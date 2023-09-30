@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
+  m_Name: BasicGun
+  m_EditorClassIdentifier: 
+  name: Basic Gun
+  range: 3
+  damage: 5
+  fireRate: 0.1
+  dispersion: 0
+  currentAmmo: 16
+  currentMaxAmmo: 48
+  maxAmmo: 80
+  magazineSize: 16
+  reloadSpeed: 0.5
+  Reloading: 0
+  sprite: {fileID: 208659192, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
