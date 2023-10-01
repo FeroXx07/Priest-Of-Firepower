@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Interactor : MonoBehaviour
 {
+    [SerializeField] KeyCode key;
     [SerializeField]private LayerMask layer;
     [SerializeField] private float interactionRange;
     private Collider2D interactable;
@@ -18,13 +19,13 @@ public class Interactor : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(transform.position, dir ,interactionRange,layer);
     
 
-        if(hit.collider!= null && Input.GetKeyDown(KeyCode.F))
+        if(hit.collider!= null)
         {
-
             interactable = hit.collider;
             IInteractable obj =  interactable.GetComponent<IInteractable>();
-
-            obj.Interact(this);
+            obj.ShowUIMessage();
+            if (Input.GetKey(key))
+                obj.Interact(this);
         }
     }
 

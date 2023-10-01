@@ -11,7 +11,7 @@ public class PlayerShooter : MonoBehaviour
     Vector2 shootDir;
     [SerializeField] float range;
     [SerializeField] LineRenderer shootMarker;
-    [SerializeField] GameObject weaponHolder;
+    Transform weaponHolder;
     [SerializeField] float weaponOffset = .5f;
      private SpriteRenderer playerSR;
     public static Action<Vector2> OnShoot;
@@ -21,8 +21,12 @@ public class PlayerShooter : MonoBehaviour
     {
         shootMarker.positionCount = 2;
         playerSR = GetComponent<SpriteRenderer>();
+     
     }
-
+    private void OnEnable()
+    {
+        WeaponSwitcher.OnWeaponSwitch += ChangeHolder;
+    }
     void Update()
     {
         // Get the mouse position in world coordinates.
@@ -71,5 +75,9 @@ public class PlayerShooter : MonoBehaviour
         playerSR.flipX = flip;
     }    
 
+    void ChangeHolder(Transform holder)
+    {
+        weaponHolder = holder;
+    }
 }
 

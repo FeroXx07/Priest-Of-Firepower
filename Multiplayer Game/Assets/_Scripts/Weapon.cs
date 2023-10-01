@@ -21,10 +21,15 @@ public class Weapon : MonoBehaviour
         data.currentMaxAmmo = data.maxAmmo;
         data.currentAmmo = data.magazineSize;
     }
-
+    private void OnDisable()
+    {
+        data.Reloading = false;
+        PlayerShooter.OnShoot -= Shoot;
+        PlayerShooter.OnReload -= Reload;
+    }
     void Reload()
     {
-        if (data.Reloading || data.currentMaxAmmo <= 0 || data.currentAmmo >= data.magazineSize) return;
+        if (data.Reloading || data.currentMaxAmmo <= 0 || data.currentAmmo >= data.magazineSize || !gameObject.activeSelf) return;
 
         StartCoroutine(Realoading());
     }
