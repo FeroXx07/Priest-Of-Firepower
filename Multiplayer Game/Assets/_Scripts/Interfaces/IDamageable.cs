@@ -1,18 +1,16 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
-public class IDamageable : MonoBehaviour
+public interface IDamageable
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    event Action<GameObject> onDamageableDestroyed;
+    event Action<GameObject> onDamageTaken;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    float Health { get; set; }    
+    void TakeDamage(IDamageDealer damageDealer, Vector3 dir);
+    void OnDamageableDestroyed();
 }
+
