@@ -7,5 +7,5 @@ public interface IInteractable
     public float interactionTime { get; }
     public string prompt { get; }
     public void Interact(Interactor interactor);
-    public void ShowUIMessage();
+    public void EnableUIPrompt(bool show);
 }

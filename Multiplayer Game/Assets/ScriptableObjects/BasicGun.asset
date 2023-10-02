@@ -16,9 +16,10 @@ MonoBehaviour:
   range: 3
   damage: 5
   fireRate: 0.1
-  dispersion: 0
-  currentAmmo: 16
-  currentMaxAmmo: 48
+  bulletSpeed: 10
+  dispersion: 10
+  currentAmmo: 12
+  currentMaxAmmo: 80
   maxAmmo: 80
   magazineSize: 16
   reloadSpeed: 0.5

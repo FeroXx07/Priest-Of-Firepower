@@ -19,7 +19,7 @@ public class WallWeapon : MonoBehaviour, IInteractable
     private void OnEnable()
     {
         timer = interactionTime;
-        DisableUI();
+        EnableUIPrompt(false);
     }
     private void Update()
     {
@@ -35,22 +35,11 @@ public class WallWeapon : MonoBehaviour, IInteractable
             //TODO check update points
             interactor.GetComponent<WeaponSwitcher>().ChangeWeapon(weapon);
             timer = interactionTime;
-            DisableUI();
+            EnableUIPrompt(false);
         }
     }
-
-    public void EnableUI()
+    public void EnableUIPrompt(bool show)
     {
-        uiElement.SetActive(true);
-    }
-
-    public void DisableUI()
-    {
-        uiElement.SetActive(false);
-    }
-
-    public void ShowUIMessage()
-    {
-        EnableUI();
+        uiElement.SetActive(show);
     }
 }

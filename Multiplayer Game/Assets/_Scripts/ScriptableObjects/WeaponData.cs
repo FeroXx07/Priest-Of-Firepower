@@ -12,7 +12,7 @@ public class WeaponData : ScriptableObject
     public float range;
     public int damage;
     public float fireRate;
-
+    public float bulletSpeed;
     public float dispersion;
 
     [Header("Reloading")]

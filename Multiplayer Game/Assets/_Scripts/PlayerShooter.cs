@@ -14,7 +14,7 @@ public class PlayerShooter : MonoBehaviour
     Transform weaponHolder;
     [SerializeField] float weaponOffset = .5f;
      private SpriteRenderer playerSR;
-    public static Action<Vector2> OnShoot;
+    public static Action OnShoot;
     public static Action OnReload;
 
     void Start()
@@ -57,7 +57,7 @@ public class PlayerShooter : MonoBehaviour
         weaponHolder.transform.position = transform.position + shootDir * weaponOffset;  
 
         if (Input.GetMouseButton(0))
-            OnShoot?.Invoke(shootDir);
+            OnShoot?.Invoke();
 
         if (Input.GetKeyDown(KeyCode.R))
             OnReload?.Invoke();

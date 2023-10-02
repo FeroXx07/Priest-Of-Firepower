@@ -19,14 +19,22 @@ public class Interactor : MonoBehaviour
         RaycastHit2D hit = Physics2D.Raycast(transform.position, dir ,interactionRange,layer);
     
 
-        if(hit.collider!= null)
+        if(hit.collider != null)
         {
             interactable = hit.collider;
             IInteractable obj =  interactable.GetComponent<IInteractable>();
-            obj.ShowUIMessage();
+            obj.EnableUIPrompt(true);
             if (Input.GetKey(key))
                 obj.Interact(this);
         }
+        // if not looking any more the las interacteable, diable UI and clear the reference to it
+        else if (interactable != null)
+        {
+            IInteractable obj = interactable.GetComponent<IInteractable>();
+            obj.EnableUIPrompt(false);
+            interactable = null;
+        }
+        
     }
 
     private void OnDrawGizmosSelected()

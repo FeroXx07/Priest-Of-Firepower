@@ -54,16 +54,34 @@ public class Weapon : MonoBehaviour
         //if is reloading or the fire rate is less than the current fire time
         return !data.Reloading && timeSinceLastShoot > 1 / data.fireRate / 60;
     }
-    void Shoot(Vector2 direction)
+    void Shoot()
     {
 
         if (data.currentAmmo > 0)
         {
             if (CanShoot())
             {
+              
                 GameObject bullet = Instantiate(bulletPrefab);
+                
+                bullet.GetComponent<Bullet>().Damage = data.damage;
+
+                transform.localRotation = transform.parent.rotation;
+
+                float dispersion;
+                dispersion = Random.Range(-data.dispersion, data.dispersion);
+
+                Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x,
+                        transform.localEulerAngles.y,
+                        transform.localEulerAngles.z + dispersion);
+
+                transform.rotation = newRot;
+
                 bullet.transform.position = firePoint.position;
-                bullet.GetComponent<Rigidbody2D>().velocity = direction * 5;
+
+                Debug.Log(newRot.eulerAngles);
+
+                bullet.GetComponent<Rigidbody2D>().velocity = transform.right * data.bulletSpeed;
 
                 data.currentAmmo--;
                 timeSinceLastShoot = 0;
@@ -82,6 +100,6 @@ public class Weapon : MonoBehaviour
     }
     void OnGunShoot()
     {
-
+        //VFX, sound
     }
 }

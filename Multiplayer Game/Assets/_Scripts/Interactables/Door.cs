@@ -11,13 +11,13 @@ public class Door : MonoBehaviour, IInteractable
 
     public float interactionTime => time;
 
+    public void EnableUIPrompt(bool show)
+    {
+        throw new System.NotImplementedException();
+    }
+
     public void Interact(Interactor interactor)
     {
         Debug.Log("Open door");
-    }
-
-    public void ShowUIMessage()
-    {
-        
     }
 }

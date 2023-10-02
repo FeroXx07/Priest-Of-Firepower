@@ -15,8 +15,8 @@ public class Chest : MonoBehaviour, IInteractable
         Debug.Log(prompt);
     }
 
-    public void ShowUIMessage()
+    public void EnableUIPrompt(bool show)
     {
-        
+
     }
 }
