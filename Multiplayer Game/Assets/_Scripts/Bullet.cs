@@ -8,9 +8,9 @@ public class Bullet : MonoBehaviour,IDamageDealer
 
     [SerializeField] LayerMask layers;
     [SerializeField] int damage;
-    public int Damage { get => damage; set => Damage = damage; }
+    public int Damage { get => damage; set => damage = value; }
 
-    public LayerMask Layers { get =>layers; set => Layers = layers; }
+    public LayerMask Layers { get =>layers; set => layers = value; }
 
     public event Action<GameObject> onDamageDealerDestroyed;
     public event Action<GameObject> onDamageDealth;

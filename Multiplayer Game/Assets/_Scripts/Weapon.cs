@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Weapon : MonoBehaviour
@@ -10,9 +11,12 @@ public class Weapon : MonoBehaviour
     [SerializeField] Transform firePoint;
     float timeSinceLastShoot;
 
+    SpriteRenderer renderer;
+
     private void Start()
     {
-        GetComponent<SpriteRenderer>().sprite = data.sprite;
+        renderer = GetComponent<SpriteRenderer>();
+        renderer.sprite = data.sprite;
     }
     private void OnEnable()
     {
@@ -78,9 +82,6 @@ public class Weapon : MonoBehaviour
                 transform.rotation = newRot;
 
                 bullet.transform.position = firePoint.position;
-
-                Debug.Log(newRot.eulerAngles);
-
                 bullet.GetComponent<Rigidbody2D>().velocity = transform.right * data.bulletSpeed;
 
                 data.currentAmmo--;
@@ -97,6 +98,15 @@ public class Weapon : MonoBehaviour
     private void Update()
     {
         timeSinceLastShoot += Time.deltaTime;
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        if (mousePos.x < transform.position.x)
+        {
+          renderer.flipY = true;
+        }
+        else
+        {
+            renderer.flipY = false;
+        }
     }
     void OnGunShoot()
     {

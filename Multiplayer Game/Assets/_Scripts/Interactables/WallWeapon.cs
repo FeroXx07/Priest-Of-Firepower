@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class WallWeapon : MonoBehaviour, IInteractable
@@ -10,31 +11,24 @@ public class WallWeapon : MonoBehaviour, IInteractable
     [SerializeField] int cost;
     [SerializeField] GameObject uiElement;
     float timer;
-
-    public string prompt => message;
-
-    public float interactionTime => timeToInteract;
-
-
+    public string Prompt => message;
+    public float InteractionTime => timeToInteract;
+    public GameObject UiElement { get => uiElement; set =>UiElement = value; }
     private void OnEnable()
     {
-        timer = interactionTime;
+        timer = InteractionTime;
+        UiElement.GetComponentInChildren<TMP_Text>().text = Prompt;
         EnableUIPrompt(false);
-    }
-    private void Update()
-    {
-        
     }
     public void Interact(Interactor interactor)
     {
         timer -= Time.deltaTime;
         if(timer <= 0)
         {
-            //interact
-            Debug.Log(prompt);
+            Debug.Log(Prompt);
             //TODO check update points
             interactor.GetComponent<WeaponSwitcher>().ChangeWeapon(weapon);
-            timer = interactionTime;
+            timer = InteractionTime;
             EnableUIPrompt(false);
         }
     }

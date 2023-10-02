@@ -4,8 +4,10 @@ using UnityEngine;
 
 public interface IInteractable 
 {
-    public float interactionTime { get; }
-    public string prompt { get; }
+    public float InteractionTime { get; }
+    public string Prompt { get; }
+    
+    public GameObject UiElement { get; set; }
     public void Interact(Interactor interactor);
     public void EnableUIPrompt(bool show);
 }

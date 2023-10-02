@@ -597,7 +597,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   range: 5
   shootMarker: {fileID: 646839819}
-  weaponOffset: 0
+  weaponOffset: 0.5
 --- !u!114 &555876512
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -667,6 +667,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   message: Open the door
   time: 0
+  uiElement: {fileID: 0}
 --- !u!50 &613947537
 Rigidbody2D:
   serializedVersion: 4
@@ -1045,7 +1046,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4330438074132723354, guid: 2b0351508e8f424468f20968e18931a5, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4330438074132723355, guid: 2b0351508e8f424468f20968e18931a5, type: 3}
       propertyPath: m_Pivot.x
@@ -1230,7 +1231,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd84f284e555b024dbfc1a1b2cec065a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  message: Weapon
+  message: Press
   timeToInteract: 1
   weapon: {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
   cost: 0
