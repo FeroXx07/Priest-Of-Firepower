@@ -23,7 +23,7 @@ public class Interactor : MonoBehaviour
         {
             interactable = hit.collider;
             IInteractable obj =  interactable.GetComponent<IInteractable>();
-            obj.EnableUIPrompt(true);
+            obj.EnablePromptUI(true);
             if (Input.GetKey(key))
                 obj.Interact(this);
         }
@@ -31,7 +31,7 @@ public class Interactor : MonoBehaviour
         else if (interactable != null)
         {
             IInteractable obj = interactable.GetComponent<IInteractable>();
-            obj.EnableUIPrompt(false);
+            obj.EnablePromptUI(false);
             interactable = null;
         }
         

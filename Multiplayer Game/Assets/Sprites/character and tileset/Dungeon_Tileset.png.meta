@@ -3,7 +3,7 @@ guid: e6e8174d58484db438520951ffb41ea2
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
-  serializedVersion: 12
+  serializedVersion: 11
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -47,7 +47,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -63,7 +63,6 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
-  cookieLightType: 0
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -2215,106 +2214,106 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Dungeon_Tileset_0: -1996447355
-      Dungeon_Tileset_1: -2119093229
-      Dungeon_Tileset_10: -722446168
-      Dungeon_Tileset_11: -828755122
-      Dungeon_Tileset_12: -571747064
-      Dungeon_Tileset_13: -135526703
-      Dungeon_Tileset_14: 1262283850
-      Dungeon_Tileset_15: -226884624
-      Dungeon_Tileset_16: 1992858672
-      Dungeon_Tileset_17: 761902245
-      Dungeon_Tileset_18: 1528772801
-      Dungeon_Tileset_19: -1285174544
-      Dungeon_Tileset_2: 1624450348
-      Dungeon_Tileset_20: 992975662
-      Dungeon_Tileset_21: 1298967287
-      Dungeon_Tileset_22: -492367391
-      Dungeon_Tileset_23: -1812333977
-      Dungeon_Tileset_24: -1072570359
+      Dungeon_Tileset_62: -597088663
       Dungeon_Tileset_25: -1593097753
-      Dungeon_Tileset_26: -2061617141
-      Dungeon_Tileset_27: -345127459
-      Dungeon_Tileset_28: 422405362
-      Dungeon_Tileset_29: 1752068381
-      Dungeon_Tileset_3: -34476156
+      Dungeon_Tileset_69: -1956770775
+      Dungeon_Tileset_32: -315069520
+      Dungeon_Tileset_35: -1348086206
+      Dungeon_Tileset_63: -361328734
+      Dungeon_Tileset_50: -1720455764
+      Dungeon_Tileset_5: 644742845
       Dungeon_Tileset_30: 2079704368
       Dungeon_Tileset_31: 2120932151
-      Dungeon_Tileset_32: -315069520
-      Dungeon_Tileset_33: -1296616250
-      Dungeon_Tileset_34: 313599278
-      Dungeon_Tileset_35: -1348086206
-      Dungeon_Tileset_36: -2060992779
-      Dungeon_Tileset_37: 1079234382
+      Dungeon_Tileset_83: 2101771218
+      Dungeon_Tileset_92: 634394988
+      Dungeon_Tileset_8: -317596977
+      Dungeon_Tileset_94: -1796727172
+      Dungeon_Tileset_10: -722446168
+      Dungeon_Tileset_43: 10640301
+      Dungeon_Tileset_89: -454698954
+      Dungeon_Tileset_61: -640482738
+      Dungeon_Tileset_72: 1212116108
+      Dungeon_Tileset_77: -467801401
+      Dungeon_Tileset_87: 955274499
       Dungeon_Tileset_38: -1956358634
       Dungeon_Tileset_39: 1809376899
-      Dungeon_Tileset_4: 1045800587
-      Dungeon_Tileset_40: 109512258
-      Dungeon_Tileset_41: -669070395
-      Dungeon_Tileset_42: -483225105
-      Dungeon_Tileset_43: 10640301
-      Dungeon_Tileset_44: -1998007143
-      Dungeon_Tileset_45: 786689982
-      Dungeon_Tileset_46: 1397883132
-      Dungeon_Tileset_47: 84977522
-      Dungeon_Tileset_48: -1441187015
-      Dungeon_Tileset_49: -1986554808
-      Dungeon_Tileset_5: 644742845
-      Dungeon_Tileset_50: -1720455764
-      Dungeon_Tileset_51: 1826587759
-      Dungeon_Tileset_52: -1958386365
-      Dungeon_Tileset_53: -1838022794
-      Dungeon_Tileset_54: 1870667099
-      Dungeon_Tileset_55: 1619863569
+      Dungeon_Tileset_84: -73759320
+      Dungeon_Tileset_79: 649435021
       Dungeon_Tileset_56: 1003605794
-      Dungeon_Tileset_57: 1070274938
-      Dungeon_Tileset_58: 880436923
-      Dungeon_Tileset_59: -537478714
-      Dungeon_Tileset_6: -1118805952
-      Dungeon_Tileset_60: 1994323761
-      Dungeon_Tileset_61: -640482738
-      Dungeon_Tileset_62: -597088663
-      Dungeon_Tileset_63: -361328734
-      Dungeon_Tileset_64: 2093112880
-      Dungeon_Tileset_65: 1220843768
-      Dungeon_Tileset_66: -699594852
-      Dungeon_Tileset_67: -1569668592
-      Dungeon_Tileset_68: 848282469
-      Dungeon_Tileset_69: -1956770775
-      Dungeon_Tileset_7: -648071024
-      Dungeon_Tileset_70: -1898971124
-      Dungeon_Tileset_71: 1509265993
-      Dungeon_Tileset_72: 1212116108
-      Dungeon_Tileset_73: -135380194
       Dungeon_Tileset_74: 691309906
       Dungeon_Tileset_75: 1916486589
-      Dungeon_Tileset_76: -1977666867
-      Dungeon_Tileset_77: -467801401
-      Dungeon_Tileset_78: 1421328116
-      Dungeon_Tileset_79: 649435021
-      Dungeon_Tileset_8: -317596977
-      Dungeon_Tileset_80: 1312830886
-      Dungeon_Tileset_81: -528568607
+      Dungeon_Tileset_17: 761902245
+      Dungeon_Tileset_46: 1397883132
+      Dungeon_Tileset_12: -571747064
+      Dungeon_Tileset_29: 1752068381
+      Dungeon_Tileset_14: 1262283850
+      Dungeon_Tileset_20: 992975662
+      Dungeon_Tileset_41: -669070395
+      Dungeon_Tileset_15: -226884624
+      Dungeon_Tileset_6: -1118805952
+      Dungeon_Tileset_37: 1079234382
+      Dungeon_Tileset_40: 109512258
+      Dungeon_Tileset_24: -1072570359
+      Dungeon_Tileset_47: 84977522
       Dungeon_Tileset_82: -883843019
-      Dungeon_Tileset_83: 2101771218
-      Dungeon_Tileset_84: -73759320
-      Dungeon_Tileset_85: -120771049
+      Dungeon_Tileset_60: 1994323761
+      Dungeon_Tileset_67: -1569668592
       Dungeon_Tileset_86: -2109976250
-      Dungeon_Tileset_87: 955274499
-      Dungeon_Tileset_88: 1021537752
-      Dungeon_Tileset_89: -454698954
-      Dungeon_Tileset_9: -1023824177
-      Dungeon_Tileset_90: 188899064
-      Dungeon_Tileset_91: 1915418120
-      Dungeon_Tileset_92: 634394988
-      Dungeon_Tileset_93: 2044996749
-      Dungeon_Tileset_94: -1796727172
-      Dungeon_Tileset_95: -84099819
-      Dungeon_Tileset_96: -2055691864
+      Dungeon_Tileset_59: -537478714
+      Dungeon_Tileset_44: -1998007143
+      Dungeon_Tileset_13: -135526703
+      Dungeon_Tileset_21: 1298967287
       Dungeon_Tileset_97: 1430633655
+      Dungeon_Tileset_95: -84099819
       Dungeon_Tileset_98: -820530514
+      Dungeon_Tileset_3: -34476156
+      Dungeon_Tileset_53: -1838022794
+      Dungeon_Tileset_93: 2044996749
+      Dungeon_Tileset_11: -828755122
+      Dungeon_Tileset_42: -483225105
+      Dungeon_Tileset_73: -135380194
+      Dungeon_Tileset_34: 313599278
+      Dungeon_Tileset_65: 1220843768
+      Dungeon_Tileset_66: -699594852
+      Dungeon_Tileset_36: -2060992779
+      Dungeon_Tileset_33: -1296616250
+      Dungeon_Tileset_26: -2061617141
+      Dungeon_Tileset_70: -1898971124
+      Dungeon_Tileset_81: -528568607
+      Dungeon_Tileset_18: 1528772801
+      Dungeon_Tileset_16: 1992858672
+      Dungeon_Tileset_55: 1619863569
+      Dungeon_Tileset_76: -1977666867
+      Dungeon_Tileset_28: 422405362
+      Dungeon_Tileset_45: 786689982
+      Dungeon_Tileset_68: 848282469
+      Dungeon_Tileset_80: 1312830886
+      Dungeon_Tileset_4: 1045800587
+      Dungeon_Tileset_1: -2119093229
+      Dungeon_Tileset_2: 1624450348
+      Dungeon_Tileset_49: -1986554808
+      Dungeon_Tileset_19: -1285174544
+      Dungeon_Tileset_7: -648071024
+      Dungeon_Tileset_78: 1421328116
+      Dungeon_Tileset_22: -492367391
+      Dungeon_Tileset_90: 188899064
+      Dungeon_Tileset_23: -1812333977
+      Dungeon_Tileset_88: 1021537752
+      Dungeon_Tileset_9: -1023824177
+      Dungeon_Tileset_48: -1441187015
+      Dungeon_Tileset_52: -1958386365
+      Dungeon_Tileset_64: 2093112880
+      Dungeon_Tileset_0: -1996447355
+      Dungeon_Tileset_27: -345127459
+      Dungeon_Tileset_54: 1870667099
       Dungeon_Tileset_99: -1638938635
+      Dungeon_Tileset_96: -2055691864
+      Dungeon_Tileset_91: 1915418120
+      Dungeon_Tileset_57: 1070274938
+      Dungeon_Tileset_71: 1509265993
+      Dungeon_Tileset_85: -120771049
+      Dungeon_Tileset_51: 1826587759
+      Dungeon_Tileset_58: 880436923
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

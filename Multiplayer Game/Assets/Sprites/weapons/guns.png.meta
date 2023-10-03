@@ -3,7 +3,7 @@ guid: 0004e6716e2d5e0488ec22b047409273
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
-  serializedVersion: 12
+  serializedVersion: 11
   mipmaps:
     mipMapMode: 0
     enableMipMap: 0
@@ -47,7 +47,7 @@ TextureImporter:
   spriteMeshType: 1
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
-  spritePixelsToUnits: 100
+  spritePixelsToUnits: 16
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
@@ -63,7 +63,6 @@ TextureImporter:
   textureFormatSet: 0
   ignorePngGamma: 0
   applyGammaDecoding: 0
-  cookieLightType: 0
   platformSettings:
   - serializedVersion: 3
     buildTarget: DefaultTexturePlatform
@@ -1459,70 +1458,70 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      guns_0: -2106740067
-      guns_1: -1519450289
-      guns_10: -490547005
-      guns_11: -1995124348
-      guns_12: -714185765
-      guns_13: 1078898951
-      guns_14: -1591860804
-      guns_15: -108406391
-      guns_16: -393660249
-      guns_17: -1263471461
-      guns_18: 824192078
-      guns_19: -1418862209
-      guns_2: -1844164964
-      guns_20: 1759628547
-      guns_21: 241095519
-      guns_22: -990373973
-      guns_23: 188275001
-      guns_24: 1915439828
-      guns_25: 1161378556
-      guns_26: -279251378
-      guns_27: 1799238534
-      guns_28: -967282919
-      guns_29: 630783095
-      guns_3: -1630582780
-      guns_30: -395990985
-      guns_31: -698760853
-      guns_32: 1369754938
-      guns_33: 197378607
-      guns_34: 2068759336
-      guns_35: 163727215
-      guns_36: -1525047805
-      guns_37: -1126173690
-      guns_38: -51999010
-      guns_39: -242527358
-      guns_4: 2143882053
       guns_40: -1708271689
-      guns_41: 1944510493
-      guns_42: -1017851146
+      guns_60: 623670813
+      guns_25: 1161378556
+      guns_18: 824192078
+      guns_1: -1519450289
       guns_43: -1184429678
+      guns_34: 2068759336
+      guns_11: -1995124348
+      guns_38: -51999010
+      guns_15: -108406391
       guns_44: -1406278336
+      guns_21: 241095519
+      guns_35: 163727215
+      guns_62: 75923381
+      guns_39: -242527358
+      guns_41: 1944510493
+      guns_24: 1915439828
+      guns_52: -941254496
+      guns_58: 1933399531
+      guns_19: -1418862209
+      guns_17: -1263471461
+      guns_3: -1630582780
+      guns_5: -95872917
+      guns_4: 2143882053
+      guns_6: -501131978
+      guns_56: -775781227
+      guns_33: 197378607
+      guns_8: 1907685678
+      guns_14: -1591860804
+      guns_13: 1078898951
+      guns_2: -1844164964
+      guns_30: -395990985
+      guns_36: -1525047805
+      guns_42: -1017851146
+      guns_50: 664420412
+      guns_26: -279251378
+      guns_22: -990373973
+      guns_49: 1324260311
+      guns_59: -539544159
+      guns_28: -967282919
+      guns_32: 1369754938
+      guns_23: 188275001
+      guns_47: -1395170444
+      guns_61: -307148153
+      guns_55: -1273914377
+      guns_31: -698760853
+      guns_29: 630783095
+      guns_20: 1759628547
+      guns_0: -2106740067
+      guns_7: 1605598303
+      guns_48: -986511092
+      guns_10: -490547005
+      guns_27: 1799238534
+      guns_51: 208659192
+      guns_57: 846403241
       guns_45: -701502438
       guns_46: -1230910807
-      guns_47: -1395170444
-      guns_48: -986511092
-      guns_49: 1324260311
-      guns_5: -95872917
-      guns_50: 664420412
-      guns_51: 208659192
-      guns_52: -941254496
       guns_53: 64155386
       guns_54: 1854093460
-      guns_55: -1273914377
-      guns_56: -775781227
-      guns_57: 846403241
-      guns_58: 1933399531
-      guns_59: -539544159
-      guns_6: -501131978
-      guns_60: 623670813
-      guns_61: -307148153
-      guns_62: 75923381
-      guns_63: -1889891775
-      guns_7: 1605598303
-      guns_8: 1907685678
+      guns_12: -714185765
       guns_9: -985174218
+      guns_37: -1126173690
+      guns_63: -1889891775
+      guns_16: -393660249
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

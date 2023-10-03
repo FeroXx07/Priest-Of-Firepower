@@ -9,16 +9,15 @@ public class WallWeapon : MonoBehaviour, IInteractable
     [SerializeField] float timeToInteract = 1f;
     [SerializeField] GameObject weapon;
     [SerializeField] int cost;
-    [SerializeField] GameObject uiElement;
+    [SerializeField] InteractionPromptUI interactionPromptUI;
     float timer;
     public string Prompt => message;
     public float InteractionTime => timeToInteract;
-    public GameObject UiElement { get => uiElement; set =>UiElement = value; }
     private void OnEnable()
     {
         timer = InteractionTime;
-        UiElement.GetComponentInChildren<TMP_Text>().text = Prompt;
-        EnableUIPrompt(false);
+        interactionPromptUI.Display(message);
+        EnablePromptUI(false);
     }
     public void Interact(Interactor interactor)
     {
@@ -29,11 +28,12 @@ public class WallWeapon : MonoBehaviour, IInteractable
             //TODO check update points
             interactor.GetComponent<WeaponSwitcher>().ChangeWeapon(weapon);
             timer = InteractionTime;
-            EnableUIPrompt(false);
+            EnablePromptUI(false);
         }
     }
-    public void EnableUIPrompt(bool show)
+
+    public void EnablePromptUI(bool show)
     {
-        uiElement.SetActive(show);
+        interactionPromptUI.gameObject.SetActive(show);
     }
 }
