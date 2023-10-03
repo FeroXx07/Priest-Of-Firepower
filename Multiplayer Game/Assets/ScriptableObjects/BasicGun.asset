@@ -15,11 +15,11 @@ MonoBehaviour:
   name: Basic Gun
   range: 3
   damage: 5
-  fireRate: 0.1
-  bulletSpeed: 10
+  fireRate: 0.05
+  bulletSpeed: 25
   dispersion: 10
-  currentAmmo: 12
-  currentMaxAmmo: 80
+  currentAmmo: 0
+  currentMaxAmmo: 0
   maxAmmo: 80
   magazineSize: 16
   reloadSpeed: 0.5

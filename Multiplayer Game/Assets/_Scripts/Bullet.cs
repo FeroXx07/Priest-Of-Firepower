@@ -7,7 +7,7 @@ public class Bullet : MonoBehaviour,IDamageDealer
 {
 
     [SerializeField] LayerMask layers;
-    [SerializeField] int damage;
+    int damage;
     public int Damage { get => damage; set => damage = value; }
 
     public LayerMask Layers { get =>layers; set => layers = value; }
@@ -20,9 +20,14 @@ public class Bullet : MonoBehaviour,IDamageDealer
     {
         if (collision.TryGetComponent<IDamageable>(out IDamageable dmg))
         {
-            if(IsSelected(layers))
-                dmg.TakeDamage(this,Vector2.zero);
+            if (IsSelected(collision.layer))
+                dmg.TakeDamage(this, Vector2.zero);
+
+            Destroy(gameObject);
         }
+        if (IsSelected(collision.layer))
+            Destroy(gameObject);
+
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
