@@ -26,9 +26,16 @@ public class WallWeapon : MonoBehaviour, IInteractable
         {
             Debug.Log(Prompt);
             //TODO check update points
-            interactor.GetComponent<WeaponSwitcher>().ChangeWeapon(weapon);
-            timer = InteractionTime;
-            EnablePromptUI(false);
+
+            // if has that weapon fill ammo 
+            // if has a slot empty add to empty slot
+            // if has not this weapon change by current weapon
+            if(interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+            {
+                switcher.ChangeWeapon(weapon);
+                timer = InteractionTime;
+                EnablePromptUI(false);
+            }
         }
     }
 

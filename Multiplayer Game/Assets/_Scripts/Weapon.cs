@@ -17,11 +17,13 @@ public class Weapon : MonoBehaviour
     {
         renderer = GetComponent<SpriteRenderer>();
         renderer.sprite = data.sprite;
+        timeSinceLastShoot = 10;
     }
     private void OnEnable()
     {
         PlayerShooter.OnShoot += Shoot;
         PlayerShooter.OnReload += Reload;
+        PlayerShooter.OnFlip+= FlipGun;
         data.currentMaxAmmo = data.maxAmmo;
         data.currentAmmo = data.magazineSize;
     }
@@ -30,6 +32,7 @@ public class Weapon : MonoBehaviour
         data.Reloading = false;
         PlayerShooter.OnShoot -= Shoot;
         PlayerShooter.OnReload -= Reload;
+        PlayerShooter.OnFlip -= FlipGun;
     }
     void Reload()
     {
@@ -60,12 +63,10 @@ public class Weapon : MonoBehaviour
     }
     void Shoot()
     {
-
         if (data.currentAmmo > 0)
         {
             if (CanShoot())
             {
-              
                 GameObject bullet = Instantiate(bulletPrefab);
                 
                 bullet.GetComponent<Bullet>().Damage = data.damage;
@@ -95,18 +96,21 @@ public class Weapon : MonoBehaviour
         }
 
     }
-    private void Update()
+    void FlipGun(bool flip)
     {
-        timeSinceLastShoot += Time.deltaTime;
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        if (mousePos.x < transform.position.x)
+        //renderer.flipY = flip;
+        if (flip)
         {
-          renderer.flipY = true;
+            transform.localScale = new Vector3(-1, -1, 1);
         }
         else
         {
-            renderer.flipY = false;
+            transform.localScale = new Vector3(1, 1, 1);
         }
+    }
+    private void Update()
+    {
+        timeSinceLastShoot += Time.deltaTime;
     }
     void OnGunShoot()
     {

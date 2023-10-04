@@ -34,6 +34,7 @@ public class Door : MonoBehaviour, IInteractable
             timer = InteractionTime;
             EnablePromptUI(false);
             Debug.Log("Open door");
+            gameObject.SetActive(false);
         }   
     }
 }

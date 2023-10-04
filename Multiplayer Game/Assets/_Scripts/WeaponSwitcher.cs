@@ -69,9 +69,9 @@ public class WeaponSwitcher : MonoBehaviour
         if(holder == null)  return;
 
         //remove previous weapon
-        foreach (GameObject w in holder)
+        foreach (Transform w in holder)
         {
-            Destroy(w);
+            Destroy(w.gameObject);
         }
         
         Instantiate(newWeaponPrefab,holder.transform);

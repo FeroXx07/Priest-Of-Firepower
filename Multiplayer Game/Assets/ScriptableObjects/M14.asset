@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
-  m_Name: BasicGun
+  m_Name: M14
   m_EditorClassIdentifier: 
-  name: Basic Gun
-  range: 3
-  damage: 5
-  fireRate: 0.05
-  bulletSpeed: 25
+  name: M14
+  range: 5
+  damage: 10
+  fireRate: 0.1
+  bulletSpeed: 20
   dispersion: 10
-  currentAmmo: 8
-  currentMaxAmmo: 64
-  maxAmmo: 80
-  magazineSize: 16
-  reloadSpeed: 0.5
+  currentAmmo: 10
+  currentMaxAmmo: 124
+  maxAmmo: 155
+  magazineSize: 31
+  reloadSpeed: 0.3
   Reloading: 0
-  sprite: {fileID: 208659192, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
+  sprite: {fileID: -1844164964, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}

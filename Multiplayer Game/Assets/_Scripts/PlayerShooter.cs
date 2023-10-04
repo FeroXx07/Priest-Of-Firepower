@@ -16,12 +16,13 @@ public class PlayerShooter : MonoBehaviour
      private SpriteRenderer playerSR;
     public static Action OnShoot;
     public static Action OnReload;
-
+    public static Action<bool> OnFlip;
+    bool Flipped;
     void Start()
     {
         shootMarker.positionCount = 2;
         playerSR = GetComponent<SpriteRenderer>();
-     
+        Flipped = false;
     }
     private void OnEnable()
     {
@@ -38,7 +39,6 @@ public class PlayerShooter : MonoBehaviour
 
         UpdateShootMarker(lineEnd);
 
-        //
         if (shootDir.x < 0)
             Flip(true);
         else
@@ -72,7 +72,20 @@ public class PlayerShooter : MonoBehaviour
 
     void Flip(bool flip)
     {
-        playerSR.flipX = flip;
+        if (Flipped != flip)
+        {
+            Flipped = flip;
+            OnFlip?.Invoke(flip);
+
+            if (flip)
+            {
+                transform.localScale = new Vector3(-1, 1, 1);
+            }
+            else
+            {
+                transform.localScale = new Vector3(1, 1, 1);
+            }
+        }
     }    
 
     void ChangeHolder(Transform holder)
