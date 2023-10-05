@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data: {fileID: 11400000, guid: 8027b6d0f4f6bca4b8cb06891b46cc13, type: 2}
-  bulletPrefab: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  bulletPool: {fileID: 11400000, guid: 93ee4b2c378bb2446a05de413b85cb42, type: 2}
   firePoint: {fileID: 4667659699741469382}
 --- !u!1 &6018971091304249275
 GameObject:
