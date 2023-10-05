@@ -8,6 +8,8 @@ public class Weapon : MonoBehaviour
 {
     public WeaponData data;
     public PoolHolder bulletPool;
+    [SerializeField]
+    GameObject bulletRef; //for testing
     [SerializeField] Transform firePoint;
 
     private float _timeSinceLastShoot;
@@ -68,8 +70,7 @@ public class Weapon : MonoBehaviour
             if (CanShoot())
             { 
                 GameObject bullet = null;
-                //GameObject bullet = Instantiate(bulletPrefab);
-                bullet = bulletPool.pool.PullGameObject();
+                bullet = Instantiate(bulletRef);//bulletPool.pool.PullGameObject();
                 bullet.GetComponent<Bullet>().Damage = data.damage;
 
                 transform.localRotation = transform.parent.rotation;
