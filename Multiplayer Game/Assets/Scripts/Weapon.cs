@@ -7,17 +7,17 @@ using UnityEngine;
 public class Weapon : MonoBehaviour
 {
     public WeaponData data;
-    public GameObject bulletPrefab;
+    public PoolHolder bulletPool;
     [SerializeField] Transform firePoint;
-    float timeSinceLastShoot;
 
-    SpriteRenderer renderer;
+    private float _timeSinceLastShoot;
+    private SpriteRenderer _spriteRenderer;
 
     private void Start()
     {
-        renderer = GetComponent<SpriteRenderer>();
-        renderer.sprite = data.sprite;
-        timeSinceLastShoot = 10;
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        _spriteRenderer.sprite = data.sprite;
+        _timeSinceLastShoot = 10;
     }
     private void OnEnable()
     {
@@ -59,16 +59,17 @@ public class Weapon : MonoBehaviour
     bool CanShoot()
     {
         //if is reloading or the fire rate is less than the current fire time
-        return !data.Reloading && timeSinceLastShoot > 1 / data.fireRate / 60;
+        return !data.Reloading && _timeSinceLastShoot > 1 / data.fireRate / 60;
     }
     void Shoot()
     {
         if (data.currentAmmo > 0)
         {
             if (CanShoot())
-            {
-                GameObject bullet = Instantiate(bulletPrefab);
-                
+            { 
+                GameObject bullet = null;
+                //GameObject bullet = Instantiate(bulletPrefab);
+                bullet = bulletPool.pool.PullGameObject();
                 bullet.GetComponent<Bullet>().Damage = data.damage;
 
                 transform.localRotation = transform.parent.rotation;
@@ -86,7 +87,7 @@ public class Weapon : MonoBehaviour
                 bullet.GetComponent<Rigidbody2D>().velocity = transform.right * data.bulletSpeed;
 
                 data.currentAmmo--;
-                timeSinceLastShoot = 0;
+                _timeSinceLastShoot = 0;
                 OnGunShoot();
             }
         }
@@ -98,7 +99,7 @@ public class Weapon : MonoBehaviour
     }
     void FlipGun(bool flip)
     {
-        //renderer.flipY = flip;
+        //_spriteRenderer.flipY = flip;
         if (flip)
         {
             transform.localScale = new Vector3(-1, -1, 1);
@@ -110,7 +111,7 @@ public class Weapon : MonoBehaviour
     }
     private void Update()
     {
-        timeSinceLastShoot += Time.deltaTime;
+        _timeSinceLastShoot += Time.deltaTime;
     }
     void OnGunShoot()
     {

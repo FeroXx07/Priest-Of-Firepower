@@ -65,7 +65,7 @@ public class PlayerShooter : MonoBehaviour
 
     void UpdateShootMarker(Vector3 finalPos)
     {
-        // Set the positions of the line renderer.
+        // Set the positions of the line _spriteRenderer.
         shootMarker.SetPosition(0, transform.position);
         shootMarker.SetPosition(1, finalPos);
     }
