@@ -1,19 +1,12 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.SceneManagement;
-using UnityEditor.U2D.Sprites;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class PlayerShooter : MonoBehaviour
 {
-    Vector2 shootDir;
     [SerializeField] float range;
     [SerializeField] LineRenderer shootMarker;
     Transform weaponHolder;
     [SerializeField] float weaponOffset = .5f;
-     private SpriteRenderer playerSR;
     public static Action OnShoot;
     public static Action OnReload;
     public static Action<bool> OnFlip;
@@ -21,7 +14,6 @@ public class PlayerShooter : MonoBehaviour
     void Start()
     {
         shootMarker.positionCount = 2;
-        playerSR = GetComponent<SpriteRenderer>();
         Flipped = false;
     }
     private void OnEnable()

@@ -1,9 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
+
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+
 
 [CreateAssetMenu(fileName = "PoolHolder", menuName = "ScriptableObjects/PoolHolder")]
 
@@ -13,26 +11,26 @@ public class PoolHolder : ScriptableObject
     public GameObject prefab;
     public int numToInit = 0;
 
-    private void OnEnable() => EditorApplication.playModeStateChanged += HandleOnPlayModeChanged;
+    //private void OnEnable() => EditorApplication.playModeStateChanged += HandleOnPlayModeChanged;
 
-    private void OnDisable() => EditorApplication.playModeStateChanged -= HandleOnPlayModeChanged;
+    //private void OnDisable() => EditorApplication.playModeStateChanged -= HandleOnPlayModeChanged;
 
-    void HandleOnPlayModeChanged(PlayModeStateChange mode)
-    {
-        switch (mode)
-        {
-            case PlayModeStateChange.EnteredPlayMode:
-                pool = new ObjectPool<PoolObject>(prefab, numToInit);
-                break;
-            case PlayModeStateChange.ExitingPlayMode:
-                pool = null;
-                break;
-            case PlayModeStateChange.EnteredEditMode:
-                break;
-            case PlayModeStateChange.ExitingEditMode:
-                break;
-            default:
-                break;
-        }
-    }
+    //void HandleOnPlayModeChanged(PlayModeStateChange mode)
+    //{
+    //    switch (mode)
+    //    {
+    //        case PlayModeStateChange.EnteredPlayMode:
+    //            pool = new ObjectPool<PoolObject>(prefab, numToInit);
+    //            break;
+    //        case PlayModeStateChange.ExitingPlayMode:
+    //            pool = null;
+    //            break;
+    //        case PlayModeStateChange.EnteredEditMode:
+    //            break;
+    //        case PlayModeStateChange.ExitingEditMode:
+    //            break;
+    //        default:
+    //            break;
+    //    }
+    //}
 }
