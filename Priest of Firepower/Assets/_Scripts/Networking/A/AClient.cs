@@ -13,16 +13,38 @@ namespace ClientA
         IPEndPoint endPoint;
         [SerializeField] string IPaddress;
 
-        private CancellationTokenSource tokenSource;
+        private CancellationTokenSource cancellationToken;
         private Task senderTask;
 
+        private Thread senderThread;
         public void Connect()
         {
-            tokenSource = new CancellationTokenSource();
-            senderTask = SenderTCP(tokenSource.Token);
+            cancellationToken = new CancellationTokenSource();
+            //senderTask = SenderTCPAsync(tokenSource.Token);
+            
+            senderThread = new Thread(()=> SendTCP(cancellationToken.Token));
+            senderThread.Start();
+        }
+        private void OnDisable()
+        {
+            if(senderThread != null && senderThread.IsAlive)
+            {
+                senderThread.Abort();
+            }
+        }
+        void CancelThread(Thread thread)
+        {
+            if (thread != null && thread.IsAlive)
+            {
+                // Signal the thread to exit gracefully
+                cancellationToken.Cancel();
+
+                // Wait for the thread to finish before proceeding (optional)
+                thread.Join();
+            }
         }
 
-        async Task SenderTCP(CancellationToken cancellationToken)
+        async Task SenderTCPAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -32,17 +54,18 @@ namespace ClientA
                 IPAddress serverIP = IPAddress.Parse(IPaddress);
                 int serverPort = 12345; // Replace with your server's port
                 endPoint = new IPEndPoint(serverIP, serverPort);
+                await sender.ConnectAsync(endPoint);
+
+                if (!sender.Connected)
+                {
+                    Debug.LogError("Socket connection failed.");
+                    return;
+                }
+
+                Debug.Log("Socket connected to -> " + sender.RemoteEndPoint.ToString());
+
                 try
                 {
-                    await sender.ConnectAsync(endPoint);
-
-                    if (!sender.Connected)
-                    {
-                        Debug.LogError("Socket connection failed.");
-                        return;
-                    }
-
-                    Debug.Log("Socket connected to -> " + sender.RemoteEndPoint.ToString());
 
                     // Continue with sending and receiving data
 
@@ -75,7 +98,7 @@ namespace ClientA
                 catch (ArgumentNullException ane)
                 {
 
-                    Debug.Log("ArgumentNullException : "+ ane.ToString());
+                    Debug.LogError("ArgumentNullException : "+ ane.ToString());
                 }
                 catch (SocketException se)
                 {
@@ -103,7 +126,7 @@ namespace ClientA
                 }
                 catch (Exception e)
                 {
-                    Debug.Log("Unexpected exception : "+ e.ToString());
+                    Debug.LogError("Unexpected exception : "+ e.ToString());
                 }
 
             }
@@ -114,23 +137,29 @@ namespace ClientA
         }
 
     
-        void SendTCP()
+        void SendTCP(CancellationToken cancellationToken)
         {
-
             try
             {
+                Debug.Log("Creating connetion ...");
                 Socket sender = new Socket(AddressFamily.InterNetwork, SocketType.Stream,ProtocolType.Tcp);
 
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-                endPoint = new IPEndPoint(IPAddress.Any, 0);
-                // We print EndPoint information 
-                // that we are connected
-                Debug.Log("Socket connected to -> "+sender.RemoteEndPoint.ToString());
+                IPAddress serverIP = IPAddress.Parse(IPaddress);
+                int serverPort = 12345; // Replace with your server's port
+                endPoint = new IPEndPoint(serverIP, serverPort);
+                sender.Connect(endPoint);
+
+                if (!sender.Connected)
+                {
+                    Debug.LogError("Socket connection failed.");
+                    return;
+                }
+
+                Debug.Log("Socket connected to -> " + sender.RemoteEndPoint.ToString());
                 try
                 {
-                    //connect socket to the end point
-                    sender.Connect(endPoint);
                     // Creation of message that
                     // we will send to Server
                     byte[] sendBytes = Encoding.ASCII.GetBytes("Hello there! from clientA");
@@ -150,17 +179,19 @@ namespace ClientA
                 }
                 catch (ArgumentNullException ane) {
 
-                    Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
+                    Debug.LogError("ArgumentNullException : "+ ane.ToString());
                 }
                  catch (SocketException se)
                 {
 
-                    Console.WriteLine("SocketException : {0}", se.ToString());
+                    Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
+                    Debug.LogError("SocketException: " + se.Message); // Log the error message
+
                 }
 
                 catch (Exception e)
                 {
-                    Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                    Debug.LogError("Unexpected exception : "+ e.ToString());
                 }
             }catch(Exception e)
             {
