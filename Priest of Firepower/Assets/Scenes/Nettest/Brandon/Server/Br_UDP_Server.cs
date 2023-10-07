@@ -5,7 +5,7 @@ using System.Net;
 using System;
 using System.Net.Sockets;
 
-public class UDP_Server : MonoBehaviour
+public class Br_UDP_Server : MonoBehaviour
 {
     private UdpClient udpServer;
     public int port = 5000;
@@ -13,6 +13,8 @@ public class UDP_Server : MonoBehaviour
     bool createRoomRequested = false;
     Socket newSocket;
     EndPoint RemoteClient;
+    [SerializeField]
+    int listenCalls;
     // Start is called before the first frame update
     void Start()
     {
@@ -20,29 +22,34 @@ public class UDP_Server : MonoBehaviour
     }
 
 
-    void CreateRoomRequest()
+    public void CreateRoomRequest()
     {
         createRoomRequested = true;
         newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-        
+        ListenForClients();
     }
 
     void ListenForClients()
     {
-        var client = new IPEndPoint(IPAddress.Any, port);
-        RemoteClient
-        newSocket.Bind(client);
-    }
+        IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
+        EndPoint senderRemote = sender;
+        newSocket.Bind(senderRemote);
 
-    void RecieveCallback(IAsyncResult ar)
-    {
         byte[] msg = new Byte[256];
         Console.WriteLine("Waiting to receive datagrams from client...");
+        listenCalls++;
         // This call blocks.
-        newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None ref client);
+        newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
+        listenCalls--;
+        Console.WriteLine("Waiting has stopped.");
         newSocket.Close();
     }
+
+    //void RecieveCallback(IAsyncResult ar)
+    //{
+        
+    //}
 
     
 }

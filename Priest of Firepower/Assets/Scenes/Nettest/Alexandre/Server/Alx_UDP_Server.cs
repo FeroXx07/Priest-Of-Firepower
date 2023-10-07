@@ -5,7 +5,7 @@ using System.Net;
 using System;
 using System.Net.Sockets;
 
-public class UDP_Server : MonoBehaviour
+public class Alx_UDP_Server : MonoBehaviour
 {
     private UdpClient udpServer;
     public int port = 5000;
@@ -31,7 +31,6 @@ public class UDP_Server : MonoBehaviour
     void ListenForClients()
     {
         var client = new IPEndPoint(IPAddress.Any, port);
-        RemoteClient
         newSocket.Bind(client);
     }
 
@@ -40,7 +39,7 @@ public class UDP_Server : MonoBehaviour
         byte[] msg = new Byte[256];
         Console.WriteLine("Waiting to receive datagrams from client...");
         // This call blocks.
-        newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None ref client);
+        //newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None ref client);
         newSocket.Close();
     }
 
