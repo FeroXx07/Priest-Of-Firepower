@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Net.Sockets;
 using System.Net;
 
-public class Client : MonoBehaviour
+public class Br_UDP_Client : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
