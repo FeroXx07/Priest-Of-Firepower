@@ -28,6 +28,10 @@ public class Br_UDP_Server : MonoBehaviour
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
+    private void Awake()
+    {
+        Application.runInBackground = true;
+    }
 
     private void Update()
     {
@@ -143,7 +147,7 @@ public class Br_UDP_Server : MonoBehaviour
     void InvokeCreateMessage(byte[] msg)
     {
         //decode data
-        string message = System.Text.Encoding.ASCII.GetString(msg);
+        string message = System.Text.Encoding.UTF8.GetString(msg);
         Br_IServer.OnCreateMessage.Invoke(message);
 
     }

@@ -10,6 +10,8 @@ public class Br_UDP_Client : MonoBehaviour
 {
     [SerializeField]
     TextMeshProUGUI inputFieldText;
+    [SerializeField]
+    TextMeshProUGUI inputFieldMessage;
     public int serverPort;
 
 
@@ -57,7 +59,7 @@ public class Br_UDP_Client : MonoBehaviour
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
 
 
-            byte[] messageBytes = System.Text.Encoding.ASCII.GetBytes("ola ke ase");
+            byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(inputFieldMessage.text);
 
             serverIp = "127.0.0.1";
             IPAddress ipAddress;
