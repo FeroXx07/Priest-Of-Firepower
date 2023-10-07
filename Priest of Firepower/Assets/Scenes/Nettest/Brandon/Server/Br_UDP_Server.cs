@@ -8,25 +8,23 @@ using System.Threading;
 
 public class Br_UDP_Server : MonoBehaviour
 {
-    public static event System.Action<byte[]> OnCreateMessage;
 
-    [SerializeField]
-    GameObject floatingText;
+    private SynchronizationContext synchronizationContext;
+
     public int port = 5000;
     string serverIpAddress = " 192.168.104.17";
     bool createRoomRequested = false;
     Socket newSocket;
     [SerializeField]
-    int listenCalls;
-    [SerializeField]
     float waitTimeLimit;
     [SerializeField]
     float timer;
     Thread listenClients;
+    bool serverActive = false;
+
     // Start is called before the first frame update
     void Start()
     {
-        OnCreateMessage += CreateMessage;
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
@@ -43,6 +41,7 @@ public class Br_UDP_Server : MonoBehaviour
         {
             if (listenClients != null && listenClients.IsAlive)
             {
+                print("Waiting has exceeded time limit. Aborting...");
                 AbortListenForClients();
             }
         }
@@ -53,61 +52,82 @@ public class Br_UDP_Server : MonoBehaviour
         timer = waitTimeLimit;
         createRoomRequested = true;
 
-        
+
 
         print("Starting to listen for clients...");
-        listenClients = new Thread(ListenForClients);
-        listenClients.Start();
 
-        GameObject text = Instantiate(floatingText);
-        text.GetComponent<TMPro.TextMeshPro>().text = "test message";
+        synchronizationContext = SynchronizationContext.Current;
+        serverActive = !serverActive;
+
+        if (serverActive)
+        {
+            listenClients = new Thread(ListenForClients);
+            listenClients.Start();
+        }
+        else
+        {
+            AbortListenForClients();
+        }
+        
     }
 
 
 
     void ListenForClients()
     {
-        try
+        print("Starting Server.");
+        //Create and bind socket so that nobody can use it until unbinding
+        newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
+        newSocket.Bind(endPoint);
+
+        //newSocket.Listen(10); --> for tcp
+        print("Waiting to receive datagrams from client...");
+
+        //var client = newSocket.Accept(); //blocks the thread until a client connects to the socket // for tcp
+        //EndPoint senderRemote = client.RemoteEndPoint; //Retrieves the endpoint info (IP address and port of the client)
+        //newSocket.Bind(senderRemote); unnecessary
+
+        while (serverActive)
         {
-            
-            //Create and bind socket so that nobody can use it until unbinding
-            newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
-            newSocket.Bind(endPoint);
+            try
+            {
 
-            //newSocket.Listen(10); --> for tcp
-            print("Waiting to receive datagrams from client...");
+                byte[] msg = new Byte[256];
+                EndPoint senderRemote = new IPEndPoint(IPAddress.Any, 0);
 
-            //var client = newSocket.Accept(); //blocks the thread until a client connects to the socket // for tcp
-            //EndPoint senderRemote = client.RemoteEndPoint; //Retrieves the endpoint info (IP address and port of the client)
-            //newSocket.Bind(senderRemote); unnecessary
-            listenCalls++;
+                //this blocks the program until receiving an answer from a client
+                newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
 
-            byte[] msg = new Byte[256];
-            EndPoint senderRemote = new IPEndPoint(IPAddress.Any, 0);
+                if (serverActive)
+                {
+                    //post function to be executed in main thread
+                    synchronizationContext.Post(_ => InvokeCreateMessage(msg), null);
+                }
 
-            //this blocks the program until receiving an answer from a client
-            newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
+               
 
-            InvokeCreateMessage(msg);
+                print("Message Received");
 
-            listenCalls--;
-            print("Waiting has stopped.");
-            newSocket.Close();
-            
+            }
+            catch (System.Exception e)
+            {
+                Debug.Log("Connection failed.. trying again. Error:" + e);
+            }
         }
-        catch (System.Exception e)
-        {
-            Debug.Log("Connection failed.. trying again. Error:" + e);
-        }
+
+        print("Closing Server.");
+        newSocket.Close();
+
+
     }
 
     void AbortListenForClients()
     {
-        print("Waiting has exceeded time limit. Aborting...");
         if (listenClients != null)
             listenClients.Abort();
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
+        serverActive = false;
 
     }
     private void OnDisable()
@@ -116,18 +136,17 @@ public class Br_UDP_Server : MonoBehaviour
             listenClients.Abort();
 
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
+        serverActive = false;
     }
 
+    //Executed in main thread
     void InvokeCreateMessage(byte[] msg)
     {
-        OnCreateMessage?.Invoke(msg);
-    }
-
-    void CreateMessage(byte[] msg)
-    {
+        //decode data
         string message = System.Text.Encoding.ASCII.GetString(msg);
-        GameObject text = Instantiate(floatingText);
-        text.GetComponent<TMPro.TextMeshPro>().text = message;
+        Br_IServer.OnCreateMessage.Invoke(message);
 
     }
+
+
 }

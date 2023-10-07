@@ -45,7 +45,8 @@ public class Br_UDP_Client : MonoBehaviour
         }
     }
 
-    public void ConnectToServer() {
+    public void ConnectToServer()
+    {
         try
         {
             print("conectig to ip: " + inputFieldText.text);
