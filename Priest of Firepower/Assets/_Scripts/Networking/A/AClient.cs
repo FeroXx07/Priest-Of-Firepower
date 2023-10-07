@@ -28,28 +28,23 @@ namespace ClientA
             {
                 Debug.Log("Creating connetion");
                 Socket sender = new Socket(AddressFamily.InterNetwork,SocketType.Stream, ProtocolType.Tcp);
-                //for the local endpoint, which is typically not what you'd use for a client socket.
                 //For a client socket, you should specify the IP address and port of the server you want to connect to.
                 IPAddress serverIP = IPAddress.Parse(IPaddress);
                 int serverPort = 12345; // Replace with your server's port
                 endPoint = new IPEndPoint(serverIP, serverPort);
-               
-
                 try
                 {
                     await sender.ConnectAsync(endPoint);
 
-                    if (sender.Connected)
-                    {
-                        Debug.Log("Socket connected to -> " + sender.RemoteEndPoint.ToString());
-
-                        // Continue with sending and receiving data
-                    }
-                    else
+                    if (!sender.Connected)
                     {
                         Debug.LogError("Socket connection failed.");
-                        return; // Handle the failure or return from the method
+                        return;
                     }
+
+                    Debug.Log("Socket connected to -> " + sender.RemoteEndPoint.ToString());
+
+                    // Continue with sending and receiving data
 
 
                     byte[] sendBytes = Encoding.ASCII.GetBytes("hello from clientA");
@@ -118,9 +113,7 @@ namespace ClientA
             }
         }
 
-        //bind() is used to bind a socket to a specific address and port,
-        //making the socket listen for incoming connection requests on that address and port,
-        //while connect() is used by a client to initiate a connection to a server.
+    
         void SendTCP()
         {
 

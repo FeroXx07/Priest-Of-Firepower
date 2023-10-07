@@ -25,8 +25,6 @@ public class AServer : MonoBehaviour
         tokenSource = new CancellationTokenSource();
         listenerTask = ListenerTCPAsync(tokenSource.Token);
         await listenerTask;
-        //listen = new Thread(()=> ListenerTCP()); 
-        //listen.Start(); 
     }
     async Task ListenerTCPAsync(CancellationToken cancellationToken)
     {
@@ -34,34 +32,13 @@ public class AServer : MonoBehaviour
         {
             Debug.Log("Starting server...");
             Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
+            //Port to be listening to listen to any ip address as we dont know the client ip
             endPoint = new IPEndPoint(IPAddress.Any, port);
+            //bind() is used to bind a socket to a specific address and port,
+            //making the socket listen for incoming connection requests on that address and port,
+            //while connect() is used by a client to initiate a connection to a server.
             listener.Bind(endPoint);
             listener.Listen(4);
-            //try
-            //{
-            //    //bind the socket to the port and if not aviable find another one and send response to the client
-
-            //    Debug.Log("Server listening on port " + port);
-            //    Socket clientSocket = await Task.Run(() => listener.Accept(), cancellationToken);
-            //    // Send the server's port to the client
-            //    byte[] portMessage = Encoding.ASCII.GetBytes("ServerPort:" + port);
-            //    clientSocket.Send(portMessage);
-            //}
-            //catch (SocketException se)
-            //{
-            //    if (se.SocketErrorCode == SocketError.AddressAlreadyInUse)
-            //    {
-            //        // Handle the case where the port is already in use
-            //        Debug.LogError("Port " + port + " is already in use.");
-            //    }
-            //    else
-            //    {
-            //        Debug.LogError("SocketException: " + se.SocketErrorCode);
-            //    }
-            //    return; // Exit the server or take appropriate action
-            //}
-
             while (!cancellationToken.IsCancellationRequested)
             {
                 Debug.Log("Waiting connection ... ");
@@ -95,10 +72,7 @@ public class AServer : MonoBehaviour
             Debug.LogException(e);
         }
     }
-    async void Bind()
-    {
 
-    }
     void ListenerTCP()
     {
         try
