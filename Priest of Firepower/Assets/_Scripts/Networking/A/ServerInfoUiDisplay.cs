@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class ServerInfoUiDisplay : MonoBehaviour
 {
-    // Start is called before the first frame update
+    [SerializeField] Transform viewPort;
+    [SerializeField] TMP_Text uiElement;
     void Start()
     {
         
@@ -14,5 +16,10 @@ public class ServerInfoUiDisplay : MonoBehaviour
     void Update()
     {
         
+    }
+
+    void UpdateClientList()
+    {
+
     }
 }

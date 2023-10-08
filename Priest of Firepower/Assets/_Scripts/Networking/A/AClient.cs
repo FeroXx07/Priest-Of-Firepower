@@ -22,7 +22,7 @@ namespace ClientA
             }
         }
         IPEndPoint endPoint;
-        [SerializeField]public string IPaddress;
+        string IPaddress;
 
         private CancellationTokenSource sendToken;
         private Task senderTask;
@@ -37,6 +37,8 @@ namespace ClientA
         public Action OnConnected;
         public Action<string> OnMessageRecived;
         private Queue<string> messageQueue = new Queue<string>();
+
+        int serverPort = 12345; // Replace with your server's port
         private void Awake()
         {
             if (instance == null)
@@ -96,6 +98,7 @@ namespace ClientA
         public void SetIpAddress(string ip)
         {
             IPaddress = ip;
+            Debug.Log("Ip address set to: " + ip);
         }
         void CancelThread(Thread thread, CancellationTokenSource token)
         {
@@ -113,10 +116,17 @@ namespace ClientA
             try
             {
 
-                if (connection.Connected)
+                if (connection != null && connection.Connected)
                 { 
                     Disconnect();
                     Thread.Sleep(100);
+                }
+
+                if(IPaddress == "")
+                {
+                    Debug.LogError("IP is empty ...");
+
+                    return;
                 }
 
               
@@ -127,7 +137,6 @@ namespace ClientA
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
                 IPAddress serverIP = IPAddress.Parse(IPaddress);
-                int serverPort = 12345; // Replace with your server's port
                 endPoint = new IPEndPoint(serverIP, serverPort);
 
                 connection.Connect(endPoint);
@@ -162,12 +171,6 @@ namespace ClientA
                 byte[] sendBytes = Encoding.ASCII.GetBytes(message);
                 connection.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
 
-                byte[] dataBuffer = new byte[1024];
-
-                // get the data size and fill the databuffer
-                int bytesRecived = connection.Receive(dataBuffer);
-                Debug.Log(Encoding.ASCII.GetString(dataBuffer, 0, bytesRecived));
-
             }
             catch (ArgumentNullException ane)
             {
@@ -192,7 +195,6 @@ namespace ClientA
         {
           while(!cancellationToken.IsCancellationRequested)
           {
-
               try
               {
                   Debug.Log("Listening server ...");
@@ -211,7 +213,6 @@ namespace ClientA
                       EnqueueMessage(data);                    
                   }
                   
-             
               }
               catch (SocketException se)
               {
@@ -252,6 +253,133 @@ namespace ClientA
             {
                 connection.Shutdown(SocketShutdown.Both);
                 connection.Close();
+            }
+        }
+        private async Task ConnectTCPAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                if (connection != null && connection.Connected)
+                {
+                    Disconnect();
+                    await Task.Delay(100); // Delay after disconnecting
+                }
+
+                if (string.IsNullOrEmpty(IPaddress))
+                {
+                    Debug.LogError("IP is empty ...");
+                    return;
+                }
+
+                Debug.Log("Creating connection ...");
+                connection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+                IPAddress serverIP = IPAddress.Parse(IPaddress);
+                
+                endPoint = new IPEndPoint(serverIP, serverPort);
+
+                await connection.ConnectAsync(endPoint);
+
+                if (!connection.Connected)
+                {
+                    Debug.LogError("Socket connection failed.");
+                    return;
+                }
+
+                Debug.Log("Socket connected to -> " + connection.RemoteEndPoint.ToString());
+
+                MainThreadDispatcher.EnqueueAction(OnConnected);
+
+                StartListening(); // Start listening asynchronously
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+
+        async Task ListenServerAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+
+                try
+                {
+                    Debug.Log("Listening server ...");
+                    byte[] buffer = new byte[1024];
+                    string data = null;
+
+                    // Receive data from the client
+                    int bufferSize = await connection.ReceiveAsync(new ArraySegment<byte>( buffer), SocketFlags.None);
+                    data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
+
+                    if (!string.IsNullOrEmpty(data))
+                    {
+                        Debug.Log("msg recived ..." + data);
+
+                        //queue the message to be processed on the main thread
+                        EnqueueMessage(data);
+                    }
+
+
+                }
+                catch (SocketException se)
+                {
+                    if (se.SocketErrorCode == SocketError.ConnectionReset ||
+                        se.SocketErrorCode == SocketError.ConnectionAborted)
+                    {
+                        // Handle client disconnection (optional)
+                        Debug.LogError(se);
+                    }
+                    else
+                    {
+                        // Handle other socket exceptions
+                        Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    // Handle other exceptions
+                    Debug.LogError($"Exception: {e.Message}");
+                }
+
+                Thread.Sleep(100);
+            }
+        }
+
+        async Task SendMessageTextAsync(string message)
+        {
+            try
+            {
+                if (connection == null) return;
+                // Creation of message that
+                // we will send to Server
+                byte[] sendBytes = Encoding.ASCII.GetBytes(message);
+                connection.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
+
+                byte[] dataBuffer = new byte[1024];
+
+                // get the data size and fill the databuffer
+                int bytesRecived = await connection.ReceiveAsync(new ArraySegment<byte>(dataBuffer),SocketFlags.None);
+                Debug.Log(Encoding.ASCII.GetString(dataBuffer, 0, bytesRecived));
+
+            }
+            catch (ArgumentNullException ane)
+            {
+
+                Debug.LogError("ArgumentNullException : " + ane.ToString());
+            }
+            catch (SocketException se)
+            {
+
+                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.LogError("SocketException: " + se.Message); // Log the error message
+
+            }
+
+            catch (Exception e)
+            {
+                Debug.LogError("Unexpected exception : " + e.ToString());
             }
         }
         void SendUDP()

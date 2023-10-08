@@ -6,6 +6,8 @@ using System.Threading;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+
 namespace ServerA
 {
 
@@ -23,7 +25,8 @@ namespace ServerA
     }
     public class AServer : MonoBehaviour
     {
-        AServer Instance;
+        AServer instance;
+        AServer Instance { get { return instance; } }
         IPEndPoint endPoint;
         [SerializeField] int port = 12345;
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
@@ -37,13 +40,15 @@ namespace ServerA
 
         ClientManager clientManager;
 
-        List<ClientData> clientList = new List<ClientData>();
+        //List<ClientData> clientList = new List<ClientData>();
+        private ConcurrentBag<ClientData> clientList = new ConcurrentBag<ClientData>();
 
         //actions
         Action<Socket> OnClientAccepted;
+        Action OnClientRemoved;
+        
 
-
-        class ClientData
+         class ClientData
         {
             public int ID;
             public ClientMetadata metaData;
@@ -66,7 +71,11 @@ namespace ServerA
 
         private void Awake()
         {
-            Instance = this;
+            if (instance == null)
+                instance = this;
+            else if(instance != null)
+                DestroyImmediate(instance);
+            DontDestroyOnLoad(gameObject);
         }
         private void Start()
         {
@@ -89,19 +98,14 @@ namespace ServerA
 
         private void OnDisable()
         {
-            OnClientAccepted -= CreateClient;
-
-            if (listenerThread != null && listenerThread.IsAlive)
-            {
-                listenerThread.Abort();
-            }
-
+          
+            StopListening();
+            StopChat();
             foreach(ClientData client in clientList)
             {
                 RemoveClient(client);
             }
-            StopListening();
-            StopChat();
+            OnClientAccepted -= CreateClient;
         }
         void ListenerTCP(CancellationToken cancellationToken)
         {
@@ -114,6 +118,8 @@ namespace ServerA
                 //create end point
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
+                //So for the ip any it listens to all directions ipv4 local LAN and 
+                //also the public ip. TOconnect from the client use any of the ips
                 endPoint = new IPEndPoint(IPAddress.Any, 12345);
                 //bind to ip and port to listen to
                 listener.Bind(endPoint);
@@ -150,9 +156,9 @@ namespace ServerA
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                List<ClientData> clients= new List<ClientData>(clientList);   
+                Debug.Log(clientList.Count);
                 // Check for incoming messages from all clients
-                foreach (ClientData clientData in clients)
+                foreach (ClientData clientData in clientList)
                 {
                     if (cancellationToken.IsCancellationRequested)
                     {
@@ -160,7 +166,7 @@ namespace ServerA
                     }
 
                     Socket clientSocket = clientData.socket;
-
+              
                     try
                     {
                         byte[] buffer = new byte[1024];
@@ -169,7 +175,7 @@ namespace ServerA
                         // Receive data from the client
                         int bufferSize = clientSocket.Receive(buffer);
                         data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-
+                        
                         if (!string.IsNullOrEmpty(data))
                         {
                             Debug.Log("message recived: "+ data);
@@ -227,24 +233,31 @@ namespace ServerA
         void RemoveClient(ClientData clientData)
         {
             // Remove the client from the list of connected clients
-            clientList.Remove(clientData);
+            //clientList.Remove(clientData);
 
-            Debug.Log("Client "+ clientData.ID +" disconnected.");
-
-            // Cancel the client's cancellation token source
-            clientData.cancellationTokenSource.Cancel();
-
-            // Close the client's socket
-            if (clientData.socket.Connected)
+            if( clientList.TryTake(out clientData))
             {
-                clientData.socket.Shutdown(SocketShutdown.Both);
+                Debug.Log("Client " + clientData.ID + " disconnected.");
+
+                // Cancel the client's cancellation token source
+                clientData.cancellationTokenSource.Cancel();
+
+                // Close the client's socket
+                if (clientData.socket.Connected)
+                {
+                    clientData.socket.Shutdown(SocketShutdown.Both);
+                }
+                clientData.socket.Close();
             }
-            clientData.socket.Close();
+            else
+            {
+                Debug.LogError("Couldn't remove client :" + clientData.ID);
+            }
+
         }
         void BroadcastMessage(string message, int senderID)
         {
-            List<ClientData> clients = new List<ClientData>(clientList);
-            foreach (ClientData clientData in clients)
+            foreach (ClientData clientData in clientList)
             {
                 try
                 {
@@ -330,52 +343,43 @@ namespace ServerA
                 Debug.LogError(e);
             }
         }
-
+#region Async
         async Task ListenerTCPAsync(CancellationToken cancellationToken)
         {
             try
             {
-                Debug.Log("Starting server...");
+                Debug.Log("Starting server ...");
+                //create listener tcp
                 Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                //Port to be listening to listen to any ip address as we dont know the client ip
+
+                //create end point
+                //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
+                //In this case the operating system (TCP/IP stack) assigns a free port number for you.
+                //So for the ip any it listens to all directions ipv4 local LAN and 
+                //also the public ip. TOconnect from the client use any of the ips
                 endPoint = new IPEndPoint(IPAddress.Any, 12345);
-                //bind() is used to bind a socket to a specific address and port,
-                //making the socket listen for incoming connection requests on that address and port,
-                //while connect() is used by a client to initiate a connection to a server.
+                //bind to ip and port to listen to
                 listener.Bind(endPoint);
+                // Using Listen() method we create 
+                // the Client list that will want
+                // to connect to Server
                 listener.Listen(4);
+
+                Debug.Log("Server listening ...");
+
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    Debug.Log("Waiting connection ... ");
+                    Console.WriteLine("Waiting connection ... ");
 
                     Socket clientSocket = await listener.AcceptAsync();
+                    IPEndPoint endPoint = (IPEndPoint)clientSocket.LocalEndPoint;
+                    int localPort = endPoint.Port;
+                    Debug.Log("Connection accepted -> " + localPort);
 
-                    Debug.Log("Connection accepted ->" + clientSocket.ToString());
-
-                    byte[] buffer = new byte[1024];
-                    string data = null;
-
-                    while (true)
-                    {
-                        if (cancellationToken.IsCancellationRequested)
-                        {
-                            break; // Exit if cancellation is requested
-                        }
-                        int bufferSize = await clientSocket.ReceiveAsync(buffer, SocketFlags.None);
-
-                        data += Encoding.ASCII.GetString(buffer, 0, bufferSize);
-
-                        if (data.IndexOf("<EOF>") > -1)
-                            break;
-                    }
-
-                    Debug.Log("Text received -> " + data);
-                    byte[] message = Encoding.ASCII.GetBytes("Received data server A");
-
-                    await clientSocket.SendAsync(message, SocketFlags.None);
-
-                    clientSocket.Shutdown(SocketShutdown.Both);
-                    clientSocket.Close();
+                    //add this accepted client into the client list
+                    OnClientAccepted?.Invoke(clientSocket);
+                    // Add some delay to avoid busy-waiting
+                    Thread.Sleep(100);
                 }
             }
             catch (Exception e)
@@ -383,8 +387,97 @@ namespace ServerA
                 Debug.LogException(e);
             }
         }
+        async Task HandleChatAsync(CancellationToken cancellationToken)
+        {
+            Debug.Log("Starting chat thread ...");
 
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // Check for incoming messages from all clients
+                foreach (ClientData clientData in clientList)
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break; // Exit if cancellation is requested
+                    }
 
+                    Socket clientSocket = clientData.socket;
+
+                    try
+                    {
+                        byte[] buffer = new byte[1024];
+
+                        // Use ReceiveAsync to asynchronously receive data from the client
+                        int bufferSize = await clientSocket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.None, cancellationToken);
+                        string data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
+
+                        if (!string.IsNullOrEmpty(data))
+                        {
+                            Debug.Log("message received: " + data);
+                            // Process the received message (e.g., broadcast to all clients)
+                            BroadcastMessage(data, clientData.ID);
+                        }
+                    }
+                    catch (SocketException se)
+                    {
+                        if (se.SocketErrorCode == SocketError.ConnectionReset ||
+                            se.SocketErrorCode == SocketError.ConnectionAborted)
+                        {
+                            // Handle client disconnection (optional)
+                            Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
+                            RemoveClient(clientData);
+                        }
+                        else
+                        {
+                            // Handle other socket exceptions
+                            Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        // Handle other exceptions
+                        Debug.LogError($"Exception: {e.Message}");
+                    }
+                }
+
+                // Add some delay to avoid busy-waiting
+                await Task.Delay(100);
+            }
+        }
+        async Task BroadcastMessageAsync(string message, int senderID)
+        {
+            foreach (ClientData clientData in clientList)
+            {
+                try
+                {
+                    // Skip broadcasting to the sender
+                    if (clientData.ID == senderID)
+                    {
+                        continue;
+                    }
+
+                    Socket clientSocket = clientData.socket;
+
+                    // Send the message to other clients
+                    byte[] data = Encoding.ASCII.GetBytes($"Client {senderID}: {message}");
+                    await clientSocket.SendAsync(new ArraySegment<byte>(data),SocketFlags.None);
+
+                    Debug.Log("message broadcasted ...");
+                }
+                catch (SocketException se)
+                {
+                    // Handle socket exceptions (e.g., client disconnection)
+                    Debug.LogError($"Error broadcasting message to client {clientData.ID}: {se.Message}");
+                    RemoveClient(clientData);
+                }
+                catch (Exception e)
+                {
+                    // Handle other exceptions
+                    Debug.LogError($"Error broadcasting message: {e.Message}");
+                }
+            }
+        }
+        #endregion
         void ListenerUDP()
         {
             try
