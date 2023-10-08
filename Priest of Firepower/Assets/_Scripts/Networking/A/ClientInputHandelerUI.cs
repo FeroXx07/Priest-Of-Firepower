@@ -7,33 +7,38 @@ using UnityEngine.UI;
 
 public class ClientInputHandelerUI : MonoBehaviour
 {
+    [SerializeField] TMP_Text connectionInfo;
     [SerializeField]TMP_InputField ipInputField,mesageInputField;
     [SerializeField] GameObject chatPanel;
     [SerializeField] GameObject chatTextElementUi;
     [SerializeField] int maxMessages = 25;
     List<MSG> messages = new List<MSG>();
+
     void Start()
     {
         if(ipInputField != null)
         ipInputField.onSubmit.AddListener(OnSetIp);
         if(mesageInputField != null)
         mesageInputField.onSubmit.AddListener(OnSendMessage);
-
+        if (chatPanel == null)
+        {
+            Debug.LogError("chatPanel is not assigned in the Inspector.");
+        }
 
     }
     private void OnEnable()
     {
-        if(AClient.Instance != null)
-         AClient.Instance.OnMessageRecived += OnMessageRecived;
+        AClient.Instance.OnMessageRecived += OnMessageRecived;
+        AClient.Instance.OnConnected += OnConnected;
     }
     private void OnDisable()
     {
         AClient.Instance.OnMessageRecived -= OnMessageRecived;
+        AClient.Instance.OnConnected -= OnConnected;
     }
     private void OnSetIp(string text)
     {
         AClient.Instance.SetIpAddress(text);
-    
     }
 
     private void OnSendMessage(string text)
@@ -48,6 +53,7 @@ public class ClientInputHandelerUI : MonoBehaviour
 
     void OnMessageRecived(string text)
     {
+        Debug.Log("post message: " +text);
         if(messages.Count > maxMessages)
         {
             Destroy(messages[0].textObj.gameObject);
@@ -64,6 +70,11 @@ public class ClientInputHandelerUI : MonoBehaviour
 
         messages.Add(newMsg);
 
+    }
+
+    private void OnConnected()
+    {
+        connectionInfo.text = "Connected to:\n"+AClient.Instance.GetIpAddress();
     }
 
     class MSG

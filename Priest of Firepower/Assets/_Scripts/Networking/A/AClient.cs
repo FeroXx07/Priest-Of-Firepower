@@ -6,12 +6,21 @@ using System.Threading;
 using System.Text;
 using System.Threading.Tasks;
 using static ServerA.AServer;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace ClientA
 {
     public class AClient : MonoBehaviour
     {
-        public static AClient Instance { get; set; }
+        private static AClient instance;
+        public static AClient Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
         IPEndPoint endPoint;
         [SerializeField]public string IPaddress;
 
@@ -25,31 +34,21 @@ namespace ClientA
 
         private Socket connection;
 
+        public Action OnConnected;
         public Action<string> OnMessageRecived;
-
-        public void Connect()
+        private Queue<string> messageQueue = new Queue<string>();
+        private void Awake()
         {
-            sendToken = new CancellationTokenSource();           
-            senderThread = new Thread(()=> ConnectTCP(sendToken.Token));
-            senderThread.Start();
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else if (instance != this)
+            {
+                Destroy(gameObject);
+            }
 
-            
-        }
-
-        public void SendMessageUI(string text)
-        {
-            Thread message = new Thread(() => SendMessageText(text));
-            message.Start();
-        }
-
-        public void SetIpAddress(string ip)
-        {
-            IPaddress = ip;
-        }
-
-        private void Start()
-        {
-            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         private void OnDisable()
@@ -63,14 +62,47 @@ namespace ClientA
                 listenServerThread.Abort();
             }
             Disconnect();
-
         }
-        void CancelThread(Thread thread)
+        private void Update()
+        {
+            if(messageQueue.Count > 0)
+            {
+                OnMessageRecived?.Invoke(messageQueue.Dequeue());
+            }
+        }
+        public void Connect()
+        {
+            sendToken = new CancellationTokenSource();           
+            senderThread = new Thread(()=> ConnectTCP(sendToken.Token));
+            senderThread.Start();
+        }
+
+        public void SendMessageUI(string text)
+        {
+            Thread message = new Thread(() => SendMessageText(text));
+            message.Start();
+        }
+
+        public void EnqueueMessage(string message)
+        {
+            messageQueue.Enqueue(message);
+        }
+
+        public string GetIpAddress()
+        {
+            return IPaddress;
+        }
+
+        public void SetIpAddress(string ip)
+        {
+            IPaddress = ip;
+        }
+        void CancelThread(Thread thread, CancellationTokenSource token)
         {
             if (thread != null && thread.IsAlive)
             {
                 // Signal the thread to exit gracefully
-                sendToken.Cancel();
+                token.Cancel();
                 
                 // Wait for the thread to finish before proceeding (optional)
                 thread.Join();
@@ -80,6 +112,15 @@ namespace ClientA
         {
             try
             {
+
+                if (connection.Connected)
+                { 
+                    Disconnect();
+                    Thread.Sleep(100);
+                }
+
+              
+
                 Debug.Log("Creating connetion ...");
                 connection = new Socket(AddressFamily.InterNetwork, SocketType.Stream,ProtocolType.Tcp);
 
@@ -98,7 +139,10 @@ namespace ClientA
                 }
 
                 Debug.Log("Socket connected to -> " + connection.RemoteEndPoint.ToString());
-
+                
+                //add action dispatcher for main thread
+                MainThreadDispatcher.EnqueueAction(OnConnected);
+                
                 //start listening for server data
                 StartListening();
              
@@ -112,6 +156,7 @@ namespace ClientA
         {
             try
             {
+                if (connection == null) return;
                 // Creation of message that
                 // we will send to Server
                 byte[] sendBytes = Encoding.ASCII.GetBytes(message);
@@ -161,9 +206,11 @@ namespace ClientA
                   if (!string.IsNullOrEmpty(data))
                   {
                       Debug.Log("msg recived ..." + data);
-                      OnMessageRecived?.Invoke(data);
+                       
+                      //queue the message to be processed on the main thread
+                      EnqueueMessage(data);                    
                   }
-
+                  
              
               }
               catch (SocketException se)
@@ -199,6 +246,8 @@ namespace ClientA
 
         void Disconnect()
         { 
+            CancelThread(senderThread, sendToken);
+            CancelThread(listenServerThread,listenerToken);
             if (connection != null)
             {
                 connection.Shutdown(SocketShutdown.Both);

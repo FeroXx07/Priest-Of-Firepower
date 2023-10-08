@@ -12,7 +12,7 @@ namespace ServerA
 
     public class ClientManager
     {
-        private int nextClientId = -1;
+        private int nextClientId = 0;
 
         public int GetNextClientId()
         {
@@ -144,19 +144,9 @@ namespace ServerA
                 Debug.LogException(e);
             }
         }
-
-        void DisconnectClient(Socket clientSocket)
-        {
-
-            // Disable the connection with this client
-            clientSocket.Shutdown(SocketShutdown.Both);
-            clientSocket.Close();
-        }
-
-
         void HandleChat(CancellationToken cancellationToken)
         {
-            Debug.Log("Starting chat thred ...");
+            Debug.Log("Starting chat thread ...");
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -194,7 +184,7 @@ namespace ServerA
                         {
                             // Handle client disconnection (optional)
                             Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
-                            DisconnectClient(clientData.socket);
+                            RemoveClient(clientData);
                         }
                         else
                         {
@@ -239,8 +229,7 @@ namespace ServerA
             // Remove the client from the list of connected clients
             clientList.Remove(clientData);
 
-            // Optionally, perform cleanup or logging for the disconnected client
-            Debug.Log($"Client {clientData.ID} disconnected.");
+            Debug.Log("Client "+ clientData.ID +" disconnected.");
 
             // Cancel the client's cancellation token source
             clientData.cancellationTokenSource.Cancel();
@@ -270,6 +259,8 @@ namespace ServerA
                     // Send the message to other clients
                     byte[] data = Encoding.ASCII.GetBytes($"Client {senderID}: {message}");
                     clientSocket.Send(data);
+
+                    Debug.Log("message broadcasted ...");
                 }
                 catch (SocketException se)
                 {
