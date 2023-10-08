@@ -5,11 +5,14 @@ using System.Net;
 using System;
 using System.Net.Sockets;
 using System.Threading;
-
+using TMPro;
 public class Br_UDP_Server : MonoBehaviour
 {
 
     private SynchronizationContext synchronizationContext;
+
+    [SerializeField]
+    TextMeshProUGUI serverName;
 
     public int port = 5000;
     string serverIpAddress = " 192.168.104.17";
@@ -102,6 +105,12 @@ public class Br_UDP_Server : MonoBehaviour
 
                 //this blocks the program until receiving an answer from a client
                 newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
+
+                string response = "Welcome to " + serverName.text;
+                print("TCP: Sending response: " + response);
+
+                byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
+                newSocket.SendTo(responseBytes, senderRemote);
 
                 if (serverActive)
                 {

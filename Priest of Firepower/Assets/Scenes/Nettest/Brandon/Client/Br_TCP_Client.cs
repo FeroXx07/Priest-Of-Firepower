@@ -33,7 +33,10 @@ public class Br_TCP_Client : MonoBehaviour
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-
+    private void Awake()
+    {
+        Application.runInBackground = true;
+    }
     // Update is called once per frame
     void Update()
     {
