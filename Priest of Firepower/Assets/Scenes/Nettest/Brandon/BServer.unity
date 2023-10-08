@@ -906,6 +906,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3c4ce2d8bb23d744b8bebbe12598dd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  serverName: {fileID: 1847643420}
   port: 5000
   waitTimeLimit: 1000
   timer: 0
@@ -936,6 +937,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e6706f1fae29dd488b8f33bfee7aab1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  serverName: {fileID: 1847643420}
   port: 5000
   waitTimeLimit: 1000
   timer: 0

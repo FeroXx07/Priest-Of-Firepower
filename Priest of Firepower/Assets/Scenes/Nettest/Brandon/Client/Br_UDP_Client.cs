@@ -8,6 +8,8 @@ using TMPro;
 
 public class Br_UDP_Client : MonoBehaviour
 {
+    private SynchronizationContext synchronizationContext;
+
     [SerializeField]
     TextMeshProUGUI inputFieldText;
     [SerializeField]
@@ -22,14 +24,19 @@ public class Br_UDP_Client : MonoBehaviour
 
 
     Thread connectToServer;
+    Thread recieveResponseThread;
     Socket newSocket;
+    EndPoint serverEndpoint;
     // Start is called before the first frame update
     void Start()
     {
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-
+    private void Awake()
+    {
+        Application.runInBackground = true;
+    }
     // Update is called once per frame
     void Update()
     {
@@ -71,16 +78,41 @@ public class Br_UDP_Client : MonoBehaviour
             }
             print("UDP: ipAddress: " + ipAddress);
 
-            IPEndPoint ipep = new IPEndPoint(ipAddress, serverPort);
+            serverEndpoint = new IPEndPoint(ipAddress, serverPort);
 
-            newSocket.SendTo(messageBytes, ipep);
-            newSocket.Close();
+            newSocket.SendTo(messageBytes, serverEndpoint);
+
+            synchronizationContext = SynchronizationContext.Current;
+            recieveResponseThread = new Thread(HandleServerResponse);
+            recieveResponseThread.Start();
+
 
         }
         catch (System.Exception e)
         {
             Debug.Log("UDP: Connection failed.. trying again. Error: " + e);
         }
+    }
+
+    void HandleServerResponse()
+    {
+        byte[] response = new byte[256];
+        int responseByteCount = newSocket.ReceiveFrom(response, response.Length, SocketFlags.None, ref serverEndpoint);
+        if (responseByteCount > 0)
+        {
+            synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
+            string message = System.Text.Encoding.UTF8.GetString(response);
+            print(message);
+        }
+        newSocket.Close();
+    }
+
+    void InvokeCreateResponse(byte[] msg)
+    {
+        //decode data
+        string message = System.Text.Encoding.UTF8.GetString(msg);
+        Br_IServer.OnCreateResponse.Invoke(message);
+
     }
 
     void AbortConnectToServer()
@@ -97,5 +129,6 @@ public class Br_UDP_Client : MonoBehaviour
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
     }
 
+    //todo: quitar unused connectToServer thread;
 
 }
