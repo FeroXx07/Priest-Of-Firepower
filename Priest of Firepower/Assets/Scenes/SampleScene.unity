@@ -8008,7 +8008,8 @@ GameObject:
   - component: {fileID: 1338995947}
   - component: {fileID: 1338995946}
   - component: {fileID: 1338995945}
-  - component: {fileID: 1338995944}
+  - component: {fileID: 1338995948}
+  - component: {fileID: 1338995949}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Untagged
@@ -8016,19 +8017,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1338995944
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1338995943}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1188ef33632770d4ea1ab7b394dea243, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  target: {fileID: 555876507}
 --- !u!195 &1338995945
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -8118,6 +8106,34 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1338995948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338995943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fd6e738bda0d6e4d9b31233dd2cb71a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1338995949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338995943}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69e764ef40dd0a44bb4c9869c087ff90, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentLife: 1
+  totalLife: 10
+  damage: 5
+  attackCooldown: 1
 --- !u!1 &1575614001
 GameObject:
   m_ObjectHideFlags: 0
