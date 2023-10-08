@@ -9,4 +9,5 @@ using UnityEngine.Events;
 public interface Br_IServer
 {
     public static Action<string> OnCreateMessage;
+    public static Action<string> OnCreateResponse;
 }

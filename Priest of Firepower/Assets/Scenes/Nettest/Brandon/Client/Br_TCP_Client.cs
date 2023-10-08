@@ -8,6 +8,8 @@ using TMPro;
 
 public class Br_TCP_Client : MonoBehaviour
 {
+    private SynchronizationContext synchronizationContext;
+
     [SerializeField]
     TextMeshProUGUI inputFieldText;
     [SerializeField]
@@ -23,6 +25,8 @@ public class Br_TCP_Client : MonoBehaviour
 
     Thread connectToServer;
     Socket newSocket;
+
+    Thread responseThread;
     // Start is called before the first frame update
     void Start()
     {
@@ -75,7 +79,12 @@ public class Br_TCP_Client : MonoBehaviour
             print("TCP: Connected to server at: " + serverEp);
 
             newSocket.Send(messageBytes);
-            newSocket.Close();
+
+            synchronizationContext = SynchronizationContext.Current;
+            responseThread = new Thread(HandleServerResponse);
+            responseThread.Start();
+
+
 
         }
         catch (System.Exception e)
@@ -95,8 +104,31 @@ public class Br_TCP_Client : MonoBehaviour
     {
         if (connectToServer != null)
             connectToServer.Abort();
+
+        if (responseThread != null)
+            responseThread.Abort();
+
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
     }
 
+    void HandleServerResponse()
+    {
+        byte[] response = new byte[256];
+        int responseByteCount = newSocket.Receive(response);
+        if (responseByteCount > 0)
+        {
+            synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
+        }
+        newSocket.Close();
+    }
 
+
+
+    void InvokeCreateResponse(byte[] msg)
+    {
+        //decode data
+        string message = System.Text.Encoding.UTF8.GetString(msg);
+        Br_IServer.OnCreateResponse.Invoke(message);
+
+    }
 }

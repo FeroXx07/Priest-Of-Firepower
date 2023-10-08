@@ -150,6 +150,12 @@ public class Br_TCP_Server : MonoBehaviour
 
                     print("TCP: Message Received");
 
+
+                    //send client a response
+                    string response = "TCP: Connection stablished";
+                    byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
+                    clientSocket.Send(responseBytes);
+
                     //keep receiving data from the client
                     clientSocket.BeginReceive(clientData, 0, clientData.Length, SocketFlags.None, new AsyncCallback(ReceiveMessage), clientSocket);
 

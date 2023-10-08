@@ -17,6 +17,7 @@ public class TextSpawner : MonoBehaviour
     private void OnEnable()
     {
         Br_IServer.OnCreateMessage += CreateMessage;
+        Br_IServer.OnCreateResponse += CreateResponse;
 
 
     }
@@ -25,6 +26,14 @@ public class TextSpawner : MonoBehaviour
     void CreateMessage(string message)
     {
         GameObject text = Instantiate(floatingText);
+        text.GetComponent<TMPro.TextMeshPro>().text = message;
+
+    }
+
+    void CreateResponse(string message)
+    {
+        GameObject text = Instantiate(floatingText);
+        text.transform.position = new Vector3(-text.transform.position.x, text.transform.position.y, text.transform.position.z);
         text.GetComponent<TMPro.TextMeshPro>().text = message;
 
     }
