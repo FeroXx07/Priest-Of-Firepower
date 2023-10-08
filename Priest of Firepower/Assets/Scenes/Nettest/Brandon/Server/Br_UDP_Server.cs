@@ -45,7 +45,7 @@ public class Br_UDP_Server : MonoBehaviour
         {
             if (listenClients != null && listenClients.IsAlive)
             {
-                print("Waiting has exceeded time limit. Aborting...");
+                print("UDP: Waiting has exceeded time limit. Aborting...");
                 AbortListenForClients();
             }
         }
@@ -53,12 +53,12 @@ public class Br_UDP_Server : MonoBehaviour
 
     public void CreateRoomRequest()
     {
+        if (!enabled) return;
         timer = waitTimeLimit;
         createRoomRequested = true;
 
 
-
-        print("Starting to listen for clients...");
+        print("UDP: Starting to listen for clients...");
 
         synchronizationContext = SynchronizationContext.Current;
         serverActive = !serverActive;
@@ -79,14 +79,14 @@ public class Br_UDP_Server : MonoBehaviour
 
     void ListenForClients()
     {
-        print("Starting Server.");
+        print("UDP: Starting Server.");
         //Create and bind socket so that nobody can use it until unbinding
         newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
         newSocket.Bind(endPoint);
 
         //newSocket.Listen(10); --> for tcp
-        print("Waiting to receive datagrams from client...");
+        print("UDP: Waiting to receive datagrams from client...");
 
         //var client = newSocket.Accept(); //blocks the thread until a client connects to the socket // for tcp
         //EndPoint senderRemote = client.RemoteEndPoint; //Retrieves the endpoint info (IP address and port of the client)
@@ -111,16 +111,16 @@ public class Br_UDP_Server : MonoBehaviour
 
                
 
-                print("Message Received");
+                print("UDP: Message Received");
 
             }
             catch (System.Exception e)
             {
-                Debug.Log("Connection failed.. trying again. Error:" + e);
+                Debug.Log("UDP: Connection failed.. trying again. Error:" + e);
             }
         }
 
-        print("Closing Server.");
+        print("UDP: Closing Server.");
         newSocket.Close();
 
 

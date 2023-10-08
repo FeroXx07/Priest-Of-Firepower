@@ -6,7 +6,7 @@ using System.Net;
 using System.Threading;
 using TMPro;
 
-public class Br_UDP_Client : MonoBehaviour
+public class Br_TCP_Client : MonoBehaviour
 {
     [SerializeField]
     TextMeshProUGUI inputFieldText;
@@ -50,15 +50,14 @@ public class Br_UDP_Client : MonoBehaviour
     public void ConnectToServer()
     {
         if (!enabled) return;
+
         try
         {
-            print("UDP: conectig to ip: " + inputFieldText.text);
+            print("TCP: conectig to ip: " + inputFieldText.text);
             string serverIp = inputFieldText.text.Remove(inputFieldText.text.Length - 1);
 
             //Create and bind socket so that nobody can use it until unbinding
-            newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
-
+            newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
             byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(inputFieldMessage.text);
 
@@ -66,26 +65,28 @@ public class Br_UDP_Client : MonoBehaviour
             if (!IPAddress.TryParse(serverIp, out ipAddress))
             {
                 // Handle invalid IP address input
-                print("UDP: Invalid IP address: " + serverIp);
+                print("TCP: Invalid IP address: " + serverIp);
                 return;
             }
-            print("UDP: ipAddress: " + ipAddress);
+            print("TCP: ipAddress: " + ipAddress);
 
-            IPEndPoint ipep = new IPEndPoint(ipAddress, serverPort);
+            IPEndPoint serverEp = new IPEndPoint(ipAddress, serverPort);
+            newSocket.Connect(serverEp);
+            print("TCP: Connected to server at: " + serverEp);
 
-            newSocket.SendTo(messageBytes, ipep);
+            newSocket.Send(messageBytes);
             newSocket.Close();
 
         }
         catch (System.Exception e)
         {
-            Debug.Log("UDP: Connection failed.. trying again. Error: " + e);
+            Debug.Log("TCP: Connection failed.. trying again. Error: " + e);
         }
     }
 
     void AbortConnectToServer()
     {
-        print("UDP: Waiting has exceeded time limit. Aborting...");
+        print("TCP: Waiting has exceeded time limit. Aborting...");
         if (connectToServer != null)
             connectToServer.Abort();
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
