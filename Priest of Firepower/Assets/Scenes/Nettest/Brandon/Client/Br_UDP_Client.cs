@@ -36,6 +36,7 @@ public class Br_UDP_Client : MonoBehaviour
     private void Awake()
     {
         Application.runInBackground = true;
+        DontDestroyOnLoad(transform.gameObject);
     }
     // Update is called once per frame
     void Update()
@@ -111,7 +112,7 @@ public class Br_UDP_Client : MonoBehaviour
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateResponse.Invoke(message);
+        Br_IServer.OnCreateResponse?.Invoke(message);
 
     }
 

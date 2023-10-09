@@ -5,14 +5,12 @@ using System.Net;
 using System;
 using System.Net.Sockets;
 using System.Threading;
-using TMPro;
+using UnityEngine.SceneManagement;
 public class Br_TCP_Server : MonoBehaviour
 {
 
     private SynchronizationContext synchronizationContext;
 
-    [SerializeField]
-    TextMeshProUGUI serverName;
     public int port = 5000;
     string serverIpAddress = " 192.168.104.17";
     bool createRoomRequested = false;
@@ -26,17 +24,37 @@ public class Br_TCP_Server : MonoBehaviour
 
     //general buffer to store user incoming data
     byte[] clientData = new Byte[256];
+    string roomName = "";
 
-    // Start is called before the first frame update
+    private static Br_TCP_Server tcpServerInstance;
+    private void Awake()
+    {
+
+        // Check if an instance already exists
+        if (tcpServerInstance != null && tcpServerInstance != this)
+        {
+            // If an instance already exists, destroy this duplicate GameObject
+            Destroy(gameObject);
+            return;
+        }
+
+        // Set this instance as the singleton
+        tcpServerInstance = this;
+
+        // Don't destroy this GameObject when loading new scenes
+        DontDestroyOnLoad(gameObject);
+
+        Application.runInBackground = true;
+        DontDestroyOnLoad(transform.gameObject);
+        Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
+    }
+
     void Start()
     {
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-    private void Awake()
-    {
-        Application.runInBackground = true;
-    }
+    
 
     private void Update()
     {
@@ -65,6 +83,9 @@ public class Br_TCP_Server : MonoBehaviour
 
         synchronizationContext = SynchronizationContext.Current;
         serverActive = !serverActive;
+
+        //go to hub
+        SceneManager.LoadScene("BHub");
 
         if (serverActive)
         {
@@ -148,13 +169,13 @@ public class Br_TCP_Server : MonoBehaviour
                 if (serverActive)
                 {
                     //post function to be executed in main thread
-                    synchronizationContext.Post(_ => InvokeCreateMessage(receivedData), null);
+                    synchronizationContext.Post(_ => HandleReceivedData(receivedData), null);
 
                     print("TCP: Message Received");
 
 
                     //send client a response
-                    string response = "Welcome to " + serverName.text;
+                    string response = "Welcome to " + roomName;
                     print("TCP: Sending response: " + response);
 
                     byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
@@ -199,14 +220,33 @@ public class Br_TCP_Server : MonoBehaviour
         serverActive = false;
     }
 
+
     //Executed in main thread
+
+    //Multiuse that acts when data is received
+    void HandleReceivedData(byte[] msg)
+    {
+
+        InvokeCreateMessage(msg);
+    }
+
+    //Spawn floating text action
     void InvokeCreateMessage(byte[] msg)
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateMessage.Invoke(message);
+        Br_IServer.OnCreateMessage?.Invoke(message);
+    }
+    
 
+    public void SetRoomName(string roomName)
+    {
+        this.roomName = roomName;
     }
 
+    public string GetRoomName()
+    {
+        return roomName;
+    }
 
 }

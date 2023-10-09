@@ -5,25 +5,47 @@ using System.Net;
 using System;
 using System.Net.Sockets;
 using System.Threading;
-using TMPro;
+using UnityEngine.SceneManagement;
 public class Br_UDP_Server : MonoBehaviour
 {
 
     private SynchronizationContext synchronizationContext;
 
-    [SerializeField]
-    TextMeshProUGUI serverName;
-
     public int port = 5000;
-    string serverIpAddress = " 192.168.104.17";
-    bool createRoomRequested = false;
     Socket newSocket;
+
     [SerializeField]
     float waitTimeLimit;
+
     [SerializeField]
     float timer;
+
     Thread listenClients;
     bool serverActive = false;
+
+    string roomName = "";
+
+    private static Br_UDP_Server udpServerInstance;
+    private void Awake()
+    {
+        // Check if an instance already exists
+        if (udpServerInstance != null && udpServerInstance != this)
+        {
+            // If an instance already exists, destroy this duplicate GameObject
+            Destroy(gameObject);
+            return;
+        }
+
+        // Set this instance as the singleton
+        udpServerInstance = this;
+
+        // Don't destroy this GameObject when loading new scenes
+        DontDestroyOnLoad(gameObject);
+
+        Application.runInBackground = true;
+        DontDestroyOnLoad(transform.gameObject);
+        Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -31,10 +53,7 @@ public class Br_UDP_Server : MonoBehaviour
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-    private void Awake()
-    {
-        Application.runInBackground = true;
-    }
+    
 
     private void Update()
     {
@@ -58,13 +77,14 @@ public class Br_UDP_Server : MonoBehaviour
     {
         if (!enabled) return;
         timer = waitTimeLimit;
-        createRoomRequested = true;
 
 
         print("UDP: Starting to listen for clients...");
 
         synchronizationContext = SynchronizationContext.Current;
         serverActive = !serverActive;
+
+        SceneManager.LoadScene("BHub");
 
         if (serverActive)
         {
@@ -88,12 +108,7 @@ public class Br_UDP_Server : MonoBehaviour
         IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, port);
         newSocket.Bind(endPoint);
 
-        //newSocket.Listen(10); --> for tcp
         print("UDP: Waiting to receive datagrams from client...");
-
-        //var client = newSocket.Accept(); //blocks the thread until a client connects to the socket // for tcp
-        //EndPoint senderRemote = client.RemoteEndPoint; //Retrieves the endpoint info (IP address and port of the client)
-        //newSocket.Bind(senderRemote); unnecessary
 
         while (serverActive)
         {
@@ -106,7 +121,7 @@ public class Br_UDP_Server : MonoBehaviour
                 //this blocks the program until receiving an answer from a client
                 newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
 
-                string response = "Welcome to " + serverName.text;
+                string response = "Welcome to " + roomName;
                 print("TCP: Sending response: " + response);
 
                 byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
@@ -115,7 +130,7 @@ public class Br_UDP_Server : MonoBehaviour
                 if (serverActive)
                 {
                     //post function to be executed in main thread
-                    synchronizationContext.Post(_ => InvokeCreateMessage(msg), null);
+                    synchronizationContext.Post(_ => HandleReceivedData(msg), null);
                 }
 
                
@@ -153,12 +168,31 @@ public class Br_UDP_Server : MonoBehaviour
     }
 
     //Executed in main thread
+
+    //Multiuse that acts when data is received
+    void HandleReceivedData(byte[] msg)
+    {
+
+        InvokeCreateMessage(msg);
+    }
+
+    //Spawn floating text action
     void InvokeCreateMessage(byte[] msg)
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateMessage.Invoke(message);
+        Br_IServer.OnCreateMessage?.Invoke(message);
 
+    }
+
+    public void SetRoomName(string roomName)
+    {
+        this.roomName = roomName;
+    }
+
+    public string GetRoomName()
+    {
+        return roomName;
     }
 
 
