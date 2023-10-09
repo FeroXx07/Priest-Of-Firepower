@@ -47,8 +47,9 @@ namespace ServerA
         Action<int> OnClientAccepted;
         Action OnClientRemoved;
         Action<string> OnDataRecieved;
-        
 
+        //handeles connection with clients
+        Socket server;
          class ClientData
         {
             public int ID;
@@ -81,13 +82,12 @@ namespace ServerA
         private void Start()
         {
             clientManager = new ClientManager();
-        
+            //start server
+            StartConnectionListenerTPC();
         }
         private void OnEnable()
         {
-            connectionCancellationTokenSource = new CancellationTokenSource();
-            listenerThread = new Thread(() => ListenerTCP(connectionCancellationTokenSource.Token));
-            listenerThread.Start();
+
         }
 
         private void OnDisable()
@@ -96,6 +96,12 @@ namespace ServerA
             StopListening();
 
             DisconnectAllClients();
+
+            if(server.Connected)
+            {
+                server.Shutdown(SocketShutdown.Both);
+            }
+            server.Close();
         }
 
         private void Update()
@@ -103,14 +109,13 @@ namespace ServerA
             RemoveDisconectedClient();
         }
 
-
-        void ListenerTCP(CancellationToken cancellationToken)
+        void StartConnectionListenerTPC()
         {
             try
             {
                 Debug.Log("Starting server ...");
                 //create listener tcp
-                Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
                 //create end point
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
@@ -119,26 +124,40 @@ namespace ServerA
                 //also the public ip. TOconnect from the client use any of the ips
                 endPoint = new IPEndPoint(IPAddress.Any, 12345);
                 //bind to ip and port to listen to
-                listener.Bind(endPoint);
+                server.Bind(endPoint);
                 // Using Listen() method we create 
                 // the Client list that will want
                 // to connect to Server
-                listener.Listen(4);
+                server.Listen(4);
+                
+                connectionCancellationTokenSource = new CancellationTokenSource();
+                listenerThread = new Thread(() => ConnectionListenerTCP(connectionCancellationTokenSource.Token));
+                listenerThread.Start();
+              
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
 
-                Debug.Log("Server listening ...");
-
-                while (true)
+        void ConnectionListenerTCP(CancellationToken cancellationToken)
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
                 {
                     Console.WriteLine("Waiting connection ... ");
 
-                    Socket clientSocket = listener.Accept();
-                    IPEndPoint endPoint = (IPEndPoint)clientSocket.LocalEndPoint;
-                    int localPort = endPoint.Port;
-                    Debug.Log("Connection accepted -> " + localPort);
+                    Socket clientSocket = server.Accept();
 
-                    int clientID = CreateClient(clientSocket);
+
                     //add this accepted client into the client list
+                    int clientID = CreateClient(clientSocket);
+                    
+                    //call any related action to this event
                     OnClientAccepted?.Invoke(clientID);
+
                     // Add some delay to avoid busy-waiting
                     Thread.Sleep(100);
                 }
@@ -159,8 +178,7 @@ namespace ServerA
                 try
                 {
                     byte[] buffer = new byte[1024];
-                
-
+                    
                     // Receive data from the client
                     int bufferSize = clientSocket.Receive(buffer);
                     data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
@@ -207,6 +225,10 @@ namespace ServerA
             {
                 ClientData clientData = new ClientData();
 
+
+                clientSocket.ReceiveTimeout = 100;
+                clientSocket.SendTimeout = 100;
+
                 clientData.socket = clientSocket;
 
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
@@ -251,6 +273,7 @@ namespace ServerA
                 Debug.Log("Client " + clientData.ID + " disconnected.");
             }            
         }
+
         void BroadcastMessage(string message, int senderID)
         {
             List<ClientData> clients = new List<ClientData>();
@@ -312,6 +335,14 @@ namespace ServerA
             {
                 t.Abort();
             }
+            // Print status message.
+            Debug.Log("Server: Waiting for all threads to terminate.");
+
+            // Wait for all client threads to really terminate.
+            foreach (Thread t in clientThreads)
+            {
+                t.Join();
+            }
         }
         void HandleClient(Socket clientSocket, CancellationToken cancellationToken)
         {
@@ -362,6 +393,15 @@ namespace ServerA
         }
 
 #region Async
+
+
+        private async Task Heartbeat()
+        {
+            //foreach (ClientData client in clientList)
+            //{
+            //    client.socket.SendAsync();
+            //}
+        }
         async Task ListenerTCPAsync(CancellationToken cancellationToken)
         {
             try
