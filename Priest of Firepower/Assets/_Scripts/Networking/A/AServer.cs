@@ -33,19 +33,20 @@ namespace ServerA
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
         private CancellationTokenSource connectionCancellationTokenSource;
-        private CancellationTokenSource chatCancellationTokenSource;
         private Task listenerTask;
         private Thread listenerThread;
-        private Thread chatThread;
 
         ClientManager clientManager;
 
-        //List<ClientData> clientList = new List<ClientData>();
-        private ConcurrentBag<ClientData> clientList = new ConcurrentBag<ClientData>();
+        private List<Thread> clientThreads = new List<Thread>();
+        private List<ClientData> clientList = new List<ClientData>();
+        private List<ClientData> clientListToRemove = new List<ClientData>();
+        //private ConcurrentBag<ClientData> clientList = new ConcurrentBag<ClientData>();
 
         //actions
-        Action<Socket> OnClientAccepted;
+        Action<int> OnClientAccepted;
         Action OnClientRemoved;
+        Action<string> OnDataRecieved;
         
 
          class ClientData
@@ -84,29 +85,25 @@ namespace ServerA
         }
         private void OnEnable()
         {
-
-            OnClientAccepted += CreateClient;
-
             connectionCancellationTokenSource = new CancellationTokenSource();
             listenerThread = new Thread(() => ListenerTCP(connectionCancellationTokenSource.Token));
             listenerThread.Start();
-
-            chatCancellationTokenSource = new CancellationTokenSource();
-            chatThread = new Thread(() => HandleChat(chatCancellationTokenSource.Token));
-            chatThread.Start();
         }
 
         private void OnDisable()
         {
           
             StopListening();
-            StopChat();
-            foreach(ClientData client in clientList)
-            {
-                RemoveClient(client);
-            }
-            OnClientAccepted -= CreateClient;
+
+            DisconnectAllClients();
         }
+
+        private void Update()
+        {
+            RemoveDisconectedClient();
+        }
+
+
         void ListenerTCP(CancellationToken cancellationToken)
         {
             try
@@ -130,7 +127,7 @@ namespace ServerA
 
                 Debug.Log("Server listening ...");
 
-                while (!cancellationToken.IsCancellationRequested)
+                while (true)
                 {
                     Console.WriteLine("Waiting connection ... ");
 
@@ -139,8 +136,9 @@ namespace ServerA
                     int localPort = endPoint.Port;
                     Debug.Log("Connection accepted -> " + localPort);
 
+                    int clientID = CreateClient(clientSocket);
                     //add this accepted client into the client list
-                    OnClientAccepted?.Invoke(clientSocket);
+                    OnClientAccepted?.Invoke(clientID);
                     // Add some delay to avoid busy-waiting
                     Thread.Sleep(100);
                 }
@@ -150,95 +148,95 @@ namespace ServerA
                 Debug.LogException(e);
             }
         }
-        void HandleChat(CancellationToken cancellationToken)
+        void HandleChat(ClientData clientData)
         {
-            Debug.Log("Starting chat thread ...");
-
-            while (!cancellationToken.IsCancellationRequested)
+            Debug.Log("Starting chat thread " +clientData.ID + " ...");
+            
+            while (!clientData.cancellationTokenSource.IsCancellationRequested)
             {
-                Debug.Log(clientList.Count);
-                // Check for incoming messages from all clients
-                foreach (ClientData clientData in clientList)
+                Socket clientSocket = clientData.socket;
+                string data = null;
+                try
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break; // Exit if cancellation is requested
-                    }
+                    byte[] buffer = new byte[1024];
+                
 
-                    Socket clientSocket = clientData.socket;
-              
-                    try
+                    // Receive data from the client
+                    int bufferSize = clientSocket.Receive(buffer);
+                    data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
+                
+                    if (!string.IsNullOrEmpty(data))
                     {
-                        byte[] buffer = new byte[1024];
-                        string data = null;
-
-                        // Receive data from the client
-                        int bufferSize = clientSocket.Receive(buffer);
-                        data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                        
-                        if (!string.IsNullOrEmpty(data))
-                        {
-                            Debug.Log("message recived: "+ data);
-                            // Process the received message (e.g., broadcast to all clients)
-                            BroadcastMessage(data, clientData.ID);
-                        }
+                        Debug.Log("message recived: "+ data);
+                        // Process the received message (e.g., broadcast to all clients)
+                        BroadcastMessage(data, clientData.ID);
                     }
-                    catch (SocketException se)
-                    {
-                        if (se.SocketErrorCode == SocketError.ConnectionReset ||
-                            se.SocketErrorCode == SocketError.ConnectionAborted)
-                        {
-                            // Handle client disconnection (optional)
-                            Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
-                            RemoveClient(clientData);
-                        }
-                        else
-                        {
-                            // Handle other socket exceptions
-                            Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        // Handle other exceptions
-                        Debug.LogError($"Exception: {e.Message}");
-                    }
+                   
                 }
+                catch (SocketException se)
+                {
+                    if (se.SocketErrorCode == SocketError.ConnectionReset ||
+                        se.SocketErrorCode == SocketError.ConnectionAborted)
+                    {
+                        // Handle client disconnection (optional)
+                        Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
+                        RemoveClient(clientData);
+                    }
+                    else
+                    {
+                        // Handle other socket exceptions
+                        Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                    }
+                    continue;
+                }
+                catch (Exception e)
+                {
+                    // Handle other exceptions
+                    Debug.LogError($"Exception: {e.Message}");
 
+                    continue;
+                }
                 // Add some delay to avoid busy-waiting
                 Thread.Sleep(100);
             }
         }
          
-        void CreateClient(Socket clientSocket)
+        int CreateClient(Socket clientSocket)
         {
-            ClientData clientData = new ClientData();
+            lock(clientList)
+            {
+                ClientData clientData = new ClientData();
 
-            clientData.socket = clientSocket;
+                clientData.socket = clientSocket;
 
-            IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
-            clientData.metaData.IP = clientEndPoint.Address;
-            clientData.metaData.port = clientEndPoint.Port;
+                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
+                clientData.metaData.IP = clientEndPoint.Address;
+                clientData.metaData.port = clientEndPoint.Port;
+                clientData.cancellationTokenSource = new CancellationTokenSource();  
+                clientData.ID = clientManager.GetNextClientId();
 
-            clientData.ID = clientManager.GetNextClientId();
+                clientList.Add(clientData);
 
-            clientList.Add(clientData);
+                Debug.Log("Connected client Id: " + clientData.ID);
 
-            Debug.Log("Connected client count: " + clientList.Count );
 
-            //clientData.cancellationTokenSource = new CancellationTokenSource();
-            //Thread clientHandeler = new Thread(() => HandleClient(clientSocket, clientData.cancellationTokenSource.Token));
-            //clientHandeler.Start();
+                //Create the handeler of the caht for that client
+                Thread t = new Thread(() => HandleChat(clientData));
+
+                t.IsBackground = true;
+                t.Name = clientData.ID.ToString();
+                t.Start();
+
+                clientThreads.Add(t);
+
+                return clientData.ID;
+            }
         }
         void RemoveClient(ClientData clientData)
         {
-            // Remove the client from the list of connected clients
-            //clientList.Remove(clientData);
-
-            if( clientList.TryTake(out clientData))
+            // Remove the client from the list of connected clients    
+            lock (clientList)
             {
-                Debug.Log("Client " + clientData.ID + " disconnected.");
-
                 // Cancel the client's cancellation token source
                 clientData.cancellationTokenSource.Cancel();
 
@@ -248,16 +246,19 @@ namespace ServerA
                     clientData.socket.Shutdown(SocketShutdown.Both);
                 }
                 clientData.socket.Close();
-            }
-            else
-            {
-                Debug.LogError("Couldn't remove client :" + clientData.ID);
-            }
+                clientListToRemove.Add(clientData);
 
+                Debug.Log("Client " + clientData.ID + " disconnected.");
+            }            
         }
         void BroadcastMessage(string message, int senderID)
         {
-            foreach (ClientData clientData in clientList)
+            List<ClientData> clients = new List<ClientData>();
+            lock (clientList)
+            {
+                clients = new List<ClientData>(clientList);
+            }
+            foreach (ClientData clientData in clients)
             {
                 try
                 {
@@ -287,29 +288,29 @@ namespace ServerA
                     Debug.LogError($"Error broadcasting message: {e.Message}");
                 }
             }
+            
         }
         void StopListening()
         {
             if (listenerThread != null && listenerThread.IsAlive)
             {
-                // Signal the thread to exit gracefully
+                // Signal the thread to exit 
                 connectionCancellationTokenSource.Cancel();
-
-                // Wait for the thread to finish before proceeding (optional)
-                listenerThread.Join();
+                listenerThread.Abort();
             }
         }
-
-        void StopChat()
+        void DisconnectAllClients()
         {
-
-            if (chatThread != null && chatThread.IsAlive)
+            foreach (ClientData client in clientList) 
             {
-                // Signal the thread to exit gracefully
-                chatCancellationTokenSource.Cancel();
-
-                // Wait for the thread to finish before proceeding (optional)
-                chatThread.Join();
+                RemoveClient(client);
+            }
+        }
+        void StopAllClientThreads()
+        {
+            foreach(Thread t in clientThreads)
+            {
+                t.Abort();
             }
         }
         void HandleClient(Socket clientSocket, CancellationToken cancellationToken)
@@ -343,6 +344,23 @@ namespace ServerA
                 Debug.LogError(e);
             }
         }
+
+        void RemoveDisconectedClient()
+        {
+            if (clientListToRemove.Count > 0)
+            {
+                lock (clientList)
+                {
+                    foreach (ClientData clientToRemove in clientListToRemove)
+                    {
+                        clientList.Remove(clientToRemove);
+                    }
+                }
+                Debug.Log("removed " + clientListToRemove.Count + " clients");
+                clientListToRemove.Clear(); 
+            }
+        }
+
 #region Async
         async Task ListenerTCPAsync(CancellationToken cancellationToken)
         {
@@ -376,8 +394,9 @@ namespace ServerA
                     int localPort = endPoint.Port;
                     Debug.Log("Connection accepted -> " + localPort);
 
+                    int clientID = CreateClient(clientSocket);
                     //add this accepted client into the client list
-                    OnClientAccepted?.Invoke(clientSocket);
+                    OnClientAccepted?.Invoke(clientID);
                     // Add some delay to avoid busy-waiting
                     Thread.Sleep(100);
                 }

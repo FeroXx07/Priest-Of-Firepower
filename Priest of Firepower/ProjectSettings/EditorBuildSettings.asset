@@ -5,16 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/Nettest/A/AServer.unity
     guid: d97de94020d03d446814ff8c184b43c6
   - enabled: 0
     path: Assets/Scenes/Nettest/A/AClient.unity
     guid: 282b1a17863e81c46b808ee40087d5b4
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Nettest/Brandon/BServer.unity
     guid: 17b918ee6cadc42458d93fd00dd4f6ca
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Nettest/Brandon/BHub.unity
     guid: d8a9186c76b324b4d9f4d631c50aa1f9
   m_configObjects: {}
