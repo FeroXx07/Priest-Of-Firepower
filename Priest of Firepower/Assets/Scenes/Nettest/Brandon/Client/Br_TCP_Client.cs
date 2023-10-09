@@ -5,15 +5,12 @@ using System.Net.Sockets;
 using System.Net;
 using System.Threading;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class Br_TCP_Client : MonoBehaviour
 {
     private SynchronizationContext synchronizationContext;
 
-    [SerializeField]
-    TextMeshProUGUI inputFieldText;
-    [SerializeField]
-    TextMeshProUGUI inputFieldMessage;
     public int serverPort;
 
 
@@ -23,21 +20,42 @@ public class Br_TCP_Client : MonoBehaviour
     float timer;
 
 
-    Thread connectToServer;
+    Thread connectToServerThread;
     Socket newSocket;
 
     Thread responseThread;
-    // Start is called before the first frame update
+
+    string username;
+    string serverIp;
+    private static Br_TCP_Client tcpClientInstance;
+
+
+    private void Awake()
+    {
+        // Check if an instance already exists
+        if (tcpClientInstance != null && tcpClientInstance != this)
+        {
+            // If an instance already exists, destroy this duplicate GameObject
+            Destroy(gameObject);
+            return;
+        }
+
+        // Set this instance as the singleton
+        tcpClientInstance = this;
+
+        // Don't destroy this GameObject when loading new scenes
+        DontDestroyOnLoad(gameObject);
+        Application.runInBackground = true;
+        Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
+        Br_IServer.OnCreateResponse += SendMessageToServer;
+    }
+
     void Start()
     {
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-    private void Awake()
-    {
-        Application.runInBackground = true;
-        DontDestroyOnLoad(transform.gameObject);
-    }
+   
     // Update is called once per frame
     void Update()
     {
@@ -48,26 +66,29 @@ public class Br_TCP_Client : MonoBehaviour
         }
         else
         {
-            if (connectToServer != null && connectToServer.IsAlive)
+            if (connectToServerThread != null && connectToServerThread.IsAlive)
             {
                 AbortConnectToServer();
             }
         }
     }
 
-    public void ConnectToServer()
+    public void JoinRoom()
     {
         if (!enabled) return;
 
         try
         {
-            print("TCP: conectig to ip: " + inputFieldText.text);
-            string serverIp = inputFieldText.text.Remove(inputFieldText.text.Length - 1);
+            print("TCP: conectig to ip: " + this.serverIp);
+            string serverIp = this.serverIp.Remove(this.serverIp.Length - 1);
 
             //Create and bind socket so that nobody can use it until unbinding
             newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-            byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(inputFieldMessage.text);
+            string message = username + " joined.";
+
+
+            byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
 
             IPAddress ipAddress;
             if (!IPAddress.TryParse(serverIp, out ipAddress))
@@ -81,6 +102,8 @@ public class Br_TCP_Client : MonoBehaviour
             IPEndPoint serverEp = new IPEndPoint(ipAddress, serverPort);
             newSocket.Connect(serverEp);
             print("TCP: Connected to server at: " + serverEp);
+            
+            SceneManager.LoadScene("BHub");
 
             newSocket.Send(messageBytes);
 
@@ -100,14 +123,14 @@ public class Br_TCP_Client : MonoBehaviour
     void AbortConnectToServer()
     {
         print("TCP: Waiting has exceeded time limit. Aborting...");
-        if (connectToServer != null)
-            connectToServer.Abort();
+        if (connectToServerThread != null)
+            connectToServerThread.Abort();
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
     }
     private void OnDisable()
     {
-        if (connectToServer != null)
-            connectToServer.Abort();
+        if (connectToServerThread != null)
+            connectToServerThread.Abort();
 
         if (responseThread != null)
             responseThread.Abort();
@@ -121,9 +144,10 @@ public class Br_TCP_Client : MonoBehaviour
         int responseByteCount = newSocket.Receive(response);
         if (responseByteCount > 0)
         {
-            synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
+            
+            //synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
         }
-        newSocket.Close();
+        //newSocket.Close();
     }
 
 
@@ -134,5 +158,27 @@ public class Br_TCP_Client : MonoBehaviour
         string message = System.Text.Encoding.UTF8.GetString(msg);
         Br_IServer.OnCreateResponse?.Invoke(message);
 
+    }
+
+    void SendMessageToServer(string message)
+    {
+        byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
+        newSocket.Send(messageBytes);
+
+    }
+
+    public void SetUsername(string username)
+    {
+        this.username = username;
+    }
+
+    public void SetServerIp(string ip)
+    {
+        this.serverIp = ip;
+    }
+
+    public string GetUsername()
+    {
+        return username;
     }
 }

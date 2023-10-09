@@ -43,7 +43,6 @@ public class Br_UDP_Server : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         Application.runInBackground = true;
-        DontDestroyOnLoad(transform.gameObject);
         Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
     }
 

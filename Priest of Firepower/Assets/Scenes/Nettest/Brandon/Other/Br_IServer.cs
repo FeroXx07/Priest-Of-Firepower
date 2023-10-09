@@ -20,6 +20,6 @@ public interface Br_ICreateRoomUI
 
 public interface Br_IJoinRoomUI
 {
-    public static Action<string> OnJoinRoom;
-    public static Action<string> OnLeaveRoom;
+    public static Action OnJoinRoom;
+    public static Action OnLeaveRoom;
 }

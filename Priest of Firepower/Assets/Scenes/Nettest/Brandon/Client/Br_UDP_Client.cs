@@ -5,15 +5,12 @@ using System.Net.Sockets;
 using System.Net;
 using System.Threading;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class Br_UDP_Client : MonoBehaviour
 {
     private SynchronizationContext synchronizationContext;
 
-    [SerializeField]
-    TextMeshProUGUI inputFieldText;
-    [SerializeField]
-    TextMeshProUGUI inputFieldMessage;
     public int serverPort;
 
 
@@ -23,21 +20,39 @@ public class Br_UDP_Client : MonoBehaviour
     float timer;
 
 
-    Thread connectToServer;
+    Thread connectToServerThread;
     Thread recieveResponseThread;
     Socket newSocket;
     EndPoint serverEndpoint;
-    // Start is called before the first frame update
+
+    private static Br_UDP_Client udpClientInstance;
+    string username;
+    string serverIp;
+    private void Awake()
+    {
+        // Check if an instance already exists
+        if (udpClientInstance != null && udpClientInstance != this)
+        {
+            // If an instance already exists, destroy this duplicate GameObject
+            Destroy(gameObject);
+            return;
+        }
+
+        // Set this instance as the singleton
+        udpClientInstance = this;
+
+        // Don't destroy this GameObject when loading new scenes
+        DontDestroyOnLoad(gameObject);
+        Application.runInBackground = true;
+        Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
+    }
+
     void Start()
     {
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-    private void Awake()
-    {
-        Application.runInBackground = true;
-        DontDestroyOnLoad(transform.gameObject);
-    }
+   
     // Update is called once per frame
     void Update()
     {
@@ -48,27 +63,27 @@ public class Br_UDP_Client : MonoBehaviour
         }
         else
         {
-            if (connectToServer != null && connectToServer.IsAlive)
+            if (connectToServerThread != null && connectToServerThread.IsAlive)
             {
                 AbortConnectToServer();
             }
         }
     }
 
-    public void ConnectToServer()
+    public void JoinRoom()
     {
         if (!enabled) return;
         try
         {
-            print("UDP: conectig to ip: " + inputFieldText.text);
-            string serverIp = inputFieldText.text.Remove(inputFieldText.text.Length - 1);
+            print("UDP: conectig to ip: " + this.serverIp);
+            string serverIp = this.serverIp.Remove(this.serverIp.Length - 1);
 
             //Create and bind socket so that nobody can use it until unbinding
             newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
 
-
-            byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(inputFieldMessage.text);
+            string message = username + " joined.";
+            byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
 
             IPAddress ipAddress;
             if (!IPAddress.TryParse(serverIp, out ipAddress))
@@ -80,6 +95,9 @@ public class Br_UDP_Client : MonoBehaviour
             print("UDP: ipAddress: " + ipAddress);
 
             serverEndpoint = new IPEndPoint(ipAddress, serverPort);
+
+            SceneManager.LoadScene("BHub");
+
 
             newSocket.SendTo(messageBytes, serverEndpoint);
 
@@ -119,17 +137,31 @@ public class Br_UDP_Client : MonoBehaviour
     void AbortConnectToServer()
     {
         print("UDP: Waiting has exceeded time limit. Aborting...");
-        if (connectToServer != null)
-            connectToServer.Abort();
+        if (connectToServerThread != null)
+            connectToServerThread.Abort();
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
     }
     private void OnDisable()
     {
-        if (connectToServer != null)
-            connectToServer.Abort();
+        if (connectToServerThread != null)
+            connectToServerThread.Abort();
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
     }
 
     //todo: quitar unused connectToServer thread;
+
+    public void SetUsername(string username)
+    {
+        this.username = username;
+    }
+    public void SetServerIp(string ip)
+    {
+        this.serverIp = ip;
+    }
+
+    public string GetUsername()
+    {
+        return username;
+    }
 
 }
