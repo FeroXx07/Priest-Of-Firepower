@@ -12,6 +12,8 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
     EnemyData enemyData;
 
+    Collider2D collider;
+
     float timeRemaining = 3f;
 
     enum meleeEnemyState
@@ -33,6 +35,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = false;
         agent.updateUpAxis = false;
+        collider = gameObject.GetComponent<Collider2D>();
     }
 
     // Update is called once per frame
@@ -80,6 +83,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 
                 agent.isStopped = true;
                 // Play death animation, sound and particles, destroy enemy object
+                collider.enabled = false;
                 
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
