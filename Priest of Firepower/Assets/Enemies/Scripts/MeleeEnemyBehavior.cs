@@ -12,6 +12,8 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
     EnemyData enemyData;
 
+    float timeRemaining = 3f;
+
     enum meleeEnemyState
     {
        SPAWN,
@@ -75,9 +77,15 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 break;
 
             case meleeEnemyState.DIE:
-
+                
                 agent.isStopped = true;
                 // Play death animation, sound and particles, destroy enemy object
+                
+                timeRemaining -= Time.deltaTime;
+                if (timeRemaining <= 0)
+                {
+                    DestroyObject(gameObject);
+                }
                 break;
 
             default:
