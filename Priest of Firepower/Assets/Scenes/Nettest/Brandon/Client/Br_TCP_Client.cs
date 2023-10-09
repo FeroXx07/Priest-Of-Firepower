@@ -47,7 +47,7 @@ public class Br_TCP_Client : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
         Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
-        Br_IServer.OnCreateResponse += SendMessageToServer;
+        Br_IServer.OnSendMessageToServer += SendMessageToServer;
     }
 
     void Start()
@@ -156,7 +156,7 @@ public class Br_TCP_Client : MonoBehaviour
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateResponse?.Invoke(message);
+        Br_IServer.OnSendMessageToServer?.Invoke(message);
 
     }
 

@@ -28,6 +28,7 @@ public class Br_UDP_Client : MonoBehaviour
     private static Br_UDP_Client udpClientInstance;
     string username;
     string serverIp;
+    bool connectedToServer = false;
     private void Awake()
     {
         // Check if an instance already exists
@@ -45,6 +46,8 @@ public class Br_UDP_Client : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
         Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
+        Br_IServer.OnSendMessageToServer += SendMessageToServer;
+        Br_IServer.OnReceiveMessageFromServer += ReceiveMessageFromServer;
     }
 
     void Start()
@@ -102,7 +105,7 @@ public class Br_UDP_Client : MonoBehaviour
             newSocket.SendTo(messageBytes, serverEndpoint);
 
             synchronizationContext = SynchronizationContext.Current;
-            recieveResponseThread = new Thread(HandleServerResponse);
+            recieveResponseThread = new Thread(HandleConnectionToServer);
             recieveResponseThread.Start();
 
 
@@ -113,7 +116,22 @@ public class Br_UDP_Client : MonoBehaviour
         }
     }
 
-    void HandleServerResponse()
+    void SendMessageToServer(string message)
+    {
+        byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
+        newSocket.SendTo(messageBytes, serverEndpoint);
+
+    }
+
+    void ReceiveMessageFromServer(string message)
+    {
+        byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
+        newSocket.SendTo(messageBytes, serverEndpoint);
+
+    }
+
+
+    void HandleConnectionToServer()
     {
         byte[] response = new byte[256];
         int responseByteCount = newSocket.ReceiveFrom(response, response.Length, SocketFlags.None, ref serverEndpoint);
@@ -122,15 +140,26 @@ public class Br_UDP_Client : MonoBehaviour
             synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
             string message = System.Text.Encoding.UTF8.GetString(response);
             print(message);
+            connectedToServer = true;
+            KeepListeningToServer();
+        }
+    }
+
+    void KeepListeningToServer()
+    {
+        if (connectedToServer)
+        {
+            KeepListeningToServer();
         }
         newSocket.Close();
     }
+
 
     void InvokeCreateResponse(byte[] msg)
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateResponse?.Invoke(message);
+        Br_IServer.OnSendMessageToServer?.Invoke(message);
 
     }
 

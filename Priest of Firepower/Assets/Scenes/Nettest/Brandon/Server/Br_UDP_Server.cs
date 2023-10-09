@@ -44,6 +44,8 @@ public class Br_UDP_Server : MonoBehaviour
 
         Application.runInBackground = true;
         Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
+        Br_IServer.OnReceiveMessageFromClient += ReceiveMessageFromClient;
+        Br_IServer.OnSendMessageToClient += SendMessageToClient;
     }
 
     // Start is called before the first frame update
@@ -180,7 +182,17 @@ public class Br_UDP_Server : MonoBehaviour
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateMessage?.Invoke(message);
+        Br_IServer.OnSendMessageToClient?.Invoke(message);
+
+    }
+
+    void ReceiveMessageFromClient(string message)
+    {
+
+    }
+
+    void SendMessageToClient(string message)
+    {
 
     }
 

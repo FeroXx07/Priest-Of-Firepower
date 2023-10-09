@@ -14,11 +14,11 @@ public class Br_Hub_Chat : MonoBehaviour
     GameObject client;
     private void OnEnable()
     {
-        GameObject server = GameObject.Find("server");
-        GameObject client = GameObject.Find("client");
+        server = GameObject.Find("server");
+        client = GameObject.Find("client");
 
-        if (client != null) Br_IServer.OnCreateMessage += ReceiveMessage;
-        if (server != null) Br_IServer.OnCreateResponse += SendMessageToServer;
+        if (client != null) Br_IServer.OnSendMessageToClient += ReceiveMessage;
+        if (server != null) Br_IServer.OnSendMessageToServer += SendMessageToServer;
     }
 
     public void SendChatMessage()
@@ -26,7 +26,8 @@ public class Br_Hub_Chat : MonoBehaviour
         if (inputFieldText.text != "")
         {
             GameObject chatMessage = Instantiate(chatMessagePrefab);
-            chatMessage.GetComponent<TextMeshProUGUI>().text = "Server: " + inputFieldText.text;
+           if (server != null) chatMessage.GetComponent<TextMeshProUGUI>().text = "Server: " + inputFieldText.text;
+           if (client != null) chatMessage.GetComponent<TextMeshProUGUI>().text = inputFieldText.text;
 
 
             chatMessage.transform.parent = chatMessageContent.transform;
@@ -49,12 +50,12 @@ public class Br_Hub_Chat : MonoBehaviour
 
     void SendMessageToServer(string message)
     {
-        Br_IServer.OnCreateResponse?.Invoke(message);
+        Br_IServer.OnSendMessageToServer?.Invoke(message);
     }
 
     void SendMessageToClient(string message)
     {
-        Br_IServer.OnCreateMessage?.Invoke(message);
+        Br_IServer.OnSendMessageToClient?.Invoke(message);
     }
 
 }

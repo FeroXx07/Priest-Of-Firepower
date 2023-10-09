@@ -16,8 +16,8 @@ public class TextSpawner : MonoBehaviour
 
     private void OnEnable()
     {
-        Br_IServer.OnCreateMessage += CreateMessage;
-        Br_IServer.OnCreateResponse += CreateResponse;
+        Br_IServer.OnSendMessageToClient += CreateMessage;
+        Br_IServer.OnSendMessageToServer += CreateResponse;
 
 
     }

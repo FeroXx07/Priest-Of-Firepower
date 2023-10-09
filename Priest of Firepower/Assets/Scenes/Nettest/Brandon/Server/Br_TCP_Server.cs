@@ -234,7 +234,7 @@ public class Br_TCP_Server : MonoBehaviour
     {
         //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnCreateMessage?.Invoke(message);
+        Br_IServer.OnSendMessageToClient?.Invoke(message);
     }
     
 
