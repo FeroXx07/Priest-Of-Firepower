@@ -125,7 +125,7 @@ namespace ServerA
                 endPoint = new IPEndPoint(IPAddress.Any, 12345);
                 //bind to ip and port to listen to
                 server.Bind(endPoint);
-                // Using Listen() method we create 
+                // Using ListenForConnections() method we create 
                 // the Client list that will want
                 // to connect to Server
                 server.Listen(4);
@@ -418,7 +418,7 @@ namespace ServerA
                 endPoint = new IPEndPoint(IPAddress.Any, 12345);
                 //bind to ip and port to listen to
                 listener.Bind(endPoint);
-                // Using Listen() method we create 
+                // Using ListenForConnections() method we create 
                 // the Client list that will want
                 // to connect to Server
                 listener.Listen(4);
