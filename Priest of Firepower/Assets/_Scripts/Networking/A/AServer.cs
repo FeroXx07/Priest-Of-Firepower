@@ -10,8 +10,6 @@ using System.Collections.Concurrent;
 
 namespace ServerA
 {
-
-
     public class ClientManager
     {
         private int nextClientId = 0;
@@ -32,7 +30,7 @@ namespace ServerA
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
-        private CancellationTokenSource connectionCancellationTokenSource;
+        private CancellationTokenSource listenerToken;
         private Task listenerTask;
         private Thread listenerThread;
 
@@ -49,14 +47,22 @@ namespace ServerA
         Action<string> OnDataRecieved;
 
         //handeles connection with clients
-        Socket server;
-         class ClientData
+        Socket serverTCP;
+        Socket serverUDP;
+        class ClientData
         {
             public int ID;
             public ClientMetadata metaData;
             public ClientSate state;
-            public Socket socket;
-            public CancellationTokenSource cancellationTokenSource;
+            public Socket connectionTCP;
+            public Socket connectionUDP;
+            public CancellationTokenSource authenticationToken;
+            public CancellationTokenSource gameToken;
+            public Thread gameThread;
+        }
+        class Connection
+        {
+            Socket socket;
         }
         struct ClientMetadata
         {
@@ -97,11 +103,13 @@ namespace ServerA
 
             DisconnectAllClients();
 
-            if(server.Connected)
+            StopAllClientThreads();
+
+            if (serverTCP.Connected)
             {
-                server.Shutdown(SocketShutdown.Both);
+                serverTCP.Shutdown(SocketShutdown.Both);
             }
-            server.Close();
+            serverTCP.Close();
         }
 
         private void Update()
@@ -115,7 +123,7 @@ namespace ServerA
             {
                 Debug.Log("Starting server ...");
                 //create listener tcp
-                server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                serverTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
                 //create end point
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
@@ -124,14 +132,14 @@ namespace ServerA
                 //also the public ip. TOconnect from the client use any of the ips
                 endPoint = new IPEndPoint(IPAddress.Any, 12345);
                 //bind to ip and port to listen to
-                server.Bind(endPoint);
+                serverTCP.Bind(endPoint);
                 // Using ListenForConnections() method we create 
                 // the Client list that will want
                 // to connect to Server
-                server.Listen(4);
+                serverTCP.Listen(4);
                 
-                connectionCancellationTokenSource = new CancellationTokenSource();
-                listenerThread = new Thread(() => ConnectionListenerTCP(connectionCancellationTokenSource.Token));
+                listenerToken = new CancellationTokenSource();
+                listenerThread = new Thread(() => ConnectionListenerTCP(listenerToken.Token));
                 listenerThread.Start();
               
             }
@@ -149,7 +157,7 @@ namespace ServerA
                 {
                     Console.WriteLine("Waiting connection ... ");
 
-                    Socket clientSocket = server.Accept();
+                    Socket clientSocket = serverTCP.Accept();
 
 
                     //add this accepted client into the client list
@@ -171,9 +179,9 @@ namespace ServerA
         {
             Debug.Log("Starting chat thread " +clientData.ID + " ...");
             
-            while (!clientData.cancellationTokenSource.IsCancellationRequested)
+            while (!clientData.authenticationToken.IsCancellationRequested)
             {
-                Socket clientSocket = clientData.socket;
+                Socket clientSocket = clientData.connectionTCP;
                 string data = null;
                 try
                 {
@@ -225,16 +233,15 @@ namespace ServerA
             {
                 ClientData clientData = new ClientData();
 
-
                 clientSocket.ReceiveTimeout = 100;
                 clientSocket.SendTimeout = 100;
 
-                clientData.socket = clientSocket;
+                clientData.connectionTCP = clientSocket;
 
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
                 clientData.metaData.IP = clientEndPoint.Address;
                 clientData.metaData.port = clientEndPoint.Port;
-                clientData.cancellationTokenSource = new CancellationTokenSource();  
+                clientData.authenticationToken = new CancellationTokenSource();  
                 clientData.ID = clientManager.GetNextClientId();
 
                 clientList.Add(clientData);
@@ -260,14 +267,15 @@ namespace ServerA
             lock (clientList)
             {
                 // Cancel the client's cancellation token source
-                clientData.cancellationTokenSource.Cancel();
+                clientData.authenticationToken.Cancel();
 
                 // Close the client's socket
-                if (clientData.socket.Connected)
+                if (clientData.connectionTCP.Connected)
                 {
-                    clientData.socket.Shutdown(SocketShutdown.Both);
+                    clientData.connectionTCP.Shutdown(SocketShutdown.Both);
                 }
-                clientData.socket.Close();
+                clientData.connectionTCP.Close();
+
                 clientListToRemove.Add(clientData);
 
                 Debug.Log("Client " + clientData.ID + " disconnected.");
@@ -291,7 +299,7 @@ namespace ServerA
                         continue;
                     }
 
-                    Socket clientSocket = clientData.socket;
+                    Socket clientSocket = clientData.connectionTCP;
 
                     // Send the message to other clients
                     byte[] data = Encoding.ASCII.GetBytes($"Client {senderID}: {message}");
@@ -315,11 +323,19 @@ namespace ServerA
         }
         void StopListening()
         {
-            if (listenerThread != null && listenerThread.IsAlive)
+            if (listenerThread != null)
             {
-                // Signal the thread to exit 
-                connectionCancellationTokenSource.Cancel();
-                listenerThread.Abort();
+                if (listenerThread.IsAlive)
+                {// Signal the thread to exit 
+                    listenerToken.Cancel();
+                }
+                listenerThread.Join();
+
+                //make sure it is not alive
+                if(listenerThread.IsAlive)
+                {
+                    listenerThread.Abort();
+                }
             }
         }
         void DisconnectAllClients()
@@ -331,17 +347,17 @@ namespace ServerA
         }
         void StopAllClientThreads()
         {
-            foreach(Thread t in clientThreads)
-            {
-                t.Abort();
-            }
-            // Print status message.
             Debug.Log("Server: Waiting for all threads to terminate.");
 
             // Wait for all client threads to really terminate.
             foreach (Thread t in clientThreads)
             {
                 t.Join();
+            }
+            foreach (Thread t in clientThreads)
+            {
+                if (t.IsAlive)
+                    t.Abort();
             }
         }
         void HandleClient(Socket clientSocket, CancellationToken cancellationToken)
@@ -460,7 +476,7 @@ namespace ServerA
                         break; // Exit if cancellation is requested
                     }
 
-                    Socket clientSocket = clientData.socket;
+                    Socket clientSocket = clientData.connectionTCP;
 
                     try
                     {
@@ -515,7 +531,7 @@ namespace ServerA
                         continue;
                     }
 
-                    Socket clientSocket = clientData.socket;
+                    Socket clientSocket = clientData.connectionTCP;
 
                     // Send the message to other clients
                     byte[] data = Encoding.ASCII.GetBytes($"Client {senderID}: {message}");

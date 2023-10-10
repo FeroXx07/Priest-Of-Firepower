@@ -32,7 +32,8 @@ namespace ClientA
         private CancellationTokenSource listenerToken;
         private Thread listenServerThread;
 
-        private Socket connection;
+        private Socket connectionTCP;
+        private Socket connectionUDP;
 
         public Action OnConnected;
         public Action<string> OnMessageRecived;
@@ -54,15 +55,7 @@ namespace ClientA
         }
 
         private void OnDisable()
-        {
-            if(senderThread != null && senderThread.IsAlive)
-            {
-                senderThread.Abort();
-            }
-            if (listenServerThread != null && listenServerThread.IsAlive)
-            {
-                listenServerThread.Abort();
-            }
+        { 
             Disconnect();
         }
         private void Update()
@@ -107,7 +100,7 @@ namespace ClientA
                 // Signal the thread to exit gracefully
                 token.Cancel();
                 
-                // Wait for the thread to finish before proceeding (optional)
+                // Wait for the thread to finish before proceeding
                 thread.Join();
             }
         }
@@ -115,39 +108,37 @@ namespace ClientA
         {
             try
             {
-
-                if (connection != null && connection.Connected)
+                //disconnect if there is a previous connection
+                if (connectionTCP != null && connectionTCP.Connected)
                 { 
                     Disconnect();
                     Thread.Sleep(100);
                 }
-
+                //if ip is empty exit connection attempt TODO sow popup or something to user
                 if(IPaddress == "")
                 {
                     Debug.LogError("IP is empty ...");
 
                     return;
-                }
-
-              
+                }              
 
                 Debug.Log("Creating connetion ...");
-                connection = new Socket(AddressFamily.InterNetwork, SocketType.Stream,ProtocolType.Tcp);
+                connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream,ProtocolType.Tcp);
 
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
                 IPAddress serverIP = IPAddress.Parse(IPaddress);
                 endPoint = new IPEndPoint(serverIP, serverPort);
 
-                connection.Connect(endPoint);
+                connectionTCP.Connect(endPoint);
 
-                if (!connection.Connected)
+                if (!connectionTCP.Connected)
                 {
                     Debug.LogError("Socket connection failed.");
                     return;
                 }
 
-                Debug.Log("Socket connected to -> " + connection.RemoteEndPoint.ToString());
+                Debug.Log("Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
                 
                 //add action dispatcher for main thread
                 MainThreadDispatcher.EnqueueAction(OnConnected);
@@ -165,11 +156,11 @@ namespace ClientA
         {
             try
             {
-                if (connection == null) return;
+                if (connectionTCP == null) return;
                 // Creation of message that
                 // we will send to Server
                 byte[] sendBytes = Encoding.ASCII.GetBytes(message);
-                connection.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
+                connectionTCP.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
 
             }
             catch (ArgumentNullException ane)
@@ -202,7 +193,7 @@ namespace ClientA
                   string data = null;
 
                   // Receive data from the client
-                  int bufferSize = connection.Receive(buffer);
+                  int bufferSize = connectionTCP.Receive(buffer);
                   data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
 
                   if (!string.IsNullOrEmpty(data))
@@ -246,20 +237,26 @@ namespace ClientA
         }
 
         void Disconnect()
-        { 
-            CancelThread(senderThread, sendToken);
-            CancelThread(listenServerThread,listenerToken);
-            if (connection != null)
+        {
+            if (senderThread != null && senderThread.IsAlive)
             {
-                connection.Shutdown(SocketShutdown.Both);
-                connection.Close();
+                CancelThread(senderThread, listenerToken);
+            }
+            if (listenServerThread != null && listenServerThread.IsAlive)
+            {
+                CancelThread(senderThread, sendToken);
+            }
+            if (connectionTCP != null)
+            {
+                connectionTCP.Shutdown(SocketShutdown.Both);
+                connectionTCP.Close();
             }
         }
         private async Task ConnectTCPAsync(CancellationToken cancellationToken)
         {
             try
             {
-                if (connection != null && connection.Connected)
+                if (connectionTCP != null && connectionTCP.Connected)
                 {
                     Disconnect();
                     await Task.Delay(100); // Delay after disconnecting
@@ -272,21 +269,21 @@ namespace ClientA
                 }
 
                 Debug.Log("Creating connection ...");
-                connection = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
                 IPAddress serverIP = IPAddress.Parse(IPaddress);
                 
                 endPoint = new IPEndPoint(serverIP, serverPort);
 
-                await connection.ConnectAsync(endPoint);
+                await connectionTCP.ConnectAsync(endPoint);
 
-                if (!connection.Connected)
+                if (!connectionTCP.Connected)
                 {
                     Debug.LogError("Socket connection failed.");
                     return;
                 }
 
-                Debug.Log("Socket connected to -> " + connection.RemoteEndPoint.ToString());
+                Debug.Log("Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
 
                 MainThreadDispatcher.EnqueueAction(OnConnected);
 
@@ -310,7 +307,7 @@ namespace ClientA
                     string data = null;
 
                     // Receive data from the client
-                    int bufferSize = await connection.ReceiveAsync(new ArraySegment<byte>( buffer), SocketFlags.None);
+                    int bufferSize = await connectionTCP.ReceiveAsync(new ArraySegment<byte>( buffer), SocketFlags.None);
                     data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
 
                     if (!string.IsNullOrEmpty(data))
@@ -351,16 +348,16 @@ namespace ClientA
         {
             try
             {
-                if (connection == null) return;
+                if (connectionTCP == null) return;
                 // Creation of message that
                 // we will send to Server
                 byte[] sendBytes = Encoding.ASCII.GetBytes(message);
-                connection.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
+                connectionTCP.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
 
                 byte[] dataBuffer = new byte[1024];
 
                 // get the data size and fill the databuffer
-                int bytesRecived = await connection.ReceiveAsync(new ArraySegment<byte>(dataBuffer),SocketFlags.None);
+                int bytesRecived = await connectionTCP.ReceiveAsync(new ArraySegment<byte>(dataBuffer),SocketFlags.None);
                 Debug.Log(Encoding.ASCII.GetString(dataBuffer, 0, bytesRecived));
 
             }
