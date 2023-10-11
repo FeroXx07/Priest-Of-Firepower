@@ -6,7 +6,7 @@ using UnityEngine;
 public class WeaponData : ScriptableObject
 {
     [Header("Info")]
-    public string name;
+    public string _name;
 
     [Header("Shooting")]
     public float range;

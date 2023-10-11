@@ -1,3 +1,5 @@
+
+#define AUTHENTICATION_CODE 
 using System;
 using System.Net;
 using System.Net.Sockets;
@@ -10,6 +12,7 @@ using System.Collections.Concurrent;
 
 namespace ServerA
 {
+
     public class ClientManager
     {
         private int nextClientId = 0;
@@ -22,11 +25,11 @@ namespace ServerA
         }
     }
     public class AServer : MonoBehaviour
-    {
+    { 
         AServer instance;
         AServer Instance { get { return instance; } }
         IPEndPoint endPoint;
-        [SerializeField] int port = 12345;
+        //[SerializeField] int port = 12345;
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
@@ -49,20 +52,20 @@ namespace ServerA
         //handeles connection with clients
         Socket serverTCP;
         Socket serverUDP;
+
+        //Authentication 
+        private string authenticationCode ="IM_VALID_USER_LOVE_ME";
+
         class ClientData
         {
             public int ID;
+            public string username;
             public ClientMetadata metaData;
             public ClientSate state;
             public Socket connectionTCP;
             public Socket connectionUDP;
-            public CancellationTokenSource authenticationToken;
-            public CancellationTokenSource gameToken;
+            public CancellationTokenSource authenticationToken; //if disconnection request invoke cancellation token to shutdown all related processes
             public Thread gameThread;
-        }
-        class Connection
-        {
-            Socket socket;
         }
         struct ClientMetadata
         {
@@ -89,7 +92,7 @@ namespace ServerA
         {
             clientManager = new ClientManager();
             //start server
-            StartConnectionListenerTPC();
+            StartConnectionListenerTCP();
         }
         private void OnEnable()
         {
@@ -117,7 +120,7 @@ namespace ServerA
             RemoveDisconectedClient();
         }
 
-        void StartConnectionListenerTPC()
+        void StartConnectionListenerTCP()
         {
             try
             {
@@ -139,7 +142,7 @@ namespace ServerA
                 serverTCP.Listen(4);
                 
                 listenerToken = new CancellationTokenSource();
-                listenerThread = new Thread(() => ConnectionListenerTCP(listenerToken.Token));
+                listenerThread = new Thread(() => AuthenticationTCP(listenerToken.Token));
                 listenerThread.Start();
               
             }
@@ -149,7 +152,7 @@ namespace ServerA
             }
         }
 
-        void ConnectionListenerTCP(CancellationToken cancellationToken)
+        void AuthenticationTCP(CancellationToken cancellationToken)
         {
             try
             {
@@ -159,13 +162,47 @@ namespace ServerA
 
                     Socket clientSocket = serverTCP.Accept();
 
+                    //ping client to send confirmation code
+                    byte[] msg = Encoding.ASCII.GetBytes("ok");
+                    clientSocket.Send(msg);
 
-                    //add this accepted client into the client list
-                    int clientID = CreateClient(clientSocket);
+                    //set a timeout to recive the verification code
+                    clientSocket.ReceiveTimeout = 1000;
+
+                    byte[] buffer = new byte[1024];
+                    int bufferSize = clientSocket.Receive(buffer);
+
+                    string code = Encoding.ASCII.GetString(buffer, 0, bufferSize);
+
+                    //ping client to send username
+                    byte[] confirmation = Encoding.ASCII.GetBytes("ok");
+                    clientSocket.Send(msg);
+
+                    buffer = new byte[1024];
+                    bufferSize = clientSocket.Receive(buffer); 
+
+                    string username = Encoding.ASCII.GetString(buffer, 0, bufferSize);
                     
-                    //call any related action to this event
-                    OnClientAccepted?.Invoke(clientID);
+                    //username validation
+                    bool validUsername = true;
+                    if (username.Length > 15 || username.Length == 0)
+                        validUsername = false;
 
+                    //before create add the client check if it an actual connection we want
+                    if (code == authenticationCode && validUsername)
+                    {
+                        //add this accepted client into the client list
+                        int clientID = CreateClient(clientSocket,username);
+
+                        //call any related action to this event
+                        OnClientAccepted?.Invoke(clientID);
+                    }
+                    else
+                    {
+                        //disconnect that connection as it is a non wanted connection
+                        clientSocket.Shutdown(SocketShutdown.Both);
+                        clientSocket.Close();
+                    }
                     // Add some delay to avoid busy-waiting
                     Thread.Sleep(100);
                 }
@@ -227,29 +264,33 @@ namespace ServerA
             }
         }
          
-        int CreateClient(Socket clientSocket)
+        int CreateClient(Socket clientSocket, string userName)
         {
             lock(clientList)
             {
                 ClientData clientData = new ClientData();
 
-                clientSocket.ReceiveTimeout = 100;
-                clientSocket.SendTimeout = 100;
+                clientData.ID = clientManager.GetNextClientId();
+                clientData.username = userName;
 
                 clientData.connectionTCP = clientSocket;
+                clientData.connectionTCP.ReceiveTimeout = 100;
+                clientData.connectionTCP.SendTimeout = 100;
 
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
                 clientData.metaData.IP = clientEndPoint.Address;
                 clientData.metaData.port = clientEndPoint.Port;
-                clientData.authenticationToken = new CancellationTokenSource();  
-                clientData.ID = clientManager.GetNextClientId();
 
+                clientData.authenticationToken = new CancellationTokenSource();
+ 
                 clientList.Add(clientData);
 
                 Debug.Log("Connected client Id: " + clientData.ID);
 
 
-                //Create the handeler of the caht for that client
+                //Create the handeler of the chat for that client
+                //create a hole thread to recive important data from server-client
+                //like game state, caharacter selection, map etc
                 Thread t = new Thread(() => HandleChat(clientData));
 
                 t.IsBackground = true;
