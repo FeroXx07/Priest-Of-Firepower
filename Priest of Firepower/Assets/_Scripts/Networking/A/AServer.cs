@@ -25,7 +25,7 @@ namespace ServerA
         }
     }
     public class AServer : MonoBehaviour
-    { 
+    {
         AServer instance;
         AServer Instance { get { return instance; } }
         IPEndPoint endPoint;
@@ -54,12 +54,12 @@ namespace ServerA
         Socket serverUDP;
 
         //Authentication 
-        private string authenticationCode ="IM_VALID_USER_LOVE_ME";
+        private string authenticationCode = "IM_VALID_USER_LOVE_ME";
 
         class ClientData
         {
-            public int ID;
-            public string username;
+            public int ID = -1;
+            public string username = "";
             public ClientMetadata metaData;
             public ClientSate state;
             public Socket connectionTCP;
@@ -84,7 +84,7 @@ namespace ServerA
         {
             if (instance == null)
                 instance = this;
-            else if(instance != null)
+            else if (instance != null)
                 DestroyImmediate(instance);
             DontDestroyOnLoad(gameObject);
         }
@@ -101,7 +101,7 @@ namespace ServerA
 
         private void OnDisable()
         {
-          
+
             StopListening();
 
             DisconnectAllClients();
@@ -140,11 +140,11 @@ namespace ServerA
                 // the Client list that will want
                 // to connect to Server
                 serverTCP.Listen(4);
-                
+
                 listenerToken = new CancellationTokenSource();
                 listenerThread = new Thread(() => AuthenticationTCP(listenerToken.Token));
                 listenerThread.Start();
-              
+
             }
             catch (Exception e)
             {
@@ -179,10 +179,10 @@ namespace ServerA
                     clientSocket.Send(msg);
 
                     buffer = new byte[1024];
-                    bufferSize = clientSocket.Receive(buffer); 
+                    bufferSize = clientSocket.Receive(buffer);
 
                     string username = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                    
+
                     //username validation
                     bool validUsername = true;
                     if (username.Length > 15 || username.Length == 0)
@@ -192,7 +192,7 @@ namespace ServerA
                     if (code == authenticationCode && validUsername)
                     {
                         //add this accepted client into the client list
-                        int clientID = CreateClient(clientSocket,username);
+                        int clientID = CreateClient(clientSocket, username);
 
                         //call any related action to this event
                         OnClientAccepted?.Invoke(clientID);
@@ -214,8 +214,8 @@ namespace ServerA
         }
         void HandleChat(ClientData clientData)
         {
-            Debug.Log("Starting chat thread " +clientData.ID + " ...");
-            
+            Debug.Log("Starting chat thread " + clientData.ID + " ...");
+
             while (!clientData.authenticationToken.IsCancellationRequested)
             {
                 Socket clientSocket = clientData.connectionTCP;
@@ -223,18 +223,18 @@ namespace ServerA
                 try
                 {
                     byte[] buffer = new byte[1024];
-                    
+
                     // Receive data from the client
                     int bufferSize = clientSocket.Receive(buffer);
                     data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                
+
                     if (!string.IsNullOrEmpty(data))
                     {
-                        Debug.Log("message recived: "+ data);
+                        Debug.Log("message recived: " + data);
                         // Process the received message (e.g., broadcast to all clients)
                         BroadcastMessage(data, clientData.ID);
                     }
-                   
+
                 }
                 catch (SocketException se)
                 {
@@ -263,10 +263,10 @@ namespace ServerA
                 Thread.Sleep(100);
             }
         }
-         
+
         int CreateClient(Socket clientSocket, string userName)
         {
-            lock(clientList)
+            lock (clientList)
             {
                 ClientData clientData = new ClientData();
 
@@ -282,7 +282,7 @@ namespace ServerA
                 clientData.metaData.port = clientEndPoint.Port;
 
                 clientData.authenticationToken = new CancellationTokenSource();
- 
+
                 clientList.Add(clientData);
 
                 Debug.Log("Connected client Id: " + clientData.ID);
@@ -320,7 +320,7 @@ namespace ServerA
                 clientListToRemove.Add(clientData);
 
                 Debug.Log("Client " + clientData.ID + " disconnected.");
-            }            
+            }
         }
 
         void BroadcastMessage(string message, int senderID)
@@ -360,7 +360,7 @@ namespace ServerA
                     Debug.LogError($"Error broadcasting message: {e.Message}");
                 }
             }
-            
+
         }
         void StopListening()
         {
@@ -373,7 +373,7 @@ namespace ServerA
                 listenerThread.Join();
 
                 //make sure it is not alive
-                if(listenerThread.IsAlive)
+                if (listenerThread.IsAlive)
                 {
                     listenerThread.Abort();
                 }
@@ -381,7 +381,7 @@ namespace ServerA
         }
         void DisconnectAllClients()
         {
-            foreach (ClientData client in clientList) 
+            foreach (ClientData client in clientList)
             {
                 RemoveClient(client);
             }
@@ -445,11 +445,11 @@ namespace ServerA
                     }
                 }
                 Debug.Log("removed " + clientListToRemove.Count + " clients");
-                clientListToRemove.Clear(); 
+                clientListToRemove.Clear();
             }
         }
 
-#region Async
+        #region Async
 
 
         private async Task Heartbeat()
@@ -491,9 +491,9 @@ namespace ServerA
                     int localPort = endPoint.Port;
                     Debug.Log("Connection accepted -> " + localPort);
 
-                    int clientID = CreateClient(clientSocket);
-                    //add this accepted client into the client list
-                    OnClientAccepted?.Invoke(clientID);
+                    //int clientID = CreateClient(clientSocket, username);
+                    ////add this accepted client into the client list
+                    //OnClientAccepted?.Invoke(clientID);
                     // Add some delay to avoid busy-waiting
                     Thread.Sleep(100);
                 }
@@ -576,7 +576,7 @@ namespace ServerA
 
                     // Send the message to other clients
                     byte[] data = Encoding.ASCII.GetBytes($"Client {senderID}: {message}");
-                    await clientSocket.SendAsync(new ArraySegment<byte>(data),SocketFlags.None);
+                    await clientSocket.SendAsync(new ArraySegment<byte>(data), SocketFlags.None);
 
                     Debug.Log("message broadcasted ...");
                 }
