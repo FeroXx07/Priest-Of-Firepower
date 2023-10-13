@@ -26,6 +26,10 @@ public class Br_UDP_Server : MonoBehaviour
     string roomName = "";
 
     private static Br_UDP_Server udpServerInstance;
+
+    [SerializeField]
+    List<EndPoint> connectedClients = new List<EndPoint>();
+
     private void Awake()
     {
         // Check if an instance already exists
@@ -44,7 +48,6 @@ public class Br_UDP_Server : MonoBehaviour
 
         Application.runInBackground = true;
         Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
-        Br_IServer.OnReceiveMessageFromClient += ReceiveMessageFromClient;
         Br_IServer.OnSendMessageToClient += SendMessageToClient;
     }
 
@@ -111,6 +114,8 @@ public class Br_UDP_Server : MonoBehaviour
 
         print("UDP: Waiting to receive datagrams from client...");
 
+
+        //listen for new clients
         while (serverActive)
         {
             try
@@ -119,24 +124,32 @@ public class Br_UDP_Server : MonoBehaviour
                 byte[] msg = new Byte[256];
                 EndPoint senderRemote = new IPEndPoint(IPAddress.Any, 0);
 
-                //this blocks the program until receiving an answer from a client
-                newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
-
-                string response = "Welcome to " + roomName;
-                print("TCP: Sending response: " + response);
-
-                byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
-                newSocket.SendTo(responseBytes, senderRemote);
 
                 if (serverActive)
                 {
+
+                    //this blocks the program until receiving an answer from a client
+                    newSocket.ReceiveFrom(msg, msg.Length, SocketFlags.None, ref senderRemote);
+
+
+                    //check if client is new
+                    if (!connectedClients.Contains(senderRemote))
+                    {
+                        connectedClients.Add(senderRemote);
+
+                        string response = "Welcome to " + roomName;
+                        print("UDP: Sending response: " + response);
+
+                        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
+                        newSocket.SendTo(responseBytes, senderRemote);
+                    }
+
+
                     //post function to be executed in main thread
                     synchronizationContext.Post(_ => HandleReceivedData(msg), null);
+
+
                 }
-
-               
-
-                print("UDP: Message Received");
 
             }
             catch (System.Exception e)
@@ -173,27 +186,25 @@ public class Br_UDP_Server : MonoBehaviour
     //Multiuse that acts when data is received
     void HandleReceivedData(byte[] msg)
     {
-
-        InvokeCreateMessage(msg);
-    }
-
-    //Spawn floating text action
-    void InvokeCreateMessage(byte[] msg)
-    {
-        //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnSendMessageToClient?.Invoke(message);
+        print("Received Data: " + message);
 
+        
+        Br_IServer.OnReceiveMessageFromClient?.Invoke(message);
     }
 
-    void ReceiveMessageFromClient(string message)
-    {
 
-    }
 
     void SendMessageToClient(string message)
     {
+        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(message);
 
+        for (int i = 0; i < connectedClients.Count; i++)
+        {
+            print("sending message [" + message + "] to: " + connectedClients[i]);
+            newSocket.SendTo(responseBytes, connectedClients[i]);
+
+        }
     }
 
     public void SetRoomName(string roomName)

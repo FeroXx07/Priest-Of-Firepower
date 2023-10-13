@@ -47,7 +47,7 @@ public class Br_UDP_Client : MonoBehaviour
         Application.runInBackground = true;
         Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
         Br_IServer.OnSendMessageToServer += SendMessageToServer;
-        Br_IServer.OnReceiveMessageFromServer += ReceiveMessageFromServer;
+        //Br_IServer.OnReceiveMessageFromServer += ReceiveMessageFromServer;
     }
 
     void Start()
@@ -55,7 +55,7 @@ public class Br_UDP_Client : MonoBehaviour
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-   
+
     // Update is called once per frame
     void Update()
     {
@@ -104,8 +104,9 @@ public class Br_UDP_Client : MonoBehaviour
 
             newSocket.SendTo(messageBytes, serverEndpoint);
 
+
             synchronizationContext = SynchronizationContext.Current;
-            recieveResponseThread = new Thread(HandleConnectionToServer);
+            recieveResponseThread = new Thread(WaitForServerAnswer);
             recieveResponseThread.Start();
 
 
@@ -113,6 +114,7 @@ public class Br_UDP_Client : MonoBehaviour
         catch (System.Exception e)
         {
             Debug.Log("UDP: Connection failed.. trying again. Error: " + e);
+            print("error");
         }
     }
 
@@ -123,24 +125,18 @@ public class Br_UDP_Client : MonoBehaviour
 
     }
 
-    void ReceiveMessageFromServer(string message)
+    void WaitForServerAnswer()
     {
-        byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
-        newSocket.SendTo(messageBytes, serverEndpoint);
-
-    }
-
-
-    void HandleConnectionToServer()
-    {
-        byte[] response = new byte[256];
-        int responseByteCount = newSocket.ReceiveFrom(response, response.Length, SocketFlags.None, ref serverEndpoint);
+        byte[] serverAnswerData = new byte[256];
+        int responseByteCount = newSocket.ReceiveFrom(serverAnswerData, serverAnswerData.Length, SocketFlags.None, ref serverEndpoint);
         if (responseByteCount > 0)
         {
-            synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
-            string message = System.Text.Encoding.UTF8.GetString(response);
-            print(message);
             connectedToServer = true;
+
+            //Announce connection to server
+            synchronizationContext.Post(_ => InvokeReceiveMessageFromServer(serverAnswerData), null);
+
+            //keep listening for data
             KeepListeningToServer();
         }
     }
@@ -149,17 +145,26 @@ public class Br_UDP_Client : MonoBehaviour
     {
         if (connectedToServer)
         {
+            byte[] serverData = new byte[256];
+            print("waiting to receive response");
+
+            int responseByteCount = newSocket.ReceiveFrom(serverData, serverData.Length, SocketFlags.None, ref serverEndpoint);
+            if (responseByteCount > 0)
+            {
+                //synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
+                synchronizationContext.Post(_ => InvokeReceiveMessageFromServer(serverData), null);
+
+            }
             KeepListeningToServer();
         }
-        newSocket.Close();
+        //newSocket.Close();
     }
 
-
-    void InvokeCreateResponse(byte[] msg)
+    void InvokeReceiveMessageFromServer(byte[] msg)
     {
-        //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnSendMessageToServer?.Invoke(message);
+        print("server Answer: " + message);
+        Br_IServer.OnReceiveMessageFromServer?.Invoke(message);
 
     }
 

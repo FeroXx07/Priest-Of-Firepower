@@ -55,7 +55,7 @@ public class Br_TCP_Client : MonoBehaviour
         if (Screen.fullScreen)
             Screen.fullScreen = false;
     }
-   
+
     // Update is called once per frame
     void Update()
     {
@@ -102,7 +102,7 @@ public class Br_TCP_Client : MonoBehaviour
             IPEndPoint serverEp = new IPEndPoint(ipAddress, serverPort);
             newSocket.Connect(serverEp);
             print("TCP: Connected to server at: " + serverEp);
-            
+
             SceneManager.LoadScene("BHub");
 
             newSocket.Send(messageBytes);
@@ -144,7 +144,7 @@ public class Br_TCP_Client : MonoBehaviour
         int responseByteCount = newSocket.Receive(response);
         if (responseByteCount > 0)
         {
-            
+
             //synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
         }
         //newSocket.Close();
@@ -162,6 +162,7 @@ public class Br_TCP_Client : MonoBehaviour
 
     void SendMessageToServer(string message)
     {
+        if (!this.enabled) return;
         byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
         newSocket.Send(messageBytes);
 

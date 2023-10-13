@@ -17,8 +17,21 @@ public class Br_Hub_Chat : MonoBehaviour
         server = GameObject.Find("server");
         client = GameObject.Find("client");
 
-        if (client != null) Br_IServer.OnSendMessageToClient += ReceiveMessage;
-        if (server != null) Br_IServer.OnSendMessageToServer += SendMessageToServer;
+        //entered as client
+        if (client != null)
+        {
+            //Br_IServer.OnSendMessageToServer += SendMessageToServer;
+            Br_IServer.OnReceiveMessageFromServer += ReceiveMessage;
+
+        }
+
+        //entered as server
+        if (server != null)
+        {
+            //Br_IServer.OnSendMessageToClient += SendMessageToClient;
+            Br_IServer.OnReceiveMessageFromClient += ReceiveMessage;
+
+        }
     }
 
     public void SendChatMessage()
@@ -26,8 +39,8 @@ public class Br_Hub_Chat : MonoBehaviour
         if (inputFieldText.text != "")
         {
             GameObject chatMessage = Instantiate(chatMessagePrefab);
-           if (server != null) chatMessage.GetComponent<TextMeshProUGUI>().text = "Server: " + inputFieldText.text;
-           if (client != null) chatMessage.GetComponent<TextMeshProUGUI>().text = inputFieldText.text;
+            if (server != null) chatMessage.GetComponent<TextMeshProUGUI>().text = "Server: " + inputFieldText.text;
+            if (client != null) chatMessage.GetComponent<TextMeshProUGUI>().text = inputFieldText.text;
 
 
             chatMessage.transform.parent = chatMessageContent.transform;
@@ -42,6 +55,7 @@ public class Br_Hub_Chat : MonoBehaviour
 
     void ReceiveMessage(string message)
     {
+        print("creating message: " + message);
         GameObject chatMessage = Instantiate(chatMessagePrefab);
         chatMessage.GetComponent<TextMeshProUGUI>().text = message;
         chatMessage.transform.parent = chatMessageContent.transform;
@@ -50,11 +64,13 @@ public class Br_Hub_Chat : MonoBehaviour
 
     void SendMessageToServer(string message)
     {
+        print("sending message to server: " + message);
         Br_IServer.OnSendMessageToServer?.Invoke(message);
     }
 
     void SendMessageToClient(string message)
     {
+        print("sending message to clients: " + message);
         Br_IServer.OnSendMessageToClient?.Invoke(message);
     }
 
