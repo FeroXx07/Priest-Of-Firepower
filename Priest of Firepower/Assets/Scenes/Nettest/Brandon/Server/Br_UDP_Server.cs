@@ -29,6 +29,7 @@ public class Br_UDP_Server : MonoBehaviour
 
     [SerializeField]
     List<EndPoint> connectedClients = new List<EndPoint>();
+    List<string> connectedClientsString = new List<string>();
 
     private void Awake()
     {
@@ -136,6 +137,7 @@ public class Br_UDP_Server : MonoBehaviour
                     if (!connectedClients.Contains(senderRemote))
                     {
                         connectedClients.Add(senderRemote);
+                        connectedClientsString.Add(senderRemote.ToString());
 
                         string response = "Welcome to " + roomName;
                         print("UDP: Sending response: " + response);
@@ -146,7 +148,7 @@ public class Br_UDP_Server : MonoBehaviour
 
 
                     //post function to be executed in main thread
-                    synchronizationContext.Post(_ => HandleReceivedData(msg), null);
+                    synchronizationContext.Post(_ => HandleReceivedData(msg, senderRemote), null);
 
 
                 }
@@ -163,6 +165,22 @@ public class Br_UDP_Server : MonoBehaviour
 
 
     }
+
+
+    //to work with data packages instead of strings
+
+    //void SendServerInfo(EndPoint senderRemote)
+    //{
+    //    string response = "Welcome to " + roomName;
+    //    print("UDP: Sending response: " + response);
+
+    //    Br_ServerInfoPackaging.ServerInformation serverInfo = new Br_ServerInfoPackaging.ServerInformation();
+    //    serverInfo.serverName = roomName;
+    //    serverInfo.message = response;
+
+    //    byte[] responseBytes = Br_ServerInfoPackaging.SerializeData(serverInfo);
+    //    newSocket.SendTo(responseBytes, senderRemote);
+    //}
 
     void AbortListenForClients()
     {
@@ -184,13 +202,18 @@ public class Br_UDP_Server : MonoBehaviour
     //Executed in main thread
 
     //Multiuse that acts when data is received
-    void HandleReceivedData(byte[] msg)
+    void HandleReceivedData(byte[] msg, EndPoint sender)
     {
         string message = System.Text.Encoding.UTF8.GetString(msg);
         print("Received Data: " + message);
 
         
         Br_IServer.OnReceiveMessageFromClient?.Invoke(message);
+
+        //redistribute to other clients
+
+        //works but duplicates messages due to lack of user authentication (username) and same ip (doubles instances causes bugs)
+        RedistributeMessageFromClient(sender, message);
     }
 
 
@@ -204,6 +227,20 @@ public class Br_UDP_Server : MonoBehaviour
             print("sending message [" + message + "] to: " + connectedClients[i]);
             newSocket.SendTo(responseBytes, connectedClients[i]);
 
+        }
+    }
+
+    void RedistributeMessageFromClient(EndPoint originalSender, string message)
+    {
+        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(message);
+
+        for (int i = 0; i < connectedClients.Count; i++)
+        {
+            if (connectedClients[i] != originalSender)
+            {
+                print("sending message [" + message + "] to: " + connectedClients[i]);
+                newSocket.SendTo(responseBytes, connectedClients[i]);
+            }
         }
     }
 
