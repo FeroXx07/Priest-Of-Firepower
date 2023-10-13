@@ -31,23 +31,23 @@ public class Br_UDP_Client : MonoBehaviour
     bool connectedToServer = false;
     private void Awake()
     {
-        // Check if an instance already exists
+        // Check if client already exists
         if (udpClientInstance != null && udpClientInstance != this)
         {
-            // If an instance already exists, destroy this duplicate GameObject
             Destroy(gameObject);
             return;
         }
 
-        // Set this instance as the singleton
         udpClientInstance = this;
 
-        // Don't destroy this GameObject when loading new scenes
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
+    }
+
+    private void OnEnable()
+    {
         Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
         Br_IServer.OnSendMessageToServer += SendMessageToServer;
-        //Br_IServer.OnReceiveMessageFromServer += ReceiveMessageFromServer;
     }
 
     void Start()
@@ -125,6 +125,7 @@ public class Br_UDP_Client : MonoBehaviour
 
     }
 
+    //wait for server response to our attempt at connecting
     void WaitForServerAnswer()
     {
         byte[] serverAnswerData = new byte[256];
@@ -141,6 +142,7 @@ public class Br_UDP_Client : MonoBehaviour
         }
     }
 
+    //loop that listens for messages from the server always
     void KeepListeningToServer()
     {
         if (connectedToServer)

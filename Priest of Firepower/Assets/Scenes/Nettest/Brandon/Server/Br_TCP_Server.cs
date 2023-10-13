@@ -27,6 +27,11 @@ public class Br_TCP_Server : MonoBehaviour
     string roomName = "";
 
     private static Br_TCP_Server tcpServerInstance;
+
+    [SerializeField]
+    List<Socket> connectedClients = new List<Socket>();
+    [SerializeField]
+    List<string> connectedClientsStr = new List<string>();
     private void Awake()
     {
 
@@ -45,8 +50,15 @@ public class Br_TCP_Server : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         Application.runInBackground = true;
-        Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
     }
+
+    private void OnEnable()
+    {
+        Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
+        Br_IServer.OnSendMessageToClient += SendMessageToClient;
+    }
+
+    
 
     void Start()
     {
@@ -115,7 +127,8 @@ public class Br_TCP_Server : MonoBehaviour
             newSocket.Listen(10);
             print("TCP: Waiting to receive datagrams from client...");
 
-            var client = newSocket.BeginAccept(new AsyncCallback(AcceptClient), null);//blocks the program until receiving a client
+            //blocks the program until receiving a client connection attempt
+            var client = newSocket.BeginAccept(new AsyncCallback(AcceptClient), null);
             
 
         }
@@ -132,16 +145,14 @@ public class Br_TCP_Server : MonoBehaviour
         try
         {
             Socket clientSocket = newSocket.EndAccept(ar);
-            var clientEp = clientSocket.RemoteEndPoint;
-            print("TCP: Connected: " + clientEp.ToString());
-
-
+            EndPoint clientEp = clientSocket.RemoteEndPoint;
+            
+            //block program until data from user is received
             var receiveResult = clientSocket.BeginReceive(clientData, 0, clientData.Length, SocketFlags.None, new AsyncCallback(ReceiveMessage), clientSocket);
 
+            //loop to check for client's connection attempts
             newSocket.BeginAccept(new AsyncCallback(AcceptClient), null);
-
             
-           
 
         }
         catch (System.Exception e)
@@ -155,32 +166,38 @@ public class Br_TCP_Server : MonoBehaviour
         try
         {
             Socket clientSocket = (Socket)ar.AsyncState;
-            int bytesRead = clientSocket.EndReceive(ar);
+            EndPoint clientEp = clientSocket.RemoteEndPoint;
 
-            if (bytesRead > 0)
+
+            if (serverActive)
             {
-                
+                int bytesRead = clientSocket.EndReceive(ar);
                 byte[] receivedData = new byte[bytesRead];
 
-                //copy data from general user data buffer to single data buffer to use
-                Array.Copy(clientData, receivedData, bytesRead);
-
-                if (serverActive)
+                if (bytesRead > 0)
                 {
+                    //check if client is new
+                    if (!connectedClients.Contains(clientSocket))
+                    {
+                        connectedClients.Add(clientSocket);
+                        connectedClientsStr.Add(clientSocket.RemoteEndPoint.ToString());
+
+                        //send confirmation message that client entered server
+                        string response = "Welcome to " + roomName;
+                        print("TCP: Sending response: " + response);
+
+                        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
+                        clientSocket.Send(responseBytes);
+                    }
+
+
+                    //copy data from general user data buffer to single data buffer to use
+                    Array.Copy(clientData, receivedData, bytesRead);
+
                     //post function to be executed in main thread
-                    synchronizationContext.Post(_ => HandleReceivedData(receivedData), null);
+                    synchronizationContext.Post(_ => HandleReceivedData(clientSocket, receivedData), null);                    
 
-                    print("TCP: Message Received");
-
-
-                    //send client a response
-                    string response = "Welcome to " + roomName;
-                    print("TCP: Sending response: " + response);
-
-                    byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
-                    clientSocket.Send(responseBytes);
-
-                    //keep receiving data from the client
+                    //keep receiving data from the accepted client
                     clientSocket.BeginReceive(clientData, 0, clientData.Length, SocketFlags.None, new AsyncCallback(ReceiveMessage), clientSocket);
 
                 }
@@ -223,20 +240,42 @@ public class Br_TCP_Server : MonoBehaviour
     //Executed in main thread
 
     //Multiuse that acts when data is received
-    void HandleReceivedData(byte[] msg)
+    void HandleReceivedData(Socket sender, byte[] msg)
     {
-
-        InvokeCreateMessage(msg);
-    }
-
-    //Spawn floating text action
-    void InvokeCreateMessage(byte[] msg)
-    {
-        //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnSendMessageToClient?.Invoke(message);
+        print("Received Data: " + message);
+
+        Br_IServer.OnReceiveMessageFromClient?.Invoke(message);
+
+        //redistribute to other clients
+        RedistributeMessageFromClient(sender, message);
     }
-    
+
+    private void SendMessageToClient(string message)
+    {
+        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(message);
+
+        for (int i = 0; i < connectedClients.Count; i++)
+        {
+            print("sending message [" + message + "] to: " + connectedClients[i]);
+            connectedClients[i].Send(responseBytes);
+
+        }
+    }
+
+    void RedistributeMessageFromClient(Socket originalSender, string message)
+    {
+        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(message);
+
+        for (int i = 0; i < connectedClients.Count; i++)
+        {
+            if (connectedClients[i] != originalSender)
+            {
+                print("sending message [" + message + "] to: " + connectedClients[i]);
+                connectedClients[i].Send(responseBytes);
+            }
+        }
+    }
 
     public void SetRoomName(string roomName)
     {

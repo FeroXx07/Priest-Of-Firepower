@@ -6,6 +6,7 @@ using System.Net;
 using System.Threading;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System;
 
 public class Br_TCP_Client : MonoBehaviour
 {
@@ -28,6 +29,7 @@ public class Br_TCP_Client : MonoBehaviour
     string username;
     string serverIp;
     private static Br_TCP_Client tcpClientInstance;
+    bool connectedToServer = false;
 
 
     private void Awake()
@@ -46,6 +48,11 @@ public class Br_TCP_Client : MonoBehaviour
         // Don't destroy this GameObject when loading new scenes
         DontDestroyOnLoad(gameObject);
         Application.runInBackground = true;
+
+    }
+
+    private void OnEnable()
+    {
         Br_IJoinRoomUI.OnJoinRoom += JoinRoom;
         Br_IServer.OnSendMessageToServer += SendMessageToServer;
     }
@@ -108,7 +115,7 @@ public class Br_TCP_Client : MonoBehaviour
             newSocket.Send(messageBytes);
 
             synchronizationContext = SynchronizationContext.Current;
-            responseThread = new Thread(HandleServerResponse);
+            responseThread = new Thread(WaitForServerAnswer);
             responseThread.Start();
 
 
@@ -138,27 +145,27 @@ public class Br_TCP_Client : MonoBehaviour
         if (newSocket != null && newSocket.IsBound) newSocket.Close();
     }
 
-    void HandleServerResponse()
+    void WaitForServerAnswer()
     {
-        byte[] response = new byte[256];
-        int responseByteCount = newSocket.Receive(response);
+        byte[] serverAnswerData = new byte[256];
+        int responseByteCount = newSocket.Receive(serverAnswerData);
         if (responseByteCount > 0)
         {
+            connectedToServer = true;
 
-            //synchronizationContext.Post(_ => InvokeCreateResponse(response), null);
+            //Announce connection to server
+            synchronizationContext.Post(_ => InvokeReceiveMessageFromServer(serverAnswerData), null);
         }
-        //newSocket.Close();
+        WaitForServerAnswer();
     }
 
-
-
-    void InvokeCreateResponse(byte[] msg)
+    private void InvokeReceiveMessageFromServer(byte[] msg)
     {
-        //decode data
         string message = System.Text.Encoding.UTF8.GetString(msg);
-        Br_IServer.OnSendMessageToServer?.Invoke(message);
-
+        print("server Answer: " + message);
+        Br_IServer.OnReceiveMessageFromServer?.Invoke(message);
     }
+
 
     void SendMessageToServer(string message)
     {

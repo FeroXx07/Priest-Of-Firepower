@@ -29,6 +29,7 @@ public class Br_UDP_Server : MonoBehaviour
 
     [SerializeField]
     List<EndPoint> connectedClients = new List<EndPoint>();
+    [SerializeField]
     List<string> connectedClientsString = new List<string>();
 
     private void Awake()
@@ -48,6 +49,11 @@ public class Br_UDP_Server : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         Application.runInBackground = true;
+        
+    }
+
+    private void OnEnable()
+    {
         Br_ICreateRoomUI.OnCreateRoom += CreateRoomRequest;
         Br_IServer.OnSendMessageToClient += SendMessageToClient;
     }
@@ -142,6 +148,7 @@ public class Br_UDP_Server : MonoBehaviour
                         string response = "Welcome to " + roomName;
                         print("UDP: Sending response: " + response);
 
+                        //send confirmation message that client entered server
                         byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
                         newSocket.SendTo(responseBytes, senderRemote);
                     }
