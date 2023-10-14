@@ -1,13 +1,14 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net;
+using System.Diagnostics;
 using UnityEngine;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace ServerAli
 {
-    public class SupportClass
+    public class Utilities
     {
         public static void BindSocket(Socket socket, IPEndPoint endPoint)
         {
@@ -17,7 +18,7 @@ namespace ServerAli
             }
             catch (System.Exception e)
             {
-                Console.WriteLine("Winsock error: " + e.ToString());
+                UnityEngine.Debug.Log("Winsock error: " + e.ToString());
             }
         }
 
@@ -33,7 +34,7 @@ namespace ServerAli
             }
             catch (System.Exception e)
             {
-                Console.WriteLine("Error closing socket connection: " + e.ToString());
+                UnityEngine.Debug.Log("Error closing socket connection: " + e.ToString());
             }
             finally
             {
@@ -49,6 +50,21 @@ namespace ServerAli
             int port = ((IPEndPoint)l.LocalEndpoint).Port;
             l.Stop();
             return port;
+        }
+
+        public static bool ValidateIPAdress(string ipToValidate, out string cleanedIp)
+        {
+            // Remove non-numeric characters and leading/trailing spaces
+            cleanedIp = Regex.Replace(ipToValidate, @"[^\d.]", "");
+
+            //if (String.Equals(cleanedIp.Trim(), localhost, StringComparison.InvariantCultureIgnoreCase)) 
+            //    return true;// Special localhost case
+
+            if (cleanedIp.Count(c => c == '.') != 3) 
+                return false;
+
+            IPAddress address;
+            return IPAddress.TryParse(cleanedIp, out address);
         }
     }
 }

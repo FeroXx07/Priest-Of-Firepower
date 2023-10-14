@@ -7,6 +7,8 @@ using ServerAli;
 using System.Threading;
 using System;
 using UnityEditor.PackageManager;
+using UnityEngine.UI;
+using TMPro;
 
 public class Client_TCP: MonoBehaviour
 {
@@ -15,22 +17,18 @@ public class Client_TCP: MonoBehaviour
     private IPEndPoint _iPEndPointlocal;
 
     private IPAddress _address = IPAddress.Parse("127.0.0.1");
-    [SerializeField] private int _port = SupportClass.FreeTcpPort();
+    [SerializeField] private int _port = Utilities.FreeTcpPort();
 
     private Thread _toServerThread;
-
-    bool connected = false;
     #endregion
 
     #region Initializers and Cleanup
     private void Awake()
     {
-        connected = false;
-
         // Make sure in localhost client doesn't have the same port as server
         while (_port == 61111)
         {
-            _port = SupportClass.FreeTcpPort();
+            _port = Utilities.FreeTcpPort();
         }
 
         // Init
@@ -38,7 +36,7 @@ public class Client_TCP: MonoBehaviour
         _iPEndPointlocal = new IPEndPoint(_address, _port);
 
         // Bind
-        SupportClass.BindSocket(_socket, _iPEndPointlocal);
+        Utilities.BindSocket(_socket, _iPEndPointlocal);
     }
 
     private void OnDisable()
@@ -49,26 +47,34 @@ public class Client_TCP: MonoBehaviour
     #endregion
 
     #region Core func
-    public void InitServerConnection()
+    public void UI_InitServerConnection(TextMeshProUGUI textMeshIP)
     {
         if (_toServerThread != null) {
             _toServerThread.Abort();
             _toServerThread = null;
         }
-
-        _toServerThread = new Thread(TryConnectingToServer);
-        _toServerThread.Start();
+        
+        if (Utilities.ValidateIPAdress(textMeshIP.text, out string cleanedIp))
+        {
+            _toServerThread = new Thread(() => TryConnectingToServer(cleanedIp));
+            _toServerThread.Start();
+        }
+        else
+        {
+            Debug.LogAssertion($"CLIENT TCP: Insert an valid IP Adress, {textMeshIP.text} is not a valid IP address");
+        }
     }
 
     public void InitServerDisconnection()
     {
-        SupportClass.CloseConnection(_socket);
+        Debug.Log("CLIENT TCP: Init Server Disconnection");
+        Utilities.CloseConnection(_socket);
         _toServerThread.Abort();
     }
 
-    public void TryConnectingToServer()
+    public void TryConnectingToServer(string ip)
     {
-        IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 61111);
+        IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 61111);
 
         // .Connect throws an exception if unsuccessful
         _socket.Connect(serverEndPoint);
@@ -80,22 +86,22 @@ public class Client_TCP: MonoBehaviour
 
             _socket.Blocking = false;
             _socket.Send(tmp, 0, 0);
-            Console.WriteLine("Connected!");
+            Debug.Log($"CLIENT TCP: Connected to server: {serverEndPoint}!");
         }
         catch (SocketException e){
             // 10035 == WSAEWOULDBLOCK
             if (e.NativeErrorCode.Equals(10035))  {
-                Console.WriteLine("Still Connected, but the Send would block");
+                Debug.Log("CLIENT TCP: Still Connected, but the Send would block");
             }
             else {
-                Console.WriteLine("Disconnected: error code {0}!", e.NativeErrorCode);
+                Debug.Log($"CLIENT TCP: Disconnected: error code {e.NativeErrorCode}!");
             }
         }
         finally {
             _socket.Blocking = blockingState;
         }
 
-        Console.WriteLine("Connected: {0}", _socket.Connected);
+        Debug.Log($"CLIENT TCP: Connected: {_socket.Connected}");
     }
     #endregion
 }
