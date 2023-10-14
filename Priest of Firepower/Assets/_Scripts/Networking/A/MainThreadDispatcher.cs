@@ -5,7 +5,10 @@ using System;
 public class MainThreadDispatcher : MonoBehaviour
 {
     private static readonly Queue<Action> actionQueue = new Queue<Action>();
-
+    private void Awake()
+    {
+        DontDestroyOnLoad(this);
+    }
     private void Update()
     {
         while(actionQueue.Count > 0)

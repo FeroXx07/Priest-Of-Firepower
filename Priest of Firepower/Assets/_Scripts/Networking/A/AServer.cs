@@ -9,6 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
+using ClientA;
+using UnityEngine.Rendering;
 
 namespace ServerA
 {
@@ -26,8 +28,14 @@ namespace ServerA
     }
     public class AServer : MonoBehaviour
     {
-        AServer instance;
-        AServer Instance { get { return instance; } }
+        private static AServer instance;
+        public static AServer Instance
+        {
+            get
+            {
+                return instance;
+            }
+        }
         IPEndPoint endPoint;
         //[SerializeField] int port = 12345;
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
@@ -55,7 +63,7 @@ namespace ServerA
 
         //Authentication 
         private string authenticationCode = "IM_VALID_USER_LOVE_ME";
-
+        private bool IsServerInitialized  = false;
         class ClientData
         {
             public int ID = -1;
@@ -66,6 +74,7 @@ namespace ServerA
             public Socket connectionUDP;
             public CancellationTokenSource authenticationToken; //if disconnection request invoke cancellation token to shutdown all related processes
             public Thread gameThread;
+            public bool IsHost = false;
         }
         struct ClientMetadata
         {
@@ -88,25 +97,25 @@ namespace ServerA
                 DestroyImmediate(instance);
             DontDestroyOnLoad(gameObject);
         }
-        private void Start()
+
+        public void InitServer()
         {
             clientManager = new ClientManager();
             //start server
             StartConnectionListenerTCP();
         }
-        private void OnEnable()
-        {
-
-        }
-
         private void OnDisable()
         {
+
+            Debug.Log("Stopping server ...");
 
             StopListening();
 
             DisconnectAllClients();
 
             StopAllClientThreads();
+
+            Debug.Log("Closing server connection ...");
 
             if (serverTCP.Connected)
             {
@@ -145,6 +154,8 @@ namespace ServerA
                 listenerThread = new Thread(() => AuthenticationTCP(listenerToken.Token));
                 listenerThread.Start();
 
+                IsServerInitialized = true;
+
             }
             catch (Exception e)
             {
@@ -158,7 +169,7 @@ namespace ServerA
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    Console.WriteLine("Waiting connection ... ");
+                    Debug.Log("Server: Waiting connection ... ");
 
                     Socket clientSocket = serverTCP.Accept();
 
@@ -167,13 +178,13 @@ namespace ServerA
                     clientSocket.Send(msg);
 
                     //set a timeout to recive the verification code
-                    clientSocket.ReceiveTimeout = 1000;
+                    clientSocket.ReceiveTimeout = 5000;
 
                     byte[] buffer = new byte[1024];
                     int bufferSize = clientSocket.Receive(buffer);
 
                     string code = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-
+                    Debug.Log("Server: "+code + " recieved");
                     //ping client to send username
                     byte[] confirmation = Encoding.ASCII.GetBytes("ok");
                     clientSocket.Send(msg);
@@ -182,15 +193,24 @@ namespace ServerA
                     bufferSize = clientSocket.Receive(buffer);
 
                     string username = Encoding.ASCII.GetString(buffer, 0, bufferSize);
+                    Debug.Log("Server: recieved username: " + username);
+
 
                     //username validation
                     bool validUsername = true;
                     if (username.Length > 15 || username.Length == 0)
                         validUsername = false;
 
+                    confirmation = Encoding.ASCII.GetBytes("ok");
+                    clientSocket.Send(msg);
+
                     //before create add the client check if it an actual connection we want
                     if (code == authenticationCode && validUsername)
                     {
+                        //ping client that is authenticated
+                        confirmation = Encoding.ASCII.GetBytes("ok");
+                        clientSocket.Send(msg);
+
                         //add this accepted client into the client list
                         int clientID = CreateClient(clientSocket, username);
 
@@ -210,6 +230,8 @@ namespace ServerA
             catch (Exception e)
             {
                 Debug.LogException(e);
+                listenerToken.Cancel();
+                Debug.Log("Shutting down authentication process ...");
             }
         }
         void HandleChat(ClientData clientData)
@@ -274,8 +296,9 @@ namespace ServerA
                 clientData.username = userName;
 
                 clientData.connectionTCP = clientSocket;
-                clientData.connectionTCP.ReceiveTimeout = 100;
-                clientData.connectionTCP.SendTimeout = 100;
+                //add a time out exeption for when the client disconnects or has lag or something
+                clientData.connectionTCP.ReceiveTimeout = Timeout.Infinite;
+                clientData.connectionTCP.SendTimeout = Timeout.Infinite;
 
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
                 clientData.metaData.IP = clientEndPoint.Address;
@@ -362,6 +385,7 @@ namespace ServerA
             }
 
         }
+
         void StopListening()
         {
             if (listenerThread != null)
@@ -369,8 +393,9 @@ namespace ServerA
                 if (listenerThread.IsAlive)
                 {// Signal the thread to exit 
                     listenerToken.Cancel();
+                    listenerThread.Join();
                 }
-                listenerThread.Join();
+     
 
                 //make sure it is not alive
                 if (listenerThread.IsAlive)
@@ -390,17 +415,13 @@ namespace ServerA
         {
             Debug.Log("Server: Waiting for all threads to terminate.");
 
-            // Wait for all client threads to really terminate.
-            foreach (Thread t in clientThreads)
-            {
-                t.Join();
-            }
             foreach (Thread t in clientThreads)
             {
                 if (t.IsAlive)
                     t.Abort();
             }
         }
+        public bool GetServerInit() { return IsServerInitialized; }
         void HandleClient(Socket clientSocket, CancellationToken cancellationToken)
         {
             try
