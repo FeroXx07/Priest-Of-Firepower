@@ -31,6 +31,8 @@ public class Server_TCP : MonoBehaviour
     private List<Socket> _clientSockets = new List<Socket>();
 
     private Thread _listeningThread;
+
+    public string serverName;
     #endregion
 
     #region Events
@@ -78,7 +80,7 @@ public class Server_TCP : MonoBehaviour
     #endregion
 
     #region Core func
-    public void UI_TriggerCreateGame()
+    public void TriggerCreateGame()
     {
         OnServerIPAssignated?.Invoke(_address.ToString());
 
@@ -140,6 +142,9 @@ public class Server_TCP : MonoBehaviour
         Debug.Log("SERVER TCP: Connected to client: " + clientep.ToString());
 
         _clientSockets.Add(client);
+
+        // Create a new thread
+
         OnNewConnection.Invoke(client);
     }
     #endregion
