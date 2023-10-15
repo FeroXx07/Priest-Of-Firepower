@@ -21,6 +21,7 @@ namespace ClientA
                 return instance;
             }
         }
+        #region variables
         IPEndPoint endPoint;
         string IPaddress;
         IPAddress serverIP;
@@ -40,6 +41,10 @@ namespace ClientA
 
         private int serverPort = 12345; // Replace with your server's port
         private bool IsConnected = false;
+        #endregion
+
+
+        #region Enable/Disable funcitons
         private void Awake()
         {
             if (instance == null)
@@ -59,7 +64,6 @@ namespace ClientA
         }
         private void OnDisable()
         {
-            
             Disconnect();
         }
         private void Update()
@@ -69,45 +73,26 @@ namespace ClientA
                 OnMessageRecived?.Invoke(messageQueue.Dequeue());
             }
         }
-        public void Connect(IPAddress address)
-        {
-            serverIP = address;
-            connectionThread = new Thread(() => ConnectTCP());
-            connectionThread.Start();
-        }
-
-        public void SendMessageUI(string text)
-        {
-            Thread message = new Thread(() => SendMessageText(text));
-            message.Start();
-        }
-
-        public void EnqueueMessage(string message)
-        {
-            messageQueue.Enqueue(message);
-        }
-
+        #endregion
+        #region Get/Setters
         public string GetIpAddress()
         {
             return IPaddress;
         }
-
         public void SetIpAddress(IPAddress adress)
         {
             serverIP = adress;
         }
-        void CancelThread(Thread thread, CancellationTokenSource token)
-        {
-            if (thread != null && thread.IsAlive)
-            {
-                // Signal the thread to exit gracefully
-                token.Cancel();
+        #endregion
 
-                // Wait for the thread to finish before proceeding
-                thread.Join();
-            }
+        #region Core Functions
+        public void Connect(IPAddress address)
+        {
+            serverIP = address;
+            connectionThread = new Thread(() => Authenticate());
+            connectionThread.Start();
         }
-        void ConnectTCP()
+        void Authenticate()
         {
             try
             {
@@ -192,37 +177,12 @@ namespace ClientA
                 Debug.LogException(e);
             }
         }
-
-        public void SendMessageText(string message)
+        void StartListening()
         {
-            try
-            {
-                if (connectionTCP == null) return;
-                // Creation of message that
-                // we will send to Server
-                byte[] sendBytes = Encoding.ASCII.GetBytes(message);
-                connectionTCP.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
-
-            }
-            catch (ArgumentNullException ane)
-            {
-
-                Debug.LogError("ArgumentNullException : " + ane.ToString());
-            }
-            catch (SocketException se)
-            {
-
-                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
-                Debug.LogError("SocketException: " + se.Message); // Log the error message
-
-            }
-
-            catch (Exception e)
-            {
-                Debug.LogError("Unexpected exception : " + e.ToString());
-            }
+            listenerToken = new CancellationTokenSource();
+            listenServerThread = new Thread(() => ListenServer(listenerToken.Token));
+            listenServerThread.Start();
         }
-
         void ListenServer(CancellationToken cancellationToken)
         {
             connectionTCP.ReceiveTimeout = Timeout.Infinite;
@@ -272,14 +232,6 @@ namespace ClientA
                 Thread.Sleep(100);
             }
         }
-
-        void StartListening()
-        {
-            listenerToken = new CancellationTokenSource();
-            listenServerThread = new Thread(() => ListenServer(listenerToken.Token));
-            listenServerThread.Start();
-        }
-
         void Disconnect()
         {
             Debug.Log("Disconnecting client ...");
@@ -297,5 +249,59 @@ namespace ClientA
                 connectionTCP.Close();
             }
         }
+        void CancelThread(Thread thread, CancellationTokenSource token)
+        {
+            if (thread != null && thread.IsAlive)
+            {
+                // Signal the thread to exit gracefully
+                token.Cancel();
+
+                // Wait for the thread to finish before proceeding
+                thread.Join();
+            }
+        }
+        #endregion
+        #region Helper functions
+
+        public void SendMessageUI(string text)
+        {
+            Thread message = new Thread(() => SendMessageText(text));
+            message.Start();
+        }
+
+        public void EnqueueMessage(string message)
+        {
+            messageQueue.Enqueue(message);
+        }
+        public void SendMessageText(string message)
+        {
+            try
+            {
+                if (connectionTCP == null) return;
+                // Creation of message that
+                // we will send to Server
+                byte[] sendBytes = Encoding.ASCII.GetBytes(message);
+                connectionTCP.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
+
+            }
+            catch (ArgumentNullException ane)
+            {
+
+                Debug.LogError("ArgumentNullException : " + ane.ToString());
+            }
+            catch (SocketException se)
+            {
+
+                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.LogError("SocketException: " + se.Message); // Log the error message
+
+            }
+
+            catch (Exception e)
+            {
+                Debug.LogError("Unexpected exception : " + e.ToString());
+            }
+        }
+        #endregion
     }
 }
