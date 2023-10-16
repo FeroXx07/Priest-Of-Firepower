@@ -8,6 +8,7 @@ public class Door : MonoBehaviour, IInteractable
     [SerializeField] string message;
     [SerializeField] float time;
     [SerializeField] InteractionPromptUI interactionPromptUI;
+    [SerializeField] AudioClip audioClip;
     float timer;
     public string Prompt => message;
 

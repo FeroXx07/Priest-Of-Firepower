@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1897267876575666543}
   - component: {fileID: 1897267876575666542}
   - component: {fileID: 1897267876575666541}
-  - component: {fileID: 1897267876575666540}
+  - component: {fileID: 4534680615128562026}
   m_Layer: 6
   m_Name: Chest
   m_TagString: Untagged
@@ -33,6 +33,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 494736246682898013}
+  - {fileID: 1976169429354997253}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -135,7 +136,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &1897267876575666540
+--- !u!114 &4534680615128562026
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -144,12 +145,80 @@ MonoBehaviour:
   m_GameObject: {fileID: 1897267876575666539}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 639af073384a93642977a12801cfa8f6, type: 3}
+  m_Script: {fileID: 11500000, guid: 69efe637c1dadcd489ecd289739d1314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   message: Open the Chestr[cost:750]
-  time: 0
+  time: 0.5
   interactionPromptUI: {fileID: 7236965091297131869}
+  audioClip: {fileID: 0}
+  vfx: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+  sprites: []
+  weapons:
+  - {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
+  - {fileID: 1681268591073965709, guid: 3480f4e7954274743a02daa813d7098d, type: 3}
+--- !u!1001 &102519894501985135
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 1897267876575666528}
+    m_Modifications:
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_RootOrder
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793515, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_Name
+      value: ChestVFX
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+--- !u!4 &1976169429354997253 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+  m_PrefabInstance: {fileID: 102519894501985135}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1897267876640922174
 PrefabInstance:
   m_ObjectHideFlags: 0
