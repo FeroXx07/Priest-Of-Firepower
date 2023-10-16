@@ -7,10 +7,12 @@ public class HealthSystem : MonoBehaviour,IDamageable
 {
 
     [SerializeField] private int health;
+    [SerializeField] private int maxHealth;
     [SerializeField] private LayerMask layer;
 
     public LayerMask layers { get => layer; set => layer = value; }
     public int Health { get => health; set => health = value; }
+    public int MaxHealth { get => maxHealth; set => maxHealth = value; }
 
 
 
