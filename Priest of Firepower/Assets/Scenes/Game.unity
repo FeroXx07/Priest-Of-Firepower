@@ -6281,7 +6281,7 @@ GameObject:
   - component: {fileID: 555876514}
   m_Layer: 9
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -8146,9 +8146,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fd6e738bda0d6e4d9b31233dd2cb71a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  meleAttackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
+  meleeAttackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
   attackDuration: 0.5
   cooldownDuration: 1.5
+  attackOffset: 1
 --- !u!58 &1338995950
 CircleCollider2D:
   m_ObjectHideFlags: 0

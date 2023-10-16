@@ -15,15 +15,19 @@ public class MeleeEnemyBehavior : MonoBehaviour
     Collider2D collider;
 
     [SerializeField]
-    GameObject meleAttackPrefab;
+    GameObject meleeAttackPrefab;
 
     float timeRemaining = 3f;
 
     public float attackDuration = 0.5f;
     public float cooldownDuration = 1.5f;
+    public float attackOffset = 1.0f;
     private bool isAttacking = false;
     private float attackTimer = 0f;
     private float cooldownTimer = 0f;
+
+    private GameObject[] playerList;
+    private GameObject internalMeleeAttackObject;
 
     enum meleeEnemyState
     {
@@ -45,6 +49,8 @@ public class MeleeEnemyBehavior : MonoBehaviour
         agent.updateRotation = false;
         agent.updateUpAxis = false;
         collider = gameObject.GetComponent<Collider2D>();
+
+        playerList = GameObject.FindGameObjectsWithTag("Player");
     }
 
     // Update is called once per frame
@@ -129,11 +135,22 @@ public class MeleeEnemyBehavior : MonoBehaviour
     private void StartMeleeAttack()
     {
         isAttacking = true;
+        Vector3 closerPlayerPosition = new Vector3(0,0,0);
+        float distance = Mathf.Infinity;
 
-        // If you have an animation, play it here
-        // animator.SetTrigger("Attack");
-        GameObject GO = Instantiate(meleAttackPrefab);
-        GO.transform.position = gameObject.transform.position;
+        for(int i = 0; i < playerList.Length; i++)
+        {
+            if(Vector3.Distance(playerList[i].transform.position, gameObject.transform.position) < distance)
+            {
+                closerPlayerPosition = playerList[i].transform.position;
+                distance = Vector3.Distance(playerList[i].transform.position, gameObject.transform.position);
+            }
+        }
+
+        Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
+
+        internalMeleeAttackObject = Instantiate(meleeAttackPrefab);
+        internalMeleeAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
 
         attackTimer = attackDuration;
     }
@@ -141,6 +158,14 @@ public class MeleeEnemyBehavior : MonoBehaviour
     private void EndMeleeAttack()
     {
         isAttacking = false;
+
+        //
+
+        if(internalMeleeAttackObject != null) // TODO Add to pool
+        {
+            DestroyObject(internalMeleeAttackObject);
+        }
+
         cooldownTimer = cooldownDuration;
     }
 }
