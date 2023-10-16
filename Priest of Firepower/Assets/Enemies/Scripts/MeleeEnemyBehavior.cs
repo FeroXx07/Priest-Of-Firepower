@@ -10,11 +10,20 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
     NavMeshAgent agent;
 
-    EnemyData enemyData;
+    HealthSystem enemyData;
 
     Collider2D collider;
 
+    [SerializeField]
+    GameObject meleAttackPrefab;
+
     float timeRemaining = 3f;
+
+    public float attackDuration = 0.5f;
+    public float cooldownDuration = 1.5f;
+    private bool isAttacking = false;
+    private float attackTimer = 0f;
+    private float cooldownTimer = 0f;
 
     enum meleeEnemyState
     {
@@ -30,7 +39,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        enemyData = GetComponent<EnemyData>();
+        enemyData = GetComponent<HealthSystem>();
         target = GameObject.Find("Player").transform;
         agent = GetComponent<NavMeshAgent>();
         agent.updateRotation = false;
@@ -41,7 +50,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(enemyData.currentLife <= 0)
+        if(enemyData.Health <= 0)
         {
             enemyState = meleeEnemyState.DIE;
         }
@@ -71,8 +80,27 @@ public class MeleeEnemyBehavior : MonoBehaviour
             case meleeEnemyState.ATTACK:
                 //Debug.Log("Enemy attacks");
                 agent.isStopped = true;
+
+                if (!isAttacking && cooldownTimer <= 0f)
+                {
+                    StartMeleeAttack();
+                }
+
+                if (isAttacking)
+                {
+                    attackTimer -= Time.deltaTime;
+                    if (attackTimer <= 0f)
+                    {
+                        EndMeleeAttack();
+                    }
+                }
+                else if (cooldownTimer > 0f)
+                {
+                    cooldownTimer -= Time.deltaTime;
+                }
+
                 // For example: Perform attack, reduce player health, animation sound and particles
-                if(Vector3.Distance(target.position, this.transform.position) > 2)
+                if (Vector3.Distance(target.position, this.transform.position) > 2)
                 {
                     enemyState = meleeEnemyState.CHASE;                    
                 }
@@ -96,5 +124,23 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 agent.isStopped = true;
                 break;
         }
+    }
+
+    private void StartMeleeAttack()
+    {
+        isAttacking = true;
+
+        // If you have an animation, play it here
+        // animator.SetTrigger("Attack");
+        GameObject GO = Instantiate(meleAttackPrefab);
+        GO.transform.position = gameObject.transform.position;
+
+        attackTimer = attackDuration;
+    }
+
+    private void EndMeleeAttack()
+    {
+        isAttacking = false;
+        cooldownTimer = cooldownDuration;
     }
 }
