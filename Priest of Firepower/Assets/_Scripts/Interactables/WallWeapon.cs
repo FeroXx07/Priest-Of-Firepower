@@ -16,6 +16,8 @@ public class WallWeapon : MonoBehaviour, IInteractable
     private void OnEnable()
     {
         timer = InteractionTime;
+        Weapon wp = weapon.GetComponent<Weapon>(); 
+        message = "Hold F to buy " + wp.data._name +" [" + wp.data.price.ToString()+"]";
         interactionPromptUI.Display(message);
         EnablePromptUI(false);
     }

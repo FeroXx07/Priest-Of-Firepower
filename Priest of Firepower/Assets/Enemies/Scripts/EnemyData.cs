@@ -22,9 +22,4 @@ public class EnemyData : MonoBehaviour
     {
         
     }
-
-    public void ApplyDamageToEnemy(int damageDealed)
-    {
-        currentLife -= damageDealed;
-    }
 }

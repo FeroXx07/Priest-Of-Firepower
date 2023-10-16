@@ -7,6 +7,7 @@ public class WeaponData : ScriptableObject
 {
     [Header("Info")]
     public string _name;
+    public int price;
 
     [Header("Shooting")]
     public float range;

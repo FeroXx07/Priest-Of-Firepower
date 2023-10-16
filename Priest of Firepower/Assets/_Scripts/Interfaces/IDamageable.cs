@@ -10,7 +10,7 @@ public interface IDamageable
     event Action<GameObject> onDamageTaken;
 
     LayerMask layers { get; set; }
-    float Health { get; set; }    
+    int Health { get; set; }    
     void TakeDamage(IDamageDealer damageDealer, Vector3 dir);
     void OnDamageableDestroyed();
 }

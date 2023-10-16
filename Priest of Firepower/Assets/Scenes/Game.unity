@@ -6278,6 +6278,7 @@ GameObject:
   - component: {fileID: 555876511}
   - component: {fileID: 555876512}
   - component: {fileID: 555876513}
+  - component: {fileID: 555876514}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -6475,6 +6476,22 @@ MonoBehaviour:
   - {fileID: 654097588}
   weapons: []
   switchTime: 0.1
+--- !u!114 &555876514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 555876504}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4152c504c31e8548a451fc8d636155b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  health: 0
+  layer:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!1 &646839817
 GameObject:
   m_ObjectHideFlags: 0
@@ -8012,8 +8029,9 @@ GameObject:
   - component: {fileID: 1338995949}
   - component: {fileID: 1338995950}
   - component: {fileID: 1338995951}
+  - component: {fileID: 1338995952}
   m_Layer: 7
-  m_Name: Enemy
+  m_Name: Enemy_Skull
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8082,12 +8100,12 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 0.59720945, g: 0, b: 1, a: 1}
+  m_Sprite: {fileID: 21300000, guid: a8fa905d4811be8478c59742262eb7e5, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 0.16, y: 0.16}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -8151,7 +8169,7 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.5
+  m_Radius: 0.3
 --- !u!50 &1338995951
 Rigidbody2D:
   serializedVersion: 4
@@ -8173,6 +8191,26 @@ Rigidbody2D:
   m_SleepingMode: 0
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!95 &1338995952
+Animator:
+  serializedVersion: 4
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338995943}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: d12360eade4ce254f8d41145fee382fd, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &1575614001
 GameObject:
   m_ObjectHideFlags: 0
@@ -8681,11 +8719,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7191902583211532009, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.4530001
+      value: 1.5
       objectReference: {fileID: 0}
     - target: {fileID: 7191902583211532009, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2.438
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 7191902583211532009, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
       propertyPath: m_LocalPosition.z
@@ -8718,6 +8756,18 @@ PrefabInstance:
     - target: {fileID: 7191902583211532009, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7191902583211532011, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7191902583211532011, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7191902583211532011, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
+      propertyPath: m_Color.r
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7191902583211532012, guid: 853c22396ddfe154bb2bf6171695b0ea, type: 3}
       propertyPath: m_Name

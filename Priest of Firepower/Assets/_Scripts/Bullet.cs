@@ -44,24 +44,10 @@ public class Bullet : MonoBehaviour, IDamageDealer
     private void OnTriggerEnter2D(Collider2D collision)
     {
         CollisionHandeler(collision.gameObject);
-
-        EnemyData enemyData = collision.gameObject.GetComponent<EnemyData>();
-
-        if (enemyData != null)
-        {
-            enemyData.ApplyDamageToEnemy(Damage);
-        }
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
         CollisionHandeler(collision.gameObject);
-
-        EnemyData enemyData = collision.gameObject.GetComponent<EnemyData>();
-
-        if(enemyData != null)
-        {
-            enemyData.ApplyDamageToEnemy(Damage);
-        }
     }
     #endregion
 }

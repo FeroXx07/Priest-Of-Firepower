@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
   m_Name: M14
   m_EditorClassIdentifier: 
-  name: M14
+  _name: Ak74
+  price: 500
   range: 5
   damage: 10
   fireRate: 0.1
