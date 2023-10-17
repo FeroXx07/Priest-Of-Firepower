@@ -38,18 +38,21 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: Enviroment
+    uniqueID: 3632712897
+    locked: 0
   - name: Default
     uniqueID: 0
-    locked: 0
-  - name: Player
-    uniqueID: 1563217107
     locked: 0
   - name: Enemies
     uniqueID: 3193926919
     locked: 0
-  - name: Enviroment
-    uniqueID: 3632712897
-    locked: 0
   - name: VFX
     uniqueID: 84494373
+    locked: 0
+  - name: Player
+    uniqueID: 1563217107
+    locked: 0
+  - name: UI
+    uniqueID: 2450647839
     locked: 0

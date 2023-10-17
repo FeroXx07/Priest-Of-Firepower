@@ -12,6 +12,7 @@ public class Chest : MonoBehaviour, IInteractable
     [SerializeField] VisualEffect vfx;
     [SerializeField] List<Sprite> sprites;
     [SerializeField] List<GameObject> weapons;
+    [SerializeField] GameObject obtainedWeapon;
     GameObject weapon;
     float timer;
     public string Prompt => message;
@@ -27,6 +28,7 @@ public class Chest : MonoBehaviour, IInteractable
         GetComponent<SpriteRenderer>().sprite = sprites[0];
         EnablePromptUI(false);
         vfx.Stop();
+        obtainedWeapon.SetActive(false);
     }
 
     public void EnablePromptUI(bool show)
@@ -41,18 +43,18 @@ public class Chest : MonoBehaviour, IInteractable
         {
             if(!openChest)
             {
-                Debug.Log(Prompt);
                 //TODO check update points
                 timer = InteractionTime;
-                EnablePromptUI(false);
+
                 Debug.Log("Open chest");
 
                 OpenChest();
             }
             else
             {
-                if ( !randomizingWeapon && interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                if (!randomizingWeapon && interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                 {
+                    
                     switcher.ChangeWeapon(weapon);
                     CloseChest();
                     timer = InteractionTime;                                     
@@ -64,6 +66,7 @@ public class Chest : MonoBehaviour, IInteractable
     {
         GetComponent<SpriteRenderer>().sprite = sprites[1];
         StartCoroutine(WeaponRulette());
+        EnablePromptUI(false);
         openChest = true;
     }
 
@@ -76,6 +79,7 @@ public class Chest : MonoBehaviour, IInteractable
         randomizingWeapon = false;
         openChest = false;
         weapon = null;
+        obtainedWeapon.SetActive(false);
     }
 
     IEnumerator WeaponRulette()
@@ -86,6 +90,7 @@ public class Chest : MonoBehaviour, IInteractable
 
         weapon = GetRandomWeapon();
 
+        obtainedWeapon.GetComponent<SpriteRenderer>().sprite = weapon.GetComponent<Weapon>().data.sprite;
 
         yield return new WaitForSeconds(5);
 
@@ -96,6 +101,8 @@ public class Chest : MonoBehaviour, IInteractable
         interactionPromptUI.Display("F to Pickup");
 
         EnablePromptUI(true);
+
+        obtainedWeapon.SetActive(true);
 
         yield return new WaitForSeconds(9);
         CloseChest();

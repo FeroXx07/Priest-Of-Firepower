@@ -10,6 +10,7 @@ public class WallWeapon : MonoBehaviour, IInteractable
     [SerializeField] GameObject weapon;
     [SerializeField] int cost;
     [SerializeField] InteractionPromptUI interactionPromptUI;
+    private SpriteRenderer wallWeaponImg;
     float timer;
     public string Prompt => message;
     public float InteractionTime => timeToInteract;
@@ -20,6 +21,8 @@ public class WallWeapon : MonoBehaviour, IInteractable
         message = "Hold F to buy " + wp.data._name +" [" + wp.data.price.ToString()+"]";
         interactionPromptUI.Display(message);
         EnablePromptUI(false);
+        wallWeaponImg = GetComponent<SpriteRenderer>();
+        wallWeaponImg.sprite = wp.data.sprite;
     }
     public void Interact(Interactor interactor)
     {
