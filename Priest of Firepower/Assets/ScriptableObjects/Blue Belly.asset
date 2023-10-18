@@ -10,19 +10,19 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
-  m_Name: M14
+  m_Name: Blue Belly
   m_EditorClassIdentifier: 
-  _name: M14
+  _name: Blue Belly
   price: 500
-  range: 14
-  damage: 10
-  fireRate: 0.1
+  range: 10
+  damage: 4
+  fireRate: 0.3
   bulletSpeed: 20
   dispersion: 10
-  currentAmmo: 10
-  currentMaxAmmo: 155
-  maxAmmo: 155
-  magazineSize: 31
+  currentAmmo: 17
+  currentMaxAmmo: 120
+  maxAmmo: 160
+  magazineSize: 20
   reloadSpeed: 0.3
   Reloading: 0
-  sprite: {fileID: -1844164964, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
+  sprite: {fileID: 1915439828, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}

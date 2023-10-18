@@ -121,4 +121,12 @@ public class WeaponSwitcher : MonoBehaviour
     {
         //TODO add sound 
     }
+    public Weapon GetSelectedWeapon()
+    {
+        Weapon wp = slots[selectedWeapon].weapon.GetComponent<Weapon>();
+        if (wp != null)
+            return wp;
+
+        return null;
+    }
 }

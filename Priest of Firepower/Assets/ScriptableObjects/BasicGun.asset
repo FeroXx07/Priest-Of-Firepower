@@ -12,14 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
   m_Name: BasicGun
   m_EditorClassIdentifier: 
-  name: Basic Gun
-  range: 3
+  _name: 
+  price: 0
+  range: 5
   damage: 5
   fireRate: 0.05
   bulletSpeed: 25
   dispersion: 10
-  currentAmmo: 8
-  currentMaxAmmo: 64
+  currentAmmo: 13
+  currentMaxAmmo: 80
   maxAmmo: 80
   magazineSize: 16
   reloadSpeed: 0.5

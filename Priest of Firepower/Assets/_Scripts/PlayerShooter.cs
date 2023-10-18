@@ -3,14 +3,16 @@ using UnityEngine;
 
 public class PlayerShooter : MonoBehaviour
 {
-    [SerializeField] float range;
+
     [SerializeField] LineRenderer shootMarker;
+    [SerializeField] LayerMask layerMask;
     Transform weaponHolder;
     [SerializeField] float weaponOffset = .5f;
     public static Action OnShoot;
     public static Action OnReload;
     public static Action<bool> OnFlip;
-    bool Flipped;
+    private bool Flipped;
+    private float range = 1;
     void Start()
     {
         shootMarker.positionCount = 2;
@@ -27,9 +29,18 @@ public class PlayerShooter : MonoBehaviour
         mousePos.z = 0;
 
         Vector3 shootDir = (mousePos - transform.position).normalized;
-        Vector3 lineEnd = transform.position + shootDir * range;
 
-        UpdateShootMarker(lineEnd);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, shootDir, range, layerMask);
+        if (hit)
+        {
+            UpdateShootMarker(hit.point);
+        }
+        else
+        {
+            Vector3 lineEnd = transform.position + shootDir * range;
+
+            UpdateShootMarker(lineEnd);
+        }
 
         if (shootDir.x < 0)
             Flip(true);
@@ -83,6 +94,9 @@ public class PlayerShooter : MonoBehaviour
     void ChangeHolder(Transform holder)
     {
         weaponHolder = holder;
+        Weapon wp = holder.GetComponentInChildren<Weapon>();
+        if(wp != null)
+            range = wp.data.range;
     }
 }
 

@@ -118,4 +118,5 @@ public class Weapon : MonoBehaviour
     {
         //VFX, sound
     }
+
 }
