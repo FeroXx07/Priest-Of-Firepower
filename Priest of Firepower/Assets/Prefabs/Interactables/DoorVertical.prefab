@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 4979815464256782573}
   - component: {fileID: 4979815464256782570}
   - component: {fileID: 4979815464256782571}
+  - component: {fileID: 7346409337250888134}
   m_Layer: 6
   m_Name: DoorVertical
   m_TagString: Untagged
@@ -99,6 +100,34 @@ MonoBehaviour:
   message: Open the door[cost:750]
   time: 0
   interactionPromptUI: {fileID: 4260816170529418465}
+  audioClip: {fileID: 0}
+--- !u!114 &7346409337250888134
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4979815464256782568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7db70e0ea77f5ac47a8f4565a9406397, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_ShadowGroup: 0
+  m_ComponentVersion: 1
+  m_HasRenderer: 0
+  m_UseRendererSilhouette: 1
+  m_CastsShadows: 1
+  m_SelfShadows: 0
+  m_ApplyToSortingLayers: c1cc86d80000000007755fbe25480905d3cc2c5d1feb1192
+  m_ShapePath:
+  - {x: -0.25, y: -1, z: 0}
+  - {x: -0.25, y: 1, z: 0}
+  - {x: 0.25, y: 1, z: 0}
+  - {x: 0.25, y: -1, z: 0}
+  m_ShapePathHash: 0
+  m_Mesh: {fileID: 0}
+  m_InstanceId: -191540
 --- !u!1 &4979815464292146572
 GameObject:
   m_ObjectHideFlags: 0
