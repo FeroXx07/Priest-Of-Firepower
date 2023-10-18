@@ -154,9 +154,14 @@ MonoBehaviour:
   interactionPromptUI: {fileID: 7236965091297131869}
   audioClip: {fileID: 0}
   vfx: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
-  sprites: []
+  sprites:
+  - {fileID: 21300000, guid: 9dbf653197610f846a4f4c5c80f52284, type: 3}
+  - {fileID: 21300000, guid: 10a8e9466879c1d4bb9a22a96508a120, type: 3}
   weapons:
   - {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
+  - {fileID: 2627832369091270297, guid: 19628ac0d74ae464481cc59a138dc5c2, type: 3}
+  - {fileID: 7817667860927790107, guid: 5e41785d45510a0479517d35bc8a77e9, type: 3}
+  - {fileID: 1283569598023597542, guid: db663414989952d41a6d60db15d7ce84, type: 3}
   - {fileID: 1681268591073965709, guid: 3480f4e7954274743a02daa813d7098d, type: 3}
   obtainedWeapon: {fileID: 2227612726843118593}
 --- !u!1 &2227612726843118593
