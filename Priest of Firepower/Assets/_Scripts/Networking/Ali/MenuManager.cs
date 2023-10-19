@@ -1,11 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
-public class LobbyManager : MonoBehaviour
+public class MenuManager : MonoBehaviour
 {
-    const string _serverSceneName = "Ali_Server";
-    const string _clientSceneName = "Ali_Client";
+    public const string _serverSceneName = "Ali_CreateGame";
+    public const string _clientSceneName = "Ali_JoinGame";
+
     static bool loaded;
 
     public static void Load()
@@ -20,6 +23,22 @@ public class LobbyManager : MonoBehaviour
             _clientSceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
 
         loaded = true;
+    }
+
+    public void LoadLobby(string arg)
+    {
+        Scene sceneToUnload = SceneManager.GetActiveScene();
+
+        if (arg.Equals("host"))  {
+            sceneToUnload = SceneManager.GetSceneByName(_clientSceneName);
+        }
+        else if (arg.Equals("client"))   {
+            sceneToUnload = SceneManager.GetSceneByName(_serverSceneName);
+        }
+
+        if (sceneToUnload.isLoaded)  {
+            SceneManager.UnloadSceneAsync(sceneToUnload);
+        }
     }
 
     private void Start()

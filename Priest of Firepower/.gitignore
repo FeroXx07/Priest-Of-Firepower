@@ -3,8 +3,6 @@
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
 
-../Priest of Firepower-Junction/*
-
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/

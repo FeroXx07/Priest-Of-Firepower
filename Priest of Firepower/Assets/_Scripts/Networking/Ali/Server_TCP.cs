@@ -1,13 +1,14 @@
+using ClientA;
 using ServerAli;
-using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
+using UnityEditor.PackageManager;
 using UnityEngine;
-using UnityEngine.Events;
 
-public class Server_TCP : MonoBehaviour
+namespace ServerAli
 {
     #region Theory
     /* The listen backlog is a queue which is used by the operating system to store connections 
@@ -19,133 +20,83 @@ public class Server_TCP : MonoBehaviour
      * to the maximum number of concurrent connections that your server can maintain. */
     #endregion
 
-    #region Fields
-    private Socket _socket;
-    private IPEndPoint _iPEndPointlocal;
-
-    private IPAddress _address = IPAddress.Parse("127.0.0.1"); 
-    [SerializeField] private int _port = 61111;
-    [SerializeField] private int _backlogSize = 1;
-
-    private List<Thread> _activeThreads = new List<Thread>();
-    private List<Socket> _clientSockets = new List<Socket>();
-
-    private Thread _listeningThread;
-
-    public string serverName;
-    #endregion
-
-    #region Events
-    public Action<string> OnServerIPAssignated;
-    public Action<Socket> OnNewConnection;
-    #endregion
-
-    #region Initializers and Cleanup
-    private void Awake()
+    public class Server_TCP : Socket_Connection
     {
-        // Init
-        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        _iPEndPointlocal = new IPEndPoint(_address, _port);
-
-        // Bind
-        Utilities.BindSocket(_socket, _iPEndPointlocal);
-
-        // ListenForConnections config
-        _socket.Blocking = false;
-        _socket.Listen(_backlogSize);
-        
-        _listeningThread = null;
-    }
-
-    private void OnDisable()
-    {
-        Debug.Log("SERVER TCP: Cleanup client sockets");
-        foreach (var socket in _clientSockets)
+        [SerializeField] private int _backlogSize = 1;
+        Thread _listeningThread;
+        private void Awake()
         {
-            Debug.Log($"SERVER TCP Closing connection of socket: {socket.LocalEndPoint.ToString()}");
+            _port = 61111;
+        }
+
+        public void TriggerCreateGame()
+        {
+            InitSocket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp, () => Utilities.BindSocket(_localSocket, _iPEndPointlocal));
+
+            // ListenForConnections config
+            _localSocket.Blocking = false;
+            _localSocket.Listen(_backlogSize);
+
+            StopListeningConnections();
+
+            onRemoteIPAssignated?.Invoke(_address.ToString());
+
+            // Start an asynchronous/parallel/multi-threaded socket to listen for connections
+            _listeningThread = new Thread(() => ListenForConnections(ProcessAccept));
+            _listeningThread.Name = "_listeningThread";
+            _listeningThread.Start();
+            _activeThreads.Add(_listeningThread);
+        }
+
+        #region AwaitConnections
+        void StopListeningConnections()
+        {
+            if (_listeningThread == null)
+                return;
+
+            _activeThreads.Remove(_listeningThread);
+            _listeningThread.Abort();
+            _listeningThread = null;
+        }
+
+        void ProcessAccept(Socket client)
+        {
+            IPEndPoint clientep = (IPEndPoint)client.RemoteEndPoint;
+            Debug.Log("Connected to client: " + clientep.ToString());
+            _connectedSockets.Add(client);
+
+            // Respond with my server name
+            byte[] data = new byte[100];
+            string welcome = $"Welcome to my server {_socketName}";
+            data = Encoding.ASCII.GetBytes(welcome);
+            client.Send(data, data.Length,
+                              SocketFlags.None);
+
+            // Create a new client thread
+            Thread clientThread = new Thread(() => ListenData(client, null, HandleDisconnection));
+            clientThread.Name = "clientThread_" + clientep.ToString();
+            clientThread.Start();
+            _activeThreads.Add(clientThread);
+
+            OnNewConnection.Invoke(client);
+        }
+
+        protected override void HandleDisconnection(Socket socket)
+        {
+            string threadName = "clientThread_" + ((IPEndPoint)socket.RemoteEndPoint).ToString();
+            Thread threadToStop = _activeThreads.Find(x => x.Name == threadName);
+            _activeThreads.Remove(threadToStop);
+            _connectedSockets.Remove(socket);
+            threadToStop.Abort();
             Utilities.CloseConnection(socket);
         }
+        #endregion
 
-        _clientSockets.Clear();
-
-        Debug.Log("SERVER TCP: Cleanup active Threads ");
-        foreach (var thread in _activeThreads)
+        #region Support func
+        public List<Socket> GetAciveClients()
         {
-            Debug.Log($"SERVER TCP: Aborting thread: {thread.Name}");
-            thread.Abort();
+            return _connectedSockets;
         }
-
-        _activeThreads.Clear();
+        #endregion
     }
-    #endregion
-
-    #region Core func
-    public void TriggerCreateGame()
-    {
-        OnServerIPAssignated?.Invoke(_address.ToString());
-
-        if (_listeningThread != null)
-            return;
-
-        // Start an asynchronous/parallel/multi-threaded socket to listen for connections
-        _listeningThread = new Thread(ListenForConnections);
-        _listeningThread.Name = "_listeningThread";
-        _listeningThread.Start();
-        _activeThreads.Add(_listeningThread);
-    }
-
-    void StopListeningConnections()
-    {
-        _activeThreads.Remove(_listeningThread);
-        _listeningThread.Abort();
-        _listeningThread = null;
-    }
-
-    void ListenForConnections()
-    {
-        while (true)  {
-            try {
-                Debug.Log("SERVER TCP: Waiting for clients...");
-                if (_socket.Poll(100000, SelectMode.SelectRead)) //check if there's data available for reading on the socket without blocking
-                {
-                    // Check if there's data available for reading (100000 microseconds = 100 milliseconds)
-                    Socket client = _socket.Accept();// Contrary to socket.Accept(), async server socket.BeginAccept() starts a new thread for each client socket assigning a new port
-
-                    if (client != null && client.Connected)
-                        ProcessAccept(client);
-                }
-                else
-                {
-                    // No incoming connections, continue waiting
-                }
-            }
-            catch (SocketException se)
-            {
-                if (se.SocketErrorCode == SocketError.WouldBlock || se.SocketErrorCode == SocketError.IOPending)
-                {
-                    // Non-blocking operation would block, continue waiting
-                }
-                else
-                {
-                    Debug.Log("SERVER TCP: Connection failed.. trying again... " + se.ToString());
-                }
-            }
-            catch (System.Exception e)  {
-                Debug.Log("SERVER TCP: Connection failed.. trying again... " + e.ToString());
-            }
-        }
-    }
-
-    void ProcessAccept(Socket client)
-    {
-        IPEndPoint clientep = (IPEndPoint)client.RemoteEndPoint;
-        Debug.Log("SERVER TCP: Connected to client: " + clientep.ToString());
-
-        _clientSockets.Add(client);
-
-        // Create a new thread
-
-        OnNewConnection.Invoke(client);
-    }
-    #endregion
 }

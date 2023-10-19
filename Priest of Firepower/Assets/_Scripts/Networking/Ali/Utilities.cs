@@ -26,10 +26,9 @@ namespace ServerAli
         {
             try
             {
-                if (socket != null)
+                if (socket != null && socket.Connected)
                 {
                     socket.Shutdown(SocketShutdown.Both); // Disable both sending and receiving on this Socket.
-                    socket = null;
                 }
             }
             catch (System.Exception e)
@@ -40,6 +39,7 @@ namespace ServerAli
             {
                 socket.Close(); // Closes the Socket connection and releases all associated resources.
                 socket.Dispose(); //Releases all resources used by the current instance of the Socket class.
+                socket = null;
             }
         }
 
