@@ -23,8 +23,8 @@ public class MeleeEnemyBehavior : MonoBehaviour
     public float cooldownDuration = 1.5f;
     public float attackOffset = 1.0f;
     private bool isAttacking = false;
-    private float attackTimer = 0f;
-    private float cooldownTimer = 0f;
+    private float attackTimer = 0.1f;
+    private float cooldownTimer = 1f;
 
     private GameObject[] playerList;
     private GameObject internalMeleeAttackObject;
