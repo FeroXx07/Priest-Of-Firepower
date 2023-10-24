@@ -10,7 +10,7 @@ public interface Br_IServer
     public static Action<string> OnSendMessageToClient;
     public static Action<string> OnSendMessageToServer;
 
-    public static Action<Br_ServerInfoPackaging.ChatMessage> OnReceiveMessageFromClient;
+    public static Action<string> OnReceiveMessageFromClient;
     public static Action<string> OnReceiveMessageFromServer;
 
 }

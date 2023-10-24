@@ -295,7 +295,7 @@ public class Br_TCP_Server : MonoBehaviour
            
             case Br_ServerInfoPackaging.InfoPackageType.CLIENT_INFO:
                 Br_ServerInfoPackaging.ClientInfo clientInfo = Br_ServerInfoPackaging.DeserializeData<Br_ServerInfoPackaging.ClientInfo>(data);
-                HandleClientInfo( clientInfo);
+                HandleClientInfo(0, clientInfo);
                 break;
             
             case Br_ServerInfoPackaging.InfoPackageType.CHAT_MESSAGE:
@@ -319,7 +319,7 @@ public class Br_TCP_Server : MonoBehaviour
     void HandleChatMessages(Br_ServerInfoPackaging.ChatMessage chatMessage)
     {
         print("Received Data: " + chatMessage.message);
-        Br_IServer.OnReceiveMessageFromClient?.Invoke(chatMessage);
+        Br_IServer.OnReceiveMessageFromClient?.Invoke(chatMessage.message);
 
         //redistribute to other clients
         RedistributeMessageFromClient(chatMessage.user.socket, chatMessage.message);

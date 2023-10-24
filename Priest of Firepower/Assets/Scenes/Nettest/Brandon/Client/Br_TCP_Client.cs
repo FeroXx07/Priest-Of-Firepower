@@ -29,7 +29,7 @@ public class Br_TCP_Client : MonoBehaviour
     string username;
     string serverIp;
     private static Br_TCP_Client tcpClientInstance;
-    //bool connectedToServer = false;
+    bool connectedToServer = false;
 
 
     private void Awake()
