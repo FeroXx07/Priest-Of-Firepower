@@ -39,7 +39,7 @@ public class Br_Hub_Chat : MonoBehaviour
         if (inputFieldText.text != "")
         {
             GameObject chatMessage = Instantiate(chatMessagePrefab);
-            if (server != null) chatMessage.GetComponent<TextMeshProUGUI>().text = "Server: " + inputFieldText.text;
+            if (server != null) chatMessage.GetComponent<TextMeshProUGUI>().text = inputFieldText.text;
             if (client != null) chatMessage.GetComponent<TextMeshProUGUI>().text = inputFieldText.text;
 
 

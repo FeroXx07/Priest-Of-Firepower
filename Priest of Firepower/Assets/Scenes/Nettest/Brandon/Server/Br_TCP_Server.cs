@@ -29,9 +29,12 @@ public class Br_TCP_Server : MonoBehaviour
     private static Br_TCP_Server tcpServerInstance;
 
     [SerializeField]
-    List<Socket> connectedClients = new List<Socket>();
+    List<Br_ServerInfoPackaging.ClientInfo> connectedClients = new List<Br_ServerInfoPackaging.ClientInfo>();
     [SerializeField]
     List<string> connectedClientsStr = new List<string>();
+
+    //this should be a single instance with the device info as if it was a client
+    Br_ServerInfoPackaging.ClientInfo serverClient = new Br_ServerInfoPackaging.ClientInfo();
     private void Awake()
     {
 
@@ -119,6 +122,7 @@ public class Br_TCP_Server : MonoBehaviour
         
         try
         {
+            //  "create" server
             print("TCP: Starting Server.");
             //Create and bind socket so that nobody can use it until unbinding
             newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -126,6 +130,9 @@ public class Br_TCP_Server : MonoBehaviour
             newSocket.Bind(endPoint);
             newSocket.Listen(10);
             print("TCP: Waiting to receive datagrams from client...");
+
+            serverClient.socket = newSocket;
+            serverClient.username = "Server";
 
             //blocks the program until receiving a client connection attempt
             var client = newSocket.BeginAccept(new AsyncCallback(AcceptClient), null);
@@ -167,7 +174,8 @@ public class Br_TCP_Server : MonoBehaviour
         {
             Socket clientSocket = (Socket)ar.AsyncState;
             EndPoint clientEp = clientSocket.RemoteEndPoint;
-
+            Br_ServerInfoPackaging.ClientInfo refClient = new Br_ServerInfoPackaging.ClientInfo();
+            ref Br_ServerInfoPackaging.ClientInfo incomingClient = ref refClient;
 
             if (serverActive)
             {
@@ -176,26 +184,51 @@ public class Br_TCP_Server : MonoBehaviour
 
                 if (bytesRead > 0)
                 {
+                    bool clientAlreadyConnected = false;
+                    int clientIndex = 0;
                     //check if client is new
-                    if (!connectedClients.Contains(clientSocket))
+                    for (int i = 0; i < connectedClients.Count; i++)
                     {
-                        connectedClients.Add(clientSocket);
-                        connectedClientsStr.Add(clientSocket.RemoteEndPoint.ToString());
+                        if (connectedClients[i].socket == clientSocket)
+                        {
+                            incomingClient = connectedClients[i];
+                            clientAlreadyConnected = true;
+                            clientIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    if (!clientAlreadyConnected)
+                    {
+                        //create new client data contaniner
+                        Br_ServerInfoPackaging.ClientInfo newClient = new Br_ServerInfoPackaging.ClientInfo();
+                        newClient.socket = clientSocket;
+                        incomingClient = newClient;
+
+                        connectedClients.Add(newClient);
+                        connectedClientsStr.Add(newClient.socket.RemoteEndPoint.ToString());
+                        clientIndex = connectedClients.Count - 1;
 
                         //send confirmation message that client entered server
-                        string response = "Welcome to " + roomName;
-                        print("TCP: Sending response: " + response);
+                        Br_ServerInfoPackaging.ChatMessage welcomeMessage = new Br_ServerInfoPackaging.ChatMessage();
+                        welcomeMessage.user = serverClient;
+                        welcomeMessage.message = "Welcome to " + roomName;
+                        byte[] responseBytes = PackData(welcomeMessage, Br_ServerInfoPackaging.InfoPackageType.CHAT_MESSAGE);
 
-                        byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
+                        //string response = "Welcome to " + roomName;
+                        //print("TCP: Sending response: " + response);
+                        //byte[] responseBytes = System.Text.Encoding.UTF8.GetBytes(response);
+
                         clientSocket.Send(responseBytes);
                     }
+                    
 
 
-                    //copy data from general user data buffer to single data buffer to use
+                    //copy data from general user data buffer [clientData] to single data buffer [receivedData] to use
                     Array.Copy(clientData, receivedData, bytesRead);
 
                     //post function to be executed in main thread
-                    synchronizationContext.Post(_ => HandleReceivedData(clientSocket, receivedData), null);                    
+                    synchronizationContext.Post(_ => HandleReceivedData(clientIndex, receivedData), null);                    
 
                     //keep receiving data from the accepted client
                     clientSocket.BeginReceive(clientData, 0, clientData.Length, SocketFlags.None, new AsyncCallback(ReceiveMessage), clientSocket);
@@ -240,16 +273,59 @@ public class Br_TCP_Server : MonoBehaviour
     //Executed in main thread
 
     //Multiuse that acts when data is received
-    void HandleReceivedData(Socket sender, byte[] msg)
+    void HandleReceivedData(int clientIndex, byte[] data)
     {
-        string message = System.Text.Encoding.UTF8.GetString(msg);
-        print("Received Data: " + message);
+        //string message = System.Text.Encoding.UTF8.GetString(data);
+        //print("Received Data: " + message);
+        //Br_IServer.OnReceiveMessageFromClient?.Invoke(message);
 
-        Br_IServer.OnReceiveMessageFromClient?.Invoke(message);
+        ////redistribute to other clients
+        //RedistributeMessageFromClient(sender, message);
+
+        
+        //Unpack Data
+
+        Br_ServerInfoPackaging.InfoPackage infoPackage = UnpackData<Br_ServerInfoPackaging.InfoPackage>(data);
+
+        switch (infoPackage.infoType)
+        {
+            case Br_ServerInfoPackaging.InfoPackageType.SERVER_INFO:
+                //Br_ServerInfoPackaging.ServerInfo serverInfo = Br_ServerInfoPackaging.DeserializeData<Br_ServerInfoPackaging.ServerInfo>(data);
+                break;
+           
+            case Br_ServerInfoPackaging.InfoPackageType.CLIENT_INFO:
+                Br_ServerInfoPackaging.ClientInfo clientInfo = Br_ServerInfoPackaging.DeserializeData<Br_ServerInfoPackaging.ClientInfo>(data);
+                HandleClientInfo( clientInfo);
+                break;
+            
+            case Br_ServerInfoPackaging.InfoPackageType.CHAT_MESSAGE:
+                Br_ServerInfoPackaging.ChatMessage chatMessage = Br_ServerInfoPackaging.DeserializeData<Br_ServerInfoPackaging.ChatMessage>(data);
+                HandleChatMessages(chatMessage);
+                break;
+            default:
+                break;
+        }
+
+        //Read Header
+
+        //Work on the data depending on its type
+    }
+
+    void HandleClientInfo(int clientIndex, Br_ServerInfoPackaging.ClientInfo clientInfo)
+    {
+
+    }
+
+    void HandleChatMessages(Br_ServerInfoPackaging.ChatMessage chatMessage)
+    {
+        print("Received Data: " + chatMessage.message);
+        Br_IServer.OnReceiveMessageFromClient?.Invoke(chatMessage);
 
         //redistribute to other clients
-        RedistributeMessageFromClient(sender, message);
+        RedistributeMessageFromClient(chatMessage.user.socket, chatMessage.message);
     }
+
+
 
     private void SendMessageToClient(string message)
     {
@@ -258,7 +334,7 @@ public class Br_TCP_Server : MonoBehaviour
         for (int i = 0; i < connectedClients.Count; i++)
         {
             print("sending message [" + message + "] to: " + connectedClients[i]);
-            connectedClients[i].Send(responseBytes);
+            connectedClients[i].socket.Send(responseBytes);
 
         }
     }
@@ -269,12 +345,23 @@ public class Br_TCP_Server : MonoBehaviour
 
         for (int i = 0; i < connectedClients.Count; i++)
         {
-            if (connectedClients[i] != originalSender)
+            if (connectedClients[i].socket != originalSender)
             {
                 print("sending message [" + message + "] to: " + connectedClients[i]);
-                connectedClients[i].Send(responseBytes);
+                connectedClients[i].socket.Send(responseBytes);
             }
         }
+    }
+
+    byte[] PackData<T>(T data, Br_ServerInfoPackaging.InfoPackageType dataType)
+    {
+        return Br_ServerInfoPackaging.PackData(data, dataType);
+    }
+
+    private Br_ServerInfoPackaging.InfoPackage UnpackData<T>(byte[] data)
+    {
+        return Br_ServerInfoPackaging.UnpackData<Br_ServerInfoPackaging.InfoPackage>(data);
+
     }
 
     public void SetRoomName(string roomName)

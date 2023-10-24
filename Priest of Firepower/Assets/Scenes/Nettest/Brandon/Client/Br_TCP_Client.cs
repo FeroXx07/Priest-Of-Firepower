@@ -92,11 +92,7 @@ public class Br_TCP_Client : MonoBehaviour
             //Create and bind socket so that nobody can use it until unbinding
             newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-            string message = username + " joined.";
-
-
-            byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
-
+            //Verify server Ip Address
             IPAddress ipAddress;
             if (!IPAddress.TryParse(serverIp, out ipAddress))
             {
@@ -106,11 +102,19 @@ public class Br_TCP_Client : MonoBehaviour
             }
             print("TCP: ipAddress: " + ipAddress);
 
+            //try connect to server
             IPEndPoint serverEp = new IPEndPoint(ipAddress, serverPort);
             newSocket.Connect(serverEp);
             print("TCP: Connected to server at: " + serverEp);
 
-            SceneManager.LoadScene("BHub");
+            //send server user Info
+            Br_ServerInfoPackaging.ClientInfo clientData = new Br_ServerInfoPackaging.ClientInfo();
+            clientData.username = this.username;
+            clientData.socket = newSocket;
+            byte[] messageBytes = PackData(clientData, Br_ServerInfoPackaging.InfoPackageType.CHAT_MESSAGE);
+
+            //string message = username + " joined.";
+            //byte[] messageBytes = System.Text.Encoding.UTF8.GetBytes(message);
 
             newSocket.Send(messageBytes);
 
@@ -125,6 +129,17 @@ public class Br_TCP_Client : MonoBehaviour
         {
             Debug.Log("TCP: Connection failed.. trying again. Error: " + e);
         }
+    }
+
+    byte[] PackData<T>(T data, Br_ServerInfoPackaging.InfoPackageType dataType)
+    {
+        return Br_ServerInfoPackaging.PackData(data, dataType);
+    }
+
+    private T UnpackData<T>(byte[] data)
+    {
+        return Br_ServerInfoPackaging.UnpackData<T>(data);
+
     }
 
     void AbortConnectToServer()
@@ -147,11 +162,19 @@ public class Br_TCP_Client : MonoBehaviour
 
     void WaitForServerAnswer()
     {
+        bool connectedToServerStatus = connectedToServer;
         byte[] serverAnswerData = new byte[256];
+
+        //Wait to receive data
         int responseByteCount = newSocket.Receive(serverAnswerData);
+
         if (responseByteCount > 0)
         {
             //connectedToServer = true;
+
+            //move to Hub only if connection to server is successful
+            if (connectedToServer != connectedToServerStatus && connectedToServer == true)
+                SceneManager.LoadScene("BHub");
 
             //Announce connection to server
             synchronizationContext.Post(_ => InvokeReceiveMessageFromServer(serverAnswerData), null);

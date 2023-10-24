@@ -99,7 +99,6 @@ public class Br_UDP_Client : MonoBehaviour
 
             serverEndpoint = new IPEndPoint(ipAddress, serverPort);
 
-            SceneManager.LoadScene("BHub");
 
 
             newSocket.SendTo(messageBytes, serverEndpoint);
@@ -128,11 +127,19 @@ public class Br_UDP_Client : MonoBehaviour
     //wait for server response to our attempt at connecting
     void WaitForServerAnswer()
     {
+        bool connectedToServerStatus = connectedToServer;
         byte[] serverAnswerData = new byte[256];
+
+        //Wait to receive data
         int responseByteCount = newSocket.ReceiveFrom(serverAnswerData, serverAnswerData.Length, SocketFlags.None, ref serverEndpoint);
+
         if (responseByteCount > 0)
         {
             connectedToServer = true;
+
+            //Move to Hub only if connection to server is successful
+            if (connectedToServer != connectedToServerStatus && connectedToServer == true)
+                SceneManager.LoadScene("BHub");
 
             //Announce connection to server
             synchronizationContext.Post(_ => InvokeReceiveMessageFromServer(serverAnswerData), null);
