@@ -40,7 +40,7 @@ namespace ClientA
         private Queue<string> messageQueue = new Queue<string>();
 
         private int serverPort = 12345; // Replace with your server's port
-        private bool IsConnected = false;
+        //private bool IsConnected = false;
         #endregion
 
 
@@ -162,7 +162,7 @@ namespace ClientA
 
                 if (msg == "ok")
                 {
-                    IsConnected = true;
+                    //IsConnected = true;
 
                     //add action dispatcher for main thread
                     MainThreadDispatcher.EnqueueAction(OnConnected);

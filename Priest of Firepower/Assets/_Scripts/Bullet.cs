@@ -18,6 +18,8 @@ public class Bullet : MonoBehaviour, IDamageDealer
     #endregion
     private void DisposeGameObject()
     {
+        onDamageDealerDestroyed?.Invoke(gameObject);
+
         if (TryGetComponent(out PoolObject pool))
         {
             gameObject.SetActive(false);
@@ -30,7 +32,10 @@ public class Bullet : MonoBehaviour, IDamageDealer
         if (collision.TryGetComponent<IDamageable>(out IDamageable dmg))
         {
             if (IsSelected(collision.layer))
+            {
                 dmg.TakeDamage(this, Vector2.zero);
+                onDamageDealth?.Invoke(collision);
+            }
 
             DisposeGameObject();
         }

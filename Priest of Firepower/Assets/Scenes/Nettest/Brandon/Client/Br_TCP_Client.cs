@@ -29,7 +29,7 @@ public class Br_TCP_Client : MonoBehaviour
     string username;
     string serverIp;
     private static Br_TCP_Client tcpClientInstance;
-    bool connectedToServer = false;
+    //bool connectedToServer = false;
 
 
     private void Awake()
@@ -151,7 +151,7 @@ public class Br_TCP_Client : MonoBehaviour
         int responseByteCount = newSocket.Receive(serverAnswerData);
         if (responseByteCount > 0)
         {
-            connectedToServer = true;
+            //connectedToServer = true;
 
             //Announce connection to server
             synchronizationContext.Post(_ => InvokeReceiveMessageFromServer(serverAnswerData), null);

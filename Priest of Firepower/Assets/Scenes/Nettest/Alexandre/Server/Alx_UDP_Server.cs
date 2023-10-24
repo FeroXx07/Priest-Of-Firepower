@@ -9,8 +9,8 @@ public class Alx_UDP_Server : MonoBehaviour
 {
     private UdpClient udpServer;
     public int port = 5000;
-    string serverIpAddress = " 192.168.104.17";
-    bool createRoomRequested = false;
+    //string serverIpAddress = " 192.168.104.17";
+    //bool createRoomRequested = false;
     Socket newSocket;
     EndPoint RemoteClient;
     // Start is called before the first frame update
@@ -22,7 +22,7 @@ public class Alx_UDP_Server : MonoBehaviour
 
     void CreateRoomRequest()
     {
-        createRoomRequested = true;
+        //createRoomRequested = true;
         newSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
         

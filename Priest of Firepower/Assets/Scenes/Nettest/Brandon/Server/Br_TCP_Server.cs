@@ -12,8 +12,8 @@ public class Br_TCP_Server : MonoBehaviour
     private SynchronizationContext synchronizationContext;
 
     public int port = 5000;
-    string serverIpAddress = " 192.168.104.17";
-    bool createRoomRequested = false;
+    //string serverIpAddress = " 192.168.104.17";
+    //bool createRoomRequested = false;
     Socket newSocket;
     [SerializeField]
     float waitTimeLimit;
@@ -90,7 +90,7 @@ public class Br_TCP_Server : MonoBehaviour
         if (!enabled) return;
 
         timer = waitTimeLimit;
-        createRoomRequested = true;
+        //createRoomRequested = true;
 
         synchronizationContext = SynchronizationContext.Current;
         serverActive = !serverActive;

@@ -41,11 +41,11 @@ public class Alx_UDP_Client : MonoBehaviour
             client = newSocket.Accept();
             System.Net.EndPoint clientep = (System.Net.IPEndPoint)client.RemoteEndPoint;
             Debug.Log("Connected: " + clientep.ToString());
-            bool connected = true;
+            //bool connected = true;
         }
         catch (System.Exception e)
         {
-            Debug.Log("Connection failed.. trying again...");
+            Debug.Log("Connection failed.. trying again..." + e.ToString());
         }
     }
 }

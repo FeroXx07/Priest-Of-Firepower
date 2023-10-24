@@ -1,4 +1,3 @@
-
 using UnityEditor;
 using UnityEngine;
 
@@ -11,6 +10,7 @@ public class PoolHolder : ScriptableObject
     public GameObject prefab;
     public int numToInit = 0;
 
+#if UNITY_EDITOR
     private void OnEnable() => EditorApplication.playModeStateChanged += HandleOnPlayModeChanged;
 
     private void OnDisable() => EditorApplication.playModeStateChanged -= HandleOnPlayModeChanged;
@@ -33,7 +33,7 @@ public class PoolHolder : ScriptableObject
                 break;
         }
     }
-
+#endif
     public void InitPool()
     {
         if (pool == null)

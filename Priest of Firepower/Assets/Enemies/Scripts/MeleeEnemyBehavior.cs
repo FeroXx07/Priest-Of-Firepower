@@ -12,7 +12,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
     HealthSystem enemyData;
 
-    Collider2D collider;
+    new Collider2D collider;
 
     [SerializeField]
     GameObject meleeAttackPrefab;
@@ -122,7 +122,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
                 {
-                    DestroyObject(gameObject);
+                    Destroy(gameObject);
                 }
                 break;
 
@@ -163,7 +163,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
         if(internalMeleeAttackObject != null) // TODO Add to pool
         {
-            DestroyObject(internalMeleeAttackObject);
+            Destroy(internalMeleeAttackObject);
         }
 
         cooldownTimer = cooldownDuration;
