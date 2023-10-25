@@ -90,7 +90,7 @@ public class Chest : MonoBehaviour, IInteractable
 
         weapon = GetRandomWeapon();
 
-        obtainedWeapon.GetComponent<SpriteRenderer>().sprite = weapon.GetComponent<Weapon>().data.sprite;
+        obtainedWeapon.GetComponent<SpriteRenderer>().sprite = weapon.GetComponent<Weapon>().weaponData.sprite;
 
         yield return new WaitForSeconds(5);
 

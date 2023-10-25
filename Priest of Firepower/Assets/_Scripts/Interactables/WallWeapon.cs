@@ -18,11 +18,11 @@ public class WallWeapon : MonoBehaviour, IInteractable
     {
         timer = InteractionTime;
         Weapon wp = weapon.GetComponent<Weapon>(); 
-        message = "Hold F to buy " + wp.data._name +" [" + wp.data.price.ToString()+"]";
+        message = "Hold F to buy " + wp.weaponData._name +" [" + wp.weaponData.price.ToString()+"]";
         interactionPromptUI.Display(message);
         EnablePromptUI(false);
         wallWeaponImg = GetComponent<SpriteRenderer>();
-        wallWeaponImg.sprite = wp.data.sprite;
+        wallWeaponImg.sprite = wp.weaponData.sprite;
     }
     public void Interact(Interactor interactor)
     {

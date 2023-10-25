@@ -96,7 +96,7 @@ public class PlayerShooter : MonoBehaviour
         weaponHolder = holder;
         Weapon wp = holder.GetComponentInChildren<Weapon>();
         if(wp != null)
-            range = wp.data.range;
+            range = wp.localData.range;
     }
 }
 

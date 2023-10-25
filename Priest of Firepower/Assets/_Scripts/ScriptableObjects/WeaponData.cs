@@ -17,9 +17,9 @@ public class WeaponData : ScriptableObject
     public float dispersion;
 
     [Header("Reloading")]
-    public int currentAmmo;
-    public int currentMaxAmmo;
-    public int maxAmmo;
+    public int ammoInMagazine;
+    public int totalAmmo;
+    public int maxAmmoCapacity;
     public int magazineSize;
     public float reloadSpeed;
     public bool Reloading;

@@ -6,7 +6,8 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
-    public WeaponData data;
+    public WeaponData weaponData;
+    public WeaponData localData;
     public PoolHolder bulletPool;
     [SerializeField]
     GameObject bulletRef; //for testing
@@ -15,10 +16,14 @@ public class Weapon : MonoBehaviour
     private float _timeSinceLastShoot;
     private SpriteRenderer _spriteRenderer;
 
+    private void Awake()
+    {
+        localData = Instantiate(weaponData); // We don't want to modify the global weapon template, but only ours weapon!
+    }
     private void Start()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();
-        _spriteRenderer.sprite = data.sprite;
+        _spriteRenderer.sprite = localData.sprite;
         _timeSinceLastShoot = 10;
     }
     private void OnEnable()
@@ -26,57 +31,57 @@ public class Weapon : MonoBehaviour
         PlayerShooter.OnShoot += Shoot;
         PlayerShooter.OnReload += Reload;
         PlayerShooter.OnFlip+= FlipGun;
-        data.currentMaxAmmo = data.maxAmmo;
-        data.currentAmmo = data.magazineSize;
+        localData.totalAmmo = localData.maxAmmoCapacity;
+        localData.ammoInMagazine = localData.magazineSize;
     }
     private void OnDisable()
     {
-        data.Reloading = false;
+        localData.Reloading = false;
         PlayerShooter.OnShoot -= Shoot;
         PlayerShooter.OnReload -= Reload;
         PlayerShooter.OnFlip -= FlipGun;
     }
     void Reload()
     {
-        if (data.Reloading || data.currentMaxAmmo <= 0 || data.currentAmmo >= data.magazineSize || !gameObject.activeSelf) return;
+        if (localData.Reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize || !gameObject.activeSelf) return;
 
         StartCoroutine(Realoading());
     }
     IEnumerator Realoading()
     { 
-        data.Reloading = true;
+        localData.Reloading = true;
 
-        yield return new WaitForSeconds(data.reloadSpeed);
+        yield return new WaitForSeconds(localData.reloadSpeed);
 
-        if(data.currentMaxAmmo > 0)
+        if(localData.totalAmmo > 0)
         {
-            int bulletsToReload = (data.magazineSize - data.currentAmmo);
+            int bulletsToReload = (localData.magazineSize - localData.ammoInMagazine);
 
-            data.currentMaxAmmo -= bulletsToReload;
-            data.currentAmmo = data.magazineSize;
-            data.Reloading = false;
+            localData.totalAmmo -= bulletsToReload;
+            localData.ammoInMagazine = localData.magazineSize;
+            localData.Reloading = false;
         }
 
     }
     bool CanShoot()
     {
         //if is reloading or the fire rate is less than the current fire time
-        return !data.Reloading && _timeSinceLastShoot > 1 / data.fireRate / 60;
+        return !localData.Reloading && _timeSinceLastShoot > 1 / localData.fireRate / 60;
     }
     void Shoot()
     {
-        if (data.currentAmmo > 0)
+        if (localData.ammoInMagazine > 0)
         {
             if (CanShoot())
             { 
                 GameObject bullet = null;
-                bullet = Instantiate(bulletRef);//bulletPool.pool.PullGameObject();
-                bullet.GetComponent<Bullet>().Damage = data.damage;
+               /* bullet = Instantiate(bulletRef);*/bullet = bulletPool.pool.PullGameObject();
+                bullet.GetComponent<Bullet>().Damage = localData.damage;
 
                 transform.localRotation = transform.parent.rotation;
 
                 float dispersion;
-                dispersion = Random.Range(-data.dispersion, data.dispersion);
+                dispersion = Random.Range(-localData.dispersion, localData.dispersion);
 
                 Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x,
                         transform.localEulerAngles.y,
@@ -85,9 +90,9 @@ public class Weapon : MonoBehaviour
                 transform.rotation = newRot;
 
                 bullet.transform.position = firePoint.position;
-                bullet.GetComponent<Rigidbody2D>().velocity = transform.right * data.bulletSpeed;
+                bullet.GetComponent<Rigidbody2D>().velocity = transform.right * localData.bulletSpeed;
 
-                data.currentAmmo--;
+                localData.ammoInMagazine--;
                 _timeSinceLastShoot = 0;
                 OnGunShoot();
             }
@@ -119,4 +124,8 @@ public class Weapon : MonoBehaviour
         //VFX, sound
     }
 
+    public void GiveMaxAmmo()
+    {
+        localData.totalAmmo = localData.maxAmmoCapacity;
+    }
 }

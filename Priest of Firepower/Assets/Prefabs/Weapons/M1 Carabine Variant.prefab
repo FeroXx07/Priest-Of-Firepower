@@ -98,7 +98,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ac165568864f064980a8ec69f768a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data: {fileID: 11400000, guid: dd849d499d7a229449759facb2beddc5, type: 2}
+  weaponData: {fileID: 11400000, guid: dd849d499d7a229449759facb2beddc5, type: 2}
+  localData: {fileID: 0}
   bulletPool: {fileID: 11400000, guid: 93ee4b2c378bb2446a05de413b85cb42, type: 2}
   bulletRef: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
   firePoint: {fileID: 1283569598434614895}
