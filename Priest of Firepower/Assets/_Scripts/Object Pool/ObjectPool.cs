@@ -12,17 +12,19 @@ public class ObjectPool<T> : IPool<T> where T : MonoBehaviour, IPoolable<T>
         Spawn(numToSpawn);
     }
 
-    public ObjectPool(GameObject pooledObject, Action<T> pullObject, Action<T> pushObject, int numToSpawn = 0)
+    public ObjectPool(GameObject pooledObject, Action<T> onCreateObject, Action<T> pullObject, Action<T> pushObject, int numToSpawn = 0)
     {
         _parent = new GameObject("Pool Of " + pooledObject.name);
         this.prefab = pooledObject;
         this.pullObject = pullObject;
         this.pushObject = pushObject;
+        this.onCreateObject = onCreateObject;
         Spawn(numToSpawn);
     }
 
     private System.Action<T> pullObject;
     private System.Action<T> pushObject;
+    private System.Action<T> onCreateObject;
     private Stack<T> pooledObjects = new Stack<T>();
     private GameObject prefab;
     public int pooledCount
@@ -72,14 +74,14 @@ public class ObjectPool<T> : IPool<T> where T : MonoBehaviour, IPoolable<T>
 
     public GameObject PullGameObject(Vector3 position)
     {
-        GameObject go = Pull().gameObject;
+        GameObject go = Pull(position).gameObject;
         go.transform.position = position;
         return go;
     }
 
     public GameObject PullGameObject(Vector3 position, Quaternion rotation)
     {
-        GameObject go = Pull().gameObject;
+        GameObject go = Pull(position, rotation).gameObject;
         go.transform.position = position;
         go.transform.rotation = rotation;
         return go;
@@ -103,8 +105,14 @@ public class ObjectPool<T> : IPool<T> where T : MonoBehaviour, IPoolable<T>
         {
             t = GameObject.Instantiate(prefab, _parent.transform).GetComponent<T>();
             pooledObjects.Push(t);
+            onCreateObject?.Invoke(t);
             t.gameObject.SetActive(false);
         }
+    }
+
+    public GameObject GetParent()
+    {
+        return _parent;
     }
 }
 
