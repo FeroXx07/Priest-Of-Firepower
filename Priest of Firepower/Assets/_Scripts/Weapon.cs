@@ -88,7 +88,7 @@ public class Weapon : MonoBehaviour
                         transform.localEulerAngles.z + dispersion);
 
                 transform.rotation = newRot;
-
+                bullet.transform.rotation = transform.rotation;
                 bullet.transform.position = firePoint.position;
                 bullet.GetComponent<Rigidbody2D>().velocity = transform.right * localData.bulletSpeed;
 
