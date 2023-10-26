@@ -2,7 +2,7 @@ here will lay the sql data
 todo:
 
 show users from each country
-histogram of the countries of our players (?)
+histogram of the countries of our players (grafico mostrando lo de arriba)
 average session length
 avg session length per country
 n. sessions per player
