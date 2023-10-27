@@ -6,15 +6,19 @@ using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
+    #region Fields
     public WeaponData weaponData;
     public WeaponData localData;
+
     public PoolHolder bulletPool;
-    [SerializeField]
-    GameObject bulletRef; //for testing
+
+    [SerializeField] GameObject bulletRef; //for testing
     [SerializeField] Transform firePoint;
 
     private float _timeSinceLastShoot;
+
     private SpriteRenderer _spriteRenderer;
+    #endregion
 
     private void Awake()
     {
@@ -41,6 +45,12 @@ public class Weapon : MonoBehaviour
         PlayerShooter.OnReload -= Reload;
         PlayerShooter.OnFlip -= FlipGun;
     }
+    private void Update()
+    {
+        _timeSinceLastShoot += Time.deltaTime;
+    }
+
+    #region Reload
     void Reload()
     {
         if (localData.Reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize || !gameObject.activeSelf) return;
@@ -63,6 +73,9 @@ public class Weapon : MonoBehaviour
         }
 
     }
+    #endregion
+
+    #region Shoot
     bool CanShoot()
     {
         //if is reloading or the fire rate is less than the current fire time
@@ -103,6 +116,11 @@ public class Weapon : MonoBehaviour
         }
 
     }
+    void OnGunShoot()
+    {
+        //VFX, sound
+    }
+    #endregion
     void FlipGun(bool flip)
     {
         //_spriteRenderer.flipY = flip;
@@ -115,14 +133,7 @@ public class Weapon : MonoBehaviour
             transform.localScale = new Vector3(1, 1, 1);
         }
     }
-    private void Update()
-    {
-        _timeSinceLastShoot += Time.deltaTime;
-    }
-    void OnGunShoot()
-    {
-        //VFX, sound
-    }
+    
 
     public void GiveMaxAmmo()
     {

@@ -3,7 +3,6 @@ using UnityEngine;
 
 public class PlayerShooter : MonoBehaviour
 {
-
     [SerializeField] LineRenderer shootMarker;
     [SerializeField] LayerMask layerMask;
     Transform weaponHolder;

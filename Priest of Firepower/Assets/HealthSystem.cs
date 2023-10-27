@@ -14,8 +14,6 @@ public class HealthSystem : MonoBehaviour,IDamageable
     public int Health { get => health; set => health = value; }
     public int MaxHealth { get => maxHealth; set => maxHealth = value; }
 
-
-
     public event Action<GameObject> onDamageableDestroyed;
     public event Action<GameObject> onDamageTaken;
 
@@ -28,6 +26,12 @@ public class HealthSystem : MonoBehaviour,IDamageable
     {
         health -= damageDealer.Damage;
         onDamageTaken?.Invoke(gameObject);
+
+        if (health < 0)
+        {
+            health = 0;
+            OnDamageableDestroyed();
+        }
     }
 
 }
