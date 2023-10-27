@@ -10,6 +10,7 @@ public class PowerUpBase : MonoBehaviour
         MAX_AMMO,
         NUKE,
         DOUBLE_POINTS,
+        ONE_SHOT
     }
     public PowerUpType type;
     public static Action<PowerUpType> powerUpPickedGlobal;
