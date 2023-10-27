@@ -5,8 +5,6 @@ using UnityEngine;
 
 public class PowerUpBase : MonoBehaviour
 {
-    public static PowerUpBase instance;
-
     public enum PowerUpType
     {
         MAX_AMMO,

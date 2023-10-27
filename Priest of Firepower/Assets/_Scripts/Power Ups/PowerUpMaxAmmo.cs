@@ -4,11 +4,6 @@ using UnityEngine;
 
 public class PowerUpMaxAmmo : PowerUpBase
 {
-    private void Awake()
-    {
-        instance = this;
-    }
-
     public override void ApplyPowerUp()
     {
         base.ApplyPowerUp();
@@ -19,5 +14,6 @@ public class PowerUpMaxAmmo : PowerUpBase
             if (weapon != null)
                 weapon.GiveMaxAmmo();
         }
+
     }
 }

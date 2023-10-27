@@ -18,7 +18,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &1897267876575666528
 Transform:
@@ -58,7 +58,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -153,16 +153,16 @@ MonoBehaviour:
   time: 0.5
   interactionPromptUI: {fileID: 7236965091297131869}
   audioClip: {fileID: 0}
-  vfx: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+  vfx: {fileID: 1976169429354997255}
   sprites:
   - {fileID: 21300000, guid: 9dbf653197610f846a4f4c5c80f52284, type: 3}
   - {fileID: 21300000, guid: 10a8e9466879c1d4bb9a22a96508a120, type: 3}
   weapons:
   - {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
   - {fileID: 2627832369091270297, guid: 19628ac0d74ae464481cc59a138dc5c2, type: 3}
+  - {fileID: 2627832369091270297, guid: 19628ac0d74ae464481cc59a138dc5c2, type: 3}
   - {fileID: 7817667860927790107, guid: 5e41785d45510a0479517d35bc8a77e9, type: 3}
   - {fileID: 1283569598023597542, guid: db663414989952d41a6d60db15d7ce84, type: 3}
-  - {fileID: 1681268591073965709, guid: 3480f4e7954274743a02daa813d7098d, type: 3}
   obtainedWeapon: {fileID: 2227612726843118593}
 --- !u!1 &2227612726843118593
 GameObject:
@@ -181,7 +181,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &7454091956583269067
 Transform:
@@ -236,8 +236,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1563217107
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: -1230910807, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -285,7 +285,7 @@ MonoBehaviour:
   m_ComponentVersion: 1
   m_LightType: 3
   m_BlendStyleIndex: 0
-  m_FalloffIntensity: 0.5
+  m_FalloffIntensity: 0.75
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Intensity: 1
   m_LightVolumeIntensity: 1
@@ -355,6 +355,30 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1897267876575666528}
     m_Modifications:
+    - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_InitialEventName
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_InitialEventNameOverriden
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Name
+      value: GunSize
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Value
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Overridden
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -403,11 +427,20 @@ PrefabInstance:
       propertyPath: m_Name
       value: ChestVFX
       objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793515, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
 --- !u!4 &1976169429354997253 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+  m_PrefabInstance: {fileID: 102519894501985135}
+  m_PrefabAsset: {fileID: 0}
+--- !u!2083052967 &1976169429354997255 stripped
+VisualEffect:
+  m_CorrespondingSourceObject: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
   m_PrefabInstance: {fileID: 102519894501985135}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1897267876640922174
@@ -420,6 +453,10 @@ PrefabInstance:
     - target: {fileID: 2056408807029494880, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
       propertyPath: m_Name
       value: InteractableCanvas
+      objectReference: {fileID: 0}
+    - target: {fileID: 2056408807029494880, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     - target: {fileID: 2056408807029494883, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
       propertyPath: m_Pivot.x
@@ -508,6 +545,14 @@ PrefabInstance:
     - target: {fileID: 2056408807029494885, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
       propertyPath: m_PresetInfoIsWorld
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2056408807144788395, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 2056408807567314185, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 2147483647
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
