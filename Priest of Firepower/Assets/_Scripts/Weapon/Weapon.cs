@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.VFX;
 
 public class Weapon : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class Weapon : MonoBehaviour
     private float _timeSinceLastShoot;
 
     private SpriteRenderer _spriteRenderer;
+    [SerializeField] VisualEffect muzzleFlash;
     #endregion
 
     private void Awake()
@@ -119,6 +121,8 @@ public class Weapon : MonoBehaviour
     void OnGunShoot()
     {
         //VFX, sound
+
+        muzzleFlash.Play();
     }
     #endregion
     void FlipGun(bool flip)

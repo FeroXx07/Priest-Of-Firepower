@@ -47,11 +47,11 @@ TagManager:
   - name: Enemies
     uniqueID: 3193926919
     locked: 0
-  - name: VFX
-    uniqueID: 84494373
-    locked: 0
   - name: Player
     uniqueID: 1563217107
+    locked: 0
+  - name: VFX
+    uniqueID: 84494373
     locked: 0
   - name: UI
     uniqueID: 2450647839
