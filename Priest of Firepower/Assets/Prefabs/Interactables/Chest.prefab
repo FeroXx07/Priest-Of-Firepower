@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1897267876575666542}
   - component: {fileID: 1897267876575666541}
   - component: {fileID: 4534680615128562026}
+  - component: {fileID: 9161270688950272331}
   m_Layer: 6
   m_Name: Chest
   m_TagString: Untagged
@@ -164,6 +165,22 @@ MonoBehaviour:
   - {fileID: 7817667860927790107, guid: 5e41785d45510a0479517d35bc8a77e9, type: 3}
   - {fileID: 1283569598023597542, guid: db663414989952d41a6d60db15d7ce84, type: 3}
   obtainedWeapon: {fileID: 2227612726843118593}
+--- !u!114 &9161270688950272331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1897267876575666539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &2227612726843118593
 GameObject:
   m_ObjectHideFlags: 0
@@ -237,7 +254,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 1563217107
-  m_SortingLayer: 3
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_Sprite: {fileID: -1230910807, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
