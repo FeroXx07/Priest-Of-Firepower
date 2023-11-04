@@ -17,7 +17,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
     [SerializeField]
     GameObject meleeAttackPrefab;
 
-    float timeRemaining = 3f;
+    float timeRemaining = 1.2f;
 
     public float attackDuration = 0.5f;
     public float cooldownDuration = 1.5f;

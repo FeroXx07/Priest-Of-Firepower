@@ -11,13 +11,13 @@ GameObject:
   - component: {fileID: 824060067660528359}
   - component: {fileID: 824060067660528358}
   - component: {fileID: 824060067660528357}
-  - component: {fileID: 824060067660528352}
   - component: {fileID: 824060067660528354}
   - component: {fileID: 824060067660528355}
   - component: {fileID: 824060067660528380}
   - component: {fileID: 824060067660528381}
+  - component: {fileID: 5655012706975623227}
   m_Layer: 7
-  m_Name: Enemy_Skull
+  m_Name: Enemy_Ranged
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -100,7 +100,7 @@ NavMeshAgent:
   m_Enabled: 1
   m_AgentTypeID: 0
   m_Radius: 0.5
-  m_Speed: 3.5
+  m_Speed: 2
   m_Acceleration: 8
   avoidancePriority: 50
   m_AngularSpeed: 120
@@ -112,22 +112,6 @@ NavMeshAgent:
   m_BaseOffset: 0.5
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &824060067660528352
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824060067660528363}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fd6e738bda0d6e4d9b31233dd2cb71a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  meleeAttackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
-  attackDuration: 0.5
-  cooldownDuration: 1.5
-  attackOffset: 1
 --- !u!58 &824060067660528354
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -202,3 +186,19 @@ MonoBehaviour:
   layer:
     serializedVersion: 2
     m_Bits: 128
+--- !u!114 &5655012706975623227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824060067660528363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bda3c09d495ceb48a98434682d706d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rangedAttackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
+  bulletSpeedMultiplier: 2
+  cooldownDuration: 1.5
+  attackOffset: 1
