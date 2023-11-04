@@ -42,11 +42,6 @@ public class EnemySpawnManager : MonoBehaviour
 
         int enemyType = Random.Range(0, pools.Count );
         GameObject enemyPrefab = pools[enemyType].prefab;
-
-        Debug.Log("Count  " + pools.Count);
-        Debug.Log("type " + enemyType);
-        Debug.Log("Spawning " + enemyPrefab.name);
-
        
         GameObject enemy =  enemyPoolManager.GetFromPool(enemyPrefab.GetHashCode());
 

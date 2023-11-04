@@ -7,19 +7,15 @@ public class InteractionPromptUI : MonoBehaviour
 {
 
     [SerializeField] TMP_Text promptText;
-
-    private void OnEnable()
+    public void Display()
     {
-        
-    }
-
-
-    public void Display(string prompt)
-    {
-        promptText.text = prompt;
         gameObject.SetActive(true);
     }
 
+    public void SetText(string prompt)
+    {
+        promptText.text = prompt;
+    }
     public void Hide()
     {
         gameObject.SetActive(false);

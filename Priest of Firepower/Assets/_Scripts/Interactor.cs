@@ -8,7 +8,7 @@ public class Interactor : MonoBehaviour
     [SerializeField]private LayerMask layer;
     [SerializeField] private float interactionRange;
     private Collider2D interactable;
-    private bool OnContact = false;
+
     private void Update()
     {
         // Get the mouse position in world coordinates.
@@ -24,15 +24,7 @@ public class Interactor : MonoBehaviour
         {
             interactable = hit.collider;
             IInteractable obj =  interactable.GetComponent<IInteractable>();
-
-            if (!OnContact)
-            {
-                obj.EnablePromptUI(true);
-                OnContact = true;                    
-            }
-
-            if (Input.GetKey(key))
-                obj.Interact(this);
+            obj.Interact(this, Input.GetKey(key));
         }
         // if not looking any more the las interacteable, diable UI and clear the reference to it
         else if (interactable != null)
@@ -40,7 +32,6 @@ public class Interactor : MonoBehaviour
             IInteractable obj = interactable.GetComponent<IInteractable>();
             obj.EnablePromptUI(false);
             interactable = null;
-            OnContact = false;
         }
         
     }

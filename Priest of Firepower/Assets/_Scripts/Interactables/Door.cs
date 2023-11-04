@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class Door : MonoBehaviour, IInteractable
@@ -16,7 +17,7 @@ public class Door : MonoBehaviour, IInteractable
 
     private void OnEnable()
     {
-        interactionPromptUI.Display(message);
+        interactionPromptUI.SetText(message);
         EnablePromptUI(false);
 
     }
@@ -25,17 +26,24 @@ public class Door : MonoBehaviour, IInteractable
         interactionPromptUI.gameObject.SetActive(show);
     }
 
-    public void Interact(Interactor interactor)
+    public void Interact(Interactor interactor, bool keyPressed)
     {
-        timer -= Time.deltaTime;
-        if (timer <= 0)
+        if(keyPressed)
         {
-            Debug.Log(Prompt);
-            //TODO check update points
-            timer = InteractionTime;
-            EnablePromptUI(false);
-            Debug.Log("Open door");
-            gameObject.SetActive(false);
-        }   
+            timer -= Time.deltaTime;
+            if (timer <= 0)
+            {
+                Debug.Log(Prompt);
+                //TODO check update points
+                timer = InteractionTime;
+                EnablePromptUI(false);
+                Debug.Log("Open door");
+                gameObject.SetActive(false);
+            }
+        }
+        else{
+            EnablePromptUI(true);
+            timer = time;          
+        }
     }
 }

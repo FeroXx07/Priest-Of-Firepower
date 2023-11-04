@@ -19,29 +19,38 @@ public class WallWeapon : MonoBehaviour, IInteractable
         timer = InteractionTime;
         Weapon wp = weapon.GetComponent<Weapon>(); 
         message = "Hold F to buy " + wp.weaponData._name +" [" + wp.weaponData.price.ToString()+"]";
-        interactionPromptUI.Display(message);
+        interactionPromptUI.SetText(message);
         EnablePromptUI(false);
         wallWeaponImg = GetComponent<SpriteRenderer>();
         wallWeaponImg.sprite = wp.weaponData.sprite;
     }
-    public void Interact(Interactor interactor)
+    public void Interact(Interactor interactor, bool keyPressed)
     {
-        timer -= Time.deltaTime;
-        if(timer <= 0)
+        if(keyPressed)
         {
-            Debug.Log(Prompt);
-            //TODO check update points
-
-            // if has that weapon fill ammo 
-            // if has a slot empty add to empty slot
-            // if has not this weapon change by current weapon
-            if(interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+            timer -= Time.deltaTime;
+            if (timer <= 0)
             {
-                switcher.ChangeWeapon(weapon);
-                timer = InteractionTime;
-                EnablePromptUI(false);
+                Debug.Log(Prompt);
+                //TODO check update points
+
+                // if has that weapon fill ammo 
+                // if has a slot empty add to empty slot
+                // if has not this weapon change by current weapon
+                if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                {
+                    switcher.ChangeWeapon(weapon);
+                    timer = InteractionTime;
+                    EnablePromptUI(false);
+                }
             }
         }
+        else
+        {
+            EnablePromptUI(true);
+            timer = timeToInteract;
+        }
+ 
     }
 
     public void EnablePromptUI(bool show)
