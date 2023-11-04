@@ -175,18 +175,19 @@ public class RangedEnemyBehavior : MonoBehaviour
         float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
 
         // Cast a ray from the enemy towards the player
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, directionToPlayer, distanceToPlayer);
+        RaycastHit2D hit = Physics2D.Raycast(transform.position, directionToPlayer, distanceToPlayer, 9);
+        
 
         // Draw the ray in the editor for debugging purposes
         if (hit)
         {
             // Draw a red line to show that line of sight is blocked
-            Debug.DrawLine(transform.position, hit.point, Color.red);
+            Debug.DrawLine(transform.position, hit.point, Color.red,5f);
         }
         else
         {
             // Draw a green line to show that line of sight is clear
-            Debug.DrawLine(transform.position, (Vector2)transform.position + directionToPlayer * distanceToPlayer, Color.green);
+            Debug.DrawLine(transform.position, (Vector2)transform.position + directionToPlayer * distanceToPlayer, Color.green, 5f);
         }
 
         // If we hit something, check if it was the player

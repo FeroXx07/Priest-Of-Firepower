@@ -89,7 +89,7 @@ public class SniperEnemyBehavior : MonoBehaviour
 
                 //Debug.Log("Before if: "+ CheckLineOfSight(target));
 
-                if (distance <= 8 && distance >= 3) // && (CheckLineOfSight(target) == true)
+                if (distance <= 12 && distance >= 3) // && (CheckLineOfSight(target) == true)
                 {
                     enemyState = rangedEnemyState.ATTACK;
                     // Debug.Log("Attack mode");
