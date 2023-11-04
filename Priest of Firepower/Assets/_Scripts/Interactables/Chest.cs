@@ -23,8 +23,6 @@ public class Chest : MonoBehaviour, IInteractable
     bool randomizingWeapon;
     bool openChest;
     bool weaponReady;
-    bool weaponRuletteActive = false;
-
     float weaponRuletteStartTime = 0f;
     private void OnEnable()
     {
@@ -38,11 +36,10 @@ public class Chest : MonoBehaviour, IInteractable
 
     private void Update()
     {
-        // Check if the weapon rulette has been active for more than 9 seconds and close the chest.
+        // Check if the weaponReady has been active for more than 9 seconds and close the chest.
         if (weaponReady && Time.time - weaponRuletteStartTime >= 9)
         {
             CloseChest();
-            weaponRuletteActive = false;
         }
     }
 
@@ -75,7 +72,6 @@ public class Chest : MonoBehaviour, IInteractable
                 {
                     if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                     {
-                        Debug.Log("pickup weapon");
                         switcher.ChangeWeapon(weapon);
                         CloseChest();
                     }
@@ -96,8 +92,6 @@ public class Chest : MonoBehaviour, IInteractable
     }
     private void OpenChest()
     {
-
-        Debug.Log("Open");
         if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))
         {
             spriteRenderer.sprite = sprites[1];
@@ -109,7 +103,6 @@ public class Chest : MonoBehaviour, IInteractable
 
     private void CloseChest()
     {
-        Debug.Log("Close");
         if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))
         {
             spriteRenderer.sprite = sprites[0];
@@ -128,7 +121,6 @@ public class Chest : MonoBehaviour, IInteractable
 
     private IEnumerator WeaponRulette()
     {
-        Debug.Log("random");
         vfx.Play();
 
         randomizingWeapon= true;
@@ -141,8 +133,6 @@ public class Chest : MonoBehaviour, IInteractable
         }
 
         yield return new WaitForSecondsRealtime(5);
-
-        Debug.Log("weapon ready");
 
         vfx.Stop();
 
