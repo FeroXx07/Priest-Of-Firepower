@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RangedAttack : MonoBehaviour, IDamageDealer
+public class SniperAttack : MonoBehaviour, IDamageDealer
 {
     #region Layers
     [SerializeField] LayerMask layers;
     public LayerMask Layers { get => layers; set => layers = value; }
     #endregion
+
+    private int reboundCount = 0;
 
     #region Damage
     public int damage;
@@ -36,12 +38,11 @@ public class RangedAttack : MonoBehaviour, IDamageDealer
                 dmg.TakeDamage(this, Vector2.zero);
             }
 
-            DisposeGameObject();
+            if (collision.layer == 9) // Player
+            {
+                DisposeGameObject(); 
+            }
         }
-        else
-        {
-            DisposeGameObject();
-        }            
     }
 
     #region Collisions
@@ -54,12 +55,19 @@ public class RangedAttack : MonoBehaviour, IDamageDealer
     private void OnCollisionEnter2D(Collision2D collision)
     {
         CollisionHandeler(collision.gameObject);
+
+        reboundCount++;
+
+        if(reboundCount > 2)
+        {
+            DisposeGameObject();
+        }
     }
     #endregion
 
     void Start()
     {
-        Destroy(gameObject, 5f);
+        Destroy(gameObject, 10f);
+       
     }
-
 }
