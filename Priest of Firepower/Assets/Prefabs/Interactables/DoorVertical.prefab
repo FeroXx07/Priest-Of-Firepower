@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 4979815464256782570}
   - component: {fileID: 4979815464256782571}
   - component: {fileID: 7346409337250888134}
+  - component: {fileID: -7469441530102366059}
   m_Layer: 6
   m_Name: DoorVertical
   m_TagString: Untagged
@@ -128,6 +129,22 @@ MonoBehaviour:
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
   m_InstanceId: 69822
+--- !u!114 &-7469441530102366059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4979815464256782568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9809bf1345abc5648af68b3a82653f08, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_OverrideArea: 1
+  m_Area: 1
+  m_IgnoreFromBuild: 0
+  m_AffectedAgents: ffffffff
 --- !u!1 &4979815464292146572
 GameObject:
   m_ObjectHideFlags: 0

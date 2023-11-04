@@ -122,7 +122,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
                 {
-                    Destroy(gameObject);
+                    gameObject.SetActive(false);    
                 }
                 break;
 
