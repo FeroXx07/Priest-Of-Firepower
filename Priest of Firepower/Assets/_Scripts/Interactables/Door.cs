@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class Door : MonoBehaviour, IInteractable
 {
@@ -88,6 +89,8 @@ public class Door : MonoBehaviour, IInteractable
     private void DisableDoor()
     {
         GetComponent<BoxCollider2D>().enabled = false;
+        GetComponent<ShadowCaster2D>().enabled = false;
+
         foreach(Transform child in gameObject.transform)
         {
             child.gameObject.SetActive(false);
