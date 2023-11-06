@@ -18,7 +18,7 @@ public class PointSystem : MonoBehaviour
         points = 0;
     }
 
-    void AddPoints(int points_to_add)
+    public void AddPoints(int points_to_add)
     {
         points += points_to_add;
 
@@ -26,7 +26,7 @@ public class PointSystem : MonoBehaviour
         onPointsChanged?.Invoke(points);
     }
 
-    void RemovePoints(int points_to_remove)
+    public void RemovePoints(int points_to_remove)
     {
         points -= points_to_remove;
         onPointsRemoved?.Invoke(points_to_remove);

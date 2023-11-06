@@ -51,7 +51,7 @@ public class Door : MonoBehaviour, IInteractable
                         Open = true;
                         Debug.Log(Prompt);
                         timer = InteractionTime;
-                        pointSystem.onPointsRemoved?.Invoke(price);
+                        pointSystem.RemovePoints(price);
 
                         EnablePromptUI(false);
 
