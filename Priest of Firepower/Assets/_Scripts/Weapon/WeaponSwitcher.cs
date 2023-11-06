@@ -111,7 +111,8 @@ public class WeaponSwitcher : MonoBehaviour
         emptySlot.weapon = newWeaponPrefab;
         slots[emptySlot.index] = emptySlot;
 
-        Instantiate(newWeaponPrefab,emptySlot.holder.transform);
+        GameObject weapon = Instantiate(newWeaponPrefab,emptySlot.holder.transform);
+        weapon.GetComponent<Weapon>().SetOwner(gameObject);
     }
     void OnWeaponSelected()
     {

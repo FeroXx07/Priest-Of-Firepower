@@ -44,17 +44,20 @@ public class Door : MonoBehaviour, IInteractable
             timer -= Time.deltaTime;
             if (timer <= 0)
             { 
-                if (interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
+                if (interactor.gameObject.TryGetComponent<PointSystem>(out PointSystem pointSystem))
                 {
                     if (pointSystem.GetPoints() >= InteractionCost)
                     {
                         Open = true;
                         Debug.Log(Prompt);
                         timer = InteractionTime;
+                        pointSystem.onPointsRemoved?.Invoke(price);
+
                         EnablePromptUI(false);
-                        DisableDoor();
+
                         EnableObjects(true);
-                        pointSystem.onPointsRemoved(InteractionCost);
+
+                        DisableDoor();
                     }
                 }
             }

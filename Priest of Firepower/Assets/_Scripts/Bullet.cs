@@ -16,6 +16,7 @@ public class Bullet : MonoBehaviour, IDamageDealer
     public event Action<GameObject> onDamageDealerDestroyed;
     public event Action<GameObject> onDamageDealth;
     #endregion
+    GameObject Owner;
     private void DisposeGameObject()
     {
         onDamageDealerDestroyed?.Invoke(gameObject);
@@ -33,7 +34,7 @@ public class Bullet : MonoBehaviour, IDamageDealer
         {
             if (IsSelected(collision.layer))
             {
-                dmg.TakeDamage(this, Vector2.zero);
+                dmg.TakeDamage(this, Vector2.zero, Owner);
                 onDamageDealth?.Invoke(collision);
             }
 
@@ -55,4 +56,13 @@ public class Bullet : MonoBehaviour, IDamageDealer
         CollisionHandeler(collision.gameObject);
     }
     #endregion
+
+    public void SetOwner(GameObject owner)
+    {
+        Owner = owner;
+    }
+    public GameObject GetOwner()
+    {
+        return Owner;
+    }
 }

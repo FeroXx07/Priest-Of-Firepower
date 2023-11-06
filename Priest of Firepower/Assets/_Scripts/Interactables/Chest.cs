@@ -68,7 +68,7 @@ public class Chest : MonoBehaviour, IInteractable
                         if (pointSystem.GetPoints() >= InteractionCost)
                         {
                             OpenChest();
-                            pointSystem.onPointsRemoved(InteractionCost);
+                            pointSystem.onPointsRemoved?.Invoke(price);
                         }
                     }                   
                 }

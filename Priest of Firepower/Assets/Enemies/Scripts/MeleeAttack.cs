@@ -33,7 +33,7 @@ public class MeleeAttack : MonoBehaviour, IDamageDealer
             if (IsSelected(collision.layer))
             {
                 onDamageDealth?.Invoke(collision);
-                dmg.TakeDamage(this, Vector2.zero);
+                dmg.TakeDamage(this, Vector2.zero,gameObject);
             }
 
             DisposeGameObject();

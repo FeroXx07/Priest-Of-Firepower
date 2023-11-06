@@ -20,6 +20,8 @@ public class Weapon : MonoBehaviour
 
     private SpriteRenderer _spriteRenderer;
     [SerializeField] VisualEffect muzzleFlash;
+
+    GameObject Owner;
     #endregion
 
     private void Awake()
@@ -92,6 +94,7 @@ public class Weapon : MonoBehaviour
                 GameObject bullet = null;
                /* bullet = Instantiate(bulletRef);*/bullet = bulletPool.pool.PullGameObject();
                 bullet.GetComponent<Bullet>().Damage = localData.damage;
+                bullet.GetComponent<Bullet>().SetOwner(Owner);
 
                 transform.localRotation = transform.parent.rotation;
 
@@ -142,5 +145,14 @@ public class Weapon : MonoBehaviour
     public void GiveMaxAmmo()
     {
         localData.totalAmmo = localData.maxAmmoCapacity;
+    }
+
+    public void SetOwner(GameObject owner)
+    {
+        Owner = owner;
+    }
+    public GameObject GetOwner()
+    {
+        return Owner;
     }
 }

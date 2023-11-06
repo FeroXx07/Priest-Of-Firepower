@@ -11,7 +11,7 @@ public interface IDamageable
 
     LayerMask layers { get; set; }
     int Health { get; set; }    
-    void TakeDamage(IDamageDealer damageDealer, Vector3 dir);
+    void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner);
     void OnDamageableDestroyed();
 }
 

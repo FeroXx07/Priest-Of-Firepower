@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 824060067660528355}
   - component: {fileID: 824060067660528380}
   - component: {fileID: 824060067660528381}
+  - component: {fileID: 5671508085643841369}
   m_Layer: 7
   m_Name: Enemy_Skull
   m_TagString: Untagged
@@ -202,3 +203,17 @@ MonoBehaviour:
   layer:
     serializedVersion: 2
     m_Bits: 128
+--- !u!114 &5671508085643841369
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824060067660528363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a15e81b085a0dc4c8dad9340c3c21df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pointsOnHit: 10
+  pointsOnDeath: 50

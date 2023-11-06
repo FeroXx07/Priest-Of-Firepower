@@ -52,7 +52,6 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
         playerList = GameObject.FindGameObjectsWithTag("Player");
     }
-
     // Update is called once per frame
     void Update()
     {

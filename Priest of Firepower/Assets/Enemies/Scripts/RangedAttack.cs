@@ -16,6 +16,8 @@ public class RangedAttack : MonoBehaviour, IDamageDealer
     public event Action<GameObject> onDamageDealerDestroyed;
     public event Action<GameObject> onDamageDealth;
     #endregion
+
+    GameObject Owner;
     private void DisposeGameObject()
     {
         onDamageDealerDestroyed?.Invoke(gameObject);
@@ -33,7 +35,7 @@ public class RangedAttack : MonoBehaviour, IDamageDealer
             if (IsSelected(collision.layer))
             {
                 onDamageDealth?.Invoke(collision);
-                dmg.TakeDamage(this, Vector2.zero);
+                dmg.TakeDamage(this, Vector2.zero,Owner);
             }
 
             DisposeGameObject();

@@ -48,7 +48,7 @@ public class WallWeapon : MonoBehaviour, IInteractable
                             timer = InteractionTime;
                             EnablePromptUI(false);
 
-                            pointSystem.onPointsRemoved(InteractionCost);
+                            pointSystem.onPointsRemoved?.Invoke(price);
                         }
                     }
                 }
