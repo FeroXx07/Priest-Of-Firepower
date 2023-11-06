@@ -8,12 +8,15 @@ public class WallWeapon : MonoBehaviour, IInteractable
     [SerializeField] string message;
     [SerializeField] float timeToInteract = 1f;
     [SerializeField] GameObject weapon;
-    [SerializeField] int cost;
+    [SerializeField] int price;
     [SerializeField] InteractionPromptUI interactionPromptUI;
     private SpriteRenderer wallWeaponImg;
     float timer;
     public string Prompt => message;
     public float InteractionTime => timeToInteract;
+
+    public int InteractionCost => price;
+
     private void OnEnable()
     {
         timer = InteractionTime;
@@ -31,17 +34,23 @@ public class WallWeapon : MonoBehaviour, IInteractable
             timer -= Time.deltaTime;
             if (timer <= 0)
             {
-                Debug.Log(Prompt);
-                //TODO check update points
-
-                // if has that weapon fill ammo 
-                // if has a slot empty add to empty slot
-                // if has not this weapon change by current weapon
-                if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                if (interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
                 {
-                    switcher.ChangeWeapon(weapon);
-                    timer = InteractionTime;
-                    EnablePromptUI(false);
+                    if (pointSystem.GetPoints() >= InteractionCost)
+                    {
+
+                        // if has that weapon fill ammo 
+                        // if has a slot empty add to empty slot
+                        // if has not this weapon change by current weapon
+                        if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                        {
+                            switcher.ChangeWeapon(weapon);
+                            timer = InteractionTime;
+                            EnablePromptUI(false);
+
+                            pointSystem.onPointsRemoved(InteractionCost);
+                        }
+                    }
                 }
             }
         }

@@ -9,6 +9,7 @@ public class Door : MonoBehaviour, IInteractable
 
     [SerializeField] string message;
     [SerializeField] float time;
+    [SerializeField] int price;
     [SerializeField] InteractionPromptUI interactionPromptUI;
     [SerializeField] AudioClip audioClip;
 
@@ -19,12 +20,13 @@ public class Door : MonoBehaviour, IInteractable
 
     public float InteractionTime => time;
 
+    public int InteractionCost => price;
+
     bool Open  = false;
     private void OnEnable()
     {
         interactionPromptUI.SetText(message);
         EnablePromptUI(false);
-
         EnableObjects(false);
     }
     public void EnablePromptUI(bool show)
@@ -37,19 +39,24 @@ public class Door : MonoBehaviour, IInteractable
         //check wether the door can interacted with or not
         if (!CanInteract()) return;
 
-        if(keyPressed)
+        if (keyPressed)
         {
             timer -= Time.deltaTime;
             if (timer <= 0)
-            {
-                Open = true;
-                Debug.Log(Prompt);
-                //TODO check update points
-                timer = InteractionTime;
-                EnablePromptUI(false);
-                Debug.Log("Open door");
-                DisableDoor();
-                EnableObjects(true);
+            { 
+                if (interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
+                {
+                    if (pointSystem.GetPoints() >= InteractionCost)
+                    {
+                        Open = true;
+                        Debug.Log(Prompt);
+                        timer = InteractionTime;
+                        EnablePromptUI(false);
+                        DisableDoor();
+                        EnableObjects(true);
+                        pointSystem.onPointsRemoved(InteractionCost);
+                    }
+                }
             }
         }
         else{

@@ -7,6 +7,7 @@ public class Chest : MonoBehaviour, IInteractable
 {
     [SerializeField] string message;
     [SerializeField] float time;
+    [SerializeField] int price;
     [SerializeField] InteractionPromptUI interactionPromptUI;
     [SerializeField] AudioClip audioClip;
     [SerializeField] VisualEffect vfx;
@@ -16,9 +17,8 @@ public class Chest : MonoBehaviour, IInteractable
     GameObject weapon;
     float timer;
     public string Prompt => message;
-
     public float InteractionTime => time;
-
+    public int InteractionCost => price;
 
     bool randomizingWeapon;
     bool openChest;
@@ -59,12 +59,18 @@ public class Chest : MonoBehaviour, IInteractable
             timer -= Time.deltaTime;
             if (timer <= 0)
             {
+                
                 //open chest
                 if (!openChest)
                 {
-                    //TODO check update points
-                    OpenChest();
-                   
+                    if(interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
+                    {
+                        if (pointSystem.GetPoints() >= InteractionCost)
+                        {
+                            OpenChest();
+                            pointSystem.onPointsRemoved(InteractionCost);
+                        }
+                    }                   
                 }
                 //If chest showing the aviable weapon
                 //and player interact get weapon and close chest

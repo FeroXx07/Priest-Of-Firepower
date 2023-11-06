@@ -18,10 +18,10 @@ MonoBehaviour:
   damage: 10
   fireRate: 0.1
   bulletSpeed: 20
-  dispersion: 10
-  currentAmmo: 10
-  currentMaxAmmo: 155
-  maxAmmo: 155
+  dispersion: 3
+  ammoInMagazine: 31
+  totalAmmo: 155
+  maxAmmoCapacity: 155
   magazineSize: 31
   reloadSpeed: 0.3
   Reloading: 0

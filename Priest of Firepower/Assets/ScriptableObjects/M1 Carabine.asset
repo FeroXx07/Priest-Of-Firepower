@@ -16,13 +16,13 @@ MonoBehaviour:
   price: 500
   range: 15
   damage: 4
-  fireRate: 0.3
+  fireRate: 0.05
   bulletSpeed: 20
-  dispersion: 3
-  currentAmmo: 31
-  currentMaxAmmo: 155
-  maxAmmo: 155
-  magazineSize: 31
+  dispersion: 1
+  ammoInMagazine: 14
+  totalAmmo: 70
+  maxAmmoCapacity: 70
+  magazineSize: 14
   reloadSpeed: 0.3
   Reloading: 0
   sprite: {fileID: -501131978, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
