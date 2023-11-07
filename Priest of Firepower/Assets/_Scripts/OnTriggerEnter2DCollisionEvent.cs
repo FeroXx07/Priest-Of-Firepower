@@ -18,7 +18,7 @@ public class OnTriggerEnter2DCollisionEvent : MonoBehaviour
         triggerEvent?.Invoke(collision);
 
         if (destroyGameObject)
-            Destroy(gameObject, 0.2f);
+            Destroy(gameObject, timeToDestroy);
     }
 
     bool IsSelected(int layer) => ((layers.value >> layer) & 1) == 1;

@@ -5,11 +5,11 @@ using UnityEngine;
 public class EnemySpawner : MonoBehaviour
 {
     [SerializeField]
-    EnemySpawnManager spawnerManager;
+    EnemyManager spawnerManager;
     private void OnEnable()
     {
         if(spawnerManager == null) 
-            spawnerManager = GetComponentInParent<EnemySpawnManager>();
+            spawnerManager = GetComponentInParent<EnemyManager>();
         if(spawnerManager != null) 
             spawnerManager.AddSpawnpoint(gameObject.transform);
     }

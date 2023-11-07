@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 824060067660528381}
   - component: {fileID: 5655012706975623227}
   - component: {fileID: -9064715006445096684}
+  - component: {fileID: -1463086895296463543}
   m_Layer: 7
   m_Name: Enemy_Ranged
   m_TagString: Untagged
@@ -217,3 +218,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pointsOnHit: 10
   pointsOnDeath: 80
+--- !u!114 &-1463086895296463543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824060067660528363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bb6e295f51da0c43816dfe59d1a8e19, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

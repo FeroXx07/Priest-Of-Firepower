@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    [SerializeField] EnemySpawnManager enemySpawnManager;
+    [SerializeField] EnemyManager enemySpawnManager;
     int currentRound = 1;
 
     Action<int> OnRoundBegin;

@@ -11,8 +11,6 @@ public class Weapon : MonoBehaviour
     public WeaponData weaponData;
     public WeaponData localData;
 
-    public PoolHolder bulletPool;
-
     [SerializeField] GameObject bulletRef; //for testing
     [SerializeField] Transform firePoint;
 
@@ -33,6 +31,7 @@ public class Weapon : MonoBehaviour
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _spriteRenderer.sprite = localData.sprite;
         _timeSinceLastShoot = 10;
+
     }
     private void OnEnable()
     {
@@ -92,7 +91,7 @@ public class Weapon : MonoBehaviour
             if (CanShoot())
             { 
                 GameObject bullet = null;
-               /* bullet = Instantiate(bulletRef);*/bullet = bulletPool.pool.PullGameObject();
+                bullet = PoolManager.Instance.Pull(bulletRef);
                 bullet.GetComponent<Bullet>().Damage = localData.damage;
                 bullet.GetComponent<Bullet>().SetOwner(Owner);
 

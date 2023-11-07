@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using UnityEditor.UIElements;
 using UnityEngine;
 
-public class EnemySpawnManager : MonoBehaviour
+public class EnemyManager : MonoBehaviour
 {
-    [SerializeField] Dictionary<string, List<GameObject>> enemies;
     List<Transform> spawnPoints = new List<Transform>();
-    [SerializeField]
-    EnemyPoolManager enemyPoolManager;
+    public List<GameObject> enemiesPrefabs = new List<GameObject>();
+    public int numToInit = 5;
 
     [SerializeField] AnimationCurve enemyCountProgression = new AnimationCurve();
+    [SerializeField] float spawnFrequency = 0.5f;
 
-    [SerializeField]
-    float spawnFrequency = 0.5f;
+    private void Awake()
+    {
+    }
 
     public void SpawnEnemies(int round)
     {
@@ -36,16 +37,10 @@ public class EnemySpawnManager : MonoBehaviour
 
     GameObject SpawnEnemy(Vector3 spawnPosition)
     {
-        //get enemy 
         // TODO add probability
-        List<EnemyPoolData> pools = enemyPoolManager.GetPoolData();
-
-        int enemyType = Random.Range(0, pools.Count );
-        GameObject enemyPrefab = pools[enemyType].prefab;
-       
-        GameObject enemy =  enemyPoolManager.GetFromPool(enemyPrefab.GetHashCode());
-
-        enemy.GetComponent<Transform>().position = spawnPosition;
+        int enemyType = Random.Range(0, enemiesPrefabs.Count - 1);
+        GameObject enemyPrefab = enemiesPrefabs[enemyType];
+        GameObject enemy = PoolManager.Instance.Pull(enemyPrefab, spawnPosition);
 
         return enemy;
     }
