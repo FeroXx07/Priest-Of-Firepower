@@ -128,7 +128,7 @@ public class SniperEnemyBehavior : MonoBehaviour
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
                 {
-                    Destroy(gameObject);
+                    DisposeGameObject();
                 }
                 break;
 
@@ -193,5 +193,13 @@ public class SniperEnemyBehavior : MonoBehaviour
         return hit.collider != null && hit.collider.transform == playerTransform;
     }
 
-
+    private void DisposeGameObject()
+    {
+        if (TryGetComponent(out PoolObject pool))
+        {
+            gameObject.SetActive(false);
+        }
+        else
+            Destroy(gameObject);
+    }
 }

@@ -121,7 +121,7 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
                 {
-                    gameObject.SetActive(false);    
+                    DisposeGameObject();
                 }
                 break;
 
@@ -166,5 +166,15 @@ public class MeleeEnemyBehavior : MonoBehaviour
         }
 
         cooldownTimer = cooldownDuration;
+    }
+
+    private void DisposeGameObject()
+    {
+        if (TryGetComponent(out PoolObject pool))
+        {
+            gameObject.SetActive(false);
+        }
+        else
+            Destroy(gameObject);
     }
 }

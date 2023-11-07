@@ -58776,8 +58776,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultSize: 5
-  prefabsToAdd: []
-  prefabsToAddSize: 
+  prefabsToAdd:
+  - {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  - {fileID: 824060067660528363, guid: 4eef580d63463244abf0796b10d30d7d, type: 3}
+  - {fileID: 824060067660528363, guid: bcc07618a1f2cbd4cb88a47082ff33ab, type: 3}
+  - {fileID: 824060067660528363, guid: fdfdc2d5b14c7174eb31e561c1d6c086, type: 3}
+  prefabsToAddSize: 05000000050000000500000005000000
 --- !u!1 &1808794593
 GameObject:
   m_ObjectHideFlags: 0
