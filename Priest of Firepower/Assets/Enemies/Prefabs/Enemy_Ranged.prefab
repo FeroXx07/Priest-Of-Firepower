@@ -200,10 +200,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bda3c09d495ceb48a98434682d706d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rangedAttackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
+  attackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
   bulletSpeedMultiplier: 2
-  cooldownDuration: 1.5
-  attackOffset: 1
 --- !u!114 &-9064715006445096684
 MonoBehaviour:
   m_ObjectHideFlags: 0

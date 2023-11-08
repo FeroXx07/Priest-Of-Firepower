@@ -24,7 +24,7 @@ public class UIHealthTracker : MonoBehaviour
         }
     }
 
-    void UpdateProgressBar(GameObject gameObject)
+    void UpdateProgressBar(GameObject destroyed, GameObject destroyer)
     {
         progressBar.UpdateProgress(healthSystem.Health);
     }

@@ -126,10 +126,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fd6e738bda0d6e4d9b31233dd2cb71a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  meleeAttackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
+  attackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
   attackDuration: 0.5
-  cooldownDuration: 1.5
-  attackOffset: 1
 --- !u!58 &824060067660528354
 CircleCollider2D:
   m_ObjectHideFlags: 0

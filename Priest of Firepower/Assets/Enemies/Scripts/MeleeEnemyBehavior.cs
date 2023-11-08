@@ -4,72 +4,24 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class MeleeEnemyBehavior : MonoBehaviour
+public class MeleeEnemyBehavior : Enemy
 {
-    Transform target;
-
-    NavMeshAgent agent;
-
-    HealthSystem enemyData;
-
-    new Collider2D collider;
-
-    [SerializeField]
-    GameObject meleeAttackPrefab;
-
-    float timeRemaining = 1.2f;
-
     public float attackDuration = 0.5f;
-    public float cooldownDuration = 1.5f;
-    public float attackOffset = 1.0f;
     private bool isAttacking = false;
     private float attackTimer = 0.1f;
-    private float cooldownTimer = 1f;
 
-    private GameObject[] playerList;
-    private GameObject internalMeleeAttackObject;
-
-    enum meleeEnemyState
-    {
-       SPAWN,
-       CHASE,
-       ATTACK,
-       DIE,
-    }
-
-    meleeEnemyState enemyState = meleeEnemyState.SPAWN;
-
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        enemyData = GetComponent<HealthSystem>();
-        target = GameObject.Find("Player").transform;
-        agent = GetComponent<NavMeshAgent>();
-        agent.updateRotation = false;
-        agent.updateUpAxis = false;
-        collider = gameObject.GetComponent<Collider2D>();
-
-        playerList = GameObject.FindGameObjectsWithTag("Player");
-    }
     // Update is called once per frame
     void Update()
     {
-        if(enemyData.Health <= 0)
-        {
-            enemyState = meleeEnemyState.DIE;
-        }
-
-
         switch (enemyState)
         {
-            case meleeEnemyState.SPAWN:
+            case EnemyState.SPAWN:
                 agent.isStopped = true;
                 // Spawn sound, particle and animation
-                enemyState = meleeEnemyState.CHASE;
+                enemyState = EnemyState.CHASE;
                 break;
 
-            case meleeEnemyState.CHASE:
+            case EnemyState.CHASE:
                 //Debug.Log("Enemy chase");
                 agent.isStopped = false;
                 // animation, particles and sound
@@ -77,12 +29,12 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
                 if(Vector3.Distance(target.position, this.transform.position) <= 2)
                 {
-                    enemyState = meleeEnemyState.ATTACK;
+                    enemyState = EnemyState.ATTACK;
                 }
 
                 break;
 
-            case meleeEnemyState.ATTACK:
+            case EnemyState.ATTACK:
                 //Debug.Log("Enemy attacks");
                 agent.isStopped = true;
 
@@ -107,12 +59,12 @@ public class MeleeEnemyBehavior : MonoBehaviour
                 // For example: Perform attack, reduce player health, animation sound and particles
                 if (Vector3.Distance(target.position, this.transform.position) > 2)
                 {
-                    enemyState = meleeEnemyState.CHASE;                    
+                    enemyState = EnemyState.CHASE;                    
                 }
 
                 break;
 
-            case meleeEnemyState.DIE:
+            case EnemyState.DIE:
                 
                 agent.isStopped = true;
                 // Play death animation, sound and particles, destroy enemy object
@@ -148,8 +100,8 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
         Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
 
-        internalMeleeAttackObject = Instantiate(meleeAttackPrefab);
-        internalMeleeAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
+        internalAttackObject = Instantiate(attackPrefab);
+        internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
 
         attackTimer = attackDuration;
     }
@@ -160,9 +112,9 @@ public class MeleeEnemyBehavior : MonoBehaviour
 
         //
 
-        if(internalMeleeAttackObject != null) // TODO Add to pool
+        if(internalAttackObject != null) // TODO Add to pool
         {
-            Destroy(internalMeleeAttackObject);
+            Destroy(internalAttackObject);
         }
 
         cooldownTimer = cooldownDuration;

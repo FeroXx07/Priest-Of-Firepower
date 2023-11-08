@@ -5,72 +5,22 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 
-public class RangedEnemyBehavior : MonoBehaviour
+public class RangedEnemyBehavior : Enemy
 {
-    Transform target;
-
-    NavMeshAgent agent;
-
-    HealthSystem enemyData;
-
-    new Collider2D collider;
-
-    [SerializeField]
-    GameObject rangedAttackPrefab;
-
     public float bulletSpeedMultiplier = 2.0f;
-
-    float timeRemaining = 1.2f;
-
-    public float cooldownDuration = 1.5f;
-    public float attackOffset = 1.0f;
-    private float cooldownTimer = 1f;
-
-    private GameObject[] playerList;
-    private GameObject internalRangedAttackObject;
-
-    enum rangedEnemyState
-    {
-        SPAWN,
-        CHASE,
-        ATTACK,
-        DIE,
-    }
-
-    rangedEnemyState enemyState = rangedEnemyState.SPAWN;
-
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        enemyData = GetComponent<HealthSystem>();
-        target = GameObject.Find("Player").transform;
-        agent = GetComponent<NavMeshAgent>();
-        agent.updateRotation = false;
-        agent.updateUpAxis = false;
-        collider = gameObject.GetComponent<Collider2D>();
-
-        playerList = GameObject.FindGameObjectsWithTag("Player");
-    }
 
     // Update is called once per frame
     void Update()
     {
-        if (enemyData.Health <= 0)
-        {
-            enemyState = rangedEnemyState.DIE;
-        }
-
-
         switch (enemyState)
         {
-            case rangedEnemyState.SPAWN:
+            case EnemyState.SPAWN:
                 agent.isStopped = true;
                 // Spawn sound, particle and animation
-                enemyState = rangedEnemyState.CHASE;
+                enemyState = EnemyState.CHASE;
                 break;
 
-            case rangedEnemyState.CHASE:
+            case EnemyState.CHASE:
                 
                 agent.isStopped = false;
 
@@ -91,13 +41,13 @@ public class RangedEnemyBehavior : MonoBehaviour
 
                 if (distance <= 8 && distance >= 3) // && (CheckLineOfSight(target) == true)
                 {
-                    enemyState = rangedEnemyState.ATTACK;
+                    enemyState = EnemyState.ATTACK;
                    // Debug.Log("Attack mode");
                 }
 
                 break;
 
-            case rangedEnemyState.ATTACK:
+            case EnemyState.ATTACK:
 
                 agent.isStopped = true;
 
@@ -114,12 +64,12 @@ public class RangedEnemyBehavior : MonoBehaviour
                 // For example: Perform attack, reduce player health, animation sound and particles
                 if (Vector3.Distance(target.position, this.transform.position) > 8)  
                 {
-                    enemyState = rangedEnemyState.CHASE;
+                    enemyState = EnemyState.CHASE;
                 }
 
                 break;
 
-            case rangedEnemyState.DIE:
+            case EnemyState.DIE:
 
                 agent.isStopped = true;
                 // Play death animation, sound and particles, destroy enemy object
@@ -154,10 +104,10 @@ public class RangedEnemyBehavior : MonoBehaviour
 
         Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
 
-        internalRangedAttackObject = Instantiate(rangedAttackPrefab);
-        internalRangedAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
+        internalAttackObject = Instantiate(attackPrefab);
+        internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
 
-        Rigidbody2D rbComp = internalRangedAttackObject.GetComponent<Rigidbody2D>();
+        Rigidbody2D rbComp = internalAttackObject.GetComponent<Rigidbody2D>();
 
         if (rbComp)
         {
