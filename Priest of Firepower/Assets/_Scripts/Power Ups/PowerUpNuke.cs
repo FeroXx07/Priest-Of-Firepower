@@ -8,6 +8,6 @@ public class PowerUpNuke : PowerUpBase
     {
         base.ApplyPowerUp();
 
-        // TODO: Kill all active enemies
+        EnemyManager.Instance.KillAllEnemies();
     }
 }

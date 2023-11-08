@@ -6,12 +6,12 @@ using UnityEngine.Events;
 
 public interface IDamageable
 {
-    event Action<GameObject> onDamageableDestroyed;
-    event Action<GameObject> onDamageTaken;
+    event Action<GameObject, GameObject> onDamageableDestroyed;
+    event Action<GameObject, GameObject> onDamageTaken;
 
     LayerMask layers { get; set; }
     int Health { get; set; }    
     void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner);
-    void OnDamageableDestroyed();
+    void OnDamageableDestroyed(GameObject destroyer);
 }
 
