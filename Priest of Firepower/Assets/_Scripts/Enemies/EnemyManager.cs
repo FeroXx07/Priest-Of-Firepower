@@ -28,7 +28,6 @@ public class EnemyManager : GenericSingleton<EnemyManager>
             SpawnEnemy(p.position);
             yield return new WaitForSeconds(spawnFrequency);
         }
-
     }
 
     GameObject SpawnEnemy(Vector3 spawnPosition)
