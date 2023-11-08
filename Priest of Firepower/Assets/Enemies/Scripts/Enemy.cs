@@ -12,8 +12,12 @@ public enum EnemyState
     DIE,
 }
 
-public class Enemy : MonoBehaviour
+public class Enemy : MonoBehaviour, IPointsProvider
 {
+    [SerializeField] private int pointsOnHit = 10;
+    [SerializeField] private int pointsOnDeath = 100;
+    [SerializeField] private int pointsMultiplyer = 1;
+
     protected Transform target;
     protected NavMeshAgent agent;
     protected HealthSystem enemyData;
@@ -33,6 +37,10 @@ public class Enemy : MonoBehaviour
     protected EnemyState enemyState;
 
     public UnityEvent<Enemy> onDeath = new UnityEvent<Enemy>();
+
+    public int PointsOnHit { get => pointsOnHit; }
+    public int PointsOnDeath { get => pointsOnDeath; }
+    public int Multiplyer { get => pointsMultiplyer; set => pointsMultiplyer = value; }
 
     private void Awake()
     {
@@ -63,5 +71,15 @@ public class Enemy : MonoBehaviour
     {
         enemyState = EnemyState.DIE;
         onDeath?.Invoke(this);
+    }
+
+    public int ProvidePointsOnHit()
+    {
+        return PointsOnHit;
+    }
+
+    public int ProvidePointsOnDeath()
+    {
+        return PointsOnDeath;
     }
 }

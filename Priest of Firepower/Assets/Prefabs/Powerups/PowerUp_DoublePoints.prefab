@@ -116,7 +116,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 512
   destroyGameObject: 1
-  timeToDestroy: 0.2
+  timeToDestroy: 11
 --- !u!114 &4069460648421952045
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -131,6 +131,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 2
   powerUpTime: 10
+  timerCount: 0
+  isActive: 0
 --- !u!82 &8511461569197173625
 AudioSource:
   m_ObjectHideFlags: 0
@@ -243,7 +245,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &3339058554558117723
 Transform:
@@ -349,7 +351,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!224 &6602276159636202102
 RectTransform:
@@ -449,7 +451,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!224 &4656809168856037372
 RectTransform:
