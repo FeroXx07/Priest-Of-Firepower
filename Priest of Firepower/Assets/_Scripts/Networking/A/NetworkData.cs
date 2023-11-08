@@ -6,7 +6,8 @@ public enum DataType
 {
     Ping,
     Chat,
-    Transform
+    Transform,
+    Input
 }
 public abstract class NetworkData <T>
 {

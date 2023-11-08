@@ -162,8 +162,6 @@ namespace ClientA
 
                 if (msg == "ok")
                 {
-                    //IsConnected = true;
-
                     //add action dispatcher for main thread
                     MainThreadDispatcher.EnqueueAction(OnConnected);
                 }

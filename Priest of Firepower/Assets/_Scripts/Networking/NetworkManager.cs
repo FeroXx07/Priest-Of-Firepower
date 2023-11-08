@@ -21,22 +21,68 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     [SerializeField]
     ConnectionAddressData connectionAddress;
-    void StartClient()
+
+    //Actions
+    public Action OnClientConnected;
+
+    private void OnEnable()
     {
-        client = new AClient();
+        
+    }
+    #region Connection Initializers
+    public void StartClient()
+    {
+        CreateClient();
     }
 
-    void StartHost()
+    public void StartHost()
     {
-        client = new AClient();
-        server = new AServer();
+        CreateServer();
+        CreateClient();
+
+        server.InitServer(); 
+        
+        if (server.GetServerInit())
+        {
+            client.Connect(IPAddress.Loopback);
+        }
     }
     //last one todo (optional)
     void StartServer()
     {
+        CreateServer();
+    }
+    #endregion
+
+    //
+    void CreateClient()
+    {
+        client = new AClient();
+        client.OnConnected += ClientConnected;
+    }
+    void CreateServer()
+    {
         server = new AServer();
     }
+    #region Client Events Interface
+    //Client Events Interface
+    public void ClientConnected()
+    {
+        Debug.Log("Client Connected to server ...");
+        OnClientConnected?.Invoke();
+    }
+    public void ClientDisconected()
+    {
 
+    }
+    #endregion
+    #region Server Events Interface
+    //Server Events Interface
+    public void ConnectClient(IPAddress address)
+    {
+        client.Connect(address);
+    }
+    #endregion
     // Structure to store the address to connect to
     [Serializable]
     public struct ConnectionAddressData
