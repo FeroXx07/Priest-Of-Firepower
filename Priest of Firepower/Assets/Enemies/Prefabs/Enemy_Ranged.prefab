@@ -16,7 +16,6 @@ GameObject:
   - component: {fileID: 824060067660528380}
   - component: {fileID: 824060067660528381}
   - component: {fileID: 5655012706975623227}
-  - component: {fileID: -9064715006445096684}
   - component: {fileID: -1463086895296463543}
   m_Layer: 7
   m_Name: Enemy_Ranged
@@ -200,22 +199,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bda3c09d495ceb48a98434682d706d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
-  bulletSpeedMultiplier: 2
---- !u!114 &-9064715006445096684
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824060067660528363}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a15e81b085a0dc4c8dad9340c3c21df, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
   pointsOnHit: 10
-  pointsOnDeath: 80
+  pointsOnDeath: 100
+  pointsMultiplyer: 1
+  attackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+  bulletSpeedMultiplier: 2
 --- !u!114 &-1463086895296463543
 MonoBehaviour:
   m_ObjectHideFlags: 0

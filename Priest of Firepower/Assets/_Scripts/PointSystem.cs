@@ -38,14 +38,14 @@ public class PointSystem : MonoBehaviour
 
     public void PointsOnHit(IPointsProvider pointsProvider)
     {
-        int points =  pointsProvider.ProvidePointsOnHit();
+        int points =  pointsProvider.ProvidePointsOnHit() * pointsProvider.Multiplyer;
 
         AddPoints(points);
     }
 
     public void PointsOnDeath(IPointsProvider pointsProvider)
     {
-        int points = pointsProvider.ProvidePointsOnDeath();
+        int points = pointsProvider.ProvidePointsOnDeath() * pointsProvider.Multiplyer;
 
         AddPoints(points);
     }
