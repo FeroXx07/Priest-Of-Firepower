@@ -27,18 +27,14 @@ public class PowerUpDoublePoints : PowerUpBase
 
     private void Update()
     {
-        Debug.Log($"isActive: {isActive}");
         if (isActive)
         {
             timerCount += Time.deltaTime;
-            Debug.Log($"timerCount: {timerCount}");
             if (timerCount >= powerUpTime)
             {
-                Debug.Log($"timer reached: {timerCount} >= {powerUpTime}");
                 isActive = false;
                 timerCount = 0.0f;
                 pointsProviders.ForEach(p => p.Multiplyer = 1);
-                Debug.Log($"points reseted");
                 pointsProviders.Clear();
             }
         }

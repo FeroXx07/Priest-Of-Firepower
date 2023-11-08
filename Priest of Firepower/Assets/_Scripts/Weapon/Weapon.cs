@@ -91,9 +91,12 @@ public class Weapon : MonoBehaviour
             if (CanShoot())
             { 
                 GameObject bullet = null;
+
                 bullet = PoolManager.Instance.Pull(bulletRef);
-                bullet.GetComponent<Bullet>().Damage = localData.damage;
-                bullet.GetComponent<Bullet>().SetOwner(Owner);
+
+                OnTriggerAttack onTriggerAttack = bullet.GetComponent<OnTriggerAttack>();
+                onTriggerAttack.Damage = localData.damage;
+                onTriggerAttack.SetOwner(Owner);
 
                 transform.localRotation = transform.parent.rotation;
 

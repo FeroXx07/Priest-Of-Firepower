@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MeleeAttack : MonoBehaviour, IDamageDealer
+public class OnTriggerAttack : MonoBehaviour, IDamageDealer
 {
     #region Layers
     [SerializeField] LayerMask layers;
@@ -16,9 +16,11 @@ public class MeleeAttack : MonoBehaviour, IDamageDealer
     public event Action<GameObject> onDamageDealerDestroyed;
     public event Action<GameObject> onDamageDealth;
     #endregion
+    GameObject Owner;
     private void DisposeGameObject()
     {
         onDamageDealerDestroyed?.Invoke(gameObject);
+
         if (TryGetComponent(out PoolObject pool))
         {
             gameObject.SetActive(false);
@@ -32,8 +34,8 @@ public class MeleeAttack : MonoBehaviour, IDamageDealer
         {
             if (IsSelected(collision.layer))
             {
+                dmg.TakeDamage(this, Vector2.zero, Owner);
                 onDamageDealth?.Invoke(collision);
-                dmg.TakeDamage(this, Vector2.zero,gameObject);
             }
 
             DisposeGameObject();
@@ -54,4 +56,13 @@ public class MeleeAttack : MonoBehaviour, IDamageDealer
         CollisionHandeler(collision.gameObject);
     }
     #endregion
+
+    public void SetOwner(GameObject owner)
+    {
+        Owner = owner;
+    }
+    public GameObject GetOwner()
+    {
+        return Owner;
+    }
 }
