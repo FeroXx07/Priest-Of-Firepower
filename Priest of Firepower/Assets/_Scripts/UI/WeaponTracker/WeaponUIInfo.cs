@@ -8,6 +8,11 @@ public class WeaponUIInfo : MonoBehaviour
     [SerializeField] WeaponData weaponLocalData;
     [SerializeField] Image visibleSprite;
 
+    private void Awake()
+    {
+        visibleSprite.preserveAspect = true;
+    }
+
     public void SetWeapon(WeaponData data)
     {
         visibleSprite.sprite = data.sprite;
@@ -17,11 +22,5 @@ public class WeaponUIInfo : MonoBehaviour
     void Start()
     {
 
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }

@@ -16,6 +16,7 @@ public class WeaponSwitcher : MonoBehaviour
     [SerializeField] GameObject initialWeaponPrefab;
     [SerializeField] GameObject initialSecondaryWeaponPrefab;
 
+
     [Serializable]
     public struct WeaponSlot
     {
@@ -47,10 +48,11 @@ public class WeaponSwitcher : MonoBehaviour
     private void SetWeapons()
     {
         //clean up the weapons slots
-        for(int i =0;i< slots.Length;i++)
+        for(int i = 0;i < slots.Length;i++)
         {
             slots[i].Empty = true;
-            slots[i].holder.gameObject.SetActive(false);
+            if (slots[i].holder != null)
+                slots[i].holder.gameObject.SetActive(false);
             slots[i].weapon = null;
             slots[i].index = i;
         }
