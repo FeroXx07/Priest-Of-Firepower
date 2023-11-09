@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -53,8 +54,19 @@ public class Enemy : MonoBehaviour, IPointsProvider
     }
     void Start()
     {
-        target = GameObject.Find("Player").transform;
         playerList = GameObject.FindGameObjectsWithTag("Player");
+        float smallerDistance = Mathf.Infinity;
+
+        foreach (var player in playerList)
+        {
+            float actualDistance = Vector2.Distance(player.transform.position, this.transform.position);
+
+            if (actualDistance < smallerDistance)
+            { 
+                smallerDistance = actualDistance;
+                target = player.transform;
+            }
+        }        
     }
 
     private void OnEnable()
