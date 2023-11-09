@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 183938588540325926}
   - component: {fileID: 7850604240906023451}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,7 +96,7 @@ GameObject:
   - component: {fileID: 4472022888998543015}
   - component: {fileID: 6167136818739818673}
   - component: {fileID: 1878786967224350180}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: RangedAttack01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -129,7 +129,7 @@ CircleCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
@@ -172,3 +172,4 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 768
   damage: 20
+  destroyOnContact: 1

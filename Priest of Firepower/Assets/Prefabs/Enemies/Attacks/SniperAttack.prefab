@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 183938588540325926}
   - component: {fileID: 7850604240906023451}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Sprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -96,9 +96,10 @@ GameObject:
   - component: {fileID: 4472022888998543015}
   - component: {fileID: 6167136818739818673}
   - component: {fileID: -2498038464860930454}
-  m_Layer: 0
+  - component: {fileID: 3115550596773295711}
+  m_Layer: 10
   m_Name: SniperAttack
-  m_TagString: Untagged
+  m_TagString: Ignore_Enemies
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -172,3 +173,23 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 768
   damage: 20
+  destroyOnContact: 0
+--- !u!114 &3115550596773295711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4472022888998543014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0cc98dd54e6b954499359d56e0cbd92, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  layersToIgnoreCollision:
+    serializedVersion: 2
+    m_Bits: 128
+  maxBounces: 3
+  reboundCounter: 0
+  destroyAfterMaxBounces: 1
+  destructionTime: 1
