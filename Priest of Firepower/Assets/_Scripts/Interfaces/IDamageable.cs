@@ -6,6 +6,7 @@ using UnityEngine.Events;
 
 public interface IDamageable
 {
+    // The Action<Damaged object, Damager object>
     event Action<GameObject, GameObject> onDamageableDestroyed;
     event Action<GameObject, GameObject> onDamageTaken;
 

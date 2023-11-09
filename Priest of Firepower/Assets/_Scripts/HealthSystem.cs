@@ -29,6 +29,7 @@ public class HealthSystem : MonoBehaviour,IDamageable
     public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
     {
         health -= damageDealer.Damage;
+        onDamageTaken?.Invoke(gameObject, owner);
 
         if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
         {
