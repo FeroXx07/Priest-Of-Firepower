@@ -13,6 +13,7 @@ public class WeaponSwitcher : MonoBehaviour
     public static Action<Transform> OnWeaponSwitch;
 
     [SerializeField] GameObject initialWeaponPrefab;
+    [SerializeField] GameObject initialSecondaryWeaponPrefab;
 
     [Serializable]
     public struct WeaponSlot
@@ -28,6 +29,7 @@ public class WeaponSwitcher : MonoBehaviour
         SetWeapons();
         SelectWeapon(selectedWeapon);
         ChangeWeapon(initialWeaponPrefab);
+        ChangeWeapon(initialSecondaryWeaponPrefab);
     }
 
     private void SelectWeapon(int selectedWeapon)
@@ -73,6 +75,7 @@ public class WeaponSwitcher : MonoBehaviour
 
     public void ChangeWeapon(GameObject newWeaponPrefab)
     {
+        if (newWeaponPrefab == null) return;
 
         WeaponSlot emptySlot = new WeaponSlot{Empty = true, holder = null, weapon = null,index = -1 };
 
