@@ -20,12 +20,25 @@ public class Weapon : MonoBehaviour
     [SerializeField] VisualEffect muzzleFlash;
 
     GameObject Owner;
+
+    bool localDataCopied = false;
     #endregion
 
     private void Awake()
     {
-        localData = Instantiate(weaponData); // We don't want to modify the global weapon template, but only ours weapon!
+        if (!localDataCopied) SetData();
     }
+
+    public void SetData() //forces to copy the data, even if the parents are unactive
+    {
+        if (!localDataCopied)
+        {
+
+            localData = Instantiate(weaponData); // We don't want to modify the global weapon template, but only ours weapon!
+            localDataCopied = true;
+        }
+    }
+
     private void Start()
     {
         _spriteRenderer = GetComponent<SpriteRenderer>();

@@ -11,6 +11,7 @@ public class WeaponSwitcher : MonoBehaviour
     float lastSwtichTime;
 
     public static Action<Transform> OnWeaponSwitch;
+    public static Action<GameObject, int> OnWeaponChange;
 
     [SerializeField] GameObject initialWeaponPrefab;
     [SerializeField] GameObject initialSecondaryWeaponPrefab;
@@ -115,7 +116,11 @@ public class WeaponSwitcher : MonoBehaviour
         slots[emptySlot.index] = emptySlot;
 
         GameObject weapon = Instantiate(newWeaponPrefab,emptySlot.holder.transform);
+        weapon.GetComponent<Weapon>().SetData();
         weapon.GetComponent<Weapon>().SetOwner(gameObject);
+
+        OnWeaponChange?.Invoke(weapon, emptySlot.index);
+
     }
     void OnWeaponSelected()
     {
