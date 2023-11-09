@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Ignore_Enemies
   layers:
   - Default
   - TransparentFX
@@ -15,7 +16,7 @@ TagManager:
   - Enemy
   - Enviroment
   - Player
-  - 
+  - Enemy_Projectile
   - 
   - 
   - 
