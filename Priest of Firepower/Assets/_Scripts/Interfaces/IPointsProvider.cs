@@ -8,5 +8,4 @@ public interface IPointsProvider
     int ProvidePointsOnDeath();
     int PointsOnHit { get; }
     int PointsOnDeath { get; }
-    int Multiplyer { get; set; }
 }

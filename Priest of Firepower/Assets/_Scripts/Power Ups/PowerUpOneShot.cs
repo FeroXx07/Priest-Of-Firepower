@@ -9,6 +9,7 @@ public class PowerUpOneShot : PowerUpBase
     [SerializeField] private float timerCount = 0.0f;
     [SerializeField] bool isActive = false;
     List<Weapon> allWeapons = new List<Weapon>();
+   
     public override void ApplyPowerUp()
     {
         base.ApplyPowerUp();

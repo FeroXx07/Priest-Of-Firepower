@@ -5,12 +5,10 @@ using UnityEngine;
 
 public class PointSystem : MonoBehaviour
 {
-
     private int points;
-
+    public int multiplyer = 1;
     public Action<int> onPointsAdded;
     public Action<int> onPointsRemoved;
-
     public Action<int> onPointsChanged;
 
     void Start()
@@ -38,14 +36,14 @@ public class PointSystem : MonoBehaviour
 
     public void PointsOnHit(IPointsProvider pointsProvider)
     {
-        int points =  pointsProvider.ProvidePointsOnHit() * pointsProvider.Multiplyer;
+        int points =  pointsProvider.ProvidePointsOnHit() * multiplyer;
 
         AddPoints(points);
     }
 
     public void PointsOnDeath(IPointsProvider pointsProvider)
     {
-        int points = pointsProvider.ProvidePointsOnDeath() * pointsProvider.Multiplyer;
+        int points = pointsProvider.ProvidePointsOnDeath() * multiplyer;
 
         AddPoints(points);
     }

@@ -14,5 +14,15 @@ public class PowerUpBase : MonoBehaviour
     }
     public PowerUpType type;
     public static Action<PowerUpType> powerUpPickedGlobal;
-    public virtual void ApplyPowerUp() { powerUpPickedGlobal?.Invoke(type); }
+    public virtual void ApplyPowerUp() {
+        if (coll2d)
+            coll2d.enabled = false;
+        powerUpPickedGlobal?.Invoke(type);
+    }
+
+    protected Collider2D coll2d;
+    private void Awake()
+    {
+        coll2d = GetComponent<Collider2D>();
+    }
 }
