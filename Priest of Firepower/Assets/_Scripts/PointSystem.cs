@@ -14,7 +14,7 @@ public class PointSystem : MonoBehaviour
     void Start()
     {
         
-        points = 10000; //change to 0 in final
+        points = 0;
         
         //Show points on start
         onPointsChanged?.Invoke(points);
