@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class OnTriggerAttack : Attack
 {
-    [SerializeField] protected bool destroyOnContact = true;
+    [SerializeField] protected bool destroyOnContactWithLayer = true;
     protected virtual void CollisionHandeler(GameObject collision)
     {
         if (collision.TryGetComponent<IDamageable>(out IDamageable dmg))
@@ -17,7 +17,7 @@ public class OnTriggerAttack : Attack
             }
         }
 
-        if (IsSelected(collision.layer) && destroyOnContact)
+        if (IsSelected(collision.layer) && destroyOnContactWithLayer)
             DisposeGameObject();
     }
 

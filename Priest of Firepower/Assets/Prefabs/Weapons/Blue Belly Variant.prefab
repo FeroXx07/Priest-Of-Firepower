@@ -132,8 +132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponData: {fileID: 11400000, guid: 4e5110f0fc1933b43b528a4a2df70f1b, type: 2}
   localData: {fileID: 0}
-  bulletPool: {fileID: 11400000, guid: 93ee4b2c378bb2446a05de413b85cb42, type: 2}
-  bulletRef: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  bulletRef: {fileID: 7430432126554555486, guid: 4e66b9e2bf9809941a2e225fbc5f832c, type: 3}
   firePoint: {fileID: 2627832367354819856}
   muzzleFlash: {fileID: 618522874705143124}
 --- !u!1001 &7957938483790717519
@@ -141,6 +140,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 2627832369091270299}
     m_Modifications:
     - target: {fileID: 7414378147472295701, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
@@ -244,6 +244,9 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
 --- !u!2083052967 &618522874705143124 stripped
 VisualEffect:

@@ -132,8 +132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponData: {fileID: 11400000, guid: e702a8c25d9793b45b8160d8a0a2fa82, type: 2}
   localData: {fileID: 0}
-  bulletPool: {fileID: 11400000, guid: 93ee4b2c378bb2446a05de413b85cb42, type: 2}
-  bulletRef: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  bulletRef: {fileID: 5059123218599921543, guid: 4e66b9e2bf9809941a2e225fbc5f832c, type: 3}
   firePoint: {fileID: 32228730880977930}
   muzzleFlash: {fileID: 4345202620397486823}
 --- !u!1001 &6532589348408444412
@@ -141,6 +140,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 32228731526877057}
     m_Modifications:
     - target: {fileID: 7414378147472295701, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
@@ -244,6 +244,9 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
 --- !u!4 &4345202620397486820 stripped
 Transform:
