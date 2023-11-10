@@ -62,13 +62,17 @@ public class ParalizerEnemyBehavior : Enemy
                     cooldownTimer -= Time.deltaTime;
                 }
 
+                if (internalAttackObject) 
+                {
+                    internalAttackObject.transform.position = target.position;
+                }
+
                 // For example: Perform attack, reduce player health, animation sound and particles
                 if (Vector3.Distance(target.position, this.transform.position) > 9)
                 {
                     enemyState = EnemyState.CHASE;
 
-                    target.gameObject.GetComponent<PlayerMovement>().enabled = true;
-                    target.gameObject.GetComponent<PlayerShooter>().enabled = true;
+                    StopParalyzerAttack();
                 }
 
                 break;
@@ -79,8 +83,7 @@ public class ParalizerEnemyBehavior : Enemy
                 // Play death animation, sound and particles, destroy enemy object
                 collider.enabled = false;
 
-                target.gameObject.GetComponent<PlayerMovement>().enabled = true;
-                target.gameObject.GetComponent<PlayerShooter>().enabled = true;
+                StopParalyzerAttack();
 
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
@@ -100,7 +103,27 @@ public class ParalizerEnemyBehavior : Enemy
         target.gameObject.GetComponent<PlayerMovement>().enabled = false;
         target.gameObject.GetComponent<PlayerShooter>().enabled = false;
 
+        if(internalAttackObject){}
+        else
+        {
+            internalAttackObject = Instantiate(attackPrefab);
+            internalAttackObject.transform.position = target.position;
+        }
+        
+
         cooldownTimer = cooldownDuration;
+    }
+
+    private void StopParalyzerAttack()
+    {
+        target.gameObject.GetComponent<PlayerMovement>().enabled = true;
+        target.gameObject.GetComponent<PlayerShooter>().enabled = true;
+
+        if (internalAttackObject)
+        {
+            Destroy(internalAttackObject);
+        }
+
     }
 
     bool CheckLineOfSight(Transform playerTransform)

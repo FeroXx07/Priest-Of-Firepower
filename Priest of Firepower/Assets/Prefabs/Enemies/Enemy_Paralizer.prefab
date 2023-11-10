@@ -239,7 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pointsOnHit: 10
   pointsOnDeath: 100
-  attackPrefab: {fileID: 0}
+  attackPrefab: {fileID: 4472022888998543014, guid: 081ad3c55d6d32743b06c7d2710aa988, type: 3}
   onDeath:
     m_PersistentCalls:
       m_Calls: []
