@@ -11,7 +11,13 @@ public class WeaponTracker : MonoBehaviour
     private void OnEnable()
     {
         WeaponSwitcher.OnWeaponChange += ChangeWeapon;
+        PlayerShooter.OnShoot += UpdateWeaponUI;
+    }
 
+    void UpdateWeaponUI()
+    {
+        primaryWeapon.UpdateUI();
+        secodnaryWeapon.UpdateUI();
     }
 
     void ChangeWeapon(GameObject weapon, int index)
@@ -28,10 +34,12 @@ public class WeaponTracker : MonoBehaviour
         if (index == 0)
         {
             primaryWeapon.SetWeapon(data);
+            primaryWeapon.UpdateUI();
         }
         if (index == 1)
         {
             secodnaryWeapon.SetWeapon(data);
+            secodnaryWeapon.UpdateUI();
         }
     }
 }

@@ -17,6 +17,7 @@ public class WeaponUIInfo : MonoBehaviour
     private void Awake()
     {
         weaponSprite.preserveAspect = true;
+        
     }
 
     public void SetWeapon(WeaponData data)
@@ -30,31 +31,42 @@ public class WeaponUIInfo : MonoBehaviour
         float spriteRatio = b / a * spriteSize;
 
         weaponSprite.gameObject.transform.localScale = new Vector3(spriteRatio, spriteRatio, spriteRatio);
+        UpdateUI();
     }
 
-    private void Update()
+
+    public void UpdateUI()
     {
+
         if (weaponData == null) return;
-        
-        float fill = 0;
-        
-        //draw remaining magazines amount
+
+
+        //draw remaining bullets in current magazine
         if (weaponData.maxAmmoCapacity != 0)
         {
-            fill = weaponData.ammoInMagazine / (float)weaponData.magazineSize;
+            float fill = weaponData.ammoInMagazine / (float)weaponData.magazineSize;
             magazineSprite.fillAmount = fill;
-            
-            
+
         }
 
-        //show remaining magazines
-        if (fill == 1)
+        //write remaining magazines
+        if (weaponData.maxAmmoCapacity != 0)
         {
-            magazineCount.text = "x" + Mathf.CeilToInt(weaponData.totalAmmo / (float)weaponData.maxAmmoCapacity * weaponData.magazineSize).ToString();
+            int totalAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
+
+            float magazinesLeft = totalAmmo / (float)weaponData.magazineSize;
+
+            if (totalAmmo == weaponData.maxAmmoCapacity + weaponData.magazineSize) magazinesLeft -= 1;
+
+            magazineCount.text = "x" + Mathf.FloorToInt(magazinesLeft).ToString();
         }
 
-        int currentAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
 
+
+        //show total ammo remaining
+        int currentAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
         totalAmmo.text = currentAmmo.ToString() + " / " + (weaponData.maxAmmoCapacity + weaponData.magazineSize).ToString();
+
     }
+
 }
