@@ -7,7 +7,9 @@ using TMPro;
 public class WeaponUIInfo : MonoBehaviour
 {
     [SerializeField] WeaponData weaponData;
+
     [SerializeField] Image weaponSprite;
+    [SerializeField] float spriteSize;
     [SerializeField] Image magazineSprite;
     [SerializeField] TextMeshProUGUI magazineCount;
     [SerializeField] TextMeshProUGUI totalAmmo;
@@ -21,6 +23,13 @@ public class WeaponUIInfo : MonoBehaviour
     {
         weaponData = data;
         weaponSprite.sprite = data.sprite;
+
+        float a = weaponSprite.sprite.rect.height;
+        float b = weaponSprite.sprite.rect.width;
+        
+        float spriteRatio = b / a * spriteSize;
+
+        weaponSprite.gameObject.transform.localScale = new Vector3(spriteRatio, spriteRatio, spriteRatio);
     }
 
     private void Update()
