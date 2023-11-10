@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.UI;
 
-public class SniperEnemyBehavior : Enemy
+public class ParalizerEnemyBehavior : Enemy
 {
     public float bulletSpeedMultiplier = 6.0f;
 
@@ -39,11 +39,12 @@ public class SniperEnemyBehavior : Enemy
 
                 //Debug.Log("Before if: "+ CheckLineOfSight(target));
 
-                if (distance <= 12 && distance >= 3) // && (CheckLineOfSight(target) == true)
+                if (distance <= 9 && distance >= 3) // && (CheckLineOfSight(target) == true)
                 {
                     enemyState = EnemyState.ATTACK;
                     // Debug.Log("Attack mode");
                 }
+
 
                 break;
 
@@ -53,7 +54,7 @@ public class SniperEnemyBehavior : Enemy
 
                 if (cooldownTimer <= 0f)
                 {
-                    StartSniperAttack();
+                    StartParalyzerAttack();
                 }
 
                 if (cooldownTimer > 0f)
@@ -62,9 +63,12 @@ public class SniperEnemyBehavior : Enemy
                 }
 
                 // For example: Perform attack, reduce player health, animation sound and particles
-                if (Vector3.Distance(target.position, this.transform.position) > 12)
+                if (Vector3.Distance(target.position, this.transform.position) > 9)
                 {
                     enemyState = EnemyState.CHASE;
+
+                    target.gameObject.GetComponent<PlayerMovement>().enabled = true;
+                    target.gameObject.GetComponent<PlayerShooter>().enabled = true;
                 }
 
                 break;
@@ -74,6 +78,9 @@ public class SniperEnemyBehavior : Enemy
                 agent.isStopped = true;
                 // Play death animation, sound and particles, destroy enemy object
                 collider.enabled = false;
+
+                target.gameObject.GetComponent<PlayerMovement>().enabled = true;
+                target.gameObject.GetComponent<PlayerShooter>().enabled = true;
 
                 timeRemaining -= Time.deltaTime;
                 if (timeRemaining <= 0)
@@ -88,33 +95,10 @@ public class SniperEnemyBehavior : Enemy
         }
     }
 
-    private void StartSniperAttack()
+    private void StartParalyzerAttack()
     {
-        Vector3 closerPlayerPosition = new Vector3(0, 0, 0);
-        float distance = Mathf.Infinity;
-
-        for (int i = 0; i < playerList.Length; i++)
-        {
-            if (Vector3.Distance(playerList[i].transform.position, gameObject.transform.position) < distance)
-            {
-                closerPlayerPosition = playerList[i].transform.position;
-                distance = Vector3.Distance(playerList[i].transform.position, gameObject.transform.position);
-            }
-        }
-
-        Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
-
-        internalAttackObject = Instantiate(attackPrefab);
-        internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
-
-        Rigidbody2D rbComp = internalAttackObject.GetComponent<Rigidbody2D>();
-
-        if (rbComp)
-        {
-            rbComp.AddForce(directionToPlayer * bulletSpeedMultiplier);
-        }
-
-        //Debug.Log("Ranged Attack done");
+        target.gameObject.GetComponent<PlayerMovement>().enabled = false;
+        target.gameObject.GetComponent<PlayerShooter>().enabled = false;
 
         cooldownTimer = cooldownDuration;
     }
