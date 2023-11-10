@@ -19,6 +19,6 @@ public class PlayerUI : MonoBehaviour
 
     void UpdatePoints(int points)
     {
-        pointsTxt.text = "Score: " + points.ToString();
+        pointsTxt.text = points.ToString();
     }
 }
