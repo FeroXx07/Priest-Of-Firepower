@@ -7,6 +7,12 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
+public enum PacketType
+{
+    PING,
+    OBJECT_STATE,
+    INPUT
+}
 
 //this class will work as a client or server or both at the same time
 public class NetworkManager : GenericSingleton<NetworkManager>

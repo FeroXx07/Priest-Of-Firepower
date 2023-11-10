@@ -11,16 +11,8 @@ using System.Collections.Generic;
 
 namespace ClientA
 {
-    public class AClient : MonoBehaviour
+    public class AClient : GenericSingleton<AClient>
     {
-        private static AClient instance;
-        public static AClient Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
         #region variables
         IPEndPoint endPoint;
         string IPaddress;
@@ -45,19 +37,6 @@ namespace ClientA
 
 
         #region Enable/Disable funcitons
-        private void Awake()
-        {
-            if (instance == null)
-            {
-                instance = this;
-            }
-            else if (instance != this)
-            {
-                Destroy(gameObject);
-            }
-
-            DontDestroyOnLoad(gameObject);
-        }
         private void Start()
         {
             OnConnected += StartListening;

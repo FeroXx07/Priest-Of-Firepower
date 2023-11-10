@@ -26,17 +26,9 @@ namespace ServerA
             return clientId;
         }
     }
-    public class AServer : MonoBehaviour
+    public class AServer : GenericSingleton<AServer>
     {
         #region variables
-        private static AServer instance;
-        public static AServer Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
         IPEndPoint endPoint;
         //[SerializeField] int port = 12345;
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
@@ -95,14 +87,6 @@ namespace ServerA
         #endregion
 
         #region enable/disable functions
-        private void Awake()
-        {
-            if (instance == null)
-                instance = this;
-            else if (instance != null)
-                DestroyImmediate(instance);
-            DontDestroyOnLoad(gameObject);
-        }
         private void OnDisable()
         {
 
