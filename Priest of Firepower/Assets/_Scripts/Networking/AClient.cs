@@ -17,8 +17,6 @@ namespace ClientA
         IPEndPoint endPoint;
         string IPaddress;
         IPAddress serverIP;
-        private Task senderTask;
-
         private Thread connectionThread;
 
         private CancellationTokenSource listenerToken;
@@ -238,28 +236,13 @@ namespace ClientA
             }
         }
         #endregion
-        #region Helper functions
-
-        public void SendMessageUI(string text)
-        {
-            Thread message = new Thread(() => SendMessageText(text));
-            message.Start();
-        }
-
-        public void EnqueueMessage(string message)
-        {
-            messageQueue.Enqueue(message);
-        }
-        public void SendMessageText(string message)
+        
+        public void SendPacket(byte[]data)
         {
             try
             {
-                if (connectionTCP == null) return;
-                // Creation of message that
-                // we will send to Server
-                byte[] sendBytes = Encoding.ASCII.GetBytes(message);
-                connectionTCP.SendTo(sendBytes, sendBytes.Length, SocketFlags.None, endPoint);
-
+                if (connectionUDP == null) return;                
+                connectionUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
             }
             catch (ArgumentNullException ane)
             {
@@ -279,6 +262,7 @@ namespace ClientA
                 Debug.LogError("Unexpected exception : " + e.ToString());
             }
         }
+        #region Helper functions
         #endregion
     }
 }
