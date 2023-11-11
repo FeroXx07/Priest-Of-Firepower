@@ -53,7 +53,7 @@ public class ClientInputHandelerUI : MonoBehaviour
     {
         if (text != "")
         {
-            AClient.Instance.SendMessageUI(text);
+            //AClient.Instance.SendMessageUI(text);
             OnMessageRecived(text);
             mesageInputField.text = "";
         }

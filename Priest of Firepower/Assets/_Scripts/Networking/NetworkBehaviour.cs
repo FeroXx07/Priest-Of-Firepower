@@ -211,6 +211,8 @@ public class NetworkBehaviour : MonoBehaviour
         // MemoryStream Write(MemoryStream outputStream);
 
         // Send MemoryStream to netowrk manager buffer
+
+       NetworkManager.Instance.AddStateStreamQueue(stream);
     }
     private void Update()
     {

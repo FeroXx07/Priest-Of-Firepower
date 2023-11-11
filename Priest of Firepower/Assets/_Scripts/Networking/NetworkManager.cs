@@ -28,14 +28,15 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     private bool isClient = false;
 
     uint MTU = 1400;
-    int sendBufferTimeout = 1000; // time with no activity to send not fulled packets
+    int stateBufferTimeout = 1000; // time with no activity to send not fulled packets
+    int inputBufferTimeout = 1000; // time with no activity to send not fulled packets
+    // store all state streams to send
     Queue<MemoryStream> stateStreamBuffer = new Queue<MemoryStream>();
+    // store all input streams to send
     Queue<MemoryStream> inputStreamBuffer = new Queue<MemoryStream>();
-
-    // Queue to store MemoryStreams
-    private Queue<MemoryStream> dataQueue = new Queue<MemoryStream>();
     // Mutex for thread safety
-    private readonly object queueLock = new object();
+    private readonly object stateQueueLock = new object();
+    private readonly object inputQueueLock = new object();
 
 
 
@@ -82,7 +83,6 @@ public class NetworkManager : GenericSingleton<NetworkManager>
             client.Connect(IPAddress.Loopback);
         }
     }
-    //last one todo (optional)
     void StartServer()
     {
         CreateServer();
@@ -101,32 +101,36 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         server = new AServer();        
     }
 
-
-    public void AddDataToQueue(MemoryStream stream)
+    public void AddStateStreamQueue(MemoryStream stream)
     {
-       dataQueue.Enqueue(stream);
+       stateStreamBuffer.Enqueue(stream);
+    }
+    public void AddInputStreamQueue(MemoryStream stream)
+    {
+        inputStreamBuffer.Enqueue(stream);
     }
     
     private void SendDataThread(CancellationTokenSource token)
     {
-        float timeout = sendBufferTimeout;
+        float stateTimeout = stateBufferTimeout;
+        float inputTimeout = inputBufferTimeout;
         while(!token.IsCancellationRequested)
-        {
-           
+        { 
 
             //State buffer
-            if(dataQueue.Count > 0)
+
+            if(stateStreamBuffer.Count > 0)
             {
-                lock(queueLock)
+                lock(stateQueueLock)
                 {
                     int totalSize = 0;
                     List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                     //check if the totalsize + the next stream total size is less than the specified size
-                    while (dataQueue.Count > 0 && totalSize + (int)dataQueue.Peek().Length <= MTU || timeout <= 0)
+                    while (stateStreamBuffer.Count > 0 && totalSize + (int)stateStreamBuffer.Peek().Length <= MTU && stateBufferTimeout > 0)
                     {
-                        timeout -= Time.deltaTime;
-                        MemoryStream nextStream = dataQueue.Dequeue();
+                        stateTimeout -= Time.deltaTime * 1000f;
+                        MemoryStream nextStream = stateStreamBuffer.Dequeue();
                         totalSize += (int)nextStream.Length;
                         streamsToSend.Add(nextStream);
                     }
@@ -149,6 +153,42 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
             //Input buffer
 
+            if (inputStreamBuffer.Count > 0)
+            {
+                lock (inputQueueLock)
+                {
+                    int totalSize = 0;
+                    List<MemoryStream> streamsToSend = new List<MemoryStream>();
+
+                    //check if the totalsize + the next stream total size is less than the specified size
+                    while (inputStreamBuffer.Count > 0 && totalSize + (int)inputStreamBuffer.Peek().Length <= MTU && inputBufferTimeout > 0)
+                    {
+                        inputTimeout -= Time.deltaTime * 1000;
+                        MemoryStream nextStream = inputStreamBuffer.Dequeue();
+                        totalSize += (int)nextStream.Length;
+                        streamsToSend.Add(nextStream);
+                    }
+                    byte[] buffer = ConcatenateMemoryStreams(streamsToSend);
+
+                    if (isClient)
+                    {
+                        client.SendPacket(buffer);
+                    }
+                    else if (isServer)
+                    {
+                        server.SendToAll(buffer);
+                    }
+                    else if (isHost)
+                    {
+                        server.SendToAll(buffer);
+                    }
+                }
+            }
+
+            if (inputTimeout < 0)
+                inputTimeout = inputBufferTimeout;
+            if (stateTimeout < 0)
+                stateTimeout = stateBufferTimeout;  
 
             Thread.Sleep(10);
         }
@@ -165,18 +205,6 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         return buffer.ToArray();
     }
 
-    #region Client Functions
-    void SendDataToServer(byte[] data)
-    {
-        client.SendPacket(data);
-    }
-    #endregion
-    #region Server Funtions
-    void SendDataToAllClients(byte[] data)
-    {
-
-    }
-    #endregion
     #region Client Events Interface
     //Client Events Interface
     public void ClientConnected()
@@ -218,7 +246,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     // Structure to store the address to connect to
 
-
+    #region address
 
     [Serializable]
     public struct ConnectionAddressData
@@ -256,4 +284,5 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         /// Endpoint (IP address and port) server will listen/bind on.
         public EndPoint ListenEndPoint => ParseNetworkEndpoint((ServerListenAddress == string.Empty) ? Address : ServerListenAddress, Port);
     }
+    #endregion
 }
