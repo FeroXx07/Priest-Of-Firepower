@@ -132,7 +132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponData: {fileID: 11400000, guid: 4e5110f0fc1933b43b528a4a2df70f1b, type: 2}
   localData: {fileID: 0}
-  bulletRef: {fileID: 7430432126554555486, guid: 4e66b9e2bf9809941a2e225fbc5f832c, type: 3}
+  bulletRef: {fileID: 5059123218599921543, guid: 4e66b9e2bf9809941a2e225fbc5f832c, type: 3}
   firePoint: {fileID: 2627832367354819856}
   muzzleFlash: {fileID: 618522874705143124}
 --- !u!1001 &7957938483790717519

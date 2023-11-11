@@ -51,8 +51,6 @@ public class Weapon : MonoBehaviour
         PlayerShooter.OnShoot += Shoot;
         PlayerShooter.OnReload += Reload;
         PlayerShooter.OnFlip+= FlipGun;
-        localData.totalAmmo = localData.maxAmmoCapacity;
-        localData.ammoInMagazine = localData.magazineSize;
     }
     private void OnDisable()
     {

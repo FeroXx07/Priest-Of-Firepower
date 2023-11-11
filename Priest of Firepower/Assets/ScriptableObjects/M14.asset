@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _name: M14
   price: 500
-  range: 14
+  range: 205.5
   damage: 10
   fireRate: 0.1
   bulletSpeed: 20

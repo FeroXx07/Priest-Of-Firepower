@@ -19,8 +19,8 @@ MonoBehaviour:
   fireRate: 0.07
   bulletSpeed: 25
   dispersion: 3
-  ammoInMagazine: 0
-  totalAmmo: 0
+  ammoInMagazine: 16
+  totalAmmo: 80
   maxAmmoCapacity: 80
   magazineSize: 16
   reloadSpeed: 0.5
