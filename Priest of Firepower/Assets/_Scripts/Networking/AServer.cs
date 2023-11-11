@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using ClientA;
 using UnityEngine.Rendering;
+using System.Xml.Serialization;
 
 namespace ServerA
 {
@@ -35,7 +36,6 @@ namespace ServerA
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
         private CancellationTokenSource authenticationToken;
-        private Task listenerTask;
         private Thread authenticationThread;
 
         ClientManager clientManager;
@@ -48,7 +48,8 @@ namespace ServerA
         //actions
         Action<int> OnClientAccepted;
         Action OnClientRemoved;
-        Action<string> OnDataRecieved;
+        Action<int> OnClientDisconnected;
+        Action<byte[]> OnDataRecieved;
 
         //handeles connection with clients
         Socket serverTCP;
@@ -179,6 +180,27 @@ namespace ServerA
             clientManager = new ClientManager();
             //start server
             StartConnectionListenerTCP();
+        }
+
+        public void SendToAll(byte[] data)
+        {
+            foreach(ClientData client in clientList)
+            {
+                client.connectionUDP.Send(data);
+            }
+        }
+
+        public void SendToClient(int clientId, PacketType packetType, byte[] data)
+        {
+            foreach (ClientData client in clientList)
+            {
+                if (client.ID == clientId)
+                {
+                    client.connectionUDP.Send(data);
+
+                    return;
+                }
+            }
         }
         void StartConnectionListenerTCP()
         {
