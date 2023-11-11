@@ -20,7 +20,7 @@ public class Enemy : MonoBehaviour, IPointsProvider
 
     protected Transform target;
     protected NavMeshAgent agent;
-    protected HealthSystem enemyData;
+    protected HealthSystem healthSystem;
     protected new Collider2D collider;
 
     [SerializeField] protected GameObject attackPrefab;
@@ -42,7 +42,7 @@ public class Enemy : MonoBehaviour, IPointsProvider
 
     private void Awake()
     {
-        enemyData = GetComponent<HealthSystem>();
+        healthSystem = GetComponent<HealthSystem>();
         agent = GetComponent<NavMeshAgent>();
         collider = gameObject.GetComponent<Collider2D>();
 
@@ -68,12 +68,14 @@ public class Enemy : MonoBehaviour, IPointsProvider
 
     private void OnEnable()
     {
-        enemyData.onDamageableDestroyed += HandleDeath;
+        healthSystem.onDamageableDestroyed += HandleDeath;
+        enemyState = EnemyState.SPAWN;
+        collider.enabled = true;
     }
 
     private void OnDisable()
     {
-        enemyData.onDamageableDestroyed -= HandleDeath;
+        healthSystem.onDamageableDestroyed -= HandleDeath;
     }
 
     protected virtual void HandleDeath(GameObject destroyed, GameObject destroyer)

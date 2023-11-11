@@ -30,8 +30,6 @@ public class RoundSystem : MonoBehaviour
             StartCountDown();
         }
     }
-
-
     private void Update()
     {
         if (isCountDown)

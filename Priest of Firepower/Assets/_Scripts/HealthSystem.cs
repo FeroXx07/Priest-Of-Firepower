@@ -18,7 +18,7 @@ public class HealthSystem : MonoBehaviour,IDamageable
 
     private void OnEnable()
     {
-       
+        health = maxHealth;
     }
 
     public void OnDamageableDestroyed(GameObject destroyer)

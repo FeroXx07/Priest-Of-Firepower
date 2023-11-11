@@ -6,6 +6,20 @@ using UnityEngine;
 public class OnTriggerAttack : Attack
 {
     [SerializeField] protected bool destroyOnContactWithLayer = true;
+    [SerializeField] protected float destructionTime = 1.0f;
+    private float timer;
+
+    private void OnEnable()
+    {
+        timer = destructionTime;
+    }
+    private void Update()
+    {
+        timer -= Time.deltaTime;
+
+        if (timer < 0.0f)
+            DisposeGameObject();
+    }
     protected virtual void CollisionHandeler(GameObject collision)
     {
         if (collision.TryGetComponent<IDamageable>(out IDamageable dmg))
