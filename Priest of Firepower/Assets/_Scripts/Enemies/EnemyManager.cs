@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEditor.UIElements;
 using UnityEngine;
 
@@ -13,20 +14,30 @@ public class EnemyManager : GenericSingleton<EnemyManager>
     [SerializeField] float spawnFrequency = 0.5f;
     [SerializeField] List<Enemy> enemiesAlive = new List<Enemy>();
 
+    //current number of enemies to spanw on the current wave
+    int numberOfEnemiesToSpwan = 0;
+
+    float spawnRate  = 0.5f;
+    float spawnTimer;
     public void SpawnEnemies(int round)
     {
-        StartCoroutine(SpawnRate(round));
+        numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
+        Debug.Log("Enemies remaining: " + numberOfEnemiesToSpwan);
     }
 
-    IEnumerator SpawnRate(int round)
+    private void Update()
     {
-        int nEnemies = GetNumberOfEnemies(round);
-
-        for (int i = 0; i < nEnemies; i++)
+        if (numberOfEnemiesToSpwan > 0)
         {
-            Transform p = GetRadomSpawnPoint();
-            SpawnEnemy(p.position);
-            yield return new WaitForSeconds(spawnFrequency);
+            spawnTimer -= Time.deltaTime;
+            if (spawnTimer <= 0)
+            {
+                Transform p = GetRadomSpawnPoint();
+                SpawnEnemy(p.position);
+                numberOfEnemiesToSpwan--;
+                spawnTimer = spawnRate;
+                Debug.Log("Enemies remaining: " + numberOfEnemiesToSpwan);
+            }
         }
     }
 
@@ -53,6 +64,7 @@ public class EnemyManager : GenericSingleton<EnemyManager>
     {
         enemiesAlive.Remove(enemy);
         enemy.onDeath.RemoveListener(RemoveEnemyFromList);
+        Debug.Log("enemies alive: " + enemiesAlive.Count );
     }
 
     public void KillAllEnemies()
@@ -73,7 +85,7 @@ public class EnemyManager : GenericSingleton<EnemyManager>
         nuke.RaiseDamageDealthEvent(gameObject);
     }
 
-    int GetNumberOfEnemies(int round)
+    int GetNumberOfEnemiesToSpawn(int round)
     {
         //increase number of enemies 
         //TODO improve function
@@ -89,4 +101,6 @@ public class EnemyManager : GenericSingleton<EnemyManager>
     {
         spawnPoints.Add(spawnPoint);
     }
+    public int GetEnemiesAlive() { return enemiesAlive.Count; }
+    public int GetEnemiesCountLeft() { return numberOfEnemiesToSpwan; }
 }

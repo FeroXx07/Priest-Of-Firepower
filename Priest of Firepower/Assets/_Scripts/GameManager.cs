@@ -6,12 +6,20 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     [SerializeField] EnemyManager enemySpawnManager;
-    int currentRound = 1;
 
-    Action<int> OnRoundBegin;
-    Action OnRoundEnd;
+    [SerializeField]RoundSystem roundSystem;
+
     private void Start()
     {
-        enemySpawnManager.SpawnEnemies(currentRound);
+        roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
+        roundSystem.StartRound();
+    }
+
+
+    private void Update()
+    {
+        roundSystem.RoundFinished(enemySpawnManager);
     }
 }
+
+
