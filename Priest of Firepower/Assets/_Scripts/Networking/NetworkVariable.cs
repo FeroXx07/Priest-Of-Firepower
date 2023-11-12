@@ -15,11 +15,11 @@ public class NetworkVariable<T>
 
     private T _value;
     private Type _type;
-    private bool isDirty = false;
+    private bool _isDirty = false;
     private ChangeTracker _changeTracker;
     private int _trackerIndex;
     public T Value { get => _value; set => SetValue(value); }
-    public bool IsDirty { get => isDirty; }
+    public bool IsDirty { get => _isDirty; }
     public void SetTracker(ChangeTracker changeTracker)
     {
         _changeTracker = changeTracker;
@@ -29,7 +29,7 @@ public class NetworkVariable<T>
     { 
         if (_value.Equals(newValue) == false)
         {
-            isDirty = true;
+            _isDirty = true;
             _changeTracker.TrackChange(_trackerIndex);
         }
         _value = newValue;

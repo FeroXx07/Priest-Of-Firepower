@@ -14,6 +14,9 @@ public class SerializationTest : NetworkBehaviour
     [SerializeField] string s = "hello_world";
     [SerializeField] ulong ul = 100000000000;
 
+    [SerializeField] public NetworkVariable<int> myNetVariableInt = new NetworkVariable<int>(10101, 0);
+    [SerializeField] public NetworkVariable<string> myNetVariableStr = new NetworkVariable<string>("My Name is Ali", 1);
+
     protected override MemoryStream Write(MemoryStream outputMemoryStream)
     {
         // [Object State][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
@@ -134,5 +137,11 @@ public class SerializationTest : NetworkBehaviour
         stopwatch.Stop();
         long rTime = stopwatch.ElapsedMilliseconds;
         UnityEngine.Debug.Log($"Read Elapsed Time: {rTime} milliseconds");
+    }
+
+    private void Update()
+    {
+        UnityEngine.Debug.Log($"myNetVariableInt is: {myNetVariableInt.Value}");
+        UnityEngine.Debug.Log($"myNetVariableStr is: {myNetVariableStr.Value}");
     }
 }
