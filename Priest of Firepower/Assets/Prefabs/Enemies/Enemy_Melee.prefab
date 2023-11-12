@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 824060067660528381}
   - component: {fileID: 5847972827897104523}
   m_Layer: 7
-  m_Name: Enemy_Skull
+  m_Name: Enemy_Melee
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -213,7 +213,7 @@ Animator:
   m_GameObject: {fileID: 6550177769006481092}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 88135035e914c9040a7e4dcab824dbdc, type: 2}
+  m_Controller: {fileID: 9100000, guid: 3ab2d256b025aad48b7e4db578b52952, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -265,7 +265,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: e98eddd35f4dc194bb64a5705d2cecdb, type: 3}
+  m_Sprite: {fileID: 21300000, guid: d3ba34b06d2d9184eaa0fd1868f88e5d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
