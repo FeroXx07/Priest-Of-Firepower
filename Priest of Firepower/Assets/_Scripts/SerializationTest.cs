@@ -45,10 +45,6 @@ public class SerializationTest : NetworkBehaviour
         if (bitTracker.GetBitfield().Get(6))
             tempWriter.Write(ul);
 
-        byte[] data = tempStream.ToArray();
-        int fieldsTotalSize = data.Length;
-        writer.Write(fieldsTotalSize);
-
         int fieldCount = bitfield.Length;
         writer.Write(fieldCount);
 
@@ -64,23 +60,9 @@ public class SerializationTest : NetworkBehaviour
         return outputMemoryStream;
     }
 
-    protected override void Read(MemoryStream inputMemoryStream)
+    public override void Read(BinaryReader reader)
     {
-        // [Object State][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
-        //[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...
-
-        inputMemoryStream.Position = 0;  // Reset the stream position for reading
-
-        BinaryReader reader = new BinaryReader(inputMemoryStream);
-        string typeName = reader.ReadString();
-        Type objectType = Type.GetType(typeName);
-        UInt64 objectId = reader.ReadUInt64();
-
-        if (objectType != this.GetType() || networkObject.GetNetworkId() != objectId) 
-        {
-            UnityEngine.Debug.LogError("Mismatch in reading stream");
-            return;
-        }
+        //[Changed Fields][DATA I][Data J]... <- End of an object packet
 
         int fieldCount = bitTracker.GetBitfield().Length;
         int receivedFieldCount = reader.ReadInt32();

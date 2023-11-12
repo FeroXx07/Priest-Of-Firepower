@@ -70,7 +70,7 @@ public abstract class NetworkBehaviour : MonoBehaviour
     //bitfield.SetAll(false);
     //return outputMemoryStream;
 
-    protected abstract void Read(MemoryStream inputMemoryStream);
+    public abstract void Read(BinaryReader reader);
     //{
     //    inputMemoryStream.Position = 0;  // Reset the stream position for reading
 

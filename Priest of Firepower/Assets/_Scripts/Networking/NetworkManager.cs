@@ -3,9 +3,12 @@ using ServerA;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -59,10 +62,11 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     // Invoken when server recives data from clients
     public Action<byte[]> OnRecivedClientData;
 
-    private void OnEnable()
-    {
-        
-    }
+
+
+    Dictionary<Int64, NetworkObject> networkObjectMap;
+
+
     #region Connection Initializers
     public void StartClient()
     {
@@ -104,6 +108,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     public void AddStateStreamQueue(MemoryStream stream)
     {
+
        stateStreamBuffer.Enqueue(stream);
     }
     public void AddInputStreamQueue(MemoryStream stream)
@@ -125,6 +130,8 @@ public class NetworkManager : GenericSingleton<NetworkManager>
                 {
                     int totalSize = 0;
                     List<MemoryStream> streamsToSend = new List<MemoryStream>();
+                    
+
 
                     //check if the totalsize + the next stream total size is less than the specified size
                     while (stateStreamBuffer.Count > 0 && totalSize + (int)stateStreamBuffer.Peek().Length <= MTU && stateBufferTimeout > 0)
@@ -134,9 +141,10 @@ public class NetworkManager : GenericSingleton<NetworkManager>
                         totalSize += (int)nextStream.Length;
                         streamsToSend.Add(nextStream);
                     }
-                    byte[] buffer = ConcatenateMemoryStreams(streamsToSend);
 
-                    if(isClient)
+                    byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
+
+                    if (isClient)
                     {
                         client.SendPacket(buffer);
                     }
@@ -168,7 +176,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
                         totalSize += (int)nextStream.Length;
                         streamsToSend.Add(nextStream);
                     }
-                    byte[] buffer = ConcatenateMemoryStreams(streamsToSend);
+                    byte[] buffer = ConcatenateMemoryStreams(PacketType.INPUT,streamsToSend);
 
                     if (isClient)
                     {
@@ -205,27 +213,22 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     }
     public void ProcessIncomingData(byte[] data)
     {
-        // [PacketType][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
-        int size = sizeof(PacketType);
-        
-        // Make sure there are enough bytes in the array to read the PacketType
-        if (data.Length < size)
-        {
-            Console.WriteLine("Not enough bytes to read the PacketType.");
-            return;
-        }
 
-        byte[] buffer = new byte[size];
-        Buffer.BlockCopy(data, 0, buffer, 0, size);
-        PacketType packetType = (PacketType)buffer[0];
+        // [packet type]
+        MemoryStream stream = new MemoryStream(data);
 
-        switch(packetType)
+        BinaryReader reader = new BinaryReader(stream);
+
+        PacketType type = (PacketType)reader.ReadInt32();
+
+        switch (type)
         {
             case PacketType.PING:
                 break;
             case PacketType.INPUT:
                 break;
             case PacketType.OBJECT_STATE:
+                HandleObjectState(stream,reader);
                 break;
             case PacketType.TEXT:
                 break;
@@ -234,9 +237,27 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         }
 
     }
-    private byte[] ConcatenateMemoryStreams(List<MemoryStream> streams)
+    void HandleObjectState(MemoryStream stream, BinaryReader reader)
+    {
+        while(reader.BaseStream.Position < reader.BaseStream.Length)
+        {
+            // [Object Class][Object ID]
+            string objClass = reader.ReadString();
+            Int64 id = reader.ReadInt64();    
+
+            //read rest of the stream
+            networkObjectMap[id].HandleNetworkBehaviour(Type.GetType(objClass), reader);
+        }
+    }
+
+    private byte[] ConcatenateMemoryStreams(PacketType type,List<MemoryStream> streams)
     {
         MemoryStream buffer = new MemoryStream();
+        
+        BinaryWriter writer = new BinaryWriter(buffer);
+        
+        writer.Write((int) type);
+        
         foreach(MemoryStream stream in streams)
         {
             stream.CopyTo(buffer);
@@ -264,9 +285,8 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     {
         client.Connect(address);
     }
+
     #endregion
-
-
     #region Getters
     private bool IsHost()
     {
@@ -326,4 +346,10 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         public EndPoint ListenEndPoint => ParseNetworkEndpoint((ServerListenAddress == string.Empty) ? Address : ServerListenAddress, Port);
     }
     #endregion
+}
+
+
+public class ObjectRegistery
+{
+
 }
