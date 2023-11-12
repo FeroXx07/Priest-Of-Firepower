@@ -134,8 +134,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4152c504c31e8548a451fc8d636155b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  health: 10
-  maxHealth: 10
+  health: 1000
+  maxHealth: 1000
   layer:
     serializedVersion: 2
     m_Bits: 128
@@ -164,13 +164,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pointsOnHit: 10
-  pointsOnDeath: 2000
+  pointsOnDeath: 100
   attackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
   onDeath:
     m_PersistentCalls:
       m_Calls: []
   secondAttackPrefab: {fileID: 4472022888998543014, guid: f0967a45807eeee4391e62641838d932, type: 3}
-  thirdAttackPrefab: {fileID: 0}
+  thirdAttackPrefab: {fileID: 4472022888998543014, guid: 90d39e6162b75f44f82f01c4eac7c4c5, type: 3}
 --- !u!1 &4126697503240741566
 GameObject:
   m_ObjectHideFlags: 0
@@ -198,7 +198,7 @@ Transform:
   m_GameObject: {fileID: 4126697503240741566}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.8953083, y: 1.8953083, z: 1.8953083}
+  m_LocalScale: {x: 1.1730063, y: 1.1730063, z: 1.1730063}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 824060067660528359}

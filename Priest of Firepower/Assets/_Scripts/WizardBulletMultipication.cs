@@ -1,0 +1,73 @@
+using System.Collections;
+using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+public class WizardBulletMultipication : MonoBehaviour
+{
+    #region Fields
+
+    public int numberOfCopies = 2;
+    public float multiplicationTimer = 3.0f;
+    public float angleOffset = 30.0f;
+    public GameObject objectCloned;
+
+    private float currentTimer = 0.0f;
+    private float offsetDistance = 2.0f;
+    private Rigidbody rb;
+
+    #endregion
+    private void OnEnable()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
+
+    private void Update()
+    {
+        currentTimer += Time.deltaTime;
+        if (currentTimer >= multiplicationTimer)
+        {
+            Debug.Log("Create clones");
+            CreateClones();
+            DisposeGameObject();
+            currentTimer = 0.0f;
+        }
+    }
+
+    void CreateClones()
+    {
+        Vector3 velocity = rb.velocity; // Current velocity
+
+        // Calculate the angle increment based on the number of clones
+        float angleIncrement = 360f / numberOfCopies;
+
+        for (int i = 0; i < numberOfCopies; i++)
+        {
+            // Calculate the angle for this clone
+            float angle = angleIncrement * i;
+
+            // Calculate the position offset for this clone
+            Vector3 offset = Quaternion.Euler(0, angle, 0) * transform.forward * offsetDistance;
+
+            // Instantiate the clone at the calculated position
+            GameObject clone = Instantiate(objectCloned, transform.position + offset, transform.rotation);
+            clone.GetComponent<Rigidbody>().velocity = velocity; // Apply the same velocity
+
+            // If the clone has the BounceOnCollision component, set maxBounces to 0
+            BounceOnCollision bounceComponent = clone.GetComponent<BounceOnCollision>();
+            if (bounceComponent != null)
+            {
+                bounceComponent.maxBounces = 0;
+            }
+        }
+    }
+
+    protected void DisposeGameObject()
+    {
+        if (TryGetComponent(out PoolObject pool))
+            gameObject.SetActive(false);
+        else
+            Destroy(gameObject);
+    }
+}

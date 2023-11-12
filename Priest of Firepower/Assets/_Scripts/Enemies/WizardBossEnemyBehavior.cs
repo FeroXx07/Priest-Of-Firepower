@@ -17,6 +17,12 @@ public class WizardBossEnemyBehavior : Enemy
 
     private int shotCount = 0;
 
+    //private void Start()
+    //{
+    //    cooldownDuration = 2.5f;
+    //
+    //}
+
     // Update is called once per frame
     void Update()
     {
@@ -45,7 +51,7 @@ public class WizardBossEnemyBehavior : Enemy
                     agent.SetDestination(target.position);
                 }
 
-                //Debug.Log("Before if: "+ CheckLineOfSight(target));
+                //Debug.Log("Chase");
 
                 if (distance <= 9 && distance >= 3) // && (CheckLineOfSight(target) == true)
                 {
@@ -54,11 +60,14 @@ public class WizardBossEnemyBehavior : Enemy
                 }
 
 
+
                 break;
 
             case EnemyState.ATTACK:
 
                 agent.isStopped = true;
+
+                //Debug.Log("Attack");
 
                 if (cooldownTimer <= 0f)
                 {
@@ -80,12 +89,12 @@ public class WizardBossEnemyBehavior : Enemy
                             break;
                         case 3:
                             {
-                                InvokeRepeating("StartThreeMagicSlashAttack", 0f, 0.5f);
+                                InvokeRepeating("StartDuplicatingBulletAttack", 0f, 0.5f);
                             }
                             break;
                         default:
                             {
-                                InvokeRepeating("StartThreeMagicSlashAttack", 0f, 0.5f);
+                                InvokeRepeating("StartDuplicatingBulletAttack", 0f, 0.5f);
                             }
                             break;
                     }
@@ -155,7 +164,7 @@ public class WizardBossEnemyBehavior : Enemy
         }
 
         shotCount++;
-        if (shotCount >= 3)
+        if (shotCount >= 5)
         {
             CancelInvoke("StartSimpleBulletPatternAttack");
             shotCount = 0;
@@ -197,36 +206,32 @@ public class WizardBossEnemyBehavior : Enemy
         cooldownTimer = cooldownDuration;
     }
 
-    private void StartThreeMagicSlashAttack()
+    private void StartDuplicatingBulletAttack()
     {
-        Vector3 closerPlayerPosition = new Vector3(0, 0, 0);
-        float distance = Mathf.Infinity;
+        Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
 
-        for (int i = 0; i < playerList.Length; i++)
+        for (int i = 0; i < 4; i++)
         {
-            if (Vector3.Distance(playerList[i].transform.position, gameObject.transform.position) < distance)
+            // Calculate the rotation for each bullet
+            float angle = (i / 4.0f) * 360.0f;
+            Vector3 direction = Quaternion.Euler(0, 0, angle) * directionToPlayer;
+
+            // Instantiate the bullet and set its position
+            GameObject bullet = Instantiate(thirdAttackPrefab);
+            bullet.transform.position = gameObject.transform.position + direction * attackOffset;
+
+            // Apply force to the bullet
+            Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
+            if (rbComp)
             {
-                closerPlayerPosition = playerList[i].transform.position;
-                distance = Vector3.Distance(playerList[i].transform.position, gameObject.transform.position);
+                rbComp.AddForce(direction * bulletSpeedMultiplierThree);
             }
         }
 
-        Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
-
-        internalAttackObject = Instantiate(thirdAttackPrefab);
-        internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
-
-        Rigidbody2D rbComp = internalAttackObject.GetComponent<Rigidbody2D>();
-
-        if (rbComp)
-        {
-            rbComp.AddForce(directionToPlayer * bulletSpeedMultiplierThree);
-        }
-
         shotCount++;
-        if (shotCount >= 3)
+        if (shotCount >= 1)
         {
-            CancelInvoke("StartThreeMagicSlashAttack");
+            CancelInvoke("StartDuplicatingBulletAttack");
             shotCount = 0;
         }
 
