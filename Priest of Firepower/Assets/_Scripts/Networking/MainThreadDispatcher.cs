@@ -16,7 +16,6 @@ public class MainThreadDispatcher : MonoBehaviour
             actionQueue.Dequeue()?.Invoke();
         }
     }
-
     public static void EnqueueAction(Action action)
     {
         actionQueue.Enqueue(action);

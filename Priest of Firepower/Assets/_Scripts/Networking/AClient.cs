@@ -26,11 +26,11 @@ namespace ClientA
         private Socket connectionUDP;
 
         public Action OnConnected;
-        public Action<string> OnMessageRecived;
-        private Queue<string> messageQueue = new Queue<string>();
+        public Action<byte[]> OnDataRecieved;
+        private Queue<byte[]> messageQueue = new Queue<byte[]>();
 
         private int serverPort = 12345; // Replace with your server's port
-        //private bool IsConnected = false;
+ 
         #endregion
 
 
@@ -42,13 +42,6 @@ namespace ClientA
         private void OnDisable()
         {
             Disconnect();
-        }
-        private void Update()
-        {
-            if (messageQueue.Count > 0)
-            {
-                OnMessageRecived?.Invoke(messageQueue.Dequeue());
-            }
         }
         #endregion
         #region Get/Setters
@@ -69,89 +62,7 @@ namespace ClientA
             connectionThread = new Thread(() => Authenticate());
             connectionThread.Start();
         }
-        void Authenticate()
-        {
-            try
-            {
-                //disconnect if there is a previous connection
-                if (connectionTCP != null && connectionTCP.Connected)
-                {
-                    Disconnect();
-                    Thread.Sleep(100);
-                }
-                //if ip is empty exit connection attempt TODO sow popup or something to user
-                if (IPaddress == "")
-                {
-                    Debug.LogError("IP is empty ...");
-
-                    return;
-                }
-
-                Debug.Log("Creating connetion ...");
-                connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                connectionTCP.ReceiveTimeout = 5000;
-                connectionTCP.SendTimeout = 5000;
-                //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
-                //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-                if (serverIP == null)
-                {
-                    Debug.LogError("server Ip is null ...");
-                    return;
-                }
-                endPoint = new IPEndPoint(serverIP, serverPort);
-
-                connectionTCP.Connect(endPoint);
-
-                if (!connectionTCP.Connected)
-                {
-                    Debug.LogError("Socket connection failed.");
-                    return;
-                }
-
-                Debug.Log("Client:  Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
-
-                byte[] buffer = new byte[1024];
-                int bufferSize;
-                string msg;
-                bufferSize = connectionTCP.Receive(buffer);
-                msg = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                Debug.Log("Client: " + msg);
-                if (msg == "ok")
-                {
-                    Debug.Log("Client: Sending authentication token");
-                    connectionTCP.Send(Encoding.ASCII.GetBytes("IM_VALID_USER_LOVE_ME"));
-
-                }
-
-                bufferSize = connectionTCP.Receive(buffer);
-
-                msg = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                Debug.Log("Client: " + msg);
-                if (msg == "ok")
-                {
-                    connectionTCP.Send(Encoding.ASCII.GetBytes("Juan Caballo"));
-                }
-
-                bufferSize = connectionTCP.Receive(buffer);
-
-                msg = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                Debug.Log("Client: " + msg);
-
-                if (msg == "ok")
-                {
-                    //add action dispatcher for main thread
-                    MainThreadDispatcher.EnqueueAction(OnConnected);
-                }
-                else
-                {
-                    Debug.LogError("Failed on authentication process ...");
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-        }
+  
         void StartListening()
         {
             listenerToken = new CancellationTokenSource();
@@ -167,22 +78,18 @@ namespace ClientA
             {
                 try
                 {
-
-                    //byte[] buffer = new byte[1024];
-                    //string data = null;
-
-                    //// Receive data from the client
-                    //int bufferSize = connectionTCP.Receive(buffer);
-                    //data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-
-                    //if (!string.IsNullOrEmpty(data))
-                    //{
-                    //    Debug.Log("msg recived ..." + data);
-
-                    //    //queue the message to be processed on the main thread
-                    //    EnqueueMessage(data);
-                    //}
-
+                    if(connectionUDP.Available > 0)
+                    {
+                        byte[] data= new byte[1024];
+                        connectionUDP.Receive(data);
+                        NetworkManager.Instance.ProcessIncomingData(data);
+                    }     
+                    if(connectionTCP.Available > 0)
+                    {
+                        byte[] data = new byte[1024];
+                        connectionTCP.Receive(data);
+                        NetworkManager.Instance.ProcessIncomingData(data);
+                    }
                 }
                 catch (SocketException se)
                 {
@@ -236,12 +143,38 @@ namespace ClientA
             }
         }
         #endregion
-        
+        public void SendCriticalPacket(byte[] data)
+        {
+            try
+            {
+                if (connectionTCP == null) return;
+
+                connectionTCP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+            }
+            catch (ArgumentNullException ane)
+            {
+
+                Debug.LogError("ArgumentNullException : " + ane.ToString());
+            }
+            catch (SocketException se)
+            {
+
+                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.LogError("SocketException: " + se.Message); // Log the error message
+
+            }
+
+            catch (Exception e)
+            {
+                Debug.LogError("Unexpected exception : " + e.ToString());
+            }
+        }
         public void SendPacket(byte[]data)
         {
             try
             {
-                if (connectionUDP == null) return;                
+                if (connectionUDP == null) return;   
+                
                 connectionUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
             }
             catch (ArgumentNullException ane)
@@ -264,5 +197,93 @@ namespace ClientA
         }
         #region Helper functions
         #endregion
+
+        void Authenticate()
+        {
+            try
+            {
+                //disconnect if there is a previous connection
+                if (connectionTCP != null && connectionTCP.Connected)
+                {
+                    Disconnect();
+                    Thread.Sleep(100);
+                }
+                //if ip is empty exit connection attempt TODO sow popup or something to user
+                if (IPaddress == "")
+                {
+                    Debug.LogError("IP is empty ...");
+
+                    return;
+                }
+
+                Debug.Log("Creating connetion ...");
+                connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                connectionTCP.ReceiveTimeout = 1000;
+                connectionTCP.SendTimeout = 1000;
+                //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
+                //In this case the operating system (TCP/IP stack) assigns a free port number for you.
+                if (serverIP == null)
+                {
+                    Debug.LogError("server Ip is null ...");
+                    return;
+                }
+                endPoint = new IPEndPoint(serverIP, serverPort);
+
+                connectionTCP.Connect(endPoint);
+
+                if (!connectionTCP.Connected)
+                {
+                    Debug.LogError("Socket connection failed.");
+                    return;
+                }
+
+                Debug.Log("Client:  Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
+
+                bool authenticated = AuthenticateStep("ok", "IM_VALID_USER_LOVE_ME");
+
+                if(authenticated)
+                {
+                    authenticated = AuthenticateStep("ok", "User name");
+
+                    if(authenticated)
+                    {
+                        //add action dispatcher for main thread
+                        MainThreadDispatcher.EnqueueAction(OnConnected);
+                    }
+                    else
+                    {
+                        Debug.LogError("Failed on authentication step 2");
+                    }
+                }else
+                {
+                    Debug.LogError("Failed on authentication step 1");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+        bool AuthenticateStep(string expectedResponse, string messageToSend)
+        {
+            byte[] buffer = new byte[1024];
+            int bufferSize;
+
+            bufferSize = connectionTCP.Receive(buffer);
+            string receivedMsg = Encoding.ASCII.GetString(buffer, 0, bufferSize);
+            Debug.Log("Client: " + receivedMsg);
+
+            if (receivedMsg == expectedResponse)
+            {
+                Debug.Log($"Client: Sending authentication token - {messageToSend}");
+                connectionTCP.Send(Encoding.ASCII.GetBytes(messageToSend));
+                return true;
+            }
+            else
+            {
+                Debug.LogError($"Authentication failed. Expected: {expectedResponse}, Received: {receivedMsg}");
+                return false;
+            }
+        }
     }
 }
