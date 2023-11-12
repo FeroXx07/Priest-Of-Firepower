@@ -42,12 +42,22 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     private readonly object stateQueueLock = new object();
     private readonly object inputQueueLock = new object();
 
+    Queue<MemoryStream>incomingStreamBuffer = new Queue<MemoryStream>();
+    public readonly object incomingStreamLock = new object();
+
+    struct Process
+    {
+       public Thread thread;
+       public CancellationTokenSource cancellationToken;
+    }
+
+    Process receiveData = new Process();
+    Process sendData = new Process();
+
 
 
     [SerializeField] GameObject Player;
-
-    IPAddress serverIP;
-    IPEndPoint endPoint;
+       
 
     [SerializeField]
     ConnectionAddressData connectionAddress;
@@ -66,6 +76,28 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     Dictionary<Int64, NetworkObject> networkObjectMap;
 
+    private void Start()
+    {
+
+        Debug.Log("Starting Netwrok Manager ...");
+        receiveData.cancellationToken = new CancellationTokenSource();
+        receiveData.thread = new Thread(() => ReceiveDataThread(receiveData.cancellationToken.Token));
+        receiveData.thread.Start();
+
+        sendData.cancellationToken = new CancellationTokenSource();
+        sendData.thread = new Thread(() => SendDataThread(receiveData.cancellationToken.Token));
+        sendData.thread.Start();
+    }
+    private void OnDisable()
+    {
+        // When you want to stop the thread, you call cancellationTokenSource.Cancel(),
+        // and the thread will stop executing the loop.
+        receiveData.cancellationToken?.Cancel();
+        sendData.cancellationToken?.Cancel();
+        // You then wait for the thread to finish using thread.Join().
+        receiveData.thread.Join();
+        sendData.thread.Join();
+    }
 
     #region Connection Initializers
     public void StartClient()
@@ -100,6 +132,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     {
         client = new AClient();
         client.OnConnected += ClientConnected;
+        
     }
     void CreateServer()
     {
@@ -108,7 +141,6 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     public void AddStateStreamQueue(MemoryStream stream)
     {
-
        stateStreamBuffer.Enqueue(stream);
     }
     public void AddInputStreamQueue(MemoryStream stream)
@@ -116,107 +148,167 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         inputStreamBuffer.Enqueue(stream);
     }
     
-    private void SendDataThread(CancellationTokenSource token)
+    public void AddIncomingDataQueue(MemoryStream stream)
     {
-        float stateTimeout = stateBufferTimeout;
-        float inputTimeout = inputBufferTimeout;
-        while(!token.IsCancellationRequested)
+        incomingStreamBuffer.Enqueue(stream);
+    }
+
+    private void SendDataThread(CancellationToken token)
+    {
+        try
         {
-            //State buffer
-
-            if(stateStreamBuffer.Count > 0)
+            Debug.Log("Netwrok Manager Send data thread started...");
+            float stateTimeout = stateBufferTimeout;
+            float inputTimeout = inputBufferTimeout;
+            while (!token.IsCancellationRequested)
             {
-                lock(stateQueueLock)
+                //State buffer
+
+                if (stateStreamBuffer.Count > 0)
                 {
-                    int totalSize = 0;
-                    List<MemoryStream> streamsToSend = new List<MemoryStream>();
-                    
+                    lock (stateQueueLock)
+                    {
+                        int totalSize = 0;
+                        List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
 
-                    //check if the totalsize + the next stream total size is less than the specified size
-                    while (stateStreamBuffer.Count > 0 && totalSize + (int)stateStreamBuffer.Peek().Length <= MTU && stateBufferTimeout > 0)
-                    {
-                        stateTimeout -= Time.deltaTime * 1000f;
-                        MemoryStream nextStream = stateStreamBuffer.Dequeue();
-                        totalSize += (int)nextStream.Length;
-                        streamsToSend.Add(nextStream);
-                    }
 
-                    byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
+                        //check if the totalsize + the next stream total size is less than the specified size
+                        while (stateStreamBuffer.Count > 0 && totalSize + (int)stateStreamBuffer.Peek().Length <= MTU && stateBufferTimeout > 0)
+                        {
+                            stateTimeout -= Time.deltaTime * 1000f;
+                            MemoryStream nextStream = stateStreamBuffer.Dequeue();
+                            totalSize += (int)nextStream.Length;
+                            streamsToSend.Add(nextStream);
+                        }
 
-                    if (isClient)
-                    {
-                        client.SendPacket(buffer);
-                    }
-                    else if(isServer)
-                    {
-                        server.SendToAll(buffer);
-                    }
-                    else if(isHost)
-                    {
-                        server.SendToAll(buffer);
-                    }                  
-                }
-            }
+                        byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
 
-            //Input buffer
-
-            if (inputStreamBuffer.Count > 0)
-            {
-                lock (inputQueueLock)
-                {
-                    int totalSize = 0;
-                    List<MemoryStream> streamsToSend = new List<MemoryStream>();
-
-                    //check if the totalsize + the next stream total size is less than the specified size
-                    while (inputStreamBuffer.Count > 0 && totalSize + (int)inputStreamBuffer.Peek().Length <= MTU && inputBufferTimeout > 0)
-                    {
-                        inputTimeout -= Time.deltaTime * 1000;
-                        MemoryStream nextStream = inputStreamBuffer.Dequeue();
-                        totalSize += (int)nextStream.Length;
-                        streamsToSend.Add(nextStream);
-                    }
-                    byte[] buffer = ConcatenateMemoryStreams(PacketType.INPUT,streamsToSend);
-
-                    if (isClient)
-                    {
-                        client.SendPacket(buffer);
-                    }
-                    else if (isServer)
-                    {
-                        server.SendToAll(buffer);
-                    }
-                    else if (isHost)
-                    {
-                        server.SendToAll(buffer);
+                        if (isClient)
+                        {
+                            client.SendPacket(buffer);
+                        }
+                        else if (isServer)
+                        {
+                            server.SendToAll(buffer);
+                        }
+                        else if (isHost)
+                        {
+                            server.SendToAll(buffer);
+                        }
                     }
                 }
+
+                //Input buffer
+
+                if (inputStreamBuffer.Count > 0)
+                {
+                    lock (inputQueueLock)
+                    {
+                        int totalSize = 0;
+                        List<MemoryStream> streamsToSend = new List<MemoryStream>();
+
+                        //check if the totalsize + the next stream total size is less than the specified size
+                        while (inputStreamBuffer.Count > 0 && totalSize + (int)inputStreamBuffer.Peek().Length <= MTU && inputBufferTimeout > 0)
+                        {
+                            inputTimeout -= Time.deltaTime * 1000;
+                            MemoryStream nextStream = inputStreamBuffer.Dequeue();
+                            totalSize += (int)nextStream.Length;
+                            streamsToSend.Add(nextStream);
+                        }
+                        byte[] buffer = ConcatenateMemoryStreams(PacketType.INPUT, streamsToSend);
+
+                        if (isClient)
+                        {
+                            client.SendPacket(buffer);
+                        }
+                        else if (isServer)
+                        {
+                            server.SendToAll(buffer);
+                        }
+                        else if (isHost)
+                        {
+                            server.SendToAll(buffer);
+                        }
+                    }
+                }
+
+                if (inputTimeout < 0)
+                    inputTimeout = inputBufferTimeout;
+                if (stateTimeout < 0)
+                    stateTimeout = stateBufferTimeout;
+
+                Thread.Sleep(10);
             }
-
-            if (inputTimeout < 0)
-                inputTimeout = inputBufferTimeout;
-            if (stateTimeout < 0)
-                stateTimeout = stateBufferTimeout;  
-
-            Thread.Sleep(10);
+        }
+        catch (OperationCanceledException e)
+        {
+            Debug.LogException(e);
+        }
+        finally
+        {
+            // Clean up resources
+            lock (stateQueueLock)
+            {
+                foreach (MemoryStream incomingStream in stateStreamBuffer)
+                {
+                    incomingStream.Dispose();
+                }
+                stateStreamBuffer.Clear(); // Clear the queue
+            }
+            lock (inputQueueLock)
+            {
+                foreach (MemoryStream incomingStream in inputStreamBuffer)
+                {
+                    incomingStream.Dispose();
+                }
+                inputStreamBuffer.Clear(); // Clear the queue
+            }
         }
     }
 
 
-    private void ReceiveDataThread(CancellationTokenSource token)
+    private void ReceiveDataThread(CancellationToken token)
     {
-        while(!token.IsCancellationRequested)
+        try
         {
-
-
+            Debug.Log("Netwrok Manager receive data thread started...");
+            while (!token.IsCancellationRequested)
+            {
+                if (incomingStreamBuffer.Count > 0)
+                {
+                    lock (incomingStreamLock)
+                    {
+                        while (incomingStreamBuffer.Count > 0)
+                        {
+                            ProcessIncomingData(incomingStreamBuffer.Dequeue());
+                        }
+                    }
+                }
+            }
         }
+        catch (OperationCanceledException e)
+        {
+            Debug.LogException(e);
+        }
+        finally
+        {
+            // Clean up resources
+            lock (incomingStreamLock)
+            {
+                foreach (MemoryStream incomingStream in incomingStreamBuffer)
+                {
+                    incomingStream.Dispose();
+                }
+                incomingStreamBuffer.Clear(); // Clear the queue
+            }
+        }
+
     }
-    public void ProcessIncomingData(byte[] data)
+    public void ProcessIncomingData(MemoryStream stream)
     {
 
         // [packet type]
-        MemoryStream stream = new MemoryStream(data);
-
         BinaryReader reader = new BinaryReader(stream);
 
         PacketType type = (PacketType)reader.ReadInt32();

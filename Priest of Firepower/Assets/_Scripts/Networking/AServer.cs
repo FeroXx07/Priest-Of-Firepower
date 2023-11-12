@@ -12,6 +12,8 @@ using System.Collections.Concurrent;
 using ClientA;
 using UnityEngine.Rendering;
 using System.Xml.Serialization;
+using static ServerA.AServer;
+using System.IO;
 
 namespace ServerA
 {
@@ -234,59 +236,64 @@ namespace ServerA
             {
                 Debug.LogException(e);
             }
-        }
-  
-        void HandleChat(ClientData clientData)
+        }  
+        void HandleClient(ClientData clientData)
         {
-            Debug.Log("Starting chat thread " + clientData.ID + " ...");
+            Debug.Log("Starting Client Thread " + clientData.ID + " ...");
 
             while (!clientData.authenticationToken.IsCancellationRequested)
             {
-                Socket clientSocket = clientData.connectionTCP;
-                string data = null;
-                try
+        
+                if(clientData.connectionTCP.Available > 0)
                 {
-                    byte[] buffer = new byte[1024];
-
-                    // Receive data from the client
-                    int bufferSize = clientSocket.Receive(buffer);
-                    data = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-
-                    if (!string.IsNullOrEmpty(data))
-                    {
-                        Debug.Log("message recived: " + data);
-                        // Process the received message (e.g., broadcast to all clients)
-                        BroadcastMessage(data, clientData.ID);
-                    }
-
+                    ReceiveSocketData(clientData.connectionTCP,clientData);
                 }
-                catch (SocketException se)
+                if(clientData.connectionUDP.Available > 0)
                 {
-                    if (se.SocketErrorCode == SocketError.ConnectionReset ||
-                        se.SocketErrorCode == SocketError.ConnectionAborted)
-                    {
-                        // Handle client disconnection (optional)
-                        Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
-                        RemoveClient(clientData);
-                    }
-                    else
-                    {
-                        // Handle other socket exceptions
-                        Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
-                    }
-                    continue;
-                }
-                catch (Exception e)
-                {
-                    // Handle other exceptions
-                    Debug.LogError($"Exception: {e.Message}");
-
-                    continue;
+                    ReceiveSocketData(clientData.connectionUDP,clientData);
                 }
                 // Add some delay to avoid busy-waiting
-                Thread.Sleep(100);
+                Thread.Sleep(10);
             }
         }
+        void ReceiveSocketData(Socket socket, ClientData clientData)
+        {
+            try
+            {
+                lock(NetworkManager.Instance.incomingStreamLock)
+                {
+                    byte[] buffer = new byte[1500];
+
+                    // Receive data from the client
+                    socket.Receive(buffer);
+
+                    MemoryStream stream = new MemoryStream(buffer);
+
+                    NetworkManager.Instance.AddIncomingDataQueue(stream);
+                }
+            }
+            catch (SocketException se)
+            {
+                if (se.SocketErrorCode == SocketError.ConnectionReset ||
+                    se.SocketErrorCode == SocketError.ConnectionAborted)
+                {
+                    // Handle client disconnection (optional)
+                    Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
+                    RemoveClient(clientData);
+                }
+                else
+                {
+                    // Handle other socket exceptions
+                    Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                }
+            }
+            catch (Exception e)
+            {
+                // Handle other exceptions
+                Debug.LogError($"Exception: {e.Message}");
+            }
+        }
+
         int CreateClient(Socket clientSocket, string userName)
         {
             lock (clientList)
@@ -298,9 +305,16 @@ namespace ServerA
 
                 clientData.connectionTCP = clientSocket;
                 //add a time out exeption for when the client disconnects or has lag or something
-                clientData.connectionTCP.ReceiveTimeout = Timeout.Infinite;
-                clientData.connectionTCP.SendTimeout = Timeout.Infinite;
+                clientData.connectionTCP.ReceiveTimeout = 1000;
+                clientData.connectionTCP.SendTimeout = 1000;
 
+                //create udp connection
+                clientData.connectionUDP = new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);
+                clientData.connectionUDP.Bind(clientSocket.RemoteEndPoint);
+                clientData.connectionUDP.ReceiveTimeout = 100;
+                clientData.connectionUDP.SendTimeout = 100;
+
+                //store endpoint
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
                 clientData.metaData.IP = clientEndPoint.Address;
                 clientData.metaData.port = clientEndPoint.Port;
@@ -315,7 +329,7 @@ namespace ServerA
                 //Create the handeler of the chat for that client
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
-                Thread t = new Thread(() => HandleChat(clientData));
+                Thread t = new Thread(() => HandleClient(clientData));
 
                 t.IsBackground = true;
                 t.Name = clientData.ID.ToString();
@@ -344,76 +358,6 @@ namespace ServerA
                 clientListToRemove.Add(clientData);
 
                 Debug.Log("Client " + clientData.ID + " disconnected.");
-            }
-        }
-        void BroadcastMessage(string message, int senderID)
-        {
-            List<ClientData> clients = new List<ClientData>();
-            lock (clientList)
-            {
-                clients = new List<ClientData>(clientList);
-            }
-            foreach (ClientData clientData in clients)
-            {
-                try
-                {
-                    // Skip broadcasting to the sender
-                    if (clientData.ID == senderID)
-                    {
-                        continue;
-                    }
-
-                    Socket clientSocket = clientData.connectionTCP;
-
-                    // Send the message to other clients
-                    byte[] data = Encoding.ASCII.GetBytes($"Client {senderID}: {message}");
-                    clientSocket.Send(data);
-
-                    Debug.Log("message broadcasted ...");
-                }
-                catch (SocketException se)
-                {
-                    // Handle socket exceptions (e.g., client disconnection)
-                    Debug.LogError($"Error broadcasting message to client {clientData.ID}: {se.Message}");
-                    RemoveClient(clientData);
-                }
-                catch (Exception e)
-                {
-                    // Handle other exceptions
-                    Debug.LogError($"Error broadcasting message: {e.Message}");
-                }
-            }
-
-        }
-        void HandleClient(Socket clientSocket, CancellationToken cancellationToken)
-        {
-            try
-            {
-                byte[] buffer = new byte[1024];
-                string data = null;
-
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    //get the buffer size
-                    int bufferSize = clientSocket.Receive(buffer);
-
-                    data += Encoding.ASCII.GetString(buffer, 0, bufferSize);
-
-                    //check end of the socket
-                    if (data.IndexOf("<EOF>") > -1)
-                        break;
-                }
-                Debug.Log("Text received -> " + data);
-                byte[] message = Encoding.ASCII.GetBytes("Recived data server A");
-
-                // Send a message to Client 
-                // using Send() method
-                clientSocket.Send(message);
-
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e);
             }
         }
         #endregion
