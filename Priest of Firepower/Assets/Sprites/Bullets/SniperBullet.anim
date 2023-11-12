@@ -6,7 +6,7 @@ AnimationClip:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: SkeletonIdle
+  m_Name: SniperBullet
   serializedVersion: 7
   m_Legacy: 0
   m_Compressed: 0
@@ -21,13 +21,13 @@ AnimationClip:
   - serializedVersion: 2
     curve:
     - time: 0
-      value: {fileID: 21300000, guid: f59db66b839d44d4ab4bca4ef44f679c, type: 3}
+      value: {fileID: 1237758906, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
     - time: 0.083333336
-      value: {fileID: 21300000, guid: 80b2da3a961b9ad4c8a64934278878d6, type: 3}
+      value: {fileID: 504359422, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
     - time: 0.16666667
-      value: {fileID: 21300000, guid: b6c14d3a8434eb84fa48b62a09d6573c, type: 3}
+      value: {fileID: 1563630117, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
     - time: 0.25
-      value: {fileID: 21300000, guid: 9f25bc563452fdf4da34cc500db6536f, type: 3}
+      value: {fileID: -371729563, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
     attribute: m_Sprite
     path: 
     classID: 212
@@ -50,10 +50,10 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     pptrCurveMapping:
-    - {fileID: 21300000, guid: f59db66b839d44d4ab4bca4ef44f679c, type: 3}
-    - {fileID: 21300000, guid: 80b2da3a961b9ad4c8a64934278878d6, type: 3}
-    - {fileID: 21300000, guid: b6c14d3a8434eb84fa48b62a09d6573c, type: 3}
-    - {fileID: 21300000, guid: 9f25bc563452fdf4da34cc500db6536f, type: 3}
+    - {fileID: 1237758906, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
+    - {fileID: 504359422, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
+    - {fileID: 1563630117, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
+    - {fileID: -371729563, guid: af22bed4ebe1060458c08c55b22dfbad, type: 3}
   m_AnimationClipSettings:
     serializedVersion: 2
     m_AdditiveReferencePoseClip: {fileID: 0}
