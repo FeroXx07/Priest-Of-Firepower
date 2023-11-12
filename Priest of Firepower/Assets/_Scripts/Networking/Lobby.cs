@@ -15,12 +15,6 @@ public class Lobby : NetworkBehaviour
     
     }
 
-
-    void OnClientConnected()
-    {
-        Instantiate(clientUiPrefab);
-    }
-
     protected override MemoryStream Write(MemoryStream outputMemoryStream)
     {
         throw new System.NotImplementedException();

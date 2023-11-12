@@ -57,8 +57,9 @@ namespace ServerA
         Socket serverTCP;
         Socket serverUDP;
 
-        //Authentication 
-        private string authenticationCode = "IM_VALID_USER_LOVE_ME";
+        ServerAuthenticator authenticator = new ServerAuthenticator();
+
+
         private bool IsServerInitialized  = false;
         #endregion
 
@@ -118,11 +119,12 @@ namespace ServerA
         #region helper funcitons
         void StopAuthenticationThread()
         {
+
+            authenticationToken.Cancel();
             if (authenticationThread != null)
             {
                 if (authenticationThread.IsAlive)
-                {// Signal the thread to exit 
-                    authenticationToken.Cancel();
+                {
                     authenticationThread.Join();
                 }
 
@@ -191,7 +193,13 @@ namespace ServerA
                 client.connectionUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
             }
         }
-
+        public  void SendCriticalToAll(byte[] data)
+        {
+            foreach (ClientData client in clientList)
+            {
+                client.connectionTCP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+            }
+        }
         public void SendToClient(int clientId, byte[] data)
         {
             foreach (ClientData client in clientList)
@@ -240,36 +248,21 @@ namespace ServerA
         void HandleClient(ClientData clientData)
         {
             Debug.Log("Starting Client Thread " + clientData.ID + " ...");
-
-            while (!clientData.authenticationToken.IsCancellationRequested)
-            {
-        
-                if(clientData.connectionTCP.Available > 0)
-                {
-                    ReceiveSocketData(clientData.connectionTCP,clientData);
-                }
-                if(clientData.connectionUDP.Available > 0)
-                {
-                    ReceiveSocketData(clientData.connectionUDP,clientData);
-                }
-                // Add some delay to avoid busy-waiting
-                Thread.Sleep(10);
-            }
-        }
-        void ReceiveSocketData(Socket socket, ClientData clientData)
-        {
             try
             {
-                lock(NetworkManager.Instance.incomingStreamLock)
+                while (!clientData.authenticationToken.IsCancellationRequested)
                 {
-                    byte[] buffer = new byte[1500];
 
-                    // Receive data from the client
-                    socket.Receive(buffer);
-
-                    MemoryStream stream = new MemoryStream(buffer);
-
-                    NetworkManager.Instance.AddIncomingDataQueue(stream);
+                    if (clientData.connectionTCP.Available > 0)
+                    {
+                        ReceiveSocketData(clientData.connectionTCP);
+                    }
+                    if (clientData.connectionUDP.Available > 0)
+                    {
+                        ReceiveSocketData(clientData.connectionUDP);
+                    }
+                    // Add some delay to avoid busy-waiting
+                    Thread.Sleep(10);
                 }
             }
             catch (SocketException se)
@@ -293,7 +286,34 @@ namespace ServerA
                 Debug.LogError($"Exception: {e.Message}");
             }
         }
+        void ReceiveSocketData(Socket socket)
+        {
+            try
+            {
+                lock(NetworkManager.Instance.incomingStreamLock)
+                {
+                    byte[] buffer = new byte[1500];
 
+                    // Receive data from the client
+                    socket.Receive(buffer);
+
+                    MemoryStream stream = new MemoryStream(buffer);
+
+                    NetworkManager.Instance.AddIncomingDataQueue(stream);
+                }
+            }
+            catch (SocketException se)
+            {
+               // Handle other socket exceptions
+               Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+
+            }
+            catch (Exception e)
+            {
+                // Handle other exceptions
+                Debug.Log($"Exception: {e.Message}");
+            }
+        }
         int CreateClient(Socket clientSocket, string userName)
         {
             lock (clientList)
@@ -367,63 +387,14 @@ namespace ServerA
         {
             try
             {
+                //accept new Connections ... 
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     Debug.Log("Server: Waiting connection ... ");
                     Socket clientSocket = serverTCP.Accept();
-                    //ping client to send confirmation code
-                    byte[] msg = Encoding.ASCII.GetBytes("ok");
-                    clientSocket.Send(msg);
 
-                    //set a timeout to recive the verification code
-                    clientSocket.ReceiveTimeout = 5000;
+                    ReceiveSocketData(clientSocket);                
 
-                    byte[] buffer = new byte[1024];
-                    int bufferSize = clientSocket.Receive(buffer);
-
-                    string code = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                    Debug.Log("Server: " + code + " recieved");
-                    //ping client to send username
-                    byte[] confirmation = Encoding.ASCII.GetBytes("ok");
-                    clientSocket.Send(msg);
-
-                    buffer = new byte[1024];
-                    bufferSize = clientSocket.Receive(buffer);
-
-                    string username = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-                    Debug.Log("Server: recieved username: " + username);
-
-
-                    //username validation
-                    bool validUsername = true;
-                    if (username.Length > 15 || username.Length == 0)
-                        validUsername = false;
-
-                    confirmation = Encoding.ASCII.GetBytes("ok");
-                    clientSocket.Send(msg);
-
-                    //before create add the client check if it an actual connection we want
-                    if (code == authenticationCode && validUsername)
-                    {
-                        //ping client that is authenticated
-                        confirmation = Encoding.ASCII.GetBytes("ok");
-                        clientSocket.Send(msg);
-
-                        //add this accepted client into the client list
-                        int clientID = CreateClient(clientSocket, username);
-
-                        //call any related action to this event
-                        OnClientAccepted?.Invoke(clientID);
-
-                        authenticationToken.Cancel();
-                    }
-                    else
-                    {
-                        //disconnect that connection as it is a non wanted connection
-                        clientSocket.Shutdown(SocketShutdown.Both);
-                        clientSocket.Close();
-                    }
-                    // Add some delay to avoid busy-waiting
                     Thread.Sleep(100);
                 }
             }
@@ -433,7 +404,13 @@ namespace ServerA
                 authenticationToken.Cancel();
                 Debug.Log("Shutting down authentication process ...");
             }
+            finally
+            {
+
+            }
         }
+
+        public ServerAuthenticator GetAuthenticator() { return authenticator; }
         #endregion
     }
 }

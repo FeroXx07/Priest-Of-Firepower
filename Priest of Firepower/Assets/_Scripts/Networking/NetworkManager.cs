@@ -18,7 +18,7 @@ public enum PacketType
     PING,
     OBJECT_STATE,
     INPUT,
-    TEXT
+    AUTHENTICATION
 }
 
 //this class will work as a client or server or both at the same time
@@ -33,14 +33,17 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     uint MTU = 1400;
     int stateBufferTimeout = 1000; // time with no activity to send not fulled packets
-    int inputBufferTimeout = 1000; // time with no activity to send not fulled packets
+    int inputBufferTimeout = 100; // time with no activity to send not fulled packets
     // store all state streams to send
     Queue<MemoryStream> stateStreamBuffer = new Queue<MemoryStream>();
     // store all input streams to send
     Queue<MemoryStream> inputStreamBuffer = new Queue<MemoryStream>();
+    // store all critical data streams to send (TCP)
+    Queue<MemoryStream> reliableStreamBuffer = new Queue<MemoryStream>();
     // Mutex for thread safety
     private readonly object stateQueueLock = new object();
     private readonly object inputQueueLock = new object();
+    private readonly object realiableQueueLock = new object();
 
     Queue<MemoryStream>incomingStreamBuffer = new Queue<MemoryStream>();
     public readonly object incomingStreamLock = new object();
@@ -53,8 +56,6 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     Process receiveData = new Process();
     Process sendData = new Process();
-
-
 
     [SerializeField] GameObject Player;
        
@@ -76,6 +77,10 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     Dictionary<Int64, NetworkObject> networkObjectMap;
 
+
+
+    
+    
     private void Start()
     {
 
@@ -90,6 +95,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     }
     private void OnDisable()
     {
+        Debug.Log("Stopping NetworkManger threads...");
         // When you want to stop the thread, you call cancellationTokenSource.Cancel(),
         // and the thread will stop executing the loop.
         receiveData.cancellationToken?.Cancel();
@@ -147,7 +153,11 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     {
         inputStreamBuffer.Enqueue(stream);
     }
-    
+    public void AddReliableStreamQueue(MemoryStream stream)
+    {
+        reliableStreamBuffer.Enqueue(stream);
+    }
+
     public void AddIncomingDataQueue(MemoryStream stream)
     {
         incomingStreamBuffer.Enqueue(stream);
@@ -160,6 +170,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
             Debug.Log("Netwrok Manager Send data thread started...");
             float stateTimeout = stateBufferTimeout;
             float inputTimeout = inputBufferTimeout;
+
             while (!token.IsCancellationRequested)
             {
                 //State buffer
@@ -170,8 +181,6 @@ public class NetworkManager : GenericSingleton<NetworkManager>
                     {
                         int totalSize = 0;
                         List<MemoryStream> streamsToSend = new List<MemoryStream>();
-
-
 
                         //check if the totalsize + the next stream total size is less than the specified size
                         while (stateStreamBuffer.Count > 0 && totalSize + (int)stateStreamBuffer.Peek().Length <= MTU && stateBufferTimeout > 0)
@@ -233,6 +242,39 @@ public class NetworkManager : GenericSingleton<NetworkManager>
                     }
                 }
 
+                // reliable buffer
+
+                if (reliableStreamBuffer.Count > 0)
+                {
+                    lock (realiableQueueLock)
+                    {
+
+                        List<MemoryStream> streamsToSend = new List<MemoryStream>();
+
+                        while (reliableStreamBuffer.Count > 0)
+                        {
+                            
+                            MemoryStream nextStream = reliableStreamBuffer.Dequeue();
+
+                            byte[] buffer = nextStream.ToArray();
+
+                            if (isClient)
+                            {
+                                client.SendCriticalPacket(buffer);
+                            }
+                            else if (isServer)
+                            {
+                                server.SendCriticalToAll(buffer);
+                            }
+                            else if (isHost)
+                            {
+                                server.SendCriticalToAll(buffer);
+                            }
+                        }
+                    }
+                }
+
+
                 if (inputTimeout < 0)
                     inputTimeout = inputBufferTimeout;
                 if (stateTimeout < 0)
@@ -263,6 +305,14 @@ public class NetworkManager : GenericSingleton<NetworkManager>
                     incomingStream.Dispose();
                 }
                 inputStreamBuffer.Clear(); // Clear the queue
+            }
+            lock (reliableStreamBuffer)
+            {
+                foreach (MemoryStream incomingStream in reliableStreamBuffer)
+                {
+                    incomingStream.Dispose();
+                }
+                reliableStreamBuffer.Clear(); // Clear the queue
             }
         }
     }
@@ -308,7 +358,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     public void ProcessIncomingData(MemoryStream stream)
     {
 
-        // [packet type]
+        //[packet type]
         BinaryReader reader = new BinaryReader(stream);
 
         PacketType type = (PacketType)reader.ReadInt32();
@@ -322,7 +372,15 @@ public class NetworkManager : GenericSingleton<NetworkManager>
             case PacketType.OBJECT_STATE:
                 HandleObjectState(stream,reader);
                 break;
-            case PacketType.TEXT:
+            case PacketType.AUTHENTICATION:
+                if(isClient)
+                {
+                    client.GetAuthenticator().HandleAuthentication(stream, reader);
+                }
+                else if(isHost)
+                {
+                    server.GetAuthenticator().HandleAuthentication(stream, reader);   
+                }
                 break;
             default:
                 break;
@@ -341,6 +399,8 @@ public class NetworkManager : GenericSingleton<NetworkManager>
             networkObjectMap[id].HandleNetworkBehaviour(Type.GetType(objClass), reader);
         }
     }
+
+
 
     private byte[] ConcatenateMemoryStreams(PacketType type,List<MemoryStream> streams)
     {
@@ -380,17 +440,17 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
     #endregion
     #region Getters
-    private bool IsHost()
+    public bool IsHost()
     {
         return isHost;
     }
 
-    private bool IsServer()
+    public bool IsServer()
     {
         return isServer;
     }
 
-    private bool IsClient()
+    public bool IsClient()
     {
         return isClient;
     }
