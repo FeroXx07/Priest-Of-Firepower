@@ -6,19 +6,24 @@ using UnityEngine;
 [System.Serializable]
 public class NetworkVariable<T>
 {
-    public NetworkVariable(T value, int trackerIndex, ChangeTracker changeTracker)
+    public NetworkVariable(T value, int trackerIndex)
     {
+        _type = typeof(T);
         _value = value;
         _trackerIndex = trackerIndex;
-        _changeTracker = changeTracker;
     }
 
     private T _value;
+    private Type _type;
     private bool isDirty = false;
     private ChangeTracker _changeTracker;
     private int _trackerIndex;
     public T Value { get => _value; set => SetValue(value); }
     public bool IsDirty { get => isDirty; }
+    public void SetTracker(ChangeTracker changeTracker)
+    {
+        _changeTracker = changeTracker;
+    }
 
     void SetValue(T newValue) 
     { 
