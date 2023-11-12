@@ -15,21 +15,10 @@ public class Session : NetworkBehaviour
         base.Awake();
         bitTracker = new ChangeTracker(3);
     }
-    protected override void Read(MemoryStream inputMemoryStream)
+    public override void Read(BinaryReader reader)
     {
-        inputMemoryStream.Position = 0;  // Reset the stream position for reading
 
-        BinaryReader reader = new BinaryReader(inputMemoryStream);
-        string typeName = reader.ReadString();
-        Type objectType = Type.GetType(typeName);
-        UInt64 objectId = reader.ReadUInt64();
-
-        if (objectType != this.GetType() || networkObject.GetNetworkId() != objectId)
-        {
-            UnityEngine.Debug.LogError("Mismatch in reading stream");
-            return;
-        }
-
+        
         int fieldCount = bitTracker.GetBitfield().Length;
         int receivedFieldCount = reader.ReadInt32();
         if (receivedFieldCount != fieldCount)

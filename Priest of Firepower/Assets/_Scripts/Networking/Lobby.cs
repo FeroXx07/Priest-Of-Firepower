@@ -12,7 +12,7 @@ public class Lobby : NetworkBehaviour
 
     private void Start()
     {
-        NetworkManager.;
+    
     }
 
 
@@ -23,12 +23,11 @@ public class Lobby : NetworkBehaviour
 
     protected override MemoryStream Write(MemoryStream outputMemoryStream)
     {
-
+        throw new System.NotImplementedException();
     }
 
-    protected override void Read(MemoryStream inputMemoryStream)
+    public override void Read(BinaryReader reader)
     {
-        
-
+        throw new System.NotImplementedException();
     }
 }

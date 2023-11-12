@@ -130,7 +130,7 @@ public class SerializationTest : NetworkBehaviour
         ul = 300040004000;
 
         stopwatch.Restart();
-        Read(testStream);
+        //Read(testStream);
         stopwatch.Stop();
         long rTime = stopwatch.ElapsedMilliseconds;
         UnityEngine.Debug.Log($"Read Elapsed Time: {rTime} milliseconds");
