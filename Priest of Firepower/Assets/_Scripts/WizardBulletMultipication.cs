@@ -29,7 +29,7 @@ public class WizardBulletMultipication : MonoBehaviour
         if (currentTimer >= multiplicationTimer)
         {
             Debug.Log("Create clones");
-            CreateClones();
+            InvokeRepeating("CreateClones", 0f, 0.5f);
             DisposeGameObject();
             currentTimer = 0.0f;
         }
@@ -61,6 +61,8 @@ public class WizardBulletMultipication : MonoBehaviour
                 bounceComponent.maxBounces = 0;
             }
         }
+
+        CancelInvoke("CreateClones");
     }
 
     protected void DisposeGameObject()
