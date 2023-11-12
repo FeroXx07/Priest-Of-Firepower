@@ -170,6 +170,9 @@ public abstract class NetworkBehaviour : MonoBehaviour
     //}
     //#endregion
 
+    public virtual void OnNetworkSpawn() { }
+    public virtual void OnNetworkDespawn() { }
+
     public virtual void Awake()
     {
         if (TryGetComponent<NetworkObject>(out networkObject) == false)
