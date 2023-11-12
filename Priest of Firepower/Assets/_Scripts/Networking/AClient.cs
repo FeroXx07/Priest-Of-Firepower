@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using static ServerA.AServer;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 
 namespace ClientA
 {
@@ -80,15 +81,17 @@ namespace ClientA
                 {
                     if(connectionUDP.Available > 0)
                     {
-                        byte[] data= new byte[1024];
+                        byte[] data= new byte[1500];
                         connectionUDP.Receive(data);
-                        NetworkManager.Instance.ProcessIncomingData(data);
+                        MemoryStream stream = new MemoryStream(data);
+                        NetworkManager.Instance.AddIncomingDataQueue(stream);
                     }     
                     if(connectionTCP.Available > 0)
                     {
-                        byte[] data = new byte[1024];
+                        byte[] data = new byte[1500];
                         connectionTCP.Receive(data);
-                        NetworkManager.Instance.ProcessIncomingData(data);
+                        MemoryStream stream = new MemoryStream(data);
+                        NetworkManager.Instance.AddIncomingDataQueue(stream);
                     }
                 }
                 catch (SocketException se)
