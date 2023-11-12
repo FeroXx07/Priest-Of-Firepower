@@ -14,7 +14,8 @@ public enum PacketType
 {
     PING,
     OBJECT_STATE,
-    INPUT
+    INPUT,
+    TEXT
 }
 
 //this class will work as a client or server or both at the same time
@@ -115,8 +116,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         float stateTimeout = stateBufferTimeout;
         float inputTimeout = inputBufferTimeout;
         while(!token.IsCancellationRequested)
-        { 
-
+        {
             //State buffer
 
             if(stateStreamBuffer.Count > 0)
@@ -192,6 +192,47 @@ public class NetworkManager : GenericSingleton<NetworkManager>
 
             Thread.Sleep(10);
         }
+    }
+
+
+    private void ReceiveDataThread(CancellationTokenSource token)
+    {
+        while(!token.IsCancellationRequested)
+        {
+
+
+        }
+    }
+    public void ProcessIncomingData(byte[] data)
+    {
+        // [PacketType][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
+        int size = sizeof(PacketType);
+        
+        // Make sure there are enough bytes in the array to read the PacketType
+        if (data.Length < size)
+        {
+            Console.WriteLine("Not enough bytes to read the PacketType.");
+            return;
+        }
+
+        byte[] buffer = new byte[size];
+        Buffer.BlockCopy(data, 0, buffer, 0, size);
+        PacketType packetType = (PacketType)buffer[0];
+
+        switch(packetType)
+        {
+            case PacketType.PING:
+                break;
+            case PacketType.INPUT:
+                break;
+            case PacketType.OBJECT_STATE:
+                break;
+            case PacketType.TEXT:
+                break;
+            default:
+                break;
+        }
+
     }
     private byte[] ConcatenateMemoryStreams(List<MemoryStream> streams)
     {
