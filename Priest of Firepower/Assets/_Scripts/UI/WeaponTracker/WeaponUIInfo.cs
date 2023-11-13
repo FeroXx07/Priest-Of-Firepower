@@ -1,5 +1,6 @@
 using _Scripts.Player;
 using _Scripts.ScriptableObjects;
+using _Scripts.Power_Ups;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -24,6 +25,9 @@ namespace _Scripts.UI.WeaponTracker
         private void OnEnable()
         {
             PlayerShooter.OnStartingReload += Reload;
+            PowerUpBase.PowerUpPickedGlobal += OnPowerUp;
+
+
         }
         private void Awake()
         {
@@ -97,7 +101,6 @@ namespace _Scripts.UI.WeaponTracker
 
         IEnumerator ReloadRoutine()
         {
-            print("Reloading!!!!!!");
             while (_currReloadTime < _reloadTime)
             {
                 _currReloadTime += Time.deltaTime;
@@ -106,6 +109,25 @@ namespace _Scripts.UI.WeaponTracker
                 yield return null;
             }
 
+        }
+
+        void OnPowerUp(PowerUpBase.PowerUpType type)
+        {
+            if (weaponData == null) return;
+
+            switch (type)
+            {
+                case PowerUpBase.PowerUpType.MAX_AMMO:
+                    break;
+                case PowerUpBase.PowerUpType.NUKE:
+                    break;
+                case PowerUpBase.PowerUpType.DOUBLE_POINTS:
+                    break;
+                case PowerUpBase.PowerUpType.ONE_SHOT:
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

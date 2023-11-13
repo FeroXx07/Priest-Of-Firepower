@@ -166,6 +166,7 @@ namespace _Scripts.Weapon
         public void GiveMaxAmmo()
         {
             localData.totalAmmo = localData.maxAmmoCapacity;
+            PlayerShooter.OnReload?.Invoke();
         }
 
         public void SetOwner(GameObject owner)
