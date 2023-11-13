@@ -1,107 +1,53 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using _Scripts.Networking;
 using UnityEngine;
 
+[Serializable]
 public class SerializationTest : NetworkBehaviour
 {
-    [SerializeField] public bool b = true;
-    [SerializeField] public uint ui = 2;
-    [SerializeField] public int i = -2;
-    [SerializeField] float f = 3.3f;
-    [SerializeField] double d = 4.4444;
-    [SerializeField] string s = "hello_world";
-    [SerializeField] ulong ul = 100000000000;
-
     [SerializeField] public NetworkVariable<int> myNetVariableInt = new NetworkVariable<int>(10101, 0);
     [SerializeField] public NetworkVariable<string> myNetVariableStr = new NetworkVariable<string>("My Name is Ali", 1);
+    [SerializeField] public NetworkVariable<float> myNetFloat = new NetworkVariable<float>(333.333f, 2);
+    [SerializeField] public NetworkVariable<double> myNetDouble = new NetworkVariable<double>(99.999993, 3);
+
+    protected override void InitNetworkVariablesList()
+    {
+        // Add your NetworkVariable instances to the list
+        networkVariableList.Add(myNetVariableInt);
+        networkVariableList.Add(myNetVariableStr);
+        networkVariableList.Add(myNetFloat);
+        networkVariableList.Add(myNetDouble);
+    }
 
     protected override MemoryStream Write(MemoryStream outputMemoryStream)
     {
-        // [Object State][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
-        //[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...
-
-        MemoryStream tempStream = new MemoryStream();
-        BinaryWriter tempWriter = new BinaryWriter(tempStream);
-
         BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-        Type objectType = this.GetType();
-        writer.Write(objectType.AssemblyQualifiedName);
-        writer.Write(networkObject.GetNetworkId());
-
-        // Serialize the changed fields using the bitfield
+        //Type objectType = this.GetType();
+        //writer.Write(objectType.AssemblyQualifiedName);
+        //writer.Write(networkObject.GetNetworkId());
         BitArray bitfield = bitTracker.GetBitfield();
-
-        if (bitTracker.GetBitfield().Get(0))
-            tempWriter.Write(b);
-        if (bitTracker.GetBitfield().Get(1))
-            tempWriter.Write(ui);
-        if (bitTracker.GetBitfield().Get(2))
-            tempWriter.Write(i);
-        if (bitTracker.GetBitfield().Get(3))
-            tempWriter.Write(f);
-        if (bitTracker.GetBitfield().Get(4))
-            tempWriter.Write(d);
-        if (bitTracker.GetBitfield().Get(5))
-            tempWriter.Write(s);
-        if (bitTracker.GetBitfield().Get(6))
-            tempWriter.Write(ul);
-
         int fieldCount = bitfield.Length;
         writer.Write(fieldCount);
-
-        // Write the bitfield
         byte[] bitfieldBytes = new byte[(fieldCount + 7) / 8];
         bitfield.CopyTo(bitfieldBytes, 0);
         writer.Write(bitfieldBytes);
-
-        tempStream.CopyTo(outputMemoryStream);
-
-        // [Object State][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
-        //[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...
+        myNetVariableInt.WriteInBinaryWriter(writer);
+        myNetVariableStr.WriteInBinaryWriter(writer);
+        myNetFloat.WriteInBinaryWriter(writer);
+        myNetDouble.WriteInBinaryWriter(writer);
         return outputMemoryStream;
-    }
-
-    public override void Read(BinaryReader reader)
-    {
-        //[Changed Fields][DATA I][Data J]... <- End of an object packet
-
-        int fieldCount = bitTracker.GetBitfield().Length;
-        int receivedFieldCount = reader.ReadInt32();
-        if (receivedFieldCount != fieldCount)
-        {
-            UnityEngine.Debug.LogError("Mismatch in the count of fields");
-            return;
-        }
-
-        // Read the bitfield from the input stream
-        byte[] receivedBitfieldBytes = reader.ReadBytes((fieldCount + 7) / 8);
-        BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
-
-        if (receivedBitfield.Get(0))
-            b = reader.ReadBoolean();
-        if (receivedBitfield.Get(1))
-            ui = reader.ReadUInt32();
-        if (receivedBitfield.Get(2))
-            i = reader.ReadInt32();
-        if (receivedBitfield.Get(3))
-            f = reader.ReadSingle();
-        if (receivedBitfield.Get(4))
-            d = reader.ReadDouble();
-        if (receivedBitfield.Get(5))
-            s = reader.ReadString();
-        if (receivedBitfield.Get(6))
-            ul = reader.ReadUInt64();
-
-        // [Object State][Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]... <- End of an object packet
-        //[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...[Object Class][Object ID][Fields total Size][Changed Fields][DATA I][Data J]...
     }
 
     public override void Awake()
     {
         base.Awake();
-        bitTracker = new ChangeTracker(7);
+        InitNetworkVariablesList();
+        bitTracker = new ChangeTracker(networkVariableList.Count);
+        networkVariableList.ForEach(var => var.SetTracker(bitTracker));
     }
     private void Start()
     {
@@ -124,16 +70,20 @@ public class SerializationTest : NetworkBehaviour
             timer++;
         }
 
-        b = false;
-        ui = 1;
-        i = -1;
-        f = 99.3f;
-        d = 200.4444;
-        s = "goodbye";
-        ul = 300040004000;
-
+        myNetVariableStr.Value = "HOLAAAAAAAAAAAAAAA";
+        myNetVariableInt.Value = 20;
+        myNetFloat.Value = 222.22f;
+        myNetDouble.Value = 278.2738946;
+        //b = false;
+        //ui = 1;
+        //i = -1;
+        //f = 99.3f;
+        //d = 200.4444;
+        //s = "goodbye";
+        //ul = 300040004000;
+        BinaryReader binaryReader = new BinaryReader(testStream);
         stopwatch.Restart();
-        //Read(testStream);
+        Read(binaryReader);
         stopwatch.Stop();
         long rTime = stopwatch.ElapsedMilliseconds;
         UnityEngine.Debug.Log($"Read Elapsed Time: {rTime} milliseconds");
@@ -141,7 +91,9 @@ public class SerializationTest : NetworkBehaviour
 
     private void Update()
     {
-        UnityEngine.Debug.Log($"myNetVariableInt is: {myNetVariableInt.Value}");
-        UnityEngine.Debug.Log($"myNetVariableStr is: {myNetVariableStr.Value}");
+        UnityEngine.Debug.Log($"{gameObject.name} myNetVariableInt is: {myNetVariableInt.Value}");
+        UnityEngine.Debug.Log($"{gameObject.name} myNetVariableStr is: {myNetVariableStr.Value}");
+        UnityEngine.Debug.Log($"{gameObject.name} myNetVariablefloat is: {myNetDouble.Value}");
+        UnityEngine.Debug.Log($"{gameObject.name} myNetVariabledouble is: {myNetFloat.Value}");
     }
 }

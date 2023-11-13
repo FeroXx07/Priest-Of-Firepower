@@ -1,6 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
+using _Scripts.Networking;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -19,6 +18,11 @@ public class Lobby : NetworkBehaviour
     void OnClientConnected()
     {
         Instantiate(clientUiPrefab);
+    }
+
+    protected override void InitNetworkVariablesList()
+    {
+        throw new System.NotImplementedException();
     }
 
     protected override MemoryStream Write(MemoryStream outputMemoryStream)

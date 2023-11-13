@@ -1,8 +1,7 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
+using _Scripts.Networking;
 
 public class Session : NetworkBehaviour
 {
@@ -37,6 +36,11 @@ public class Session : NetworkBehaviour
             username = reader.ReadString();
         if (receivedBitfield.Get(2))
             isHost = reader.ReadBoolean();
+    }
+
+    protected override void InitNetworkVariablesList()
+    {
+        
     }
 
     protected override MemoryStream Write(MemoryStream outputMemoryStream)
