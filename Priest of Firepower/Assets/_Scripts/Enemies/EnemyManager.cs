@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using _Scripts.Object_Pool;
 using _Scripts.Power_Ups;
 using UnityEngine;
+using System;
 
 namespace _Scripts.Enemies
 {
@@ -20,10 +21,14 @@ namespace _Scripts.Enemies
 
         float _spawnRate  = 0.5f;
         float _spawnTimer;
+
+        public Action<int> OnEnemyCountUpdate;
+
         public void SpawnEnemies(int round)
         {
             _numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
             Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
+            OnEnemyCountUpdate?.Invoke(_numberOfEnemiesToSpwan);
         }
 
         private void Update()
@@ -45,7 +50,7 @@ namespace _Scripts.Enemies
         GameObject SpawnEnemy(Vector3 spawnPosition)
         {
             // TODO add probability
-            int enemyType = Random.Range(0, enemiesPrefabs.Count - 1);
+            int enemyType = UnityEngine.Random.Range(0, enemiesPrefabs.Count - 1);
             GameObject enemyPrefab = enemiesPrefabs[enemyType];
             GameObject polledObj = PoolManager.Instance.Pull(enemyPrefab, spawnPosition);
 
@@ -66,6 +71,7 @@ namespace _Scripts.Enemies
             enemiesAlive.Remove(enemy);
             enemy.onDeath.RemoveListener(RemoveEnemyFromList);
             Debug.Log("enemies alive: " + enemiesAlive.Count );
+            OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
         }
 
         public void KillAllEnemies()
@@ -96,7 +102,7 @@ namespace _Scripts.Enemies
 
         Transform GetRadomSpawnPoint()
         {
-            return _spawnPoints[Random.Range(0, _spawnPoints.Count)];
+            return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count)];
         }
         public void AddSpawnpoint(Transform spawnPoint)
         {
