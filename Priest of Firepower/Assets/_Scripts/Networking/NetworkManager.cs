@@ -52,10 +52,10 @@ namespace _Scripts.Networking
         Process _receiveData = new Process();
         Process _sendData = new Process();
 
-        [FormerlySerializedAs("Player")] [SerializeField] GameObject player;
-        
         [SerializeField]
-        ConnectionAddressData connectionAddress;
+        public ConnectionAddressData connectionAddress;
+
+        [FormerlySerializedAs("Player")][SerializeField] GameObject player;
 
         private ReplicationManager _replicationManager = new ReplicationManager();
         //Actions
@@ -110,16 +110,18 @@ namespace _Scripts.Networking
 
         public void StartHost()
         {
+            connectionAddress.address = IPAddress.Loopback.ToString();
+
             CreateServer();
             CreateClient();
-
+            
             _isHost = true;
 
             _server.InitServer(); 
         
             if (_server.GetServerInit())
             {
-                _client.Connect(IPAddress.Loopback);
+                _client.Connect(connectionAddress.ServerEndPoint);
             }
         }
         void StartServer()
@@ -138,27 +140,37 @@ namespace _Scripts.Networking
         }
         void CreateServer()
         {
-            _server = new AServer();        
+            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, connectionAddress.port);
+            _server = new AServer(endPoint);      
+            
         }
-
+        #region Streams
         public void AddStateStreamQueue(MemoryStream stream)
         {
-            _stateStreamBuffer.Enqueue(stream);
+            lock (_stateQueueLock)
+            { 
+                _stateStreamBuffer.Enqueue(stream); 
+            }
         }
         public void AddInputStreamQueue(MemoryStream stream)
         {
-            _inputStreamBuffer.Enqueue(stream);
+            lock (_inputQueueLock)
+            {
+                _inputStreamBuffer.Enqueue(stream); 
+            }
         }
         public void AddReliableStreamQueue(MemoryStream stream)
         {
-            _reliableStreamBuffer.Enqueue(stream);
+            lock (_realiableQueueLock)
+            {
+                _reliableStreamBuffer.Enqueue(stream); 
+            }
         }
-
         public void AddIncomingDataQueue(MemoryStream stream)
         {
             _incomingStreamBuffer.Enqueue(stream);
         }
-
+        #endregion
         private void SendDataThread(CancellationToken token)
         {
             try
@@ -253,7 +265,6 @@ namespace _Scripts.Networking
                                 MemoryStream nextStream = _reliableStreamBuffer.Dequeue();
 
                                 byte[] buffer = nextStream.ToArray();
-
                                 if (_isClient)
                                 {
                                     _client.SendCriticalPacket(buffer);
@@ -397,8 +408,6 @@ namespace _Scripts.Networking
             }
         }
 
-
-
         private byte[] ConcatenateMemoryStreams(PacketType type,List<MemoryStream> streams)
         {
             MemoryStream buffer = new MemoryStream();
@@ -430,9 +439,9 @@ namespace _Scripts.Networking
         #endregion
         #region Server Events Interface
         //Server Events Interface
-        public void ConnectClient(IPAddress address)
+        public void ConnectClient()
         {
-            _client.Connect(address);
+            _client.Connect(connectionAddress.ServerEndPoint);
         }
 
         #endregion
@@ -474,13 +483,7 @@ namespace _Scripts.Networking
             [SerializeField]
             public ushort port;
 
-            // IP address the server will listen on. If not provided, will use 'Address'.
-            [FormerlySerializedAs("ServerListenAddress")]
-            [Tooltip("IP address the server will listen on. If not provided, will use 'Address'.")]
-            [SerializeField]
-            public string serverListenAddress;
-
-            private static EndPoint ParseNetworkEndpoint(string ip, ushort port)
+            private static IPEndPoint ParseNetworkEndpoint(string ip, ushort port)
             {
                 IPAddress address = IPAddress.Parse(ip);
                 if (address == null)
@@ -491,11 +494,9 @@ namespace _Scripts.Networking
                 return new IPEndPoint(address, port);
             }
 
-            /// Endpoint (IP address and port) clients will connect to.
-            public EndPoint ServerEndPoint => ParseNetworkEndpoint(address, port);
 
-            /// Endpoint (IP address and port) server will listen/bind on.
-            public EndPoint ListenEndPoint => ParseNetworkEndpoint((serverListenAddress == string.Empty) ? address : serverListenAddress, port);
+            /// Endpoint (IP address and port) clients will connect to.
+            public IPEndPoint ServerEndPoint => ParseNetworkEndpoint(address, port);
         }
         #endregion
     }

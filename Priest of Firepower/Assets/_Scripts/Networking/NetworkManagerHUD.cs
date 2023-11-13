@@ -30,11 +30,12 @@ namespace _Scripts.Networking
 
         private void ConnectToServer(string ip)
         {
-            IPAddress adddress = IPAddress.Parse(ip);
-            if (adddress != null)
+            
+            NetworkManager.Instance.connectionAddress.address = ip;
+            
+            if (NetworkManager.Instance.connectionAddress.ServerEndPoint != null)
             {
                 NetworkManager.Instance.StartClient();
-                NetworkManager.Instance.ConnectClient(adddress);
             }
             else
             {

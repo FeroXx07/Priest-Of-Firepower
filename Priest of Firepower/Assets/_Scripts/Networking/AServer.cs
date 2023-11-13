@@ -26,19 +26,19 @@ namespace _Scripts.Networking
     {
         #region variables
         IPEndPoint _endPoint;
-        //[SerializeField] int port = 12345;
+
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
-        private CancellationTokenSource _authenticationToken;
-        private Thread _authenticationThread;
+
+        Process _listenConnectionProcess = new Process();
+        private List<Process> _authenticationProcessList = new List<Process>();
 
         ClientManager _clientManager;
 
-        private List<ClientProcess> _clientThreads = new List<ClientProcess>();
+        private List<Process> _clientThreads = new List<Process>();
         private List<ClientData> _clientList = new List<ClientData>();
         private List<ClientData> _clientListToRemove = new List<ClientData>();
-        //private ConcurrentBag<ClientData> clientList = new ConcurrentBag<ClientData>();
 
         //actions
         Action<int> _onClientAccepted;
@@ -52,14 +52,20 @@ namespace _Scripts.Networking
 
         ServerAuthenticator _authenticator = new ServerAuthenticator();
 
-        struct ClientProcess
+        struct Process
         {
             public Thread Thread;
-            public CancellationTokenSource Token;
+            public CancellationTokenSource cancellationToken;
         }
 
         private bool _isServerInitialized  = false;
         #endregion
+
+        public AServer(IPEndPoint endPoint)
+        {
+            _endPoint = endPoint;
+        }
+
 
         #region client data
         class ClientData
@@ -116,20 +122,32 @@ namespace _Scripts.Networking
         #region helper funcitons
         void StopAuthenticationThread()
         {
-
-            _authenticationToken.Cancel();
-            if (_authenticationThread != null)
+            foreach(Process p in _authenticationProcessList)
             {
-                if (_authenticationThread.IsAlive)
+                p.cancellationToken.Cancel();
+                if (p.Thread != null)
                 {
-                    _authenticationThread.Join();
-                }
-                //make sure it is not alive
-                if (_authenticationThread.IsAlive)
-                {
-                    _authenticationThread.Abort();
+                    if (p.Thread.IsAlive)
+                    {
+                        p.Thread.Join();
+                    }
+                    //make sure it is not alive
+                    if (p.Thread.IsAlive)
+                    {
+                        p.Thread.Abort();
+                    }
                 }
             }
+ 
+        }
+
+        void StopConnectionListener()
+        {
+            _listenConnectionProcess.cancellationToken.Cancel();
+            if (_listenConnectionProcess.Thread.IsAlive)
+                _listenConnectionProcess.Thread.Join();
+            if (_listenConnectionProcess.Thread.IsAlive)
+                _listenConnectionProcess.Thread.Abort();
         }
         void DisconnectAllClients()
         {
@@ -142,13 +160,13 @@ namespace _Scripts.Networking
         {
 
             Debug.Log("Server: Waiting for all threads to terminate.");
-            foreach (ClientProcess p in _clientThreads)
+            foreach (Process p in _clientThreads)
             {
-                p.Token.Cancel();
+                p.cancellationToken.Cancel();
                 if (p.Thread.IsAlive)
                     p.Thread.Join();
             }
-            foreach (ClientProcess p in _clientThreads)
+            foreach (Process p in _clientThreads)
             {
                 if (p.Thread.IsAlive)
                     p.Thread.Abort();
@@ -180,11 +198,36 @@ namespace _Scripts.Networking
         {
             _clientManager = new ClientManager();
             //start server
-            StartConnectionListenerTcp();
+            Debug.Log("Starting server ...");
+            //create listener tcp
+            _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            //create end point
+            //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
+            //In this case the operating system (TCP/IP stack) assigns a free port number for you.
+            //So for the ip any it listens to all directions ipv4 local LAN and 
+            //also the public ip. TOconnect from the client use any of the ips
+            if(_endPoint == null)
+                _endPoint = new IPEndPoint(IPAddress.Any, NetworkManager.Instance.connectionAddress.port);
+
+            //bind to ip and port to listen to
+            _serverTcp.Bind(_endPoint);
+            // Using ListenForConnections() method we create 
+            // the Client list that will want
+            // to connect to Server
+            _serverTcp.Listen(4);
+
+
+            _listenConnectionProcess.cancellationToken = new CancellationTokenSource();
+            _listenConnectionProcess.Thread = new Thread(() => StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
+            _listenConnectionProcess.Thread.Start();
+
+            _isServerInitialized = true;
         }
 
         public void SendToAll(byte[] data)
         {
+            Debug.Log("Boradcasting message ...");
             foreach(ClientData client in _clientList)
             {
                 client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
@@ -209,32 +252,31 @@ namespace _Scripts.Networking
                 }
             }
         }
-        void StartConnectionListenerTcp()
+        void StartConnectionListener(CancellationToken token)
         {
             try
             {
-                Debug.Log("Starting server ...");
-                //create listener tcp
-                _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                while(!token.IsCancellationRequested)
+                {
+                    Socket incomingConnection = _serverTcp.Accept();
+                    IPEndPoint IpEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
+                    //if not local host
 
-                //create end point
-                //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
-                //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-                //So for the ip any it listens to all directions ipv4 local LAN and 
-                //also the public ip. TOconnect from the client use any of the ips
-                _endPoint = new IPEndPoint(IPAddress.Any, 12345);
-                //bind to ip and port to listen to
-                _serverTcp.Bind(_endPoint);
-                // Using ListenForConnections() method we create 
-                // the Client list that will want
-                // to connect to Server
-                _serverTcp.Listen(4);
+                    Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
+                    if (IpEndPoint.Address.Equals(IPAddress.Loopback))
+                    {
+                        Debug.Log("Server : host connected ... ");
+                        CreateClient(incomingConnection, "Host");
+                    }
+                    else
+                    {                        
+                        Process authenticate = new Process();
 
-                _authenticationToken = new CancellationTokenSource();
-                _authenticationThread = new Thread(() => Authenticate(_authenticationToken.Token));
-                _authenticationThread.Start();
-
-                _isServerInitialized = true;
+                        authenticate.cancellationToken = new CancellationTokenSource();
+                        authenticate.Thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                        authenticate.Thread.Start();
+                    }                    
+                }
 
             }
             catch (Exception e)
@@ -348,19 +390,19 @@ namespace _Scripts.Networking
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
 
-                ClientProcess process = new ClientProcess();
+                Process clientProcess = new Process();
 
-                process.Token = new CancellationTokenSource();
+                clientProcess.cancellationToken = new CancellationTokenSource();
 
-                process.Thread = new Thread(() => HandleClient(clientData));
+                clientProcess.Thread = new Thread(() => HandleClient(clientData));
 
-                process.Thread.IsBackground = true;
-                process.Thread.Name = clientData.ID.ToString();
-                process.Thread.Start();
+                clientProcess.Thread.IsBackground = true;
+                clientProcess.Thread.Name = clientData.ID.ToString();
+                clientProcess.Thread.Start();
 
 
 
-                _clientThreads.Add(process);
+                _clientThreads.Add(clientProcess);
 
                 return clientData.ID;
             }
@@ -388,31 +430,31 @@ namespace _Scripts.Networking
         #endregion
 
         #region Authentication
-        void Authenticate(CancellationToken cancellationToken)
+        void Authenticate( Socket incomingSocket, CancellationToken cancellationToken)
         {
+            incomingSocket.ReceiveTimeout = 2000;
+            Debug.Log("Server: Authentication process started ... ");
             try
             {
                 //accept new Connections ... 
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    Debug.Log("Server: Waiting connection ... ");
-                    Socket clientSocket = _serverTcp.Accept();
-                    Debug.Log("Server: new socket accepted ...  ");
-                    if (clientSocket.Available > 0)
-                        ReceiveSocketData(clientSocket);                
-
+                    if (incomingSocket.Available > 0)
+                    {
+                        Debug.Log("Authentication message recieved ...");
+                        ReceiveSocketData(incomingSocket);
+                    }
                     Thread.Sleep(100);
                 }
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
-                _authenticationToken.Cancel();
+                Thread.ResetAbort();
                 Debug.Log("Shutting down authentication process ...");
             }
             finally
             {
-
             }
         }
 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace _Scripts.Networking
@@ -12,8 +13,6 @@ namespace _Scripts.Networking
     {
         #region variables
         IPEndPoint _endPoint;
-        string _paddress;
-        IPAddress _serverIP;
         private Thread _connectionThread;
 
         private CancellationTokenSource _listenerToken;
@@ -24,9 +23,6 @@ namespace _Scripts.Networking
 
         public Action OnConnected;
         public Action<byte[]> OnDataRecieved;
-        private Queue<byte[]> _messageQueue = new Queue<byte[]>();
-
-        private int _serverPort = 12345; // Replace with your server's port
 
         ClientAuthenticator _authenticator = new ClientAuthenticator();
         #endregion
@@ -37,6 +33,7 @@ namespace _Scripts.Networking
         private void Start()
         {
             OnConnected += StartListening;
+            OnConnected += StopAuthenticationProcess;
         }
         private void OnDisable()
         {
@@ -46,18 +43,14 @@ namespace _Scripts.Networking
         #region Get/Setters
         public string GetIpAddress()
         {
-            return _paddress;
-        }
-        public void SetIpAddress(IPAddress adress)
-        {
-            _serverIP = adress;
+            return _endPoint.ToString();
         }
         #endregion
 
         #region Core Functions
-        public void Connect(IPAddress address)
+        public void Connect(IPEndPoint address)
         {
-            _serverIP = address;
+            _endPoint = address;
 
             Debug.Log("Creating connetion ...");
             _connectionTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -65,13 +58,12 @@ namespace _Scripts.Networking
             _connectionTcp.SendTimeout = 1000;
             //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
             //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-            if (_serverIP == null)
+            if (_endPoint == null)
             {
                 Debug.Log("server Ip is null ...");
                 return;
             }
-            _endPoint = new IPEndPoint(_serverIP, _serverPort);
-
+            
             _connectionTcp.Connect(_endPoint);
 
             if (!_connectionTcp.Connected)
@@ -81,9 +73,17 @@ namespace _Scripts.Networking
             }
 
             Debug.Log("Client:  Socket connected to -> " + _connectionTcp.RemoteEndPoint.ToString());
+            if(!NetworkManager.Instance.IsHost())
+            {
+                _connectionThread = new Thread(() => Authenticate());
+                _connectionThread.Start();
+            }
+            else
+            {
+                Debug.Log("Local host created ...");
+            }
 
-            _connectionThread = new Thread(() => Authenticate());
-            _connectionThread.Start();
+
         }
   
         void StartListening()
@@ -142,10 +142,8 @@ namespace _Scripts.Networking
         void Disconnect()
         {
             Debug.Log("Disconnecting client ...");
-            if (_connectionThread != null && _connectionThread.IsAlive)
-            {
-                _connectionThread.Abort();
-            }
+            StopAuthenticationProcess();
+
             if (_listenServerThread != null && _listenServerThread.IsAlive)
             {
                 CancelThread(_listenServerThread, _listenerToken);
@@ -167,12 +165,20 @@ namespace _Scripts.Networking
                 thread.Join();
             }
         }
+
+        void StopAuthenticationProcess()
+        {
+            _connectionThread.Abort();
+        }
         #endregion
         public void SendCriticalPacket(byte[] data)
         {
             try
             {
+               
                 if (_connectionTcp == null) return;
+
+                Debug.Log("Client: sending critical packet...");
 
                 _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
@@ -225,20 +231,37 @@ namespace _Scripts.Networking
 
         void Authenticate()
         {
+            _connectionTcp.ReceiveTimeout = 1000;
             try
             {
                 _authenticator.SendAuthenticationRequest("Yololo");
+                while (_connectionTcp.Connected)
+                {
 
 
-                //if (authenticated)
-                //{
-                //    //add action dispatcher for main thread
-                //    MainThreadDispatcher.EnqueueAction(OnConnected);
-                //}
-                //else
-                //{
-                //    Debug.Log("Failed on authentication");
-                //}
+                    // Create an authentication packet
+                    MemoryStream authStream = new MemoryStream();
+                    BinaryWriter authWriter = new BinaryWriter(authStream);
+
+                    authWriter.Write((int)PacketType.AUTHENTICATION);
+                    authWriter.Write("hello");
+                                     
+                    NetworkManager.Instance.AddReliableStreamQueue(authStream);
+
+                    //if (authenticated)
+                    //{
+                    //    //add action dispatcher for main thread
+                    //    MainThreadDispatcher.EnqueueAction(OnConnected);
+                    //}
+                    //else
+                    //{
+                    //    Debug.Log("Failed on authentication");
+                    //}
+
+                    Thread.Sleep(100);
+                }
+  
+
 
             }
             catch (Exception e)
