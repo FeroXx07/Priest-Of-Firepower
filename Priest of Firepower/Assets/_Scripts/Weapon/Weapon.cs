@@ -72,7 +72,8 @@ namespace _Scripts.Weapon
         {
             if (localData.reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize || !gameObject.activeSelf) return;
 
-                StartCoroutine(Realoading());
+            PlayerShooter.OnStartingReload?.Invoke();
+            StartCoroutine(Realoading());
         }
         IEnumerator Realoading()
         { 
@@ -82,9 +83,6 @@ namespace _Scripts.Weapon
 
             if(localData.totalAmmo > 0)
             {
-                //int bulletsToReload = (localData.magazineSize - localData.ammoInMagazine);
-
-                //localData.totalAmmo -= bulletsToReload;
 
             if (localData.totalAmmo > localData.magazineSize)
                 localData.ammoInMagazine = localData.magazineSize;

@@ -351,11 +351,11 @@ MonoBehaviour:
   slots:
   - holder: {fileID: 1747872898691203083}
     weapon: {fileID: 0}
-    Empty: 0
+    empty: 0
     index: 0
   - holder: {fileID: 1747872900254246789}
     weapon: {fileID: 0}
-    Empty: 0
+    empty: 0
     index: 0
   switchTime: 0.1
   initialWeaponPrefab: {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
@@ -769,7 +769,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   health: {fileID: 1747872900250147731}
   healthBar: {fileID: 2783656451043554281}
-  healthBar_bg: {fileID: 1209871895979403291}
+  healthBarBg: {fileID: 1209871895979403291}
   healthColor:
     serializedVersion: 2
     key0: {r: 1, g: 1, b: 1, a: 1}
@@ -888,6 +888,7 @@ GameObject:
   - component: {fileID: 8936958348360465893}
   - component: {fileID: 7956992017567387612}
   - component: {fileID: 3518120804467007569}
+  - component: {fileID: 6292990264305646059}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -979,3 +980,15 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &6292990264305646059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7489695807122122495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d88221991ee20e4d89967b08fe311fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using _Scripts.Interfaces;
 using _Scripts.Weapon;
+using _Scripts.UI.Interactables;
 using UnityEngine;
 using UnityEngine.VFX;
 
