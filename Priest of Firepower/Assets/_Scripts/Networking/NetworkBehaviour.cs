@@ -140,7 +140,10 @@ namespace _Scripts.Networking
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
             if (_tickCounter >= finalRate)
+            {
                 SendData(NetworkAction.UPDATE);
+                _tickCounter = 0.0f;
+            }
             _tickCounter += Time.deltaTime;
         }
     }

@@ -505,6 +505,7 @@ namespace _Scripts.Networking
         CREATE,
         UPDATE,
         DESTROY,
+        TRANSFORM,
         EVENT
     }
     public class ReplicationManager
@@ -540,6 +541,9 @@ namespace _Scripts.Networking
                 case NetworkAction.EVENT:
                     HandleObjectEvent(id, action, type, reader);
                     break;
+                case NetworkAction.TRANSFORM:
+                    HandleObjectTransform(id, action, type, reader);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, null);
             }
@@ -565,6 +569,11 @@ namespace _Scripts.Networking
         }
         
         private void HandleObjectEvent(UInt64 id, NetworkAction action, Type type, BinaryReader reader){}
-        
+
+        private void HandleObjectTransform(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        {
+            if (!networkObjectMap[id].synchronizeTransform)
+            networkObjectMap[id].HandleNetworkTransform(reader);
+        }
     }
 }

@@ -123,6 +123,55 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &271703756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 271703758}
+  - component: {fileID: 271703757}
+  m_Layer: 0
+  m_Name: NetworkManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &271703757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271703756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48bedf07c98ae444ca97e17768850f7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  connectionAddress:
+    address: 
+    port: 0
+    serverListenAddress: 
+--- !u!4 &271703758
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271703756}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.4995086, y: 0.14410603, z: 0.004500015}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1347721980
 GameObject:
   m_ObjectHideFlags: 0
@@ -155,23 +204,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tickRate: 10
   myNetVariableInt:
-    _value: 10022
-    _isDirty: 1
-    _isLastValueFromNetwork: 0
+    value: 7423
+    isDirty: 1
+    isLastValueFromNetwork: 0
   myNetVariableStr:
-    _value: My Name is Ali
-    _isDirty: 1
-    _isLastValueFromNetwork: 0
+    value: My Name is Ali
+    isDirty: 1
+    isLastValueFromNetwork: 0
   myNetFloat:
-    _value: 413.4
-    _isDirty: 1
-    _isLastValueFromNetwork: 0
+    value: 333.333
+    isDirty: 1
+    isLastValueFromNetwork: 0
   myNetDouble:
-    _value: 153.8
-    _isDirty: 1
-    _isLastValueFromNetwork: 0
-  testVar:
-    a: 30
+    value: 99.999993
+    isDirty: 1
+    isLastValueFromNetwork: 0
 --- !u!4 &1347721982
 Transform:
   m_ObjectHideFlags: 0
@@ -199,8 +246,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
   synchronizeTransform: 1
-  globalObjectIdHash: 10
+  tickRate: 10
 --- !u!1 &1922003404
 GameObject:
   m_ObjectHideFlags: 0

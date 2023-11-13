@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using _Scripts.Networking;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace _Scripts
@@ -64,7 +65,7 @@ namespace _Scripts
 
             MemoryStream testStream = new MemoryStream();
             Write(testStream, NetworkAction.UPDATE);
-
+            MemoryStream transformStream = NetworkObject.SendNetworkTransform();
             stopwatch.Stop();
             long wTime = stopwatch.ElapsedMilliseconds;
             UnityEngine.Debug.Log($"Write Elapsed Time: {wTime} milliseconds");
@@ -80,6 +81,7 @@ namespace _Scripts
             myNetVariableInt.Value = 20;
             myNetFloat.Value = 222.22f;
             myNetDouble.Value = 278.2738946;
+            transform.SetPositionAndRotation(new Vector3(10,10,0), quaternion.identity);
             //b = false;
             //ui = 1;
             //i = -1;
@@ -90,6 +92,9 @@ namespace _Scripts
             BinaryReader binaryReader = new BinaryReader(testStream);
             stopwatch.Restart();
             Read(binaryReader);
+            
+            BinaryReader trReader = new BinaryReader(transformStream);
+            NetworkObject.HandleNetworkTransform(trReader);
             stopwatch.Stop();
             long rTime = stopwatch.ElapsedMilliseconds;
             UnityEngine.Debug.Log($"Read Elapsed Time: {rTime} milliseconds");
