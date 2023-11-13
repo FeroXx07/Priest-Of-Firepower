@@ -20,7 +20,7 @@ namespace _Scripts.Networking
             throw new System.NotImplementedException();
         }
 
-        protected override MemoryStream Write(MemoryStream outputMemoryStream)
+        protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
             throw new System.NotImplementedException();
         }

@@ -44,7 +44,7 @@ namespace _Scripts.Networking.Network_Behaviours
         
         }
 
-        protected override MemoryStream Write(MemoryStream outputMemoryStream)
+        protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
             MemoryStream tempStream = new MemoryStream();
             BinaryWriter tempWriter = new BinaryWriter(tempStream);
