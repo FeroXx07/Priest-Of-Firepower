@@ -28,9 +28,11 @@ namespace ClientA
         private Queue<byte[]> messageQueue = new Queue<byte[]>();
 
         private int serverPort = 12345; // Replace with your server's port
- 
+
+        ClientAuthenticator authenticator = new ClientAuthenticator();
         #endregion
 
+       
 
         #region Enable/Disable funcitons
         private void Start()
@@ -57,6 +59,30 @@ namespace ClientA
         public void Connect(IPAddress address)
         {
             serverIP = address;
+
+            Debug.Log("Creating connetion ...");
+            connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            connectionTCP.ReceiveTimeout = 1000;
+            connectionTCP.SendTimeout = 1000;
+            //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
+            //In this case the operating system (TCP/IP stack) assigns a free port number for you.
+            if (serverIP == null)
+            {
+                Debug.LogError("server Ip is null ...");
+                return;
+            }
+            endPoint = new IPEndPoint(serverIP, serverPort);
+
+            connectionTCP.Connect(endPoint);
+
+            if (!connectionTCP.Connected)
+            {
+                Debug.LogError("Socket connection failed.");
+                return;
+            }
+
+            Debug.Log("Client:  Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
+
             connectionThread = new Thread(() => Authenticate());
             connectionThread.Start();
         }
@@ -202,88 +228,28 @@ namespace ClientA
         {
             try
             {
-                //disconnect if there is a previous connection
-                if (connectionTCP != null && connectionTCP.Connected)
-                {
-                    Disconnect();
-                    Thread.Sleep(100);
-                }
-                //if ip is empty exit connection attempt TODO sow popup or something to user
-                if (IPaddress == "")
-                {
-                    Debug.LogError("IP is empty ...");
+                //NetworkManager.Instance.Authenticator().SendAuthenticationRequest("Yololo");
+                //Thread.Sleep(500);
+                //// bool authenticated = AuthenticateStep("ok", "IM_VALID_USER_LOVE_ME");
+                //bool authenticated = NetworkManager.Instance.Authenticator().IsAuthenticated();
 
-                    return;
-                }
+                //if(authenticated)
+                //{
+                //    //add action dispatcher for main thread
+                //    MainThreadDispatcher.EnqueueAction(OnConnected);
+                //}
+                //else
+                //{
+                //    Debug.Log("Failed on authentication");
+                //}
 
-                Debug.Log("Creating connetion ...");
-                connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                connectionTCP.ReceiveTimeout = 1000;
-                connectionTCP.SendTimeout = 1000;
-                //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
-                //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-                if (serverIP == null)
-                {
-                    Debug.LogError("server Ip is null ...");
-                    return;
-                }
-                endPoint = new IPEndPoint(serverIP, serverPort);
-
-                connectionTCP.Connect(endPoint);
-
-                if (!connectionTCP.Connected)
-                {
-                    Debug.LogError("Socket connection failed.");
-                    return;
-                }
-
-                Debug.Log("Client:  Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
-
-                bool authenticated = AuthenticateStep("ok", "IM_VALID_USER_LOVE_ME");
-
-                if(authenticated)
-                {
-                    authenticated = AuthenticateStep("ok", "User name");
-
-                    if(authenticated)
-                    {
-                        //add action dispatcher for main thread
-                        MainThreadDispatcher.EnqueueAction(OnConnected);
-                    }
-                    else
-                    {
-                        Debug.LogError("Failed on authentication step 2");
-                    }
-                }else
-                {
-                    Debug.LogError("Failed on authentication step 1");
-                }
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
             }
         }
-        bool AuthenticateStep(string expectedResponse, string messageToSend)
-        {
-            byte[] buffer = new byte[1024];
-            int bufferSize;
+        public ClientAuthenticator GetAuthenticator() { return authenticator; }
 
-            bufferSize = connectionTCP.Receive(buffer);
-            string receivedMsg = Encoding.ASCII.GetString(buffer, 0, bufferSize);
-            Debug.Log("Client: " + receivedMsg);
-
-            if (receivedMsg == expectedResponse)
-            {
-                Debug.Log($"Client: Sending authentication token - {messageToSend}");
-                connectionTCP.Send(Encoding.ASCII.GetBytes(messageToSend));
-                return true;
-            }
-            else
-            {
-                Debug.LogError($"Authentication failed. Expected: {expectedResponse}, Received: {receivedMsg}");
-                return false;
-            }
-        }
     }
 }
