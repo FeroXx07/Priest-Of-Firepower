@@ -14,6 +14,11 @@ public class Lobby : NetworkBehaviour
     
     }
 
+    protected override void InitNetworkVariablesList()
+    {
+        throw new System.NotImplementedException();
+    }
+
     protected override MemoryStream Write(MemoryStream outputMemoryStream)
     {
         throw new System.NotImplementedException();
