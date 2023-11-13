@@ -73,14 +73,8 @@ public class NetworkManager : GenericSingleton<NetworkManager>
     // Invoken when server recives data from clients
     public Action<byte[]> OnRecivedClientData;
 
-
-
     Dictionary<Int64, NetworkObject> networkObjectMap;
 
-
-
-    
-    
     private void Start()
     {
 
@@ -103,6 +97,12 @@ public class NetworkManager : GenericSingleton<NetworkManager>
         // You then wait for the thread to finish using thread.Join().
         receiveData.thread.Join();
         sendData.thread.Join();
+
+        if (receiveData.thread.IsAlive)
+            receiveData.thread.Abort();
+
+        if (sendData.thread.IsAlive)
+            sendData.thread.Abort();
     }
 
     #region Connection Initializers
@@ -327,6 +327,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
             {
                 if (incomingStreamBuffer.Count > 0)
                 {
+                    Debug.Log("helo");
                     lock (incomingStreamLock)
                     {
                         while (incomingStreamBuffer.Count > 0)
@@ -485,7 +486,7 @@ public class NetworkManager : GenericSingleton<NetworkManager>
             IPAddress address = IPAddress.Parse(ip);
             if (address == null)
             {
-                Debug.LogError(ip + " address is not valid ...");
+                Debug.Log(ip + " address is not valid ...");
                 return null;
             }
             return new IPEndPoint(address, port);

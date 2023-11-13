@@ -2,14 +2,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Sockets;
 using UnityEngine;
 
 public class ServerAuthenticator : MonoBehaviour
 {
     private string authenticationCode = "IM_VALID_USER_LOVE_ME";
     Action<string> onAuthenticated;
+
+    
     public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
     {
+
+        Debug.Log("authentication data");
         // Receive username and code from the client
         string username = reader.ReadString();
         string clientCode = reader.ReadString();
@@ -43,5 +48,10 @@ public class ServerAuthenticator : MonoBehaviour
 
 
         NetworkManager.Instance.AddReliableStreamQueue(responseStream);
+    }
+
+    public void RegisterSocket(Socket socket)
+    {
+
     }
 }

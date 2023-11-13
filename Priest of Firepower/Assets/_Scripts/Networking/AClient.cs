@@ -71,7 +71,7 @@ namespace ClientA
             //In this case the operating system (TCP/IP stack) assigns a free port number for you.
             if (serverIP == null)
             {
-                Debug.LogError("server Ip is null ...");
+                Debug.Log("server Ip is null ...");
                 return;
             }
             endPoint = new IPEndPoint(serverIP, serverPort);
@@ -80,7 +80,7 @@ namespace ClientA
 
             if (!connectionTCP.Connected)
             {
-                Debug.LogError("Socket connection failed.");
+                Debug.Log("Socket connection failed.");
                 return;
             }
 
@@ -126,18 +126,18 @@ namespace ClientA
                         se.SocketErrorCode == SocketError.ConnectionAborted)
                     {
                         // Handle client disconnection (optional)
-                        Debug.LogError(se);
+                        Debug.Log(se);
                     }
                     else
                     {
                         // Handle other socket exceptions
-                        Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                        Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
                     }
                 }
                 catch (Exception e)
                 {
                     // Handle other exceptions
-                    Debug.LogError($"Exception: {e.Message}");
+                    Debug.Log($"Exception: {e.Message}");
                 }
 
                 Thread.Sleep(100);
@@ -183,19 +183,19 @@ namespace ClientA
             catch (ArgumentNullException ane)
             {
 
-                Debug.LogError("ArgumentNullException : " + ane.ToString());
+                Debug.Log("ArgumentNullException : " + ane.ToString());
             }
             catch (SocketException se)
             {
 
-                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
-                Debug.LogError("SocketException: " + se.Message); // Log the error message
+                Debug.Log("SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.Log("SocketException: " + se.Message); // Log the error message
 
             }
 
             catch (Exception e)
             {
-                Debug.LogError("Unexpected exception : " + e.ToString());
+                Debug.Log("Unexpected exception : " + e.ToString());
             }
         }
         public void SendPacket(byte[]data)
@@ -209,19 +209,19 @@ namespace ClientA
             catch (ArgumentNullException ane)
             {
 
-                Debug.LogError("ArgumentNullException : " + ane.ToString());
+                Debug.Log("ArgumentNullException : " + ane.ToString());
             }
             catch (SocketException se)
             {
 
-                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
-                Debug.LogError("SocketException: " + se.Message); // Log the error message
+                Debug.Log("SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.Log("SocketException: " + se.Message); // Log the error message
 
             }
 
             catch (Exception e)
             {
-                Debug.LogError("Unexpected exception : " + e.ToString());
+                Debug.Log("Unexpected exception : " + e.ToString());
             }
         }
         #region Helper functions
@@ -231,12 +231,10 @@ namespace ClientA
         {
             try
             {
-                //NetworkManager.Instance.Authenticator().SendAuthenticationRequest("Yololo");
-                //Thread.Sleep(500);
-                //// bool authenticated = AuthenticateStep("ok", "IM_VALID_USER_LOVE_ME");
-                //bool authenticated = NetworkManager.Instance.Authenticator().IsAuthenticated();
+                authenticator.SendAuthenticationRequest("Yololo");
 
-                //if(authenticated)
+
+                //if (authenticated)
                 //{
                 //    //add action dispatcher for main thread
                 //    MainThreadDispatcher.EnqueueAction(OnConnected);

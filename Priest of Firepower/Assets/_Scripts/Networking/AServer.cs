@@ -42,7 +42,7 @@ namespace ServerA
 
         ClientManager clientManager;
 
-        private List<Thread> clientThreads = new List<Thread>();
+        private List<ClientProcess> clientThreads = new List<ClientProcess>();
         private List<ClientData> clientList = new List<ClientData>();
         private List<ClientData> clientListToRemove = new List<ClientData>();
         //private ConcurrentBag<ClientData> clientList = new ConcurrentBag<ClientData>();
@@ -59,6 +59,11 @@ namespace ServerA
 
         ServerAuthenticator authenticator = new ServerAuthenticator();
 
+        struct ClientProcess
+        {
+            public Thread thread;
+            public CancellationTokenSource token;
+        }
 
         private bool IsServerInitialized  = false;
         #endregion
@@ -73,7 +78,6 @@ namespace ServerA
             public Socket connectionTCP;
             public Socket connectionUDP;
             public CancellationTokenSource authenticationToken; //if disconnection request invoke cancellation token to shutdown all related processes
-            public Thread gameThread;
             public bool IsHost = false;
         }
         struct ClientMetadata
@@ -127,8 +131,6 @@ namespace ServerA
                 {
                     authenticationThread.Join();
                 }
-
-
                 //make sure it is not alive
                 if (authenticationThread.IsAlive)
                 {
@@ -145,16 +147,18 @@ namespace ServerA
         }
         void StopAllClientThreads()
         {
+
             Debug.Log("Server: Waiting for all threads to terminate.");
-            foreach (Thread t in clientThreads)
+            foreach (ClientProcess p in clientThreads)
             {
-                if (t.IsAlive)
-                    t.Join();
+                p.token.Cancel();
+                if (p.thread.IsAlive)
+                    p.thread.Join();
             }
-            foreach (Thread t in clientThreads)
+            foreach (ClientProcess p in clientThreads)
             {
-                if (t.IsAlive)
-                    t.Abort();
+                if (p.thread.IsAlive)
+                    p.thread.Abort();
             }
         }
         void RemoveDisconectedClient()
@@ -271,19 +275,19 @@ namespace ServerA
                     se.SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     // Handle client disconnection (optional)
-                    Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
+                    Debug.Log($"Client {clientData.ID} disconnected: {se.Message}");
                     RemoveClient(clientData);
                 }
                 else
                 {
                     // Handle other socket exceptions
-                    Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                    Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
                 }
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.LogError($"Exception: {e.Message}");
+                Debug.Log($"Exception: {e.Message}");
             }
         }
         void ReceiveSocketData(Socket socket)
@@ -294,9 +298,10 @@ namespace ServerA
                 {
                     byte[] buffer = new byte[1500];
 
+                    Debug.Log("Server: waiting for authentication ... ");
                     // Receive data from the client
                     socket.Receive(buffer);
-
+                    Debug.Log("Server: recieved data ... ");
                     MemoryStream stream = new MemoryStream(buffer);
 
                     NetworkManager.Instance.AddIncomingDataQueue(stream);
@@ -349,13 +354,20 @@ namespace ServerA
                 //Create the handeler of the chat for that client
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
-                Thread t = new Thread(() => HandleClient(clientData));
 
-                t.IsBackground = true;
-                t.Name = clientData.ID.ToString();
-                t.Start();
+                ClientProcess process = new ClientProcess();
 
-                clientThreads.Add(t);
+                process.token = new CancellationTokenSource();
+
+                process.thread = new Thread(() => HandleClient(clientData));
+
+                process.thread.IsBackground = true;
+                process.thread.Name = clientData.ID.ToString();
+                process.thread.Start();
+
+
+
+                clientThreads.Add(process);
 
                 return clientData.ID;
             }
@@ -392,8 +404,9 @@ namespace ServerA
                 {
                     Debug.Log("Server: Waiting connection ... ");
                     Socket clientSocket = serverTCP.Accept();
-
-                    ReceiveSocketData(clientSocket);                
+                    Debug.Log("Server: new socket accepted ...  ");
+                    if (clientSocket.Available > 0)
+                        ReceiveSocketData(clientSocket);                
 
                     Thread.Sleep(100);
                 }
