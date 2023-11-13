@@ -154,13 +154,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tickRate: 10
-  b: 1
-  ui: 2
-  i: -2
-  f: 3.3
-  d: 4.4444
-  s: hello_world
-  ul: 100000000000
+  myNetVariableInt:
+    _value: 10022
+    _isDirty: 1
+    _isLastValueFromNetwork: 0
+  myNetVariableStr:
+    _value: My Name is Ali
+    _isDirty: 1
+    _isLastValueFromNetwork: 0
+  myNetFloat:
+    _value: 413.4
+    _isDirty: 1
+    _isLastValueFromNetwork: 0
+  myNetDouble:
+    _value: 153.8
+    _isDirty: 1
+    _isLastValueFromNetwork: 0
+  testVar:
+    a: 30
 --- !u!4 &1347721982
 Transform:
   m_ObjectHideFlags: 0
