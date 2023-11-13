@@ -12,7 +12,6 @@ namespace _Scripts.UI.WeaponTracker
         [SerializeField] Image weaponSprite;
         [SerializeField] float spriteSize;
         [SerializeField] Image magazineSprite;
-        [SerializeField] TextMeshProUGUI magazineCount;
         [SerializeField] TextMeshProUGUI totalAmmo;
 
         private void Awake()
@@ -45,23 +44,13 @@ namespace _Scripts.UI.WeaponTracker
             //draw remaining bullets in current magazine
             if (weaponData.maxAmmoCapacity != 0)
             {
+                Debug.Log("ammo in magazine: " + weaponData.ammoInMagazine);
+                Debug.Log("magazine size: " + weaponData.magazineSize);
                 float fill = weaponData.ammoInMagazine / (float)weaponData.magazineSize;
                 magazineSprite.fillAmount = fill;
 
             }
-
-            //write remaining magazines
-            if (weaponData.maxAmmoCapacity != 0)
-            {
-                int totalAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
-
-                float magazinesLeft = totalAmmo / (float)weaponData.magazineSize;
-
-                if (totalAmmo == weaponData.maxAmmoCapacity + weaponData.magazineSize) magazinesLeft -= 1;
-
-                magazineCount.text = "x" + Mathf.FloorToInt(magazinesLeft).ToString();
-            }
-
+            
 
 
             //show total ammo remaining

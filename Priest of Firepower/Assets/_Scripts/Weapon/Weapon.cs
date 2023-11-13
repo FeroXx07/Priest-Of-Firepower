@@ -72,7 +72,7 @@ namespace _Scripts.Weapon
         {
             if (localData.reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize || !gameObject.activeSelf) return;
 
-            StartCoroutine(Realoading());
+                StartCoroutine(Realoading());
         }
         IEnumerator Realoading()
         { 
@@ -82,10 +82,15 @@ namespace _Scripts.Weapon
 
             if(localData.totalAmmo > 0)
             {
-                int bulletsToReload = (localData.magazineSize - localData.ammoInMagazine);
+                //int bulletsToReload = (localData.magazineSize - localData.ammoInMagazine);
 
-                localData.totalAmmo -= bulletsToReload;
+                //localData.totalAmmo -= bulletsToReload;
+
+            if (localData.totalAmmo > localData.magazineSize)
                 localData.ammoInMagazine = localData.magazineSize;
+            else
+                localData.ammoInMagazine = localData.totalAmmo;
+
                 localData.reloading = false;
             }
 
@@ -128,6 +133,7 @@ namespace _Scripts.Weapon
                     bullet.GetComponent<Rigidbody2D>().velocity = transform.right * localData.bulletSpeed;
 
                     localData.ammoInMagazine--;
+                    localData.totalAmmo--;
                     _timeSinceLastShoot = 0;
                     OnGunShoot();
                 }

@@ -37,7 +37,7 @@ namespace _Scripts.Enemies
                     SpawnEnemy(p.position);
                     _numberOfEnemiesToSpwan--;
                     _spawnTimer = _spawnRate;
-                    Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
+                    //Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
                 }
             }
         }

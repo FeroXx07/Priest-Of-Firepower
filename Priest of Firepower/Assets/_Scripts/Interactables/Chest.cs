@@ -13,6 +13,7 @@ namespace _Scripts.Interactables
         [SerializeField] float time;
         [SerializeField] int price;
         [SerializeField] InteractionPromptUI interactionPromptUI;
+        [SerializeField] UIInteractionProgress interactionProgress;
         [SerializeField] AudioClip audioClip;
         [SerializeField] VisualEffect vfx;
         [SerializeField] List<Sprite> sprites;
@@ -99,6 +100,7 @@ namespace _Scripts.Interactables
                 EnablePromptUI(true);   
                 _timer = InteractionTime;
             }
+                interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
         }
         private void OpenChest()
         {
