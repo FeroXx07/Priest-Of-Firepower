@@ -23,12 +23,12 @@ namespace _Scripts.Enemies
         float _spawnTimer;
 
         public Action<int> OnEnemyCountUpdate;
+        public Action<Enemy> OnEnemySpawn;
 
         public void SpawnEnemies(int round)
         {
             _numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
             Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
-            OnEnemyCountUpdate?.Invoke(_numberOfEnemiesToSpwan);
         }
 
         private void Update()
@@ -43,6 +43,8 @@ namespace _Scripts.Enemies
                     _numberOfEnemiesToSpwan--;
                     _spawnTimer = _spawnRate;
                     //Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
+                    OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
+
                 }
             }
         }
@@ -56,7 +58,10 @@ namespace _Scripts.Enemies
 
             if (polledObj.TryGetComponent(out Enemy enemy))
                 AddEnemyToList(enemy);
-        
+
+
+            OnEnemySpawn?.Invoke(enemy);
+
             return polledObj;
         }
 

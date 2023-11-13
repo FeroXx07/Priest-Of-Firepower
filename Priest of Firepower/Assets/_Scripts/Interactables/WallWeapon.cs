@@ -1,5 +1,6 @@
 using _Scripts.Interfaces;
 using _Scripts.Weapon;
+using _Scripts.UI.Interactables;
 using UnityEngine;
 
 namespace _Scripts.Interactables
@@ -11,6 +12,7 @@ namespace _Scripts.Interactables
         [SerializeField] GameObject weapon;
         [SerializeField] int price;
         [SerializeField] InteractionPromptUI interactionPromptUI;
+        [SerializeField] UIInteractionProgress interactionProgress;
         private SpriteRenderer _wallWeaponImg;
         float _timer;
         public string Prompt => message;
@@ -60,7 +62,7 @@ namespace _Scripts.Interactables
                 EnablePromptUI(true);
                 _timer = timeToInteract;
             }
- 
+                interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
         }
 
         public void EnablePromptUI(bool show)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using _Scripts.Interfaces;
+using _Scripts.UI.Interactables;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -12,6 +13,7 @@ namespace _Scripts.Interactables
         [SerializeField] float time;
         [SerializeField] int price;
         [SerializeField] InteractionPromptUI interactionPromptUI;
+        [SerializeField] UIInteractionProgress interactionProgress;
         [SerializeField] AudioClip audioClip;
 
         [SerializeField] List<Door> prerequisiteDoors;
@@ -67,6 +69,7 @@ namespace _Scripts.Interactables
                 EnablePromptUI(true);
                 _timer = time;          
             }
+                interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
         }
         private bool CanInteract()
         {
