@@ -9,14 +9,14 @@ namespace _Scripts.Power_Ups
         [SerializeField] private float powerUpTime = 10.0f;
         [SerializeField] private float timerCount = 0.0f;
         [SerializeField] bool isActive = false;
-        List<PointSystem> pointsProviders = new List<PointSystem>();
+        List<PointSystem> _pointsProviders = new List<PointSystem>();
         public override void ApplyPowerUp()
         {
             base.ApplyPowerUp();
 
             // TODO: Give 2x points to all active players
-            pointsProviders = FindObjectsOfType<PointSystem>(true).ToList();
-            pointsProviders.ForEach(p => p.multiplyer = 2);
+            _pointsProviders = FindObjectsOfType<PointSystem>(true).ToList();
+            _pointsProviders.ForEach(p => p.multiplyer = 2);
 
             for (int i = 0; i < transform.childCount; i++)
             {
@@ -35,8 +35,8 @@ namespace _Scripts.Power_Ups
                 {
                     isActive = false;
                     timerCount = 0.0f;
-                    pointsProviders.ForEach(p => p.multiplyer = 1);
-                    pointsProviders.Clear();
+                    _pointsProviders.ForEach(p => p.multiplyer = 1);
+                    _pointsProviders.Clear();
                 }
             }
         }

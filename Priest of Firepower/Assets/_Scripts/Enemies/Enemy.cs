@@ -18,23 +18,23 @@ namespace _Scripts.Enemies
         [SerializeField] private int pointsOnHit = 10;
         [SerializeField] private int pointsOnDeath = 100;
 
-        protected Transform target;
-        protected NavMeshAgent agent;
-        protected HealthSystem healthSystem;
-        protected new Collider2D collider;
+        protected Transform Target;
+        protected NavMeshAgent Agent;
+        protected HealthSystem HealthSystem;
+        protected new Collider2D Collider;
 
         [SerializeField] protected GameObject attackPrefab;
 
-        protected float timeRemaining = 1.2f;
+        protected float TimeRemaining = 1.2f;
 
-        protected float cooldownDuration = 1.5f;
-        protected float attackOffset = 1.0f;
-        protected float cooldownTimer = 1f;
+        protected float CooldownDuration = 1.5f;
+        protected float AttackOffset = 1.0f;
+        protected float CooldownTimer = 1f;
 
-        protected GameObject[] playerList;
-        protected GameObject internalAttackObject;
+        protected GameObject[] PlayerList;
+        protected GameObject InternalAttackObject;
 
-        protected EnemyState enemyState;
+        protected EnemyState EnemyState;
 
         public UnityEvent<Enemy> onDeath = new UnityEvent<Enemy>();
         public int PointsOnHit { get => pointsOnHit; }
@@ -42,45 +42,45 @@ namespace _Scripts.Enemies
 
         private void Awake()
         {
-            healthSystem = GetComponent<HealthSystem>();
-            agent = GetComponent<NavMeshAgent>();
-            collider = gameObject.GetComponent<Collider2D>();
+            HealthSystem = GetComponent<HealthSystem>();
+            Agent = GetComponent<NavMeshAgent>();
+            Collider = gameObject.GetComponent<Collider2D>();
 
-            agent.updateRotation = false;
-            agent.updateUpAxis = false;
+            Agent.updateRotation = false;
+            Agent.updateUpAxis = false;
         }
         void Start()
         {
-            playerList = GameObject.FindGameObjectsWithTag("Player");
+            PlayerList = GameObject.FindGameObjectsWithTag("Player");
             float smallerDistance = Mathf.Infinity;
 
-            foreach (var player in playerList)
+            foreach (var player in PlayerList)
             {
                 float actualDistance = Vector2.Distance(player.transform.position, this.transform.position);
 
                 if (actualDistance < smallerDistance)
                 { 
                     smallerDistance = actualDistance;
-                    target = player.transform;
+                    Target = player.transform;
                 }
             }        
         }
 
         private void OnEnable()
         {
-            healthSystem.onDamageableDestroyed += HandleDeath;
-            enemyState = EnemyState.SPAWN;
-            collider.enabled = true;
+            HealthSystem.OnDamageableDestroyed += HandleDeath;
+            EnemyState = EnemyState.SPAWN;
+            Collider.enabled = true;
         }
 
         private void OnDisable()
         {
-            healthSystem.onDamageableDestroyed -= HandleDeath;
+            HealthSystem.OnDamageableDestroyed -= HandleDeath;
         }
 
         protected virtual void HandleDeath(GameObject destroyed, GameObject destroyer)
         {
-            enemyState = EnemyState.DIE;
+            EnemyState = EnemyState.DIE;
             onDeath?.Invoke(this);
         }
 

@@ -5,29 +5,29 @@ namespace _Scripts.Player
     public class PlayerMovement : MonoBehaviour
     {
         [SerializeField] float speed;
-        Vector2 direction;
-        Rigidbody2D rb;
+        Vector2 _direction;
+        Rigidbody2D _rb;
 
         void Start()
         {
-            rb = GetComponent<Rigidbody2D>();
+            _rb = GetComponent<Rigidbody2D>();
         }
 
         void Update()
         {
 
-            direction = Vector2.zero;
-            if (Input.GetKey(KeyCode.A)) direction += Vector2.left; 
-            if (Input.GetKey(KeyCode.D)) direction += Vector2.right;
-            if (Input.GetKey(KeyCode.W)) direction += Vector2.up;
-            if (Input.GetKey(KeyCode.S)) direction += Vector2.down;
-            direction.Normalize();
+            _direction = Vector2.zero;
+            if (Input.GetKey(KeyCode.A)) _direction += Vector2.left; 
+            if (Input.GetKey(KeyCode.D)) _direction += Vector2.right;
+            if (Input.GetKey(KeyCode.W)) _direction += Vector2.up;
+            if (Input.GetKey(KeyCode.S)) _direction += Vector2.down;
+            _direction.Normalize();
 
         }
 
         private void FixedUpdate()
         {
-            rb.velocity = direction * speed;    
+            _rb.velocity = _direction * speed;    
         }
 
     }

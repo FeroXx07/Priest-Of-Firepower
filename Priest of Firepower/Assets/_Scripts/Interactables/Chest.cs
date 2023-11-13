@@ -18,16 +18,16 @@ namespace _Scripts.Interactables
         [SerializeField] List<Sprite> sprites;
         [SerializeField] List<GameObject> weapons;
         [SerializeField] GameObject obtainedWeapon;
-        GameObject weapon;
-        float timer;
+        GameObject _weapon;
+        float _timer;
         public string Prompt => message;
         public float InteractionTime => time;
         public int InteractionCost => price;
 
-        bool randomizingWeapon;
-        bool openChest;
-        bool weaponReady;
-        float weaponRuletteStartTime = 0f;
+        bool _randomizingWeapon;
+        bool _openChest;
+        bool _weaponReady;
+        float _weaponRuletteStartTime = 0f;
         private void OnEnable()
         {
             interactionPromptUI.SetText(message);
@@ -35,13 +35,13 @@ namespace _Scripts.Interactables
             EnablePromptUI(false);
             vfx.Stop();
             obtainedWeapon.SetActive(false);
-            weaponReady = false;
+            _weaponReady = false;
         }
 
         private void Update()
         {
             // Check if the weaponReady has been active for more than 9 seconds and close the chest.
-            if (weaponReady && Time.time - weaponRuletteStartTime >= 9)
+            if (_weaponReady && Time.time - _weaponRuletteStartTime >= 9)
             {
                 CloseChest();
             }
@@ -55,17 +55,17 @@ namespace _Scripts.Interactables
         public void Interact(Interactor interactor, bool keyPressed)
         {
 
-            if (randomizingWeapon) return;
+            if (_randomizingWeapon) return;
 
             if(keyPressed)
             {
                 //decrease timer to interact
-                timer -= Time.deltaTime;
-                if (timer <= 0)
+                _timer -= Time.deltaTime;
+                if (_timer <= 0)
                 {
                 
                     //open chest
-                    if (!openChest)
+                    if (!_openChest)
                     {
                         if(interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
                         {
@@ -82,7 +82,7 @@ namespace _Scripts.Interactables
                     {
                         if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                         {
-                            switcher.ChangeWeapon(weapon);
+                            switcher.ChangeWeapon(_weapon);
                             CloseChest();
                         }
                         else
@@ -91,13 +91,13 @@ namespace _Scripts.Interactables
                         }
                     }
 
-                    timer = InteractionTime;
+                    _timer = InteractionTime;
                 }
             }
             else
             {
                 EnablePromptUI(true);   
-                timer = InteractionTime;
+                _timer = InteractionTime;
             }
         }
         private void OpenChest()
@@ -108,7 +108,7 @@ namespace _Scripts.Interactables
             }
             StartCoroutine(WeaponRulette());
             EnablePromptUI(false);
-            openChest = true;
+            _openChest = true;
         }
 
         private void CloseChest()
@@ -120,41 +120,41 @@ namespace _Scripts.Interactables
             StopCoroutine(WeaponRulette());
             EnablePromptUI(false);
             interactionPromptUI.SetText(message);
-            randomizingWeapon = false;
-            openChest = false;
-            weaponReady = false;
-            weapon = null;
+            _randomizingWeapon = false;
+            _openChest = false;
+            _weaponReady = false;
+            _weapon = null;
             obtainedWeapon.SetActive(false);
 
-            timer = InteractionTime * 2;
+            _timer = InteractionTime * 2;
         }
 
         private IEnumerator WeaponRulette()
         {
             vfx.Play();
 
-            randomizingWeapon= true;
+            _randomizingWeapon= true;
 
-            weapon = GetRandomWeapon();
+            _weapon = GetRandomWeapon();
 
             if (obtainedWeapon.TryGetComponent<SpriteRenderer>(out var weaponSpriteRenderer))
             {
-                weaponSpriteRenderer.sprite = weapon.GetComponent<Weapon.Weapon>().weaponData.sprite;
+                weaponSpriteRenderer.sprite = _weapon.GetComponent<Weapon.Weapon>().weaponData.sprite;
             }
 
             yield return new WaitForSecondsRealtime(5);
 
             vfx.Stop();
 
-            randomizingWeapon = false;
+            _randomizingWeapon = false;
 
             obtainedWeapon.SetActive(true);
 
             interactionPromptUI.SetText("F to Pickup");
 
-            weaponReady = true;
+            _weaponReady = true;
 
-            weaponRuletteStartTime = Time.time;
+            _weaponRuletteStartTime = Time.time;
         }
 
         private GameObject GetRandomWeapon()

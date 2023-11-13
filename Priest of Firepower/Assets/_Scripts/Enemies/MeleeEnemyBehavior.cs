@@ -6,117 +6,117 @@ namespace _Scripts.Enemies
     public class MeleeEnemyBehavior : Enemy
     {
         public float attackDuration = 0.5f;
-        private bool isAttacking = false;
-        private float attackTimer = 0.1f;
+        private bool _isAttacking = false;
+        private float _attackTimer = 0.1f;
 
         // Update is called once per frame
         void Update()
         {
-            switch (enemyState)
+            switch (EnemyState)
             {
                 case EnemyState.SPAWN:
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     // Spawn sound, particle and animation
-                    enemyState = EnemyState.CHASE;
+                    EnemyState = EnemyState.CHASE;
                     break;
 
                 case EnemyState.CHASE:
                     //Debug.Log("Enemy chase");
-                    agent.isStopped = false;
+                    Agent.isStopped = false;
                     // animation, particles and sound
-                    agent.SetDestination(target.position);
+                    Agent.SetDestination(Target.position);
 
-                    if(Vector3.Distance(target.position, this.transform.position) <= 2)
+                    if(Vector3.Distance(Target.position, this.transform.position) <= 2)
                     {
-                        enemyState = EnemyState.ATTACK;
+                        EnemyState = EnemyState.ATTACK;
                     }
 
                     break;
 
                 case EnemyState.ATTACK:
                     //Debug.Log("Enemy attacks");
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
 
-                    if (!isAttacking && cooldownTimer <= 0f)
+                    if (!_isAttacking && CooldownTimer <= 0f)
                     {
                         StartMeleeAttack();
                     }
 
-                    if (isAttacking)
+                    if (_isAttacking)
                     {
-                        attackTimer -= Time.deltaTime;
-                        if (attackTimer <= 0f)
+                        _attackTimer -= Time.deltaTime;
+                        if (_attackTimer <= 0f)
                         {
                             EndMeleeAttack();
                         }
                     }
-                    else if (cooldownTimer > 0f)
+                    else if (CooldownTimer > 0f)
                     {
-                        cooldownTimer -= Time.deltaTime;
+                        CooldownTimer -= Time.deltaTime;
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(target.position, this.transform.position) > 2)
+                    if (Vector3.Distance(Target.position, this.transform.position) > 2)
                     {
-                        enemyState = EnemyState.CHASE;                    
+                        EnemyState = EnemyState.CHASE;                    
                     }
 
                     break;
 
                 case EnemyState.DIE:
                 
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    collider.enabled = false;
+                    Collider.enabled = false;
                 
-                    timeRemaining -= Time.deltaTime;
-                    if (timeRemaining <= 0)
+                    TimeRemaining -= Time.deltaTime;
+                    if (TimeRemaining <= 0)
                     {
                         DisposeGameObject();
                     }
                     break;
 
                 default:
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     break;
             }
         }
 
         private void StartMeleeAttack()
         {
-            isAttacking = true;
+            _isAttacking = true;
             Vector3 closerPlayerPosition = new Vector3(0,0,0);
             float distance = Mathf.Infinity;
 
-            for(int i = 0; i < playerList.Length; i++)
+            for(int i = 0; i < PlayerList.Length; i++)
             {
-                if(Vector3.Distance(playerList[i].transform.position, gameObject.transform.position) < distance)
+                if(Vector3.Distance(PlayerList[i].transform.position, gameObject.transform.position) < distance)
                 {
-                    closerPlayerPosition = playerList[i].transform.position;
-                    distance = Vector3.Distance(playerList[i].transform.position, gameObject.transform.position);
+                    closerPlayerPosition = PlayerList[i].transform.position;
+                    distance = Vector3.Distance(PlayerList[i].transform.position, gameObject.transform.position);
                 }
             }
 
             Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
 
-            internalAttackObject = Instantiate(attackPrefab);
-            internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
+            InternalAttackObject = Instantiate(attackPrefab);
+            InternalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * AttackOffset;
 
-            attackTimer = attackDuration;
+            _attackTimer = attackDuration;
         }
 
         private void EndMeleeAttack()
         {
-            isAttacking = false;
+            _isAttacking = false;
 
             //
 
-            if(internalAttackObject != null) // TODO Add to pool
+            if(InternalAttackObject != null) // TODO Add to pool
             {
-                Destroy(internalAttackObject);
+                Destroy(InternalAttackObject);
             }
 
-            cooldownTimer = cooldownDuration;
+            CooldownTimer = CooldownDuration;
         }
 
         private void DisposeGameObject()

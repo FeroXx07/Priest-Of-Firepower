@@ -16,14 +16,14 @@ namespace _Scripts.Interactables
 
         [SerializeField] List<Door> prerequisiteDoors;
         [SerializeField] List<GameObject> objectsToEnable;
-        float timer;
+        float _timer;
         public string Prompt => message;
 
         public float InteractionTime => time;
 
         public int InteractionCost => price;
 
-        bool Open  = false;
+        bool _open  = false;
         private void OnEnable()
         {
             interactionPromptUI.SetText(message);
@@ -42,16 +42,16 @@ namespace _Scripts.Interactables
 
             if (keyPressed)
             {
-                timer -= Time.deltaTime;
-                if (timer <= 0)
+                _timer -= Time.deltaTime;
+                if (_timer <= 0)
                 { 
                     if (interactor.gameObject.TryGetComponent<PointSystem>(out PointSystem pointSystem))
                     {
                         if (pointSystem.GetPoints() >= InteractionCost)
                         {
-                            Open = true;
+                            _open = true;
                             Debug.Log(Prompt);
-                            timer = InteractionTime;
+                            _timer = InteractionTime;
                             pointSystem.RemovePoints(price);
 
                             EnablePromptUI(false);
@@ -65,7 +65,7 @@ namespace _Scripts.Interactables
             }
             else{
                 EnablePromptUI(true);
-                timer = time;          
+                _timer = time;          
             }
         }
         private bool CanInteract()
@@ -108,6 +108,6 @@ namespace _Scripts.Interactables
             }
         }
 
-        bool IsOpen() { return Open; }
+        bool IsOpen() { return _open; }
     }
 }

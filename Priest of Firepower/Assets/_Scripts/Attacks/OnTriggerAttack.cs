@@ -7,17 +7,17 @@ namespace _Scripts.Attacks
     {
         [SerializeField] protected bool destroyOnContactWithLayer = true;
         [SerializeField] protected float destructionTime = 1.0f;
-        private float timer;
+        private float _timer;
 
         private void OnEnable()
         {
-            timer = destructionTime;
+            _timer = destructionTime;
         }
         private void Update()
         {
-            timer -= Time.deltaTime;
+            _timer -= Time.deltaTime;
 
-            if (timer < 0.0f)
+            if (_timer < 0.0f)
                 DisposeGameObject();
         }
         protected virtual void CollisionHandeler(GameObject collision)
@@ -26,7 +26,7 @@ namespace _Scripts.Attacks
             {
                 if (IsSelected(collision.layer))
                 {
-                    dmg.TakeDamage(this, Vector2.zero, owner);
+                    dmg.TakeDamage(this, Vector2.zero, Owner);
                     RaiseEventOnDealth(collision);
                 }
             }

@@ -6,25 +6,25 @@ namespace _Scripts
 {
     public class RoundSystem : MonoBehaviour
     {
-        private int currentRound = 0;
+        private int _currentRound = 0;
         public float timeBetweenRounds = 5f;
-        private float timer;
-        private bool isCountDown =false;
+        private float _timer;
+        private bool _isCountDown =false;
 
 
         public Action<int> OnRoundBegin;
         public Action OnRoundEnd;
 
-        public int GetCurrentRound() { return currentRound; }
+        public int GetCurrentRound() { return _currentRound; }
         public void StartRound()
         {
-            currentRound++;
-            OnRoundBegin?.Invoke(currentRound);
+            _currentRound++;
+            OnRoundBegin?.Invoke(_currentRound);
             Debug.Log("Round Started");
         }
         public void RoundFinished(EnemyManager enemyManager)
         {
-            if (enemyManager.GetEnemiesCountLeft() <= 0 && enemyManager.GetEnemiesAlive() <= 0 && !isCountDown)
+            if (enemyManager.GetEnemiesCountLeft() <= 0 && enemyManager.GetEnemiesAlive() <= 0 && !_isCountDown)
             {
                 Debug.Log("Round finished");
                 OnRoundEnd?.Invoke();
@@ -33,22 +33,22 @@ namespace _Scripts
         }
         private void Update()
         {
-            if (isCountDown)
+            if (_isCountDown)
             {
-                timer -= Time.deltaTime;
+                _timer -= Time.deltaTime;
 
-                if (timer <= 0)
+                if (_timer <= 0)
                 {
                     StartRound();
-                    isCountDown = false;
+                    _isCountDown = false;
                 }
             }
         }
 
         private void StartCountDown()
         {
-            isCountDown = true;
-            timer = timeBetweenRounds;
+            _isCountDown = true;
+            _timer = timeBetweenRounds;
             Debug.Log("Count down Started");
         }
     }

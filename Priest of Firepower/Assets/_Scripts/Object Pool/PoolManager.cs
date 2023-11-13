@@ -6,7 +6,7 @@ namespace _Scripts.Object_Pool
     public class PoolManager : GenericSingleton<PoolManager>
     {
         // The pool holders
-        private Dictionary<int, ObjectPool<PoolObject>> pools = new Dictionary<int, ObjectPool<PoolObject>>();
+        private Dictionary<int, ObjectPool<PoolObject>> _pools = new Dictionary<int, ObjectPool<PoolObject>>();
 
         // Optional pool list to init from awake
         [SerializeField] int defaultSize = 5;
@@ -29,7 +29,7 @@ namespace _Scripts.Object_Pool
         {
             int hash = prefab.GetHashCode();
 
-            if (pools.TryGetValue(hash, out var pool))
+            if (_pools.TryGetValue(hash, out var pool))
                 return pool;
 
             ObjectPool<PoolObject> newPool;
@@ -57,7 +57,7 @@ namespace _Scripts.Object_Pool
         {
             int hash = prefab.GetHashCode();
 
-            if (pools.TryGetValue(hash, out var pool))
+            if (_pools.TryGetValue(hash, out var pool))
                 return pool.PullGameObject(position, quaternion);
 
             if (size >= 0)
@@ -73,11 +73,11 @@ namespace _Scripts.Object_Pool
         {
             int hash = prefab.GetHashCode();
 
-            if (pools.ContainsKey(hash))
-                return pools[hash];
+            if (_pools.ContainsKey(hash))
+                return _pools[hash];
 
             ObjectPool<PoolObject> newPool = new ObjectPool<PoolObject>(prefab, size);
-            pools.TryAdd(hash, newPool);
+            _pools.TryAdd(hash, newPool);
             return newPool;
         }
     }

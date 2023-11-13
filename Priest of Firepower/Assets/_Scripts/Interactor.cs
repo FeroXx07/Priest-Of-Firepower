@@ -8,7 +8,7 @@ namespace _Scripts
         [SerializeField] KeyCode key;
         [SerializeField]private LayerMask layer;
         [SerializeField] private float interactionRange;
-        private Collider2D interactable;
+        private Collider2D _interactable;
 
         private void Update()
         {
@@ -23,16 +23,16 @@ namespace _Scripts
 
             if(hit.collider != null)
             {
-                interactable = hit.collider;
-                IInteractable obj =  interactable.GetComponent<IInteractable>();
+                _interactable = hit.collider;
+                IInteractable obj =  _interactable.GetComponent<IInteractable>();
                 obj.Interact(this, Input.GetKey(key));
             }
             // if not looking any more the las interacteable, diable UI and clear the reference to it
-            else if (interactable != null)
+            else if (_interactable != null)
             {
-                IInteractable obj = interactable.GetComponent<IInteractable>();
+                IInteractable obj = _interactable.GetComponent<IInteractable>();
                 obj.EnablePromptUI(false);
-                interactable = null;
+                _interactable = null;
             }
         
         }

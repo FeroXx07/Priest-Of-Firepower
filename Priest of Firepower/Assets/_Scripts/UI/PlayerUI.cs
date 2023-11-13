@@ -10,11 +10,11 @@ namespace _Scripts.UI
 
         private void OnEnable()
         {
-            pointSystem.onPointsChanged += UpdatePoints;
+            pointSystem.OnPointsChanged += UpdatePoints;
         }
         private void OnDisable()
         {
-            pointSystem.onPointsChanged -= UpdatePoints;
+            pointSystem.OnPointsChanged -= UpdatePoints;
         }
 
         void UpdatePoints(int points)

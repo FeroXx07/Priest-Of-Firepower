@@ -6,13 +6,13 @@ namespace _Scripts.Interfaces
     public interface IDamageable
     {
         // The Action<Damaged object, Damager object>
-        event Action<GameObject, GameObject> onDamageableDestroyed;
-        event Action<GameObject, GameObject> onDamageTaken;
+        event Action<GameObject, GameObject> OnDamageableDestroyed;
+        event Action<GameObject, GameObject> OnDamageTaken;
 
-        LayerMask layers { get; set; }
+        LayerMask Layers { get; set; }
         int Health { get; set; }    
         void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner);
-        void OnDamageableDestroyed(GameObject destroyer);
+        void RaiseEventOnDamageableDestroyed(GameObject destroyer);
     }
 }
 

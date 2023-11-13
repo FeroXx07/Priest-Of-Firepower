@@ -11,8 +11,8 @@ namespace _Scripts.Interactables
         [SerializeField] GameObject weapon;
         [SerializeField] int price;
         [SerializeField] InteractionPromptUI interactionPromptUI;
-        private SpriteRenderer wallWeaponImg;
-        float timer;
+        private SpriteRenderer _wallWeaponImg;
+        float _timer;
         public string Prompt => message;
         public float InteractionTime => timeToInteract;
 
@@ -20,20 +20,20 @@ namespace _Scripts.Interactables
 
         private void OnEnable()
         {
-            timer = InteractionTime;
+            _timer = InteractionTime;
             Weapon.Weapon wp = weapon.GetComponent<Weapon.Weapon>(); 
-            message = "Hold F to buy " + wp.weaponData._name +" [" + wp.weaponData.price.ToString()+"]";
+            message = "Hold F to buy " + wp.weaponData.weaponName +" [" + wp.weaponData.price.ToString()+"]";
             interactionPromptUI.SetText(message);
             EnablePromptUI(false);
-            wallWeaponImg = GetComponent<SpriteRenderer>();
-            wallWeaponImg.sprite = wp.weaponData.sprite;
+            _wallWeaponImg = GetComponent<SpriteRenderer>();
+            _wallWeaponImg.sprite = wp.weaponData.sprite;
         }
         public void Interact(Interactor interactor, bool keyPressed)
         {
             if(keyPressed)
             {
-                timer -= Time.deltaTime;
-                if (timer <= 0)
+                _timer -= Time.deltaTime;
+                if (_timer <= 0)
                 {
                     if (interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
                     {
@@ -46,7 +46,7 @@ namespace _Scripts.Interactables
                             if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                             {
                                 switcher.ChangeWeapon(weapon);
-                                timer = InteractionTime;
+                                _timer = InteractionTime;
                                 EnablePromptUI(false);
 
                                 pointSystem.RemovePoints(price);
@@ -58,7 +58,7 @@ namespace _Scripts.Interactables
             else
             {
                 EnablePromptUI(true);
-                timer = timeToInteract;
+                _timer = timeToInteract;
             }
  
         }

@@ -5,7 +5,7 @@ namespace _Scripts.Networking
 {
     public class ClientAuthenticator : MonoBehaviour
     {
-        private string authenticationCode = "IM_VALID_USER_LOVE_ME";
+        private string _authenticationCode = "IM_VALID_USER_LOVE_ME";
 
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
@@ -29,7 +29,7 @@ namespace _Scripts.Networking
 
             authWriter.Write((int)PacketType.AUTHENTICATION);
             authWriter.Write(username);
-            authWriter.Write(authenticationCode);
+            authWriter.Write(_authenticationCode);
 
             Debug.Log("Client: Starting authetication request ...");
 

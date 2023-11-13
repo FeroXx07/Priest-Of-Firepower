@@ -10,27 +10,27 @@ namespace _Scripts
         [SerializeField] private int health;
         [SerializeField] private int maxHealth;
         [SerializeField] private LayerMask layer;
-        public LayerMask layers { get => layer; set => layer = value; }
+        public LayerMask Layers { get => layer; set => layer = value; }
         public int Health { get => health; set => health = value; }
         public int MaxHealth { get => maxHealth; set => maxHealth = value; }
 
-        public event Action<GameObject, GameObject> onDamageableDestroyed;
-        public event Action<GameObject, GameObject> onDamageTaken;
+        public event Action<GameObject, GameObject> OnDamageableDestroyed;
+        public event Action<GameObject, GameObject> OnDamageTaken;
 
         private void OnEnable()
         {
             health = maxHealth;
         }
 
-        public void OnDamageableDestroyed(GameObject destroyer)
+        public void RaiseEventOnDamageableDestroyed(GameObject destroyer)
         {
-            onDamageableDestroyed?.Invoke(gameObject, destroyer);
+            OnDamageableDestroyed?.Invoke(gameObject, destroyer);
         }
 
         public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
         {
             health -= damageDealer.Damage;
-            onDamageTaken?.Invoke(gameObject, owner);
+            OnDamageTaken?.Invoke(gameObject, owner);
 
             if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
             {
@@ -51,7 +51,7 @@ namespace _Scripts
                 }
             
                 health = 0;
-                OnDamageableDestroyed(owner);
+                RaiseEventOnDamageableDestroyed(owner);
             }
         }
     }

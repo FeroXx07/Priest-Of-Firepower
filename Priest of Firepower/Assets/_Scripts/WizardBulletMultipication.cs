@@ -12,31 +12,31 @@ namespace _Scripts
         public float angleOffset = 30.0f;
         public GameObject objectCloned;
 
-        private float currentTimer = 0.0f;
-        private float offsetDistance = 2.0f;
-        private Rigidbody rb;
+        private float _currentTimer = 0.0f;
+        private float _offsetDistance = 2.0f;
+        private Rigidbody _rb;
 
         #endregion
         private void OnEnable()
         {
-            rb = GetComponent<Rigidbody>();
+            _rb = GetComponent<Rigidbody>();
         }
 
         private void Update()
         {
-            currentTimer += Time.deltaTime;
-            if (currentTimer >= multiplicationTimer)
+            _currentTimer += Time.deltaTime;
+            if (_currentTimer >= multiplicationTimer)
             {
                 Debug.Log("Create clones");
                 InvokeRepeating("CreateClones", 0f, 0.5f);
                 DisposeGameObject();
-                currentTimer = 0.0f;
+                _currentTimer = 0.0f;
             }
         }
 
         void CreateClones()
         {
-            Vector3 velocity = rb.velocity; // Current velocity
+            Vector3 velocity = _rb.velocity; // Current velocity
 
             // Calculate the angle increment based on the number of clones
             float angleIncrement = 360f / numberOfCopies;
@@ -47,7 +47,7 @@ namespace _Scripts
                 float angle = angleIncrement * i;
 
                 // Calculate the position offset for this clone
-                Vector3 offset = Quaternion.Euler(0, angle, 0) * transform.forward * offsetDistance;
+                Vector3 offset = Quaternion.Euler(0, angle, 0) * transform.forward * _offsetDistance;
 
                 // Instantiate the clone at the calculated position
                 GameObject clone = Instantiate(objectCloned, transform.position + offset, transform.rotation);

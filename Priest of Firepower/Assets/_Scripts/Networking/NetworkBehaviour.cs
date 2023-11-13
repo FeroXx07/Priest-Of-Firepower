@@ -10,15 +10,15 @@ namespace _Scripts.Networking
     {
         public float tickRate = 10.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
-        protected ChangeTracker bitTracker;
-        protected NetworkObject networkObject;
-        protected List<INetworkVariable> networkVariableList = new List<INetworkVariable>();
+        protected ChangeTracker BITTracker;
+        protected NetworkObject NetworkObject;
+        protected List<INetworkVariable> NetworkVariableList = new List<INetworkVariable>();
 
         #region Serialization
         protected abstract void InitNetworkVariablesList();
         protected List<INetworkVariable> GetNetworkVariables()
         {
-            return networkVariableList;
+            return NetworkVariableList;
         }
 
     
@@ -33,7 +33,7 @@ namespace _Scripts.Networking
             //writer.Write(networkObject.GetNetworkId());
 
             // Serialize the changed fields using the bitfield
-            BitArray bitfield = bitTracker.GetBitfield();
+            BitArray bitfield = BITTracker.GetBitfield();
             int fieldCount = bitfield.Length;
             // Write the count of fields
             writer.Write(fieldCount);
@@ -42,7 +42,7 @@ namespace _Scripts.Networking
             bitfield.CopyTo(bitfieldBytes, 0);
             writer.Write(bitfieldBytes);
 
-            foreach (var variable in networkVariableList)
+            foreach (var variable in NetworkVariableList)
             {
                 if(variable.IsDirty)
                 {
@@ -58,7 +58,7 @@ namespace _Scripts.Networking
             reader.BaseStream.Position = 0;
             // [Object State][Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]... <- End of an object packet
             //[Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...
-            int fieldCount = bitTracker.GetBitfield().Length;
+            int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();
             if (receivedFieldCount != fieldCount)
             {
@@ -72,7 +72,7 @@ namespace _Scripts.Networking
             {
                 if (receivedBitfield[i])
                 {
-                    networkVariableList.ElementAt(i).ReadFromBinaryReader(reader);
+                    NetworkVariableList.ElementAt(i).ReadFromBinaryReader(reader);
                 }
             }
         
@@ -85,14 +85,14 @@ namespace _Scripts.Networking
 
         public virtual void Awake()
         {
-            if (TryGetComponent<NetworkObject>(out networkObject) == false)
+            if (TryGetComponent<NetworkObject>(out NetworkObject) == false)
             {
                 Debug.LogWarning("A NetworkBehaviour needs a NetworkObject");
             }
         }
         public void SendData()
         {
-            if (NetworkManager.Instance == false && networkObject == false)
+            if (NetworkManager.Instance == false && NetworkObject == false)
             {
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }

@@ -7,8 +7,8 @@ namespace _Scripts.Networking
 {
     public class ServerAuthenticator : MonoBehaviour
     {
-        private string authenticationCode = "IM_VALID_USER_LOVE_ME";
-        Action<string> onAuthenticated;
+        private string _authenticationCode = "IM_VALID_USER_LOVE_ME";
+        Action<string> _onAuthenticated;
 
     
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
@@ -20,7 +20,7 @@ namespace _Scripts.Networking
             string clientCode = reader.ReadString();
 
             // Validate the received code
-            bool isSuccess = (clientCode == authenticationCode);
+            bool isSuccess = (clientCode == _authenticationCode);
 
             // Send authentication response to the client
             SendAuthenticationResponse(isSuccess);
@@ -28,7 +28,7 @@ namespace _Scripts.Networking
             if (isSuccess)
             {
                 Debug.Log($"Authentication successful for client: {username}");
-                onAuthenticated?.Invoke(username);
+                _onAuthenticated?.Invoke(username);
             }
             else
             {

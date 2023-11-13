@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -18,40 +19,40 @@ namespace _Scripts.Networking
 //this class will work as a client or server or both at the same time
     public class NetworkManager : GenericSingleton<NetworkManager>
     {
-        AClient client;
-        AServer server;
+        AClient _client;
+        AServer _server;
 
-        private bool isHost = false;
-        private bool isServer = false;
-        private bool isClient = false;
+        private bool _isHost = false;
+        private bool _isServer = false;
+        private bool _isClient = false;
 
-        uint MTU = 1400;
-        int stateBufferTimeout = 1000; // time with no activity to send not fulled packets
-        int inputBufferTimeout = 100; // time with no activity to send not fulled packets
+        uint _mtu = 1400;
+        int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
+        int _inputBufferTimeout = 100; // time with no activity to send not fulled packets
         // store all state streams to send
-        Queue<MemoryStream> stateStreamBuffer = new Queue<MemoryStream>();
+        Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
         // store all input streams to send
-        Queue<MemoryStream> inputStreamBuffer = new Queue<MemoryStream>();
+        Queue<MemoryStream> _inputStreamBuffer = new Queue<MemoryStream>();
         // store all critical data streams to send (TCP)
-        Queue<MemoryStream> reliableStreamBuffer = new Queue<MemoryStream>();
+        Queue<MemoryStream> _reliableStreamBuffer = new Queue<MemoryStream>();
         // Mutex for thread safety
-        private readonly object stateQueueLock = new object();
-        private readonly object inputQueueLock = new object();
-        private readonly object realiableQueueLock = new object();
+        private readonly object _stateQueueLock = new object();
+        private readonly object _inputQueueLock = new object();
+        private readonly object _realiableQueueLock = new object();
 
-        Queue<MemoryStream>incomingStreamBuffer = new Queue<MemoryStream>();
-        public readonly object incomingStreamLock = new object();
+        Queue<MemoryStream>_incomingStreamBuffer = new Queue<MemoryStream>();
+        public readonly object IncomingStreamLock = new object();
 
         struct Process
         {
-            public Thread thread;
-            public CancellationTokenSource cancellationToken;
+            public Thread Thread;
+            public CancellationTokenSource CancellationToken;
         }
 
-        Process receiveData = new Process();
-        Process sendData = new Process();
+        Process _receiveData = new Process();
+        Process _sendData = new Process();
 
-        [SerializeField] GameObject Player;
+        [FormerlySerializedAs("Player")] [SerializeField] GameObject player;
        
 
         [SerializeField]
@@ -67,43 +68,43 @@ namespace _Scripts.Networking
         // Invoken when server recives data from clients
         public Action<byte[]> OnRecivedClientData;
 
-        Dictionary<Int64, NetworkObject> networkObjectMap;
+        Dictionary<Int64, NetworkObject> _networkObjectMap;
 
         private void Start()
         {
 
             Debug.Log("Starting Netwrok Manager ...");
-            receiveData.cancellationToken = new CancellationTokenSource();
-            receiveData.thread = new Thread(() => ReceiveDataThread(receiveData.cancellationToken.Token));
-            receiveData.thread.Start();
+            _receiveData.CancellationToken = new CancellationTokenSource();
+            _receiveData.Thread = new Thread(() => ReceiveDataThread(_receiveData.CancellationToken.Token));
+            _receiveData.Thread.Start();
 
-            sendData.cancellationToken = new CancellationTokenSource();
-            sendData.thread = new Thread(() => SendDataThread(receiveData.cancellationToken.Token));
-            sendData.thread.Start();
+            _sendData.CancellationToken = new CancellationTokenSource();
+            _sendData.Thread = new Thread(() => SendDataThread(_receiveData.CancellationToken.Token));
+            _sendData.Thread.Start();
         }
         private void OnDisable()
         {
             Debug.Log("Stopping NetworkManger threads...");
             // When you want to stop the thread, you call cancellationTokenSource.Cancel(),
             // and the thread will stop executing the loop.
-            receiveData.cancellationToken?.Cancel();
-            sendData.cancellationToken?.Cancel();
+            _receiveData.CancellationToken?.Cancel();
+            _sendData.CancellationToken?.Cancel();
             // You then wait for the thread to finish using thread.Join().
-            receiveData.thread.Join();
-            sendData.thread.Join();
+            _receiveData.Thread.Join();
+            _sendData.Thread.Join();
 
-            if (receiveData.thread.IsAlive)
-                receiveData.thread.Abort();
+            if (_receiveData.Thread.IsAlive)
+                _receiveData.Thread.Abort();
 
-            if (sendData.thread.IsAlive)
-                sendData.thread.Abort();
+            if (_sendData.Thread.IsAlive)
+                _sendData.Thread.Abort();
         }
 
         #region Connection Initializers
         public void StartClient()
         {
             CreateClient();
-            isClient = true;
+            _isClient = true;
         }
 
         public void StartHost()
@@ -111,50 +112,50 @@ namespace _Scripts.Networking
             CreateServer();
             CreateClient();
 
-            isHost = true;
+            _isHost = true;
 
-            server.InitServer(); 
+            _server.InitServer(); 
         
-            if (server.GetServerInit())
+            if (_server.GetServerInit())
             {
-                client.Connect(IPAddress.Loopback);
+                _client.Connect(IPAddress.Loopback);
             }
         }
         void StartServer()
         {
             CreateServer();
-            isServer = true;
+            _isServer = true;
         }
         #endregion
 
         //Initializers for the actions
         void CreateClient()
         {
-            client = new AClient();
-            client.OnConnected += ClientConnected;
+            _client = new AClient();
+            _client.OnConnected += ClientConnected;
         
         }
         void CreateServer()
         {
-            server = new AServer();        
+            _server = new AServer();        
         }
 
         public void AddStateStreamQueue(MemoryStream stream)
         {
-            stateStreamBuffer.Enqueue(stream);
+            _stateStreamBuffer.Enqueue(stream);
         }
         public void AddInputStreamQueue(MemoryStream stream)
         {
-            inputStreamBuffer.Enqueue(stream);
+            _inputStreamBuffer.Enqueue(stream);
         }
         public void AddReliableStreamQueue(MemoryStream stream)
         {
-            reliableStreamBuffer.Enqueue(stream);
+            _reliableStreamBuffer.Enqueue(stream);
         }
 
         public void AddIncomingDataQueue(MemoryStream stream)
         {
-            incomingStreamBuffer.Enqueue(stream);
+            _incomingStreamBuffer.Enqueue(stream);
         }
 
         private void SendDataThread(CancellationToken token)
@@ -162,107 +163,107 @@ namespace _Scripts.Networking
             try
             {
                 Debug.Log("Netwrok Manager Send data thread started...");
-                float stateTimeout = stateBufferTimeout;
-                float inputTimeout = inputBufferTimeout;
+                float stateTimeout = _stateBufferTimeout;
+                float inputTimeout = _inputBufferTimeout;
 
                 while (!token.IsCancellationRequested)
                 {
                     //State buffer
 
-                    if (stateStreamBuffer.Count > 0)
+                    if (_stateStreamBuffer.Count > 0)
                     {
-                        lock (stateQueueLock)
+                        lock (_stateQueueLock)
                         {
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
-                            while (stateStreamBuffer.Count > 0 && totalSize + (int)stateStreamBuffer.Peek().Length <= MTU && stateBufferTimeout > 0)
+                            while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
                             {
                                 stateTimeout -= Time.deltaTime * 1000f;
-                                MemoryStream nextStream = stateStreamBuffer.Dequeue();
+                                MemoryStream nextStream = _stateStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
                             }
 
                             byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
 
-                            if (isClient)
+                            if (_isClient)
                             {
-                                client.SendPacket(buffer);
+                                _client.SendPacket(buffer);
                             }
-                            else if (isServer)
+                            else if (_isServer)
                             {
-                                server.SendToAll(buffer);
+                                _server.SendToAll(buffer);
                             }
-                            else if (isHost)
+                            else if (_isHost)
                             {
-                                server.SendToAll(buffer);
+                                _server.SendToAll(buffer);
                             }
                         }
                     }
 
                     //Input buffer
 
-                    if (inputStreamBuffer.Count > 0)
+                    if (_inputStreamBuffer.Count > 0)
                     {
-                        lock (inputQueueLock)
+                        lock (_inputQueueLock)
                         {
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
-                            while (inputStreamBuffer.Count > 0 && totalSize + (int)inputStreamBuffer.Peek().Length <= MTU && inputBufferTimeout > 0)
+                            while (_inputStreamBuffer.Count > 0 && totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu && _inputBufferTimeout > 0)
                             {
                                 inputTimeout -= Time.deltaTime * 1000;
-                                MemoryStream nextStream = inputStreamBuffer.Dequeue();
+                                MemoryStream nextStream = _inputStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
                             }
                             byte[] buffer = ConcatenateMemoryStreams(PacketType.INPUT, streamsToSend);
 
-                            if (isClient)
+                            if (_isClient)
                             {
-                                client.SendPacket(buffer);
+                                _client.SendPacket(buffer);
                             }
-                            else if (isServer)
+                            else if (_isServer)
                             {
-                                server.SendToAll(buffer);
+                                _server.SendToAll(buffer);
                             }
-                            else if (isHost)
+                            else if (_isHost)
                             {
-                                server.SendToAll(buffer);
+                                _server.SendToAll(buffer);
                             }
                         }
                     }
 
                     // reliable buffer
 
-                    if (reliableStreamBuffer.Count > 0)
+                    if (_reliableStreamBuffer.Count > 0)
                     {
-                        lock (realiableQueueLock)
+                        lock (_realiableQueueLock)
                         {
 
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
-                            while (reliableStreamBuffer.Count > 0)
+                            while (_reliableStreamBuffer.Count > 0)
                             {
                             
-                                MemoryStream nextStream = reliableStreamBuffer.Dequeue();
+                                MemoryStream nextStream = _reliableStreamBuffer.Dequeue();
 
                                 byte[] buffer = nextStream.ToArray();
 
-                                if (isClient)
+                                if (_isClient)
                                 {
-                                    client.SendCriticalPacket(buffer);
+                                    _client.SendCriticalPacket(buffer);
                                 }
-                                else if (isServer)
+                                else if (_isServer)
                                 {
-                                    server.SendCriticalToAll(buffer);
+                                    _server.SendCriticalToAll(buffer);
                                 }
-                                else if (isHost)
+                                else if (_isHost)
                                 {
-                                    server.SendCriticalToAll(buffer);
+                                    _server.SendCriticalToAll(buffer);
                                 }
                             }
                         }
@@ -270,9 +271,9 @@ namespace _Scripts.Networking
 
 
                     if (inputTimeout < 0)
-                        inputTimeout = inputBufferTimeout;
+                        inputTimeout = _inputBufferTimeout;
                     if (stateTimeout < 0)
-                        stateTimeout = stateBufferTimeout;
+                        stateTimeout = _stateBufferTimeout;
 
                     Thread.Sleep(10);
                 }
@@ -284,29 +285,29 @@ namespace _Scripts.Networking
             finally
             {
                 // Clean up resources
-                lock (stateQueueLock)
+                lock (_stateQueueLock)
                 {
-                    foreach (MemoryStream incomingStream in stateStreamBuffer)
+                    foreach (MemoryStream incomingStream in _stateStreamBuffer)
                     {
                         incomingStream.Dispose();
                     }
-                    stateStreamBuffer.Clear(); // Clear the queue
+                    _stateStreamBuffer.Clear(); // Clear the queue
                 }
-                lock (inputQueueLock)
+                lock (_inputQueueLock)
                 {
-                    foreach (MemoryStream incomingStream in inputStreamBuffer)
+                    foreach (MemoryStream incomingStream in _inputStreamBuffer)
                     {
                         incomingStream.Dispose();
                     }
-                    inputStreamBuffer.Clear(); // Clear the queue
+                    _inputStreamBuffer.Clear(); // Clear the queue
                 }
-                lock (reliableStreamBuffer)
+                lock (_reliableStreamBuffer)
                 {
-                    foreach (MemoryStream incomingStream in reliableStreamBuffer)
+                    foreach (MemoryStream incomingStream in _reliableStreamBuffer)
                     {
                         incomingStream.Dispose();
                     }
-                    reliableStreamBuffer.Clear(); // Clear the queue
+                    _reliableStreamBuffer.Clear(); // Clear the queue
                 }
             }
         }
@@ -319,14 +320,14 @@ namespace _Scripts.Networking
                 Debug.Log("Netwrok Manager receive data thread started...");
                 while (!token.IsCancellationRequested)
                 {
-                    if (incomingStreamBuffer.Count > 0)
+                    if (_incomingStreamBuffer.Count > 0)
                     {
                         Debug.Log("helo");
-                        lock (incomingStreamLock)
+                        lock (IncomingStreamLock)
                         {
-                            while (incomingStreamBuffer.Count > 0)
+                            while (_incomingStreamBuffer.Count > 0)
                             {
-                                ProcessIncomingData(incomingStreamBuffer.Dequeue());
+                                ProcessIncomingData(_incomingStreamBuffer.Dequeue());
                             }
                         }
                     }
@@ -339,13 +340,13 @@ namespace _Scripts.Networking
             finally
             {
                 // Clean up resources
-                lock (incomingStreamLock)
+                lock (IncomingStreamLock)
                 {
-                    foreach (MemoryStream incomingStream in incomingStreamBuffer)
+                    foreach (MemoryStream incomingStream in _incomingStreamBuffer)
                     {
                         incomingStream.Dispose();
                     }
-                    incomingStreamBuffer.Clear(); // Clear the queue
+                    _incomingStreamBuffer.Clear(); // Clear the queue
                 }
             }
 
@@ -368,13 +369,13 @@ namespace _Scripts.Networking
                     HandleObjectState(stream,reader);
                     break;
                 case PacketType.AUTHENTICATION:
-                    if(isClient)
+                    if(_isClient)
                     {
-                        client.GetAuthenticator().HandleAuthentication(stream, reader);
+                        _client.GetAuthenticator().HandleAuthentication(stream, reader);
                     }
-                    else if(isHost)
+                    else if(_isHost)
                     {
-                        server.GetAuthenticator().HandleAuthentication(stream, reader);   
+                        _server.GetAuthenticator().HandleAuthentication(stream, reader);   
                     }
                     break;
                 default:
@@ -391,7 +392,7 @@ namespace _Scripts.Networking
                 Int64 id = reader.ReadInt64();    
 
                 //read rest of the stream
-                networkObjectMap[id].HandleNetworkBehaviour(Type.GetType(objClass), reader);
+                _networkObjectMap[id].HandleNetworkBehaviour(Type.GetType(objClass), reader);
             }
         }
 
@@ -430,24 +431,24 @@ namespace _Scripts.Networking
         //Server Events Interface
         public void ConnectClient(IPAddress address)
         {
-            client.Connect(address);
+            _client.Connect(address);
         }
 
         #endregion
         #region Getters
         public bool IsHost()
         {
-            return isHost;
+            return _isHost;
         }
 
         public bool IsServer()
         {
-            return isServer;
+            return _isServer;
         }
 
         public bool IsClient()
         {
-            return isClient;
+            return _isClient;
         }
         #endregion
 
@@ -460,20 +461,23 @@ namespace _Scripts.Networking
         public struct ConnectionAddressData
         {
             // IP address of the server (address to which clients will connect to).
+            [FormerlySerializedAs("Address")]
             [Tooltip("IP address of the server (address to which clients will connect to).")]
             [SerializeField]
-            public string Address;
+            public string address;
 
             // UDP port of the server.
 
+            [FormerlySerializedAs("Port")]
             [Tooltip("UDP port of the server.")]
             [SerializeField]
-            public ushort Port;
+            public ushort port;
 
             // IP address the server will listen on. If not provided, will use 'Address'.
+            [FormerlySerializedAs("ServerListenAddress")]
             [Tooltip("IP address the server will listen on. If not provided, will use 'Address'.")]
             [SerializeField]
-            public string ServerListenAddress;
+            public string serverListenAddress;
 
             private static EndPoint ParseNetworkEndpoint(string ip, ushort port)
             {
@@ -487,10 +491,10 @@ namespace _Scripts.Networking
             }
 
             /// Endpoint (IP address and port) clients will connect to.
-            public EndPoint ServerEndPoint => ParseNetworkEndpoint(Address, Port);
+            public EndPoint ServerEndPoint => ParseNetworkEndpoint(address, port);
 
             /// Endpoint (IP address and port) server will listen/bind on.
-            public EndPoint ListenEndPoint => ParseNetworkEndpoint((ServerListenAddress == string.Empty) ? Address : ServerListenAddress, Port);
+            public EndPoint ListenEndPoint => ParseNetworkEndpoint((serverListenAddress == string.Empty) ? address : serverListenAddress, port);
         }
         #endregion
     }

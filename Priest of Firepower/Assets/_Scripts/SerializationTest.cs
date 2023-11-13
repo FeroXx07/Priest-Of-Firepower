@@ -18,10 +18,10 @@ namespace _Scripts
         protected override void InitNetworkVariablesList()
         {
             // Add your NetworkVariable instances to the list
-            networkVariableList.Add(myNetVariableInt);
-            networkVariableList.Add(myNetVariableStr);
-            networkVariableList.Add(myNetFloat);
-            networkVariableList.Add(myNetDouble);
+            NetworkVariableList.Add(myNetVariableInt);
+            NetworkVariableList.Add(myNetVariableStr);
+            NetworkVariableList.Add(myNetFloat);
+            NetworkVariableList.Add(myNetDouble);
         }
 
         protected override MemoryStream Write(MemoryStream outputMemoryStream)
@@ -30,7 +30,7 @@ namespace _Scripts
             //Type objectType = this.GetType();
             //writer.Write(objectType.AssemblyQualifiedName);
             //writer.Write(networkObject.GetNetworkId());
-            BitArray bitfield = bitTracker.GetBitfield();
+            BitArray bitfield = BITTracker.GetBitfield();
             int fieldCount = bitfield.Length;
             writer.Write(fieldCount);
             byte[] bitfieldBytes = new byte[(fieldCount + 7) / 8];
@@ -47,12 +47,12 @@ namespace _Scripts
         {
             base.Awake();
             InitNetworkVariablesList();
-            bitTracker = new ChangeTracker(networkVariableList.Count);
-            networkVariableList.ForEach(var => var.SetTracker(bitTracker));
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+            NetworkVariableList.ForEach(var => var.SetTracker(BITTracker));
         }
         private void Start()
         {
-            bitTracker.SetAll(true);
+            BITTracker.SetAll(true);
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();

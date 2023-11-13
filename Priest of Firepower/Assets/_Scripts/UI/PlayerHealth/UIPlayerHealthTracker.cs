@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace _Scripts.UI.PlayerHealth
@@ -8,7 +9,7 @@ namespace _Scripts.UI.PlayerHealth
 
         [SerializeField] HealthSystem health;
         [SerializeField] Image healthBar;
-        [SerializeField] Image healthBar_bg;
+        [FormerlySerializedAs("healthBar_bg")] [SerializeField] Image healthBarBg;
         [SerializeField] Gradient healthColor;
 
 
@@ -22,7 +23,7 @@ namespace _Scripts.UI.PlayerHealth
                 healthBar.fillAmount = health.Health / (float)health.MaxHealth;
 
                 healthBar.color = healthColor.Evaluate(healthBar.fillAmount);
-                healthBar_bg.color = new Color(healthBar.color.r, healthBar.color.g, healthBar.color.b, 0.5f);
+                healthBarBg.color = new Color(healthBar.color.r, healthBar.color.g, healthBar.color.b, 0.5f);
             }
 
             if (health.gameObject.transform.localScale.x < 0)

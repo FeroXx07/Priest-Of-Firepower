@@ -22,23 +22,23 @@ namespace _Scripts.Weapon
         private SpriteRenderer _spriteRenderer;
         [SerializeField] VisualEffect muzzleFlash;
 
-        GameObject Owner;
+        GameObject _owner;
 
-        bool localDataCopied = false;
+        bool _localDataCopied = false;
         #endregion
 
         private void Awake()
         {
-            if (!localDataCopied) SetData();
+            if (!_localDataCopied) SetData();
         }
 
         public void SetData() //forces to copy the data, even if the parents are unactive
         {
-            if (!localDataCopied)
+            if (!_localDataCopied)
             {
 
                 localData = Instantiate(weaponData); // We don't want to modify the global weapon template, but only ours weapon!
-                localDataCopied = true;
+                _localDataCopied = true;
             }
         }
 
@@ -57,7 +57,7 @@ namespace _Scripts.Weapon
         }
         private void OnDisable()
         {
-            localData.Reloading = false;
+            localData.reloading = false;
             PlayerShooter.OnShoot -= Shoot;
             PlayerShooter.OnReload -= Reload;
             PlayerShooter.OnFlip -= FlipGun;
@@ -70,13 +70,13 @@ namespace _Scripts.Weapon
         #region Reload
         void Reload()
         {
-            if (localData.Reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize || !gameObject.activeSelf) return;
+            if (localData.reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize || !gameObject.activeSelf) return;
 
             StartCoroutine(Realoading());
         }
         IEnumerator Realoading()
         { 
-            localData.Reloading = true;
+            localData.reloading = true;
 
             yield return new WaitForSeconds(localData.reloadSpeed);
 
@@ -86,7 +86,7 @@ namespace _Scripts.Weapon
 
                 localData.totalAmmo -= bulletsToReload;
                 localData.ammoInMagazine = localData.magazineSize;
-                localData.Reloading = false;
+                localData.reloading = false;
             }
 
         PlayerShooter.OnFinishedReload?.Invoke();
@@ -97,7 +97,7 @@ namespace _Scripts.Weapon
         bool CanShoot()
         {
             //if is reloading or the fire rate is less than the current fire time
-            return !localData.Reloading && _timeSinceLastShoot > 1 / localData.fireRate / 60;
+            return !localData.reloading && _timeSinceLastShoot > 1 / localData.fireRate / 60;
         }
         void Shoot()
         {
@@ -111,7 +111,7 @@ namespace _Scripts.Weapon
 
                     OnTriggerAttack onTriggerAttack = bullet.GetComponent<OnTriggerAttack>();
                     onTriggerAttack.Damage = localData.damage;
-                    onTriggerAttack.SetOwner(Owner);
+                    onTriggerAttack.SetOwner(_owner);
 
                     transform.localRotation = transform.parent.rotation;
 
@@ -166,11 +166,11 @@ namespace _Scripts.Weapon
 
         public void SetOwner(GameObject owner)
         {
-            Owner = owner;
+            _owner = owner;
         }
         public GameObject GetOwner()
         {
-            return Owner;
+            return _owner;
         }
     }
 }

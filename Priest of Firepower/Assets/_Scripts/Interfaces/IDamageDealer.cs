@@ -5,8 +5,8 @@ namespace _Scripts.Interfaces
 {
     public interface IDamageDealer
     {
-        event Action<GameObject> onDamageDealerDestroyed;
-        event Action<GameObject> onDamageDealth;
+        event Action<GameObject> OnDamageDealerDestroyed;
+        event Action<GameObject> OnDamageDealth;
 
         int Damage { get; set; }
     }

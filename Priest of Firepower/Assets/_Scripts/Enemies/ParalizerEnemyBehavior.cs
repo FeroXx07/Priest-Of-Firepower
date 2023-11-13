@@ -11,36 +11,36 @@ namespace _Scripts.Enemies
         // Update is called once per frame
         void Update()
         {
-            switch (enemyState)
+            switch (EnemyState)
             {
                 case EnemyState.SPAWN:
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     // Spawn sound, particle and animation
-                    enemyState = EnemyState.CHASE;
+                    EnemyState = EnemyState.CHASE;
                     break;
 
                 case EnemyState.CHASE:
 
-                    agent.isStopped = false;
+                    Agent.isStopped = false;
 
-                    agent.SetDestination(target.position);
+                    Agent.SetDestination(Target.position);
 
-                    float distance = Vector3.Distance(target.position, this.transform.position);
+                    float distance = Vector3.Distance(Target.position, this.transform.position);
 
                     if (distance < 3)
                     {
-                        agent.SetDestination(-target.position); // To be revewed
+                        Agent.SetDestination(-Target.position); // To be revewed
                     }
                     else
                     {
-                        agent.SetDestination(target.position);
+                        Agent.SetDestination(Target.position);
                     }
 
                     //Debug.Log("Before if: "+ CheckLineOfSight(target));
 
                     if (distance <= 9 && distance >= 3) // && (CheckLineOfSight(target) == true)
                     {
-                        enemyState = EnemyState.ATTACK;
+                        EnemyState = EnemyState.ATTACK;
                         // Debug.Log("Attack mode");
                     }
 
@@ -49,27 +49,27 @@ namespace _Scripts.Enemies
 
                 case EnemyState.ATTACK:
 
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
 
-                    if (cooldownTimer <= 0f)
+                    if (CooldownTimer <= 0f)
                     {
                         StartParalyzerAttack();
                     }
 
-                    if (cooldownTimer > 0f)
+                    if (CooldownTimer > 0f)
                     {
-                        cooldownTimer -= Time.deltaTime;
+                        CooldownTimer -= Time.deltaTime;
                     }
 
-                    if (internalAttackObject) 
+                    if (InternalAttackObject) 
                     {
-                        internalAttackObject.transform.position = target.position;
+                        InternalAttackObject.transform.position = Target.position;
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(target.position, this.transform.position) > 9)
+                    if (Vector3.Distance(Target.position, this.transform.position) > 9)
                     {
-                        enemyState = EnemyState.CHASE;
+                        EnemyState = EnemyState.CHASE;
 
                         StopParalyzerAttack();
                     }
@@ -78,49 +78,49 @@ namespace _Scripts.Enemies
 
                 case EnemyState.DIE:
 
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    collider.enabled = false;
+                    Collider.enabled = false;
 
                     StopParalyzerAttack();
 
-                    timeRemaining -= Time.deltaTime;
-                    if (timeRemaining <= 0)
+                    TimeRemaining -= Time.deltaTime;
+                    if (TimeRemaining <= 0)
                     {
                         DisposeGameObject();
                     }
                     break;
 
                 default:
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     break;
             }
         }
 
         private void StartParalyzerAttack()
         {
-            target.gameObject.GetComponent<PlayerMovement>().enabled = false;
-            target.gameObject.GetComponent<PlayerShooter>().enabled = false;
+            Target.gameObject.GetComponent<PlayerMovement>().enabled = false;
+            Target.gameObject.GetComponent<PlayerShooter>().enabled = false;
 
-            if(internalAttackObject){}
+            if(InternalAttackObject){}
             else
             {
-                internalAttackObject = Instantiate(attackPrefab);
-                internalAttackObject.transform.position = target.position;
+                InternalAttackObject = Instantiate(attackPrefab);
+                InternalAttackObject.transform.position = Target.position;
             }
         
 
-            cooldownTimer = cooldownDuration;
+            CooldownTimer = CooldownDuration;
         }
 
         private void StopParalyzerAttack()
         {
-            target.gameObject.GetComponent<PlayerMovement>().enabled = true;
-            target.gameObject.GetComponent<PlayerShooter>().enabled = true;
+            Target.gameObject.GetComponent<PlayerMovement>().enabled = true;
+            Target.gameObject.GetComponent<PlayerShooter>().enabled = true;
 
-            if (internalAttackObject)
+            if (InternalAttackObject)
             {
-                Destroy(internalAttackObject);
+                Destroy(InternalAttackObject);
             }
 
         }

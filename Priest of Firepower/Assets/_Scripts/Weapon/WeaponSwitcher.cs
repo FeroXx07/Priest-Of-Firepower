@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Weapon
 {
@@ -7,10 +8,10 @@ namespace _Scripts.Weapon
     {
         public KeyCode[] keys;
         public WeaponSlot[] slots;
-        int selectedWeapon = 0;
+        int _selectedWeapon = 0;
 
         public float switchTime;
-        float lastSwtichTime;
+        float _lastSwtichTime;
 
         public static Action<Transform> OnWeaponSwitch;
         public static Action<GameObject, int> OnWeaponChange;
@@ -24,14 +25,14 @@ namespace _Scripts.Weapon
         {
             public Transform holder;
             public GameObject weapon;
-            public bool Empty;
+            [FormerlySerializedAs("Empty")] public bool empty;
             public int index;
         }
 
         private void Start()
         {
             SetWeapons();
-            SelectWeapon(selectedWeapon);
+            SelectWeapon(_selectedWeapon);
             ChangeWeapon(initialWeaponPrefab);
             ChangeWeapon(initialSecondaryWeaponPrefab);
         }
@@ -42,7 +43,7 @@ namespace _Scripts.Weapon
             {
                 slots[i].holder.gameObject.SetActive(i == selectedWeapon);
             }
-            lastSwtichTime = 0;
+            _lastSwtichTime = 0;
             OnWeaponSwitch?.Invoke(slots[selectedWeapon].holder);
             OnWeaponSelected();
         }
@@ -52,7 +53,7 @@ namespace _Scripts.Weapon
             //clean up the weapons slots
             for(int i = 0;i < slots.Length;i++)
             {
-                slots[i].Empty = true;
+                slots[i].empty = true;
                 if (slots[i].holder != null)
                     slots[i].holder.gameObject.SetActive(false);
                 slots[i].weapon = null;
@@ -62,35 +63,35 @@ namespace _Scripts.Weapon
 
         private void Update()
         {
-            int previousWeapon = selectedWeapon;
+            int previousWeapon = _selectedWeapon;
 
             for(int i = 0; i<keys.Length; i++)
             {
-                if (Input.GetKey(keys[i]) && lastSwtichTime >= switchTime)
+                if (Input.GetKey(keys[i]) && _lastSwtichTime >= switchTime)
                 {
-                    selectedWeapon = i;
+                    _selectedWeapon = i;
                 }
             }
 
-            if (selectedWeapon != previousWeapon)
-                SelectWeapon(selectedWeapon);
+            if (_selectedWeapon != previousWeapon)
+                SelectWeapon(_selectedWeapon);
 
-            lastSwtichTime += Time.deltaTime;
+            _lastSwtichTime += Time.deltaTime;
         }
 
         public void ChangeWeapon(GameObject newWeaponPrefab)
         {
             if (newWeaponPrefab == null) return;
 
-            WeaponSlot emptySlot = new WeaponSlot{Empty = true, holder = null, weapon = null,index = -1 };
+            WeaponSlot emptySlot = new WeaponSlot{empty = true, holder = null, weapon = null,index = -1 };
 
             //check if one of the slots is empty, if so add the new weapon there
             for (int i = 0; i < slots.Length; i++)
             {
-                if (slots[i].Empty)
+                if (slots[i].empty)
                 {
                     emptySlot = slots[i];
-                    emptySlot.Empty = false;
+                    emptySlot.empty = false;
                     emptySlot.index = i;
                     break;
                 }
@@ -98,11 +99,11 @@ namespace _Scripts.Weapon
 
             //if the emptySlot is still empty means that other slots are full
             //then change the weapon to the currently selected weapon
-            if(emptySlot.Empty)
+            if(emptySlot.empty)
             {
                 for (int i = 0; i < slots.Length; i++)
                 {
-                    if (i == selectedWeapon)
+                    if (i == _selectedWeapon)
                     {
                         emptySlot = slots[i];
                         break;
@@ -132,7 +133,7 @@ namespace _Scripts.Weapon
         }
         public Weapon GetSelectedWeapon()
         {
-            Weapon wp = slots[selectedWeapon].weapon.GetComponent<Weapon>();
+            Weapon wp = slots[_selectedWeapon].weapon.GetComponent<Weapon>();
             if (wp != null)
                 return wp;
 

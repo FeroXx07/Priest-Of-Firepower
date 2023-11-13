@@ -9,20 +9,20 @@ namespace _Scripts.Enemies
         Transform target;
 
 
-        NavMeshAgent agent;
+        NavMeshAgent _agent;
 
         // Start is called before the first frame update
         void Start()
         {
-            agent = GetComponent<NavMeshAgent>();
-            agent.updateRotation = false;
-            agent.updateUpAxis = false;
+            _agent = GetComponent<NavMeshAgent>();
+            _agent.updateRotation = false;
+            _agent.updateUpAxis = false;
         }
 
         // Update is called once per frame
         void Update()
         {
-            agent.SetDestination(target.position);
+            _agent.SetDestination(target.position);
         }
     }
 }

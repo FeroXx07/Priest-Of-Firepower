@@ -6,20 +6,20 @@ namespace _Scripts.Networking.Network_Behaviours
 {
     public class Session : NetworkBehaviour
     {
-        int clientId;
-        string username;
-        bool isHost;
+        int _clientId;
+        string _username;
+        bool _isHost;
 
         public override void Awake()
         {
             base.Awake();
-            bitTracker = new ChangeTracker(3);
+            BITTracker = new ChangeTracker(3);
         }
         public override void Read(BinaryReader reader)
         {
 
         
-            int fieldCount = bitTracker.GetBitfield().Length;
+            int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();
             if (receivedFieldCount != fieldCount)
             {
@@ -32,11 +32,11 @@ namespace _Scripts.Networking.Network_Behaviours
             BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
 
             if (receivedBitfield.Get(0))
-                clientId = reader.ReadInt32();
+                _clientId = reader.ReadInt32();
             if (receivedBitfield.Get(1))
-                username = reader.ReadString();
+                _username = reader.ReadString();
             if (receivedBitfield.Get(2))
-                isHost = reader.ReadBoolean();
+                _isHost = reader.ReadBoolean();
         }
 
         protected override void InitNetworkVariablesList()
@@ -52,17 +52,17 @@ namespace _Scripts.Networking.Network_Behaviours
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             Type objectType = this.GetType();
             writer.Write(objectType.AssemblyQualifiedName);
-            writer.Write(networkObject.GetNetworkId());
+            writer.Write(NetworkObject.GetNetworkId());
 
             // Serialize the changed fields using the bitfield
-            BitArray bitfield = bitTracker.GetBitfield();
+            BitArray bitfield = BITTracker.GetBitfield();
 
-            if (bitTracker.GetBitfield().Get(0))
-                tempWriter.Write(clientId);
-            if (bitTracker.GetBitfield().Get(1))
-                tempWriter.Write(username);
-            if (bitTracker.GetBitfield().Get(2))
-                tempWriter.Write(isHost);
+            if (BITTracker.GetBitfield().Get(0))
+                tempWriter.Write(_clientId);
+            if (BITTracker.GetBitfield().Get(1))
+                tempWriter.Write(_username);
+            if (BITTracker.GetBitfield().Get(2))
+                tempWriter.Write(_isHost);
 
             byte[] data = tempStream.ToArray();
             int fieldsTotalSize = data.Length;

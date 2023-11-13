@@ -6,37 +6,37 @@ namespace _Scripts
 {
     public class PointSystem : MonoBehaviour
     {
-        private int points;
+        private int _points;
         public int multiplyer = 1;
-        public Action<int> onPointsAdded;
-        public Action<int> onPointsRemoved;
-        public Action<int> onPointsChanged;
+        public Action<int> OnPointsAdded;
+        public Action<int> OnPointsRemoved;
+        public Action<int> OnPointsChanged;
 
         void Start()
         {
         
-            points = 0;
+            _points = 0;
         
             //Show points on start
-            onPointsChanged?.Invoke(points);
+            OnPointsChanged?.Invoke(_points);
         }
 
-        public void AddPoints(int points_to_add)
+        public void AddPoints(int pointsToAdd)
         {
-            points += points_to_add;
+            _points += pointsToAdd;
 
-            onPointsAdded?.Invoke(points_to_add);
-            onPointsChanged?.Invoke(points);
+            OnPointsAdded?.Invoke(pointsToAdd);
+            OnPointsChanged?.Invoke(_points);
         }
 
-        public void RemovePoints(int points_to_remove)
+        public void RemovePoints(int pointsToRemove)
         {
-            points -= points_to_remove;
-            onPointsRemoved?.Invoke(points_to_remove);
-            onPointsChanged?.Invoke(points);
+            _points -= pointsToRemove;
+            OnPointsRemoved?.Invoke(pointsToRemove);
+            OnPointsChanged?.Invoke(_points);
         }
 
-        public int GetPoints() { return points; }
+        public int GetPoints() { return _points; }
 
 
         public void PointsOnHit(IPointsProvider pointsProvider)

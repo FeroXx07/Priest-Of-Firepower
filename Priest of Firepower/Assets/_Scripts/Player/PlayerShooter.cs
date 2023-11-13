@@ -8,18 +8,18 @@ namespace _Scripts.Player
     {
         [SerializeField] LineRenderer shootMarker;
         [SerializeField] LayerMask layerMask;
-        Transform weaponHolder;
+        Transform _weaponHolder;
         [SerializeField] float weaponOffset = .5f;
         public static Action OnShoot;
         public static Action OnReload;
         public static Action OnFinishedReload;
         public static Action<bool> OnFlip;
-        private bool Flipped;
-        private float range = 1;
+        private bool _flipped;
+        private float _range = 1;
         void Start()
         {
             shootMarker.positionCount = 2;
-            Flipped = false;
+            _flipped = false;
         }
         private void OnEnable()
         {
@@ -33,14 +33,14 @@ namespace _Scripts.Player
 
             Vector3 shootDir = (mousePos - transform.position).normalized;
 
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, shootDir, range, layerMask);
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, shootDir, _range, layerMask);
             if (hit)
             {
                 UpdateShootMarker(hit.point);
             }
             else
             {
-                Vector3 lineEnd = transform.position + shootDir * range;
+                Vector3 lineEnd = transform.position + shootDir * _range;
 
                 UpdateShootMarker(lineEnd);
             }
@@ -58,9 +58,9 @@ namespace _Scripts.Player
             Quaternion targetRotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
 
 
-            weaponHolder.transform.rotation = targetRotation;
+            _weaponHolder.transform.rotation = targetRotation;
 
-            weaponHolder.transform.position = transform.position + shootDir * weaponOffset;  
+            _weaponHolder.transform.position = transform.position + shootDir * weaponOffset;  
 
             if (Input.GetMouseButton(0))
                 OnShoot?.Invoke();
@@ -78,9 +78,9 @@ namespace _Scripts.Player
 
         void Flip(bool flip)
         {
-            if (Flipped != flip)
+            if (_flipped != flip)
             {
-                Flipped = flip;
+                _flipped = flip;
                 OnFlip?.Invoke(flip);
 
                 if (flip)
@@ -96,10 +96,10 @@ namespace _Scripts.Player
 
         void ChangeHolder(Transform holder)
         {
-            weaponHolder = holder;
+            _weaponHolder = holder;
             Weapon.Weapon wp = holder.GetComponentInChildren<Weapon.Weapon>();
             if(wp != null)
-                range = wp.localData.range;
+                _range = wp.localData.range;
         }
     }
 }

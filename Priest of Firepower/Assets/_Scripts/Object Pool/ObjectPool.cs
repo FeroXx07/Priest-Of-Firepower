@@ -10,46 +10,46 @@ namespace _Scripts.Object_Pool
         public ObjectPool(GameObject pooledObject, int numToSpawn = 0)
         {
             _parent = new GameObject("Pool Of " + pooledObject.name);
-            this.prefab = pooledObject;
+            this._prefab = pooledObject;
             Spawn(numToSpawn);
         }
 
         public ObjectPool(GameObject pooledObject, Action<T> onCreateObject, Action<T> pullObject, Action<T> pushObject, int numToSpawn = 0)
         {
             _parent = new GameObject("Pool Of " + pooledObject.name);
-            this.prefab = pooledObject;
-            this.pullObject = pullObject;
-            this.pushObject = pushObject;
-            this.onCreateObject = onCreateObject;
+            this._prefab = pooledObject;
+            this._pullObject = pullObject;
+            this._pushObject = pushObject;
+            this._onCreateObject = onCreateObject;
             Spawn(numToSpawn);
         }
 
-        private System.Action<T> pullObject;
-        private System.Action<T> pushObject;
-        private System.Action<T> onCreateObject;
-        private Stack<T> pooledObjects = new Stack<T>();
-        private GameObject prefab;
-        public int pooledCount
+        private System.Action<T> _pullObject;
+        private System.Action<T> _pushObject;
+        private System.Action<T> _onCreateObject;
+        private Stack<T> _pooledObjects = new Stack<T>();
+        private GameObject _prefab;
+        public int PooledCount
         {
             get
             {
-                return pooledObjects.Count;
+                return _pooledObjects.Count;
             }
         }
 
         public T Pull()
         {
             T t;
-            if (pooledCount > 0)
-                t = pooledObjects.Pop();
+            if (PooledCount > 0)
+                t = _pooledObjects.Pop();
             else
-                t = GameObject.Instantiate(prefab, _parent.transform).GetComponent<T>();
+                t = GameObject.Instantiate(_prefab, _parent.transform).GetComponent<T>();
 
             t.gameObject.SetActive(true); //ensure the object is on
             t.Initialize(Push);
 
             //allow default behavior and turning object back on
-            pullObject?.Invoke(t);
+            _pullObject?.Invoke(t);
 
             return t;
         }
@@ -91,10 +91,10 @@ namespace _Scripts.Object_Pool
 
         public void Push(T t)
         {
-            pooledObjects.Push(t);
+            _pooledObjects.Push(t);
 
             //create default behavior to turn off objects
-            pushObject?.Invoke(t);
+            _pushObject?.Invoke(t);
 
             t.gameObject.SetActive(false);
         }
@@ -105,9 +105,9 @@ namespace _Scripts.Object_Pool
 
             for (int i = 0; i < number; i++)
             {
-                t = GameObject.Instantiate(prefab, _parent.transform).GetComponent<T>();
-                pooledObjects.Push(t);
-                onCreateObject?.Invoke(t);
+                t = GameObject.Instantiate(_prefab, _parent.transform).GetComponent<T>();
+                _pooledObjects.Push(t);
+                _onCreateObject?.Invoke(t);
                 t.gameObject.SetActive(false);
             }
         }

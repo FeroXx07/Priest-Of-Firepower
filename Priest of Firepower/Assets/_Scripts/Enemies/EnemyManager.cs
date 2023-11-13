@@ -7,7 +7,7 @@ namespace _Scripts.Enemies
 {
     public class EnemyManager : GenericSingleton<EnemyManager>
     {
-        List<Transform> spawnPoints = new List<Transform>();
+        List<Transform> _spawnPoints = new List<Transform>();
         public List<GameObject> enemiesPrefabs = new List<GameObject>();
         public int numToInit = 5;
 
@@ -16,28 +16,28 @@ namespace _Scripts.Enemies
         [SerializeField] List<Enemy> enemiesAlive = new List<Enemy>();
 
         //current number of enemies to spanw on the current wave
-        int numberOfEnemiesToSpwan = 0;
+        int _numberOfEnemiesToSpwan = 0;
 
-        float spawnRate  = 0.5f;
-        float spawnTimer;
+        float _spawnRate  = 0.5f;
+        float _spawnTimer;
         public void SpawnEnemies(int round)
         {
-            numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
-            Debug.Log("Enemies remaining: " + numberOfEnemiesToSpwan);
+            _numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
+            Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
         }
 
         private void Update()
         {
-            if (numberOfEnemiesToSpwan > 0)
+            if (_numberOfEnemiesToSpwan > 0)
             {
-                spawnTimer -= Time.deltaTime;
-                if (spawnTimer <= 0)
+                _spawnTimer -= Time.deltaTime;
+                if (_spawnTimer <= 0)
                 {
                     Transform p = GetRadomSpawnPoint();
                     SpawnEnemy(p.position);
-                    numberOfEnemiesToSpwan--;
-                    spawnTimer = spawnRate;
-                    Debug.Log("Enemies remaining: " + numberOfEnemiesToSpwan);
+                    _numberOfEnemiesToSpwan--;
+                    _spawnTimer = _spawnRate;
+                    Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
                 }
             }
         }
@@ -96,13 +96,13 @@ namespace _Scripts.Enemies
 
         Transform GetRadomSpawnPoint()
         {
-            return spawnPoints[Random.Range(0, spawnPoints.Count)];
+            return _spawnPoints[Random.Range(0, _spawnPoints.Count)];
         }
         public void AddSpawnpoint(Transform spawnPoint)
         {
-            spawnPoints.Add(spawnPoint);
+            _spawnPoints.Add(spawnPoint);
         }
         public int GetEnemiesAlive() { return enemiesAlive.Count; }
-        public int GetEnemiesCountLeft() { return numberOfEnemiesToSpwan; }
+        public int GetEnemiesCountLeft() { return _numberOfEnemiesToSpwan; }
     }
 }

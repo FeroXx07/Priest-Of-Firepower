@@ -13,17 +13,17 @@ namespace _Scripts.Power_Ups
             ONE_SHOT
         }
         public PowerUpType type;
-        public static Action<PowerUpType> powerUpPickedGlobal;
+        public static Action<PowerUpType> PowerUpPickedGlobal;
         public virtual void ApplyPowerUp() {
-            if (coll2d)
-                coll2d.enabled = false;
-            powerUpPickedGlobal?.Invoke(type);
+            if (Coll2d)
+                Coll2d.enabled = false;
+            PowerUpPickedGlobal?.Invoke(type);
         }
 
-        protected Collider2D coll2d;
+        protected Collider2D Coll2d;
         private void Awake()
         {
-            coll2d = GetComponent<Collider2D>();
+            Coll2d = GetComponent<Collider2D>();
         }
     }
 }

@@ -15,21 +15,21 @@ namespace _Scripts.Attacks
         #region Damage
         public int damage;
         public int Damage { get => damage; set => damage = value; }
-        public event Action<GameObject> onDamageDealerDestroyed;
-        public event Action<GameObject> onDamageDealth;
+        public event Action<GameObject> OnDamageDealerDestroyed;
+        public event Action<GameObject> OnDamageDealth;
         #endregion
-        protected GameObject owner;
-        public void SetOwner(GameObject owner_)
+        protected GameObject Owner;
+        public void SetOwner(GameObject owner)
         {
-            owner = owner_;
+            Owner = owner;
         }
         public GameObject GetOwner()
         {
-            return owner;
+            return Owner;
         }
         protected void DisposeGameObject()
         {
-            onDamageDealerDestroyed?.Invoke(gameObject);
+            OnDamageDealerDestroyed?.Invoke(gameObject);
 
             if (TryGetComponent(out PoolObject pool))
             {
@@ -42,10 +42,10 @@ namespace _Scripts.Attacks
         protected bool IsSelected(int layer) => ((layers.value >> layer) & 1) == 1;
 
         protected void RaiseEventOnDestroyed(GameObject gameObject){
-            onDamageDealerDestroyed?.Invoke(gameObject);
+            OnDamageDealerDestroyed?.Invoke(gameObject);
         }
         protected void RaiseEventOnDealth(GameObject gameObject) {
-            onDamageDealth?.Invoke(gameObject);
+            OnDamageDealth?.Invoke(gameObject);
         }
     }
 }

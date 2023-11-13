@@ -11,24 +11,24 @@ namespace _Scripts.Networking
     public class AClient : GenericSingleton<AClient>
     {
         #region variables
-        IPEndPoint endPoint;
-        string IPaddress;
-        IPAddress serverIP;
-        private Thread connectionThread;
+        IPEndPoint _endPoint;
+        string _paddress;
+        IPAddress _serverIP;
+        private Thread _connectionThread;
 
-        private CancellationTokenSource listenerToken;
-        private Thread listenServerThread;
+        private CancellationTokenSource _listenerToken;
+        private Thread _listenServerThread;
 
-        private Socket connectionTCP;
-        private Socket connectionUDP;
+        private Socket _connectionTcp;
+        private Socket _connectionUDP;
 
         public Action OnConnected;
         public Action<byte[]> OnDataRecieved;
-        private Queue<byte[]> messageQueue = new Queue<byte[]>();
+        private Queue<byte[]> _messageQueue = new Queue<byte[]>();
 
-        private int serverPort = 12345; // Replace with your server's port
+        private int _serverPort = 12345; // Replace with your server's port
 
-        ClientAuthenticator authenticator = new ClientAuthenticator();
+        ClientAuthenticator _authenticator = new ClientAuthenticator();
         #endregion
 
        
@@ -46,72 +46,72 @@ namespace _Scripts.Networking
         #region Get/Setters
         public string GetIpAddress()
         {
-            return IPaddress;
+            return _paddress;
         }
         public void SetIpAddress(IPAddress adress)
         {
-            serverIP = adress;
+            _serverIP = adress;
         }
         #endregion
 
         #region Core Functions
         public void Connect(IPAddress address)
         {
-            serverIP = address;
+            _serverIP = address;
 
             Debug.Log("Creating connetion ...");
-            connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            connectionTCP.ReceiveTimeout = 1000;
-            connectionTCP.SendTimeout = 1000;
+            _connectionTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            _connectionTcp.ReceiveTimeout = 1000;
+            _connectionTcp.SendTimeout = 1000;
             //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
             //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-            if (serverIP == null)
+            if (_serverIP == null)
             {
                 Debug.Log("server Ip is null ...");
                 return;
             }
-            endPoint = new IPEndPoint(serverIP, serverPort);
+            _endPoint = new IPEndPoint(_serverIP, _serverPort);
 
-            connectionTCP.Connect(endPoint);
+            _connectionTcp.Connect(_endPoint);
 
-            if (!connectionTCP.Connected)
+            if (!_connectionTcp.Connected)
             {
                 Debug.Log("Socket connection failed.");
                 return;
             }
 
-            Debug.Log("Client:  Socket connected to -> " + connectionTCP.RemoteEndPoint.ToString());
+            Debug.Log("Client:  Socket connected to -> " + _connectionTcp.RemoteEndPoint.ToString());
 
-            connectionThread = new Thread(() => Authenticate());
-            connectionThread.Start();
+            _connectionThread = new Thread(() => Authenticate());
+            _connectionThread.Start();
         }
   
         void StartListening()
         {
-            listenerToken = new CancellationTokenSource();
-            listenServerThread = new Thread(() => ListenServer(listenerToken.Token));
-            listenServerThread.Start();
+            _listenerToken = new CancellationTokenSource();
+            _listenServerThread = new Thread(() => ListenServer(_listenerToken.Token));
+            _listenServerThread.Start();
         }
         void ListenServer(CancellationToken cancellationToken)
         {
-            connectionTCP.ReceiveTimeout = Timeout.Infinite;
-            connectionTCP.SendTimeout = Timeout.Infinite;
+            _connectionTcp.ReceiveTimeout = Timeout.Infinite;
+            _connectionTcp.SendTimeout = Timeout.Infinite;
             Debug.Log("Listening server ...");
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    if(connectionUDP.Available > 0)
+                    if(_connectionUDP.Available > 0)
                     {
                         byte[] data= new byte[1500];
-                        connectionUDP.Receive(data);
+                        _connectionUDP.Receive(data);
                         MemoryStream stream = new MemoryStream(data);
                         NetworkManager.Instance.AddIncomingDataQueue(stream);
                     }     
-                    if(connectionTCP.Available > 0)
+                    if(_connectionTcp.Available > 0)
                     {
                         byte[] data = new byte[1500];
-                        connectionTCP.Receive(data);
+                        _connectionTcp.Receive(data);
                         MemoryStream stream = new MemoryStream(data);
                         NetworkManager.Instance.AddIncomingDataQueue(stream);
                     }
@@ -142,18 +142,18 @@ namespace _Scripts.Networking
         void Disconnect()
         {
             Debug.Log("Disconnecting client ...");
-            if (connectionThread != null && connectionThread.IsAlive)
+            if (_connectionThread != null && _connectionThread.IsAlive)
             {
-                connectionThread.Abort();
+                _connectionThread.Abort();
             }
-            if (listenServerThread != null && listenServerThread.IsAlive)
+            if (_listenServerThread != null && _listenServerThread.IsAlive)
             {
-                CancelThread(listenServerThread, listenerToken);
+                CancelThread(_listenServerThread, _listenerToken);
             }
-            if (connectionTCP != null)
+            if (_connectionTcp != null)
             {
-                connectionTCP.Shutdown(SocketShutdown.Both);
-                connectionTCP.Close();
+                _connectionTcp.Shutdown(SocketShutdown.Both);
+                _connectionTcp.Close();
             }
         }
         void CancelThread(Thread thread, CancellationTokenSource token)
@@ -172,9 +172,9 @@ namespace _Scripts.Networking
         {
             try
             {
-                if (connectionTCP == null) return;
+                if (_connectionTcp == null) return;
 
-                connectionTCP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+                _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
             catch (ArgumentNullException ane)
             {
@@ -198,9 +198,9 @@ namespace _Scripts.Networking
         {
             try
             {
-                if (connectionUDP == null) return;   
+                if (_connectionUDP == null) return;   
                 
-                connectionUDP.SendTo(data, data.Length, SocketFlags.None, endPoint);
+                _connectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
             catch (ArgumentNullException ane)
             {
@@ -227,7 +227,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                authenticator.SendAuthenticationRequest("Yololo");
+                _authenticator.SendAuthenticationRequest("Yololo");
 
 
                 //if (authenticated)
@@ -246,7 +246,7 @@ namespace _Scripts.Networking
                 Debug.LogException(e);
             }
         }
-        public ClientAuthenticator GetAuthenticator() { return authenticator; }
+        public ClientAuthenticator GetAuthenticator() { return _authenticator; }
 
     }
 }

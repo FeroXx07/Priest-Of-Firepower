@@ -8,11 +8,11 @@ namespace _Scripts.Enemies
         public GameObject secondAttackPrefab;
         public GameObject thirdAttackPrefab;
 
-        private float bulletSpeedMultiplierOne = 6.0f;
-        private float bulletSpeedMultiplierTwo = 5.0f;
-        private float bulletSpeedMultiplierThree = 4.0f;
+        private float _bulletSpeedMultiplierOne = 6.0f;
+        private float _bulletSpeedMultiplierTwo = 5.0f;
+        private float _bulletSpeedMultiplierThree = 4.0f;
 
-        private int shotCount = 0;
+        private int _shotCount = 0;
 
         //private void Start()
         //{
@@ -23,36 +23,36 @@ namespace _Scripts.Enemies
         // Update is called once per frame
         void Update()
         {
-            switch (enemyState)
+            switch (EnemyState)
             {
                 case EnemyState.SPAWN:
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     // Spawn sound, particle and animation
-                    enemyState = EnemyState.CHASE;
+                    EnemyState = EnemyState.CHASE;
                     break;
 
                 case EnemyState.CHASE:
 
-                    agent.isStopped = false;
+                    Agent.isStopped = false;
 
-                    agent.SetDestination(target.position);
+                    Agent.SetDestination(Target.position);
 
-                    float distance = Vector3.Distance(target.position, this.transform.position);
+                    float distance = Vector3.Distance(Target.position, this.transform.position);
 
                     if (distance < 3)
                     {
-                        agent.SetDestination(-target.position); // To be revewed
+                        Agent.SetDestination(-Target.position); // To be revewed
                     }
                     else
                     {
-                        agent.SetDestination(target.position);
+                        Agent.SetDestination(Target.position);
                     }
 
                     //Debug.Log("Chase");
 
                     if (distance <= 9 && distance >= 3) // && (CheckLineOfSight(target) == true)
                     {
-                        enemyState = EnemyState.ATTACK;
+                        EnemyState = EnemyState.ATTACK;
                         // Debug.Log("Attack mode");
                     }
 
@@ -62,11 +62,11 @@ namespace _Scripts.Enemies
 
                 case EnemyState.ATTACK:
 
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
 
                     //Debug.Log("Attack");
 
-                    if (cooldownTimer <= 0f)
+                    if (CooldownTimer <= 0f)
                     {
                         int randNum = -1;
 
@@ -99,20 +99,20 @@ namespace _Scripts.Enemies
                     
                     }
 
-                    if (cooldownTimer > 0f)
+                    if (CooldownTimer > 0f)
                     {
-                        cooldownTimer -= Time.deltaTime;
+                        CooldownTimer -= Time.deltaTime;
                     }
 
-                    if (internalAttackObject) 
+                    if (InternalAttackObject) 
                     {
-                        internalAttackObject.transform.position = target.position;
+                        InternalAttackObject.transform.position = Target.position;
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(target.position, this.transform.position) > 9)
+                    if (Vector3.Distance(Target.position, this.transform.position) > 9)
                     {
-                        enemyState = EnemyState.CHASE;
+                        EnemyState = EnemyState.CHASE;
 
                     }
 
@@ -120,27 +120,27 @@ namespace _Scripts.Enemies
 
                 case EnemyState.DIE:
 
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    collider.enabled = false;
+                    Collider.enabled = false;
 
 
-                    timeRemaining -= Time.deltaTime;
-                    if (timeRemaining <= 0)
+                    TimeRemaining -= Time.deltaTime;
+                    if (TimeRemaining <= 0)
                     {
                         DisposeGameObject();
                     }
                     break;
 
                 default:
-                    agent.isStopped = true;
+                    Agent.isStopped = true;
                     break;
             }
         }
 
         private void StartSimpleBulletPatternAttack()
         {
-            Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
+            Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
 
             for (int i = 0; i < 12; i++)
             {
@@ -150,30 +150,30 @@ namespace _Scripts.Enemies
 
                 // Instantiate the bullet and set its position
                 GameObject bullet = Instantiate(attackPrefab);
-                bullet.transform.position = gameObject.transform.position + direction * attackOffset;
+                bullet.transform.position = gameObject.transform.position + direction * AttackOffset;
 
                 // Apply force to the bullet
                 Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
                 if (rbComp)
                 {
-                    rbComp.AddForce(direction * bulletSpeedMultiplierOne);
+                    rbComp.AddForce(direction * _bulletSpeedMultiplierOne);
                 }
             }
 
-            shotCount++;
-            if (shotCount >= 5)
+            _shotCount++;
+            if (_shotCount >= 5)
             {
                 CancelInvoke("StartSimpleBulletPatternAttack");
-                shotCount = 0;
+                _shotCount = 0;
             }
 
-            cooldownTimer = cooldownDuration;
+            CooldownTimer = CooldownDuration;
         }
 
 
         private void StartBouncingBulletPatternAttack()
         {
-            Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
+            Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
 
             for (int i = 0; i < 8; i++)
             {
@@ -183,29 +183,29 @@ namespace _Scripts.Enemies
 
                 // Instantiate the bullet and set its position
                 GameObject bullet = Instantiate(secondAttackPrefab);
-                bullet.transform.position = gameObject.transform.position + direction * attackOffset;
+                bullet.transform.position = gameObject.transform.position + direction * AttackOffset;
 
                 // Apply force to the bullet
                 Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
                 if (rbComp)
                 {
-                    rbComp.AddForce(direction * bulletSpeedMultiplierTwo);
+                    rbComp.AddForce(direction * _bulletSpeedMultiplierTwo);
                 }
             }
 
-            shotCount++;
-            if (shotCount >= 3)
+            _shotCount++;
+            if (_shotCount >= 3)
             {
                 CancelInvoke("StartBouncingBulletPatternAttack");
-                shotCount = 0;
+                _shotCount = 0;
             }
 
-            cooldownTimer = cooldownDuration;
+            CooldownTimer = CooldownDuration;
         }
 
         private void StartDuplicatingBulletAttack()
         {
-            Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
+            Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
 
             for (int i = 0; i < 4; i++)
             {
@@ -215,24 +215,24 @@ namespace _Scripts.Enemies
 
                 // Instantiate the bullet and set its position
                 GameObject bullet = Instantiate(thirdAttackPrefab);
-                bullet.transform.position = gameObject.transform.position + direction * attackOffset;
+                bullet.transform.position = gameObject.transform.position + direction * AttackOffset;
 
                 // Apply force to the bullet
                 Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
                 if (rbComp)
                 {
-                    rbComp.AddForce(direction * bulletSpeedMultiplierThree);
+                    rbComp.AddForce(direction * _bulletSpeedMultiplierThree);
                 }
             }
 
-            shotCount++;
-            if (shotCount >= 1)
+            _shotCount++;
+            if (_shotCount >= 1)
             {
                 CancelInvoke("StartDuplicatingBulletAttack");
-                shotCount = 0;
+                _shotCount = 0;
             }
 
-            cooldownTimer = cooldownDuration;
+            CooldownTimer = CooldownDuration;
         }
 
         int RandomizeInt(int min, int max)
