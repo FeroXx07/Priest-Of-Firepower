@@ -89,8 +89,9 @@ namespace _Scripts.Weapon
                 localData.Reloading = false;
             }
 
-        }
-        #endregion
+        PlayerShooter.OnFinishedReload?.Invoke();
+    }
+    #endregion
 
         #region Shoot
         bool CanShoot()

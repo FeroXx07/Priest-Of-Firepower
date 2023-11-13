@@ -65,8 +65,8 @@ namespace _Scripts.UI.WeaponTracker
 
 
             //show total ammo remaining
-            int currentAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
-            totalAmmo.text = currentAmmo.ToString() + " / " + (weaponData.maxAmmoCapacity + weaponData.magazineSize).ToString();
+            int currentAmmo = weaponData.totalAmmo;
+            totalAmmo.text = currentAmmo.ToString() + " / " + (weaponData.maxAmmoCapacity).ToString();
 
         }
 

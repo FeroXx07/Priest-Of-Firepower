@@ -12,6 +12,7 @@ namespace _Scripts.Player
         [SerializeField] float weaponOffset = .5f;
         public static Action OnShoot;
         public static Action OnReload;
+        public static Action OnFinishedReload;
         public static Action<bool> OnFlip;
         private bool Flipped;
         private float range = 1;

@@ -11,11 +11,12 @@ namespace _Scripts.UI.WeaponTracker
         [SerializeField] WeaponUIInfo secodnaryWeapon;
 
 
-        private void OnEnable()
-        {
-            WeaponSwitcher.OnWeaponChange += ChangeWeapon;
-            PlayerShooter.OnShoot += UpdateWeaponUI;
-        }
+    private void OnEnable()
+    {
+        WeaponSwitcher.OnWeaponChange += ChangeWeapon;
+        PlayerShooter.OnShoot += UpdateWeaponUI;
+        PlayerShooter.OnFinishedReload += UpdateWeaponUI;
+    }
 
         void UpdateWeaponUI()
         {
