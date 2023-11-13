@@ -25,16 +25,6 @@ namespace _Scripts.UI.PlayerHealth
                 healthBar.color = healthColor.Evaluate(healthBar.fillAmount);
                 healthBarBg.color = new Color(healthBar.color.r, healthBar.color.g, healthBar.color.b, 0.5f);
             }
-
-            if (health.gameObject.transform.localScale.x < 0)
-            {
-                transform.localScale = new Vector3(-1, 1, 1);
-            }
-            else
-            {
-                transform.localScale = new Vector3(1, 1, 1);
-
-            }
         }
     }
 }

@@ -1,4 +1,6 @@
+using _Scripts.Player;
 using _Scripts.ScriptableObjects;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +16,15 @@ namespace _Scripts.UI.WeaponTracker
         [SerializeField] Image magazineSprite;
         [SerializeField] TextMeshProUGUI totalAmmo;
 
+        float _prevAmmo;
+        float _newAmmo;
+        float _currReloadTime;
+        float _reloadTime;
+
+        private void OnEnable()
+        {
+            PlayerShooter.OnStartingReload += Reload;
+        }
         private void Awake()
         {
             weaponSprite.preserveAspect = true;
@@ -44,11 +55,8 @@ namespace _Scripts.UI.WeaponTracker
             //draw remaining bullets in current magazine
             if (weaponData.maxAmmoCapacity != 0)
             {
-                Debug.Log("ammo in magazine: " + weaponData.ammoInMagazine);
-                Debug.Log("magazine size: " + weaponData.magazineSize);
-                float fill = weaponData.ammoInMagazine / (float)weaponData.magazineSize;
-                magazineSprite.fillAmount = fill;
 
+                UpdateMagazineProgress((float)weaponData.ammoInMagazine, (float)weaponData.magazineSize);
             }
             
 
@@ -59,5 +67,45 @@ namespace _Scripts.UI.WeaponTracker
 
         }
 
+
+        void UpdateMagazineProgress(float currentValue, float maxValue)
+        {
+            float fill = currentValue / maxValue;
+            magazineSprite.fillAmount = fill;
+        }
+
+        void Reload()
+        {
+            if (weaponData == null) return;
+
+            if (weaponData.totalAmmo > weaponData.magazineSize)
+            {
+                _prevAmmo = weaponData.ammoInMagazine;
+                _newAmmo = weaponData.magazineSize;
+            }
+            else
+            {
+                _prevAmmo = weaponData.ammoInMagazine;
+                _newAmmo = weaponData.totalAmmo;
+            }
+            _currReloadTime = 0;
+            _reloadTime = weaponData.reloadSpeed;
+
+            StartCoroutine(ReloadRoutine());
+        }
+
+
+        IEnumerator ReloadRoutine()
+        {
+            print("Reloading!!!!!!");
+            while (_currReloadTime < _reloadTime)
+            {
+                _currReloadTime += Time.deltaTime;
+                float value = Mathf.Lerp(_prevAmmo, _newAmmo, _currReloadTime / _reloadTime);
+                UpdateMagazineProgress(value, (float)weaponData.magazineSize);
+                yield return null;
+            }
+
+        }
     }
 }

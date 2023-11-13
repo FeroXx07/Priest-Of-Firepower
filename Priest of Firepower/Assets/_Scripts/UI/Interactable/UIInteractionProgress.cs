@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIInteractionProgress : MonoBehaviour
-{
-    [SerializeField] Image sprite;
+namespace _Scripts.UI.Interactables
 
-    public void UpdateProgress (float progress, float maxProgress)
+{
+    public class UIInteractionProgress : MonoBehaviour
     {
-        sprite.fillAmount = progress / maxProgress;
+        [SerializeField] Image sprite;
+
+        public void UpdateProgress(float progress, float maxProgress)
+        {
+            sprite.fillAmount = progress / maxProgress;
+        }
     }
 }

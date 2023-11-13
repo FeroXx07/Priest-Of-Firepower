@@ -1,9 +1,9 @@
 using TMPro;
 using UnityEngine;
 
-namespace _Scripts.UI
+namespace _Scripts.Points.UI
 {
-    public class PlayerUI : MonoBehaviour
+    public class UIPoints : MonoBehaviour
     {
         [SerializeField]PointSystem pointSystem;
         [SerializeField] TMP_Text pointsTxt;

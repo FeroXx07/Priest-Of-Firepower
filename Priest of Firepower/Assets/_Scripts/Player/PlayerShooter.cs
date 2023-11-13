@@ -11,6 +11,7 @@ namespace _Scripts.Player
         Transform _weaponHolder;
         [SerializeField] float weaponOffset = .5f;
         public static Action OnShoot;
+        public static Action OnStartingReload;
         public static Action OnReload;
         public static Action OnFinishedReload;
         public static Action<bool> OnFlip;
