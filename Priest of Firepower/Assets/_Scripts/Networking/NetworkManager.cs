@@ -42,7 +42,6 @@ namespace _Scripts.Networking
 
         Queue<MemoryStream>_incomingStreamBuffer = new Queue<MemoryStream>();
         public readonly object IncomingStreamLock = new object();
-
         struct Process
         {
             public Thread Thread;
@@ -53,11 +52,11 @@ namespace _Scripts.Networking
         Process _sendData = new Process();
 
         [FormerlySerializedAs("Player")] [SerializeField] GameObject player;
-       
-
+        
         [SerializeField]
         ConnectionAddressData connectionAddress;
 
+        private ReplicationManager _replicationManager = new ReplicationManager();
         //Actions
         //  Invoked when a new client is connected
         public Action OnClientConnected;
@@ -68,11 +67,9 @@ namespace _Scripts.Networking
         // Invoken when server recives data from clients
         public Action<byte[]> OnRecivedClientData;
 
-        Dictionary<Int64, NetworkObject> _networkObjectMap;
 
         private void Start()
         {
-
             Debug.Log("Starting Netwrok Manager ...");
             _receiveData.CancellationToken = new CancellationTokenSource();
             _receiveData.Thread = new Thread(() => ReceiveDataThread(_receiveData.CancellationToken.Token));
@@ -389,10 +386,10 @@ namespace _Scripts.Networking
             {
                 // [Object Class][Object ID]
                 string objClass = reader.ReadString();
-                Int64 id = reader.ReadInt64();    
-
+                UInt64 id = reader.ReadUInt64();
+                NetworkAction networkAction = (NetworkAction)reader.ReadInt32();
                 //read rest of the stream
-                _networkObjectMap[id].HandleNetworkBehaviour(Type.GetType(objClass), reader);
+                _replicationManager.HandleNetworkAction(id, networkAction, Type.GetType(objClass), reader);
             }
         }
 
@@ -499,9 +496,60 @@ namespace _Scripts.Networking
         #endregion
     }
 
-
-    public class ObjectRegistery
+    public enum NetworkAction
     {
+        CREATE,
+        UPDATE,
+        DESTROY,
+        EVENT
+    }
+    public class ReplicationManager
+    {
+        public Dictionary<UInt64, NetworkObject> networkObjectMap;
+        
+        void InitManager(){}
 
+        public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        {
+            switch (action)
+            {
+                case NetworkAction.CREATE:
+                    HandleObjectCreation(id, action, type, reader);
+                    break;
+                case NetworkAction.UPDATE:
+                    HandleObjectUpdate(id, action, type, reader);
+                    break;
+                case NetworkAction.DESTROY:
+                    HandleObjectDeSpawn(id, action, type, reader);
+                    break;
+                case NetworkAction.EVENT:
+                    HandleObjectEvent(id, action, type, reader);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(action), action, null);
+            }
+        }
+
+        private void HandleObjectCreation(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        {
+            /*
+            i) Instantiate new object
+            ii) Register in the linking context
+            iii) Deserialize fields
+             */
+        }
+
+        private void HandleObjectUpdate(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        {
+            networkObjectMap[id].HandleNetworkBehaviour(type,reader);
+        }
+
+        private void HandleObjectDeSpawn(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        {
+            // Destroy or return to pool
+        }
+        
+        private void HandleObjectEvent(UInt64 id, NetworkAction action, Type type, BinaryReader reader){}
+        
     }
 }

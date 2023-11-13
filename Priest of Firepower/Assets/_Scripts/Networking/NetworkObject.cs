@@ -4,12 +4,6 @@ using UnityEngine;
 
 namespace _Scripts.Networking
 {
-    public enum NetworkAction
-    {
-        CREATE_GAMEOBJECT,
-        UPDATE_GAMEOBJECT,
-        DESTROY_GAMEOBJECT
-    }
     public class NetworkObject : MonoBehaviour
     {
         public bool synchronizeTransform = true;

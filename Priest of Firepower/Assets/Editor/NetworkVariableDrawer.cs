@@ -17,8 +17,8 @@ public class NetworkVariableTypeDrawer : PropertyDrawer
         Label displayName = new Label(property.displayName);
         container.Add(displayName);
         // Add an indentation space after the label
-        container.Add(new PropertyField(property.FindPropertyRelative("_value"), "Value"));
-        container.Add(new PropertyField(property.FindPropertyRelative("_isDirty"), "IsDirty"));
+        container.Add(new PropertyField(property.FindPropertyRelative("value"), "Value"));
+        container.Add(new PropertyField(property.FindPropertyRelative("isDirty"), "IsDirty"));
         container.style.marginBottom = 10;
         return container;
     }

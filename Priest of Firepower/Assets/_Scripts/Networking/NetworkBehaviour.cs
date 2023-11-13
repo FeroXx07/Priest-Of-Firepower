@@ -1,4 +1,5 @@
-using System.Collections;
+    using System;
+    using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -22,16 +23,16 @@ namespace _Scripts.Networking
         }
 
     
-        protected virtual MemoryStream Write(MemoryStream outputMemoryStream)
+        protected virtual MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
             // [Object State][Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]... <- End of an object packet
             //[Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-
-            //Type objectType = this.GetType();
-            //writer.Write(objectType.AssemblyQualifiedName);
-            //writer.Write(networkObject.GetNetworkId());
-
+            Type objectType = this.GetType();
+            writer.Write(objectType.AssemblyQualifiedName);
+            writer.Write(NetworkObject.GetNetworkId());
+            writer.Write((int)action);
+            
             // Serialize the changed fields using the bitfield
             BitArray bitfield = BITTracker.GetBitfield();
             int fieldCount = bitfield.Length;
@@ -90,15 +91,41 @@ namespace _Scripts.Networking
                 Debug.LogWarning("A NetworkBehaviour needs a NetworkObject");
             }
         }
-        public void SendData()
+        public void SendData(NetworkAction action)
         {
             if (NetworkManager.Instance == false && NetworkObject == false)
             {
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }
-
+            
             MemoryStream stream = new MemoryStream();
-            Write(stream);
+            switch (action)
+            {
+                case NetworkAction.CREATE:
+                {
+                    Write(stream, NetworkAction.CREATE);
+                }
+                    break;
+                case NetworkAction.UPDATE:
+                {
+                    Write(stream, NetworkAction.UPDATE);
+                } 
+                    break;
+                case NetworkAction.DESTROY:
+                {
+                    BinaryWriter writer = new BinaryWriter(stream);
+                    Type objectType = this.GetType();
+                    writer.Write(objectType.AssemblyQualifiedName);
+                    writer.Write(NetworkObject.GetNetworkId());
+                    writer.Write((int)NetworkAction.DESTROY);
+                }
+                    break;
+                case NetworkAction.EVENT:
+                    break;
+                default:
+                    Write(stream, NetworkAction.UPDATE);
+                    break;
+            }
         
             // MemoryStream Write(MemoryStream outputStream);
 
@@ -109,7 +136,9 @@ namespace _Scripts.Networking
         private void Update()
         {
             // Send Write to state buffer
-            // SendData();
+            float finalRate = 1.0f / tickRate;
+            if (_tickCounter >= finalRate)
+                SendData(NetworkAction.UPDATE);
             _tickCounter += Time.deltaTime;
         }
     }

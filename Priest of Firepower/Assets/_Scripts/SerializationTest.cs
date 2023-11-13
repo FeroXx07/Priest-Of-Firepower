@@ -24,12 +24,13 @@ namespace _Scripts
             NetworkVariableList.Add(myNetDouble);
         }
 
-        protected override MemoryStream Write(MemoryStream outputMemoryStream)
+        protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            //Type objectType = this.GetType();
-            //writer.Write(objectType.AssemblyQualifiedName);
-            //writer.Write(networkObject.GetNetworkId());
+            Type objectType = this.GetType();
+            writer.Write(objectType.AssemblyQualifiedName);
+            writer.Write(NetworkObject.GetNetworkId());
+            writer.Write((int)action);
             BitArray bitfield = BITTracker.GetBitfield();
             int fieldCount = bitfield.Length;
             writer.Write(fieldCount);
@@ -58,7 +59,7 @@ namespace _Scripts
             stopwatch.Start();
 
             MemoryStream testStream = new MemoryStream();
-            Write(testStream);
+            Write(testStream, NetworkAction.UPDATE);
 
             stopwatch.Stop();
             long wTime = stopwatch.ElapsedMilliseconds;
