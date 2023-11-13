@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using UnityEngine;
@@ -70,7 +71,7 @@ namespace _Scripts.Networking
 
         private void Start()
         {
-            Debug.Log("Starting Netwrok Manager ...");
+            Debug.Log("Starting Network Manager ...");
             _receiveData.CancellationToken = new CancellationTokenSource();
             _receiveData.Thread = new Thread(() => ReceiveDataThread(_receiveData.CancellationToken.Token));
             _receiveData.Thread.Start();
@@ -78,6 +79,9 @@ namespace _Scripts.Networking
             _sendData.CancellationToken = new CancellationTokenSource();
             _sendData.Thread = new Thread(() => SendDataThread(_receiveData.CancellationToken.Token));
             _sendData.Thread.Start();
+            
+            List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
+            _replicationManager.InitManager(list);
         }
         private void OnDisable()
         {
@@ -505,9 +509,20 @@ namespace _Scripts.Networking
     }
     public class ReplicationManager
     {
-        public Dictionary<UInt64, NetworkObject> networkObjectMap;
-        
-        void InitManager(){}
+        public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
+
+        public void InitManager(List<NetworkObject> listNetObj)
+        {
+            networkObjectMap.Clear();
+            UInt64 id = 0;
+
+            foreach (var networkObject in listNetObj)
+            {
+                networkObject.SetNetworkId(id);
+                networkObjectMap.Add(id, networkObject);
+                id++;
+            }
+        }
 
         public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {

@@ -50,7 +50,8 @@ namespace _Scripts.Networking
                     variable.WriteInBinaryWriter(writer);
                 }
             }
-
+            
+            BITTracker.SetAll(false);
             return outputMemoryStream;
         }
 
@@ -103,6 +104,7 @@ namespace _Scripts.Networking
             {
                 case NetworkAction.CREATE:
                 {
+                    BITTracker.SetAll(true);
                     Write(stream, NetworkAction.CREATE);
                 }
                     break;

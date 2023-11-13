@@ -27,20 +27,24 @@ namespace _Scripts
         protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.AssemblyQualifiedName);
-            writer.Write(NetworkObject.GetNetworkId());
-            writer.Write((int)action);
+            // Type objectType = this.GetType();
+            // writer.Write(objectType.AssemblyQualifiedName);
+            // writer.Write(NetworkObject.GetNetworkId());
+            // writer.Write((int)action);
+            
             BitArray bitfield = BITTracker.GetBitfield();
             int fieldCount = bitfield.Length;
             writer.Write(fieldCount);
             byte[] bitfieldBytes = new byte[(fieldCount + 7) / 8];
             bitfield.CopyTo(bitfieldBytes, 0);
             writer.Write(bitfieldBytes);
+            
             myNetVariableInt.WriteInBinaryWriter(writer);
             myNetVariableStr.WriteInBinaryWriter(writer);
             myNetFloat.WriteInBinaryWriter(writer);
             myNetDouble.WriteInBinaryWriter(writer);
+            
+            BITTracker.SetAll(false);
             return outputMemoryStream;
         }
 
