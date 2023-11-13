@@ -1,53 +1,55 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Enemies;
 using UnityEngine;
 
-public class RoundSystem : MonoBehaviour
+namespace _Scripts
 {
-    private int currentRound = 0;
-    public float timeBetweenRounds = 5f;
-    private float timer;
-    private bool isCountDown =false;
-
-
-    public Action<int> OnRoundBegin;
-    public Action OnRoundEnd;
-
-    public int GetCurrentRound() { return currentRound; }
-    public void StartRound()
+    public class RoundSystem : MonoBehaviour
     {
-        currentRound++;
-        OnRoundBegin?.Invoke(currentRound);
-        Debug.Log("Round Started");
-    }
-    public void RoundFinished(EnemyManager enemyManager)
-    {
-        if (enemyManager.GetEnemiesCountLeft() <= 0 && enemyManager.GetEnemiesAlive() <= 0 && !isCountDown)
+        private int currentRound = 0;
+        public float timeBetweenRounds = 5f;
+        private float timer;
+        private bool isCountDown =false;
+
+
+        public Action<int> OnRoundBegin;
+        public Action OnRoundEnd;
+
+        public int GetCurrentRound() { return currentRound; }
+        public void StartRound()
         {
-            Debug.Log("Round finished");
-            OnRoundEnd?.Invoke();
-            StartCountDown();
+            currentRound++;
+            OnRoundBegin?.Invoke(currentRound);
+            Debug.Log("Round Started");
         }
-    }
-    private void Update()
-    {
-        if (isCountDown)
+        public void RoundFinished(EnemyManager enemyManager)
         {
-            timer -= Time.deltaTime;
-
-            if (timer <= 0)
+            if (enemyManager.GetEnemiesCountLeft() <= 0 && enemyManager.GetEnemiesAlive() <= 0 && !isCountDown)
             {
-                StartRound();
-                isCountDown = false;
+                Debug.Log("Round finished");
+                OnRoundEnd?.Invoke();
+                StartCountDown();
             }
         }
-    }
+        private void Update()
+        {
+            if (isCountDown)
+            {
+                timer -= Time.deltaTime;
 
-    private void StartCountDown()
-    {
-        isCountDown = true;
-        timer = timeBetweenRounds;
-        Debug.Log("Count down Started");
+                if (timer <= 0)
+                {
+                    StartRound();
+                    isCountDown = false;
+                }
+            }
+        }
+
+        private void StartCountDown()
+        {
+            isCountDown = true;
+            timer = timeBetweenRounds;
+            Debug.Log("Count down Started");
+        }
     }
 }

@@ -1,15 +1,14 @@
 
-#define AUTHENTICATION_CODE 
+#define AUTHENTICATION_CODE
 using System;
-using System.Net;
-using System.Net.Sockets;
-using UnityEngine;
-using System.Threading;
-using System.Text;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using UnityEngine;
 
-namespace ServerA
+namespace _Scripts.Networking
 {
 
     public class ClientManager

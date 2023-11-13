@@ -1,139 +1,142 @@
 using System;
 using UnityEngine;
 
-public class WeaponSwitcher : MonoBehaviour
+namespace _Scripts.Weapon
 {
-    public KeyCode[] keys;
-    public WeaponSlot[] slots;
-    int selectedWeapon = 0;
-
-    public float switchTime;
-    float lastSwtichTime;
-
-    public static Action<Transform> OnWeaponSwitch;
-    public static Action<GameObject, int> OnWeaponChange;
-
-    [SerializeField] GameObject initialWeaponPrefab;
-    [SerializeField] GameObject initialSecondaryWeaponPrefab;
-
-
-    [Serializable]
-    public struct WeaponSlot
+    public class WeaponSwitcher : MonoBehaviour
     {
-        public Transform holder;
-        public GameObject weapon;
-        public bool Empty;
-        public int index;
-    }
+        public KeyCode[] keys;
+        public WeaponSlot[] slots;
+        int selectedWeapon = 0;
 
-    private void Start()
-    {
-        SetWeapons();
-        SelectWeapon(selectedWeapon);
-        ChangeWeapon(initialWeaponPrefab);
-        ChangeWeapon(initialSecondaryWeaponPrefab);
-    }
+        public float switchTime;
+        float lastSwtichTime;
 
-    private void SelectWeapon(int selectedWeapon)
-    {
-        for(int i = 0;i< slots.Length;i++)
+        public static Action<Transform> OnWeaponSwitch;
+        public static Action<GameObject, int> OnWeaponChange;
+
+        [SerializeField] GameObject initialWeaponPrefab;
+        [SerializeField] GameObject initialSecondaryWeaponPrefab;
+
+
+        [Serializable]
+        public struct WeaponSlot
         {
-            slots[i].holder.gameObject.SetActive(i == selectedWeapon);
-        }
-        lastSwtichTime = 0;
-        OnWeaponSwitch?.Invoke(slots[selectedWeapon].holder);
-        OnWeaponSelected();
-    }
-
-    private void SetWeapons()
-    {
-        //clean up the weapons slots
-        for(int i = 0;i < slots.Length;i++)
-        {
-            slots[i].Empty = true;
-            if (slots[i].holder != null)
-                slots[i].holder.gameObject.SetActive(false);
-            slots[i].weapon = null;
-            slots[i].index = i;
-        }
-    }
-
-    private void Update()
-    {
-        int previousWeapon = selectedWeapon;
-
-        for(int i = 0; i<keys.Length; i++)
-        {
-            if (Input.GetKey(keys[i]) && lastSwtichTime >= switchTime)
-            {
-                selectedWeapon = i;
-            }
+            public Transform holder;
+            public GameObject weapon;
+            public bool Empty;
+            public int index;
         }
 
-        if (selectedWeapon != previousWeapon)
+        private void Start()
+        {
+            SetWeapons();
             SelectWeapon(selectedWeapon);
+            ChangeWeapon(initialWeaponPrefab);
+            ChangeWeapon(initialSecondaryWeaponPrefab);
+        }
 
-        lastSwtichTime += Time.deltaTime;
-    }
-
-    public void ChangeWeapon(GameObject newWeaponPrefab)
-    {
-        if (newWeaponPrefab == null) return;
-
-        WeaponSlot emptySlot = new WeaponSlot{Empty = true, holder = null, weapon = null,index = -1 };
-
-        //check if one of the slots is empty, if so add the new weapon there
-        for (int i = 0; i < slots.Length; i++)
+        private void SelectWeapon(int selectedWeapon)
         {
-            if (slots[i].Empty)
+            for(int i = 0;i< slots.Length;i++)
             {
-                emptySlot = slots[i];
-                emptySlot.Empty = false;
-                emptySlot.index = i;
-                break;
+                slots[i].holder.gameObject.SetActive(i == selectedWeapon);
+            }
+            lastSwtichTime = 0;
+            OnWeaponSwitch?.Invoke(slots[selectedWeapon].holder);
+            OnWeaponSelected();
+        }
+
+        private void SetWeapons()
+        {
+            //clean up the weapons slots
+            for(int i = 0;i < slots.Length;i++)
+            {
+                slots[i].Empty = true;
+                if (slots[i].holder != null)
+                    slots[i].holder.gameObject.SetActive(false);
+                slots[i].weapon = null;
+                slots[i].index = i;
             }
         }
 
-        //if the emptySlot is still empty means that other slots are full
-        //then change the weapon to the currently selected weapon
-        if(emptySlot.Empty)
+        private void Update()
         {
+            int previousWeapon = selectedWeapon;
+
+            for(int i = 0; i<keys.Length; i++)
+            {
+                if (Input.GetKey(keys[i]) && lastSwtichTime >= switchTime)
+                {
+                    selectedWeapon = i;
+                }
+            }
+
+            if (selectedWeapon != previousWeapon)
+                SelectWeapon(selectedWeapon);
+
+            lastSwtichTime += Time.deltaTime;
+        }
+
+        public void ChangeWeapon(GameObject newWeaponPrefab)
+        {
+            if (newWeaponPrefab == null) return;
+
+            WeaponSlot emptySlot = new WeaponSlot{Empty = true, holder = null, weapon = null,index = -1 };
+
+            //check if one of the slots is empty, if so add the new weapon there
             for (int i = 0; i < slots.Length; i++)
             {
-                if (i == selectedWeapon)
+                if (slots[i].Empty)
                 {
                     emptySlot = slots[i];
+                    emptySlot.Empty = false;
+                    emptySlot.index = i;
                     break;
                 }
             }
-        }
 
-        //remove previous weapon
-        foreach (Transform w in emptySlot.holder)
+            //if the emptySlot is still empty means that other slots are full
+            //then change the weapon to the currently selected weapon
+            if(emptySlot.Empty)
+            {
+                for (int i = 0; i < slots.Length; i++)
+                {
+                    if (i == selectedWeapon)
+                    {
+                        emptySlot = slots[i];
+                        break;
+                    }
+                }
+            }
+
+            //remove previous weapon
+            foreach (Transform w in emptySlot.holder)
+            {
+                Destroy(w.gameObject);
+            }
+
+            emptySlot.weapon = newWeaponPrefab;
+            slots[emptySlot.index] = emptySlot;
+
+            GameObject weapon = Instantiate(newWeaponPrefab,emptySlot.holder.transform);
+            weapon.GetComponent<Weapon>().SetData();
+            weapon.GetComponent<Weapon>().SetOwner(gameObject);
+
+            OnWeaponChange?.Invoke(weapon, emptySlot.index);
+
+        }
+        void OnWeaponSelected()
         {
-            Destroy(w.gameObject);
+            //TODO add sound 
         }
+        public Weapon GetSelectedWeapon()
+        {
+            Weapon wp = slots[selectedWeapon].weapon.GetComponent<Weapon>();
+            if (wp != null)
+                return wp;
 
-        emptySlot.weapon = newWeaponPrefab;
-        slots[emptySlot.index] = emptySlot;
-
-        GameObject weapon = Instantiate(newWeaponPrefab,emptySlot.holder.transform);
-        weapon.GetComponent<Weapon>().SetData();
-        weapon.GetComponent<Weapon>().SetOwner(gameObject);
-
-        OnWeaponChange?.Invoke(weapon, emptySlot.index);
-
-    }
-    void OnWeaponSelected()
-    {
-        //TODO add sound 
-    }
-    public Weapon GetSelectedWeapon()
-    {
-        Weapon wp = slots[selectedWeapon].weapon.GetComponent<Weapon>();
-        if (wp != null)
-            return wp;
-
-        return null;
+            return null;
+        }
     }
 }

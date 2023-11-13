@@ -1,16 +1,19 @@
 using UnityEngine;
 
-public class PacketWrapper : MonoBehaviour
+namespace _Scripts.Networking
 {
-    // Start is called before the first frame update
-    void Start()
+    public class PacketWrapper : MonoBehaviour
     {
+        // Start is called before the first frame update
+        void Start()
+        {
         
-    }
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
+        // Update is called once per frame
+        void Update()
+        {
         
+        }
     }
 }

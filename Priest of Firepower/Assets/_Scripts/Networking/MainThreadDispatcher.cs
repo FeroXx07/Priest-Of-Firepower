@@ -1,22 +1,26 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
-public class MainThreadDispatcher : MonoBehaviour
+
+namespace _Scripts.Networking
 {
-    private static readonly Queue<Action> actionQueue = new Queue<Action>();
-    private void Awake()
+    public class MainThreadDispatcher : MonoBehaviour
     {
-        DontDestroyOnLoad(this);
-    }
-    private void Update()
-    {
-        while(actionQueue.Count > 0)
+        private static readonly Queue<Action> actionQueue = new Queue<Action>();
+        private void Awake()
         {
-            actionQueue.Dequeue()?.Invoke();
+            DontDestroyOnLoad(this);
         }
-    }
-    public static void EnqueueAction(Action action)
-    {
-        actionQueue.Enqueue(action);
+        private void Update()
+        {
+            while(actionQueue.Count > 0)
+            {
+                actionQueue.Dequeue()?.Invoke();
+            }
+        }
+        public static void EnqueueAction(Action action)
+        {
+            actionQueue.Enqueue(action);
+        }
     }
 }

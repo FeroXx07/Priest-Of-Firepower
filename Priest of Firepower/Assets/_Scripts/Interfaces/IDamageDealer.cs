@@ -1,12 +1,13 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public interface IDamageDealer
+namespace _Scripts.Interfaces
 {
-    event Action<GameObject> onDamageDealerDestroyed;
-    event Action<GameObject> onDamageDealth;
+    public interface IDamageDealer
+    {
+        event Action<GameObject> onDamageDealerDestroyed;
+        event Action<GameObject> onDamageDealth;
 
-    int Damage { get; set; }
+        int Damage { get; set; }
+    }
 }

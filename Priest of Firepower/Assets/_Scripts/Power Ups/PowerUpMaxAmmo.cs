@@ -1,19 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-
-public class PowerUpMaxAmmo : PowerUpBase
+namespace _Scripts.Power_Ups
 {
-    public override void ApplyPowerUp()
+    public class PowerUpMaxAmmo : PowerUpBase
     {
-        base.ApplyPowerUp();
-
-        Weapon[] allWeapons = FindObjectsOfType<Weapon>();
-        foreach (Weapon weapon in allWeapons)
+        public override void ApplyPowerUp()
         {
-            if (weapon != null)
-                weapon.GiveMaxAmmo();
-        }
+            base.ApplyPowerUp();
 
+            Weapon.Weapon[] allWeapons = FindObjectsOfType<Weapon.Weapon>();
+            foreach (Weapon.Weapon weapon in allWeapons)
+            {
+                if (weapon != null)
+                    weapon.GiveMaxAmmo();
+            }
+
+        }
     }
 }

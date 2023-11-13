@@ -1,13 +1,12 @@
 using System;
-using System.Net;
-using System.Net.Sockets;
-using UnityEngine;
-using System.Threading;
-using System.Text;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using UnityEngine;
 
-namespace ClientA
+namespace _Scripts.Networking
 {
     public class AClient : GenericSingleton<AClient>
     {

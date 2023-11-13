@@ -1,24 +1,25 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Enemies;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+namespace _Scripts
 {
-    [SerializeField] EnemyManager enemySpawnManager;
-
-    [SerializeField]RoundSystem roundSystem;
-
-    private void Start()
+    public class GameManager : MonoBehaviour
     {
-        roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
-        roundSystem.StartRound();
-    }
+        [SerializeField] EnemyManager enemySpawnManager;
+
+        [SerializeField]RoundSystem roundSystem;
+
+        private void Start()
+        {
+            roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
+            roundSystem.StartRound();
+        }
 
 
-    private void Update()
-    {
-        roundSystem.RoundFinished(enemySpawnManager);
+        private void Update()
+        {
+            roundSystem.RoundFinished(enemySpawnManager);
+        }
     }
 }
 

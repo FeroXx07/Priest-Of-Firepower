@@ -1,16 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Enemies;
 using UnityEngine;
 
-public class EnemySpawner : MonoBehaviour
+namespace _Scripts.Spawners
 {
-    [SerializeField]
-    EnemyManager spawnerManager;
-    private void OnEnable()
+    public class EnemySpawner : MonoBehaviour
     {
-        if(spawnerManager == null) 
-            spawnerManager = GetComponentInParent<EnemyManager>();
-        if(spawnerManager != null) 
-            spawnerManager.AddSpawnpoint(gameObject.transform);
+        [SerializeField]
+        EnemyManager spawnerManager;
+        private void OnEnable()
+        {
+            if(spawnerManager == null) 
+                spawnerManager = GetComponentInParent<EnemyManager>();
+            if(spawnerManager != null) 
+                spawnerManager.AddSpawnpoint(gameObject.transform);
+        }
     }
 }

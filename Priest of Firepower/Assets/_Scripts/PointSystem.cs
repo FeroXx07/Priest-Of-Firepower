@@ -1,54 +1,56 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Interfaces;
 using UnityEngine;
 
-public class PointSystem : MonoBehaviour
+namespace _Scripts
 {
-    private int points;
-    public int multiplyer = 1;
-    public Action<int> onPointsAdded;
-    public Action<int> onPointsRemoved;
-    public Action<int> onPointsChanged;
-
-    void Start()
+    public class PointSystem : MonoBehaviour
     {
+        private int points;
+        public int multiplyer = 1;
+        public Action<int> onPointsAdded;
+        public Action<int> onPointsRemoved;
+        public Action<int> onPointsChanged;
+
+        void Start()
+        {
         
-        points = 0;
+            points = 0;
         
-        //Show points on start
-        onPointsChanged?.Invoke(points);
-    }
+            //Show points on start
+            onPointsChanged?.Invoke(points);
+        }
 
-    public void AddPoints(int points_to_add)
-    {
-        points += points_to_add;
+        public void AddPoints(int points_to_add)
+        {
+            points += points_to_add;
 
-        onPointsAdded?.Invoke(points_to_add);
-        onPointsChanged?.Invoke(points);
-    }
+            onPointsAdded?.Invoke(points_to_add);
+            onPointsChanged?.Invoke(points);
+        }
 
-    public void RemovePoints(int points_to_remove)
-    {
-        points -= points_to_remove;
-        onPointsRemoved?.Invoke(points_to_remove);
-        onPointsChanged?.Invoke(points);
-    }
+        public void RemovePoints(int points_to_remove)
+        {
+            points -= points_to_remove;
+            onPointsRemoved?.Invoke(points_to_remove);
+            onPointsChanged?.Invoke(points);
+        }
 
-    public int GetPoints() { return points; }
+        public int GetPoints() { return points; }
 
 
-    public void PointsOnHit(IPointsProvider pointsProvider)
-    {
-        int points =  pointsProvider.ProvidePointsOnHit() * multiplyer;
+        public void PointsOnHit(IPointsProvider pointsProvider)
+        {
+            int points =  pointsProvider.ProvidePointsOnHit() * multiplyer;
 
-        AddPoints(points);
-    }
+            AddPoints(points);
+        }
 
-    public void PointsOnDeath(IPointsProvider pointsProvider)
-    {
-        int points = pointsProvider.ProvidePointsOnDeath() * multiplyer;
+        public void PointsOnDeath(IPointsProvider pointsProvider)
+        {
+            int points = pointsProvider.ProvidePointsOnDeath() * multiplyer;
 
-        AddPoints(points);
+            AddPoints(points);
+        }
     }
 }

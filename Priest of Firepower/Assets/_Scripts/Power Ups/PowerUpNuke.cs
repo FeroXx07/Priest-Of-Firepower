@@ -1,13 +1,14 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+using _Scripts.Enemies;
 
-public class PowerUpNuke : PowerUpBase
+namespace _Scripts.Power_Ups
 {
-    public override void ApplyPowerUp()
+    public class PowerUpNuke : PowerUpBase
     {
-        base.ApplyPowerUp();
+        public override void ApplyPowerUp()
+        {
+            base.ApplyPowerUp();
 
-        EnemyManager.Instance.KillAllEnemies();
+            EnemyManager.Instance.KillAllEnemies();
+        }
     }
 }

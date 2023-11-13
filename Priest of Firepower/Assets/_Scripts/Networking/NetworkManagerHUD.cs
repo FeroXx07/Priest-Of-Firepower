@@ -4,39 +4,42 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class NetworkManagerHUD : MonoBehaviour
+namespace _Scripts.Networking
 {
-    [SerializeField] Button hostBtn;
-    [SerializeField] TMP_InputField ipInputField;
-    private void Start()
+    public class NetworkManagerHUD : MonoBehaviour
     {
-        hostBtn.onClick.AddListener(HostGame);
-        NetworkManager.Instance.OnClientConnected += Lobby;
-        ipInputField.onEndEdit.AddListener(ConnectToServer);
-    }
-    void HostGame()
-    {
-        NetworkManager.Instance.StartHost();
-    }
-
-    //if client connected send to lobby
-    void Lobby()
-    {
-        SceneManager.LoadScene(1);
-        Debug.Log("Going to lobby ...");
-    }
-
-    private void ConnectToServer(string ip)
-    {
-        IPAddress adddress = IPAddress.Parse(ip);
-        if (adddress != null)
+        [SerializeField] Button hostBtn;
+        [SerializeField] TMP_InputField ipInputField;
+        private void Start()
         {
-            NetworkManager.Instance.StartClient();
-            NetworkManager.Instance.ConnectClient(adddress);
+            hostBtn.onClick.AddListener(HostGame);
+            NetworkManager.Instance.OnClientConnected += Lobby;
+            ipInputField.onEndEdit.AddListener(ConnectToServer);
         }
-        else
+        void HostGame()
         {
-            Debug.LogError(ip + " address is not valid ...");
+            NetworkManager.Instance.StartHost();
+        }
+
+        //if client connected send to lobby
+        void Lobby()
+        {
+            SceneManager.LoadScene(1);
+            Debug.Log("Going to lobby ...");
+        }
+
+        private void ConnectToServer(string ip)
+        {
+            IPAddress adddress = IPAddress.Parse(ip);
+            if (adddress != null)
+            {
+                NetworkManager.Instance.StartClient();
+                NetworkManager.Instance.ConnectClient(adddress);
+            }
+            else
+            {
+                Debug.LogError(ip + " address is not valid ...");
+            }
         }
     }
 }

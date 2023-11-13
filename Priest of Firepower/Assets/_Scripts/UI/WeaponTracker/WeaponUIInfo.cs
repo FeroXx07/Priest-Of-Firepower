@@ -1,72 +1,74 @@
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.ScriptableObjects;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
-public class WeaponUIInfo : MonoBehaviour
+namespace _Scripts.UI.WeaponTracker
 {
-    [SerializeField] WeaponData weaponData;
-
-    [SerializeField] Image weaponSprite;
-    [SerializeField] float spriteSize;
-    [SerializeField] Image magazineSprite;
-    [SerializeField] TextMeshProUGUI magazineCount;
-    [SerializeField] TextMeshProUGUI totalAmmo;
-
-    private void Awake()
+    public class WeaponUIInfo : MonoBehaviour
     {
-        weaponSprite.preserveAspect = true;
-        
-    }
+        [SerializeField] WeaponData weaponData;
 
-    public void SetWeapon(WeaponData data)
-    {
-        weaponData = data;
-        weaponSprite.sprite = data.sprite;
+        [SerializeField] Image weaponSprite;
+        [SerializeField] float spriteSize;
+        [SerializeField] Image magazineSprite;
+        [SerializeField] TextMeshProUGUI magazineCount;
+        [SerializeField] TextMeshProUGUI totalAmmo;
 
-        float a = weaponSprite.sprite.rect.height;
-        float b = weaponSprite.sprite.rect.width;
-        
-        float spriteRatio = b / a * spriteSize;
-
-        weaponSprite.gameObject.transform.localScale = new Vector3(spriteRatio, spriteRatio, spriteRatio);
-        UpdateUI();
-    }
-
-
-    public void UpdateUI()
-    {
-
-        if (weaponData == null) return;
-
-
-        //draw remaining bullets in current magazine
-        if (weaponData.maxAmmoCapacity != 0)
+        private void Awake()
         {
-            float fill = weaponData.ammoInMagazine / (float)weaponData.magazineSize;
-            magazineSprite.fillAmount = fill;
-
+            weaponSprite.preserveAspect = true;
+        
         }
 
-        //write remaining magazines
-        if (weaponData.maxAmmoCapacity != 0)
+        public void SetWeapon(WeaponData data)
         {
-            int totalAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
+            weaponData = data;
+            weaponSprite.sprite = data.sprite;
 
-            float magazinesLeft = totalAmmo / (float)weaponData.magazineSize;
+            float a = weaponSprite.sprite.rect.height;
+            float b = weaponSprite.sprite.rect.width;
+        
+            float spriteRatio = b / a * spriteSize;
 
-            if (totalAmmo == weaponData.maxAmmoCapacity + weaponData.magazineSize) magazinesLeft -= 1;
-
-            magazineCount.text = "x" + Mathf.FloorToInt(magazinesLeft).ToString();
+            weaponSprite.gameObject.transform.localScale = new Vector3(spriteRatio, spriteRatio, spriteRatio);
+            UpdateUI();
         }
 
 
+        public void UpdateUI()
+        {
 
-        //show total ammo remaining
-        int currentAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
-        totalAmmo.text = currentAmmo.ToString() + " / " + (weaponData.maxAmmoCapacity + weaponData.magazineSize).ToString();
+            if (weaponData == null) return;
+
+
+            //draw remaining bullets in current magazine
+            if (weaponData.maxAmmoCapacity != 0)
+            {
+                float fill = weaponData.ammoInMagazine / (float)weaponData.magazineSize;
+                magazineSprite.fillAmount = fill;
+
+            }
+
+            //write remaining magazines
+            if (weaponData.maxAmmoCapacity != 0)
+            {
+                int totalAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
+
+                float magazinesLeft = totalAmmo / (float)weaponData.magazineSize;
+
+                if (totalAmmo == weaponData.maxAmmoCapacity + weaponData.magazineSize) magazinesLeft -= 1;
+
+                magazineCount.text = "x" + Mathf.FloorToInt(magazinesLeft).ToString();
+            }
+
+
+
+            //show total ammo remaining
+            int currentAmmo = weaponData.totalAmmo + weaponData.ammoInMagazine;
+            totalAmmo.text = currentAmmo.ToString() + " / " + (weaponData.maxAmmoCapacity + weaponData.magazineSize).ToString();
+
+        }
 
     }
-
 }

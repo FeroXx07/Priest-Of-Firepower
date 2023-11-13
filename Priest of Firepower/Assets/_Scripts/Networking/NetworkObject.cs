@@ -1,31 +1,33 @@
 using System;
 using System.IO;
-using _Scripts.Networking;
 using UnityEngine;
 
-public enum NetworkAction
+namespace _Scripts.Networking
 {
-    CREATE_GAMEOBJECT,
-    UPDATE_GAMEOBJECT,
-    DESTROY_GAMEOBJECT
-}
-public class NetworkObject : MonoBehaviour
-{
-    public bool synchronizeTransform = true;
-    [SerializeField] private UInt64 globalObjectIdHash = 10;
-    public void SetNetworkId(UInt64 id){ globalObjectIdHash = id; }
-    public UInt64 GetNetworkId() {  return globalObjectIdHash; }
-
-    public void HandleNetworkBehaviour(Type type, BinaryReader reader)
+    public enum NetworkAction
     {
-        NetworkBehaviour b = GetComponent(type) as NetworkBehaviour;
-        if (b != null)
+        CREATE_GAMEOBJECT,
+        UPDATE_GAMEOBJECT,
+        DESTROY_GAMEOBJECT
+    }
+    public class NetworkObject : MonoBehaviour
+    {
+        public bool synchronizeTransform = true;
+        [SerializeField] private UInt64 globalObjectIdHash = 10;
+        public void SetNetworkId(UInt64 id){ globalObjectIdHash = id; }
+        public UInt64 GetNetworkId() {  return globalObjectIdHash; }
+
+        public void HandleNetworkBehaviour(Type type, BinaryReader reader)
         {
-            b.Read(reader);
-        }
-        else
-        {
-            Debug.LogError("Cast failed " + type);
+            NetworkBehaviour b = GetComponent(type) as NetworkBehaviour;
+            if (b != null)
+            {
+                b.Read(reader);
+            }
+            else
+            {
+                Debug.LogError("Cast failed " + type);
+            }
         }
     }
 }

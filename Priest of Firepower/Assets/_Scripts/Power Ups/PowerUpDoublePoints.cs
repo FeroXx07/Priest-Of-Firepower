@@ -1,41 +1,43 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-public class PowerUpDoublePoints : PowerUpBase
+namespace _Scripts.Power_Ups
 {
-    [SerializeField] private float powerUpTime = 10.0f;
-    [SerializeField] private float timerCount = 0.0f;
-    [SerializeField] bool isActive = false;
-    List<PointSystem> pointsProviders = new List<PointSystem>();
-    public override void ApplyPowerUp()
+    public class PowerUpDoublePoints : PowerUpBase
     {
-        base.ApplyPowerUp();
-
-        // TODO: Give 2x points to all active players
-        pointsProviders = FindObjectsOfType<PointSystem>(true).ToList();
-        pointsProviders.ForEach(p => p.multiplyer = 2);
-
-        for (int i = 0; i < transform.childCount; i++)
+        [SerializeField] private float powerUpTime = 10.0f;
+        [SerializeField] private float timerCount = 0.0f;
+        [SerializeField] bool isActive = false;
+        List<PointSystem> pointsProviders = new List<PointSystem>();
+        public override void ApplyPowerUp()
         {
-            transform.GetChild(i).gameObject.SetActive(false); // Hide sprites
-        }
-        
-        isActive = true;
-    }
+            base.ApplyPowerUp();
 
-    private void Update()
-    {
-        if (isActive)
-        {
-            timerCount += Time.deltaTime;
-            if (timerCount >= powerUpTime)
+            // TODO: Give 2x points to all active players
+            pointsProviders = FindObjectsOfType<PointSystem>(true).ToList();
+            pointsProviders.ForEach(p => p.multiplyer = 2);
+
+            for (int i = 0; i < transform.childCount; i++)
             {
-                isActive = false;
-                timerCount = 0.0f;
-                pointsProviders.ForEach(p => p.multiplyer = 1);
-                pointsProviders.Clear();
+                transform.GetChild(i).gameObject.SetActive(false); // Hide sprites
+            }
+        
+            isActive = true;
+        }
+
+        private void Update()
+        {
+            if (isActive)
+            {
+                timerCount += Time.deltaTime;
+                if (timerCount >= powerUpTime)
+                {
+                    isActive = false;
+                    timerCount = 0.0f;
+                    pointsProviders.ForEach(p => p.multiplyer = 1);
+                    pointsProviders.Clear();
+                }
             }
         }
     }

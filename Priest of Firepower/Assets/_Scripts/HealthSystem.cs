@@ -1,56 +1,58 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Interfaces;
 using UnityEngine;
 
-public class HealthSystem : MonoBehaviour,IDamageable
+namespace _Scripts
 {
-
-    [SerializeField] private int health;
-    [SerializeField] private int maxHealth;
-    [SerializeField] private LayerMask layer;
-    public LayerMask layers { get => layer; set => layer = value; }
-    public int Health { get => health; set => health = value; }
-    public int MaxHealth { get => maxHealth; set => maxHealth = value; }
-
-    public event Action<GameObject, GameObject> onDamageableDestroyed;
-    public event Action<GameObject, GameObject> onDamageTaken;
-
-    private void OnEnable()
+    public class HealthSystem : MonoBehaviour,IDamageable
     {
-        health = maxHealth;
-    }
 
-    public void OnDamageableDestroyed(GameObject destroyer)
-    {
-        onDamageableDestroyed?.Invoke(gameObject, destroyer);
-    }
+        [SerializeField] private int health;
+        [SerializeField] private int maxHealth;
+        [SerializeField] private LayerMask layer;
+        public LayerMask layers { get => layer; set => layer = value; }
+        public int Health { get => health; set => health = value; }
+        public int MaxHealth { get => maxHealth; set => maxHealth = value; }
 
-    public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
-    {
-        health -= damageDealer.Damage;
-        onDamageTaken?.Invoke(gameObject, owner);
+        public event Action<GameObject, GameObject> onDamageableDestroyed;
+        public event Action<GameObject, GameObject> onDamageTaken;
 
-        if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
+        private void OnEnable()
         {
-            if (owner.TryGetComponent<PointSystem>(out PointSystem pointSystem))
-            {
-                pointSystem.PointsOnHit(pointsProvider);
-            }
+            health = maxHealth;
         }
 
-        if (health <= 0)
+        public void OnDamageableDestroyed(GameObject destroyer)
         {
-            if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProviders))
+            onDamageableDestroyed?.Invoke(gameObject, destroyer);
+        }
+
+        public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
+        {
+            health -= damageDealer.Damage;
+            onDamageTaken?.Invoke(gameObject, owner);
+
+            if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
             {
                 if (owner.TryGetComponent<PointSystem>(out PointSystem pointSystem))
                 {
-                    pointSystem.PointsOnDeath(pointsProviders);
+                    pointSystem.PointsOnHit(pointsProvider);
                 }
             }
+
+            if (health <= 0)
+            {
+                if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProviders))
+                {
+                    if (owner.TryGetComponent<PointSystem>(out PointSystem pointSystem))
+                    {
+                        pointSystem.PointsOnDeath(pointsProviders);
+                    }
+                }
             
-            health = 0;
-            OnDamageableDestroyed(owner);
+                health = 0;
+                OnDamageableDestroyed(owner);
+            }
         }
     }
 }

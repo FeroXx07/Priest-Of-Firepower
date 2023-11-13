@@ -1,21 +1,23 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Interfaces;
 using UnityEngine;
 
-public class NuclearBomb : MonoBehaviour, IDamageDealer
+namespace _Scripts.Power_Ups
 {
-    int damage = 10000;
-    public int Damage { get => damage; set => damage = value; }
-
-    public event Action<GameObject> onDamageDealerDestroyed;
-    public event Action<GameObject> onDamageDealth;
-
-    public void RaiseDamageDealthEvent(GameObject go)
+    public class NuclearBomb : MonoBehaviour, IDamageDealer
     {
-        onDamageDealth?.Invoke(go);
-        onDamageDealerDestroyed?.Invoke(go);
+        int damage = 10000;
+        public int Damage { get => damage; set => damage = value; }
 
-        Destroy(this, 2.0f);
+        public event Action<GameObject> onDamageDealerDestroyed;
+        public event Action<GameObject> onDamageDealth;
+
+        public void RaiseDamageDealthEvent(GameObject go)
+        {
+            onDamageDealth?.Invoke(go);
+            onDamageDealerDestroyed?.Invoke(go);
+
+            Destroy(this, 2.0f);
+        }
     }
 }

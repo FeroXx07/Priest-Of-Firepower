@@ -1,50 +1,52 @@
-using System.Collections;
-using System.Collections.Generic;
+using _Scripts.Interfaces;
 using UnityEngine;
 
-public class Interactor : MonoBehaviour
+namespace _Scripts
 {
-    [SerializeField] KeyCode key;
-    [SerializeField]private LayerMask layer;
-    [SerializeField] private float interactionRange;
-    private Collider2D interactable;
-
-    private void Update()
+    public class Interactor : MonoBehaviour
     {
-        // Get the mouse position in world coordinates.
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
+        [SerializeField] KeyCode key;
+        [SerializeField]private LayerMask layer;
+        [SerializeField] private float interactionRange;
+        private Collider2D interactable;
 
-        Vector3 dir = (mousePos - transform.position).normalized;
+        private void Update()
+        {
+            // Get the mouse position in world coordinates.
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
 
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, dir ,interactionRange,layer);
+            Vector3 dir = (mousePos - transform.position).normalized;
+
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, dir ,interactionRange,layer);
     
 
-        if(hit.collider != null)
-        {
-            interactable = hit.collider;
-            IInteractable obj =  interactable.GetComponent<IInteractable>();
-            obj.Interact(this, Input.GetKey(key));
-        }
-        // if not looking any more the las interacteable, diable UI and clear the reference to it
-        else if (interactable != null)
-        {
-            IInteractable obj = interactable.GetComponent<IInteractable>();
-            obj.EnablePromptUI(false);
-            interactable = null;
-        }
+            if(hit.collider != null)
+            {
+                interactable = hit.collider;
+                IInteractable obj =  interactable.GetComponent<IInteractable>();
+                obj.Interact(this, Input.GetKey(key));
+            }
+            // if not looking any more the las interacteable, diable UI and clear the reference to it
+            else if (interactable != null)
+            {
+                IInteractable obj = interactable.GetComponent<IInteractable>();
+                obj.EnablePromptUI(false);
+                interactable = null;
+            }
         
-    }
+        }
 
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.yellow;
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.yellow;
 
-        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0;
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            mousePos.z = 0;
 
-        Vector3 dir = (mousePos - transform.position).normalized;
+            Vector3 dir = (mousePos - transform.position).normalized;
 
-        Gizmos.DrawLine(transform.position, transform.position + dir * interactionRange);
+            Gizmos.DrawLine(transform.position, transform.position + dir * interactionRange);
+        }
     }
 }
