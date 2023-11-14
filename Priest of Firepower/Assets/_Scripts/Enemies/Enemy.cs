@@ -51,6 +51,11 @@ namespace _Scripts.Enemies
         }
         void Start()
         {
+            SetTarget();
+        }
+
+        protected void SetTarget()
+        {
             PlayerList = GameObject.FindGameObjectsWithTag("Player");
             float smallerDistance = Mathf.Infinity;
 
@@ -59,11 +64,11 @@ namespace _Scripts.Enemies
                 float actualDistance = Vector2.Distance(player.transform.position, this.transform.position);
 
                 if (actualDistance < smallerDistance)
-                { 
+                {
                     smallerDistance = actualDistance;
                     Target = player.transform;
                 }
-            }        
+            }
         }
 
         private void OnEnable()
