@@ -100,8 +100,10 @@ namespace _Scripts
             UnityEngine.Debug.Log($"Read Elapsed Time: {rTime} milliseconds");
         }
 
-        private void Update()
+        public override void Update()
         {
+            base.Update();
+            
             UnityEngine.Debug.Log($"{gameObject.name} myNetVariableInt is: {myNetVariableInt.Value}");
             UnityEngine.Debug.Log($"{gameObject.name} myNetVariableStr is: {myNetVariableStr.Value}");
             UnityEngine.Debug.Log($"{gameObject.name} myNetVariablefloat is: {myNetDouble.Value}");
