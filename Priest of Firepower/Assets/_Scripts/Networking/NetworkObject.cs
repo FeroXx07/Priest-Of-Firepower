@@ -8,6 +8,9 @@ namespace _Scripts.Networking
     {
         [SerializeField] private UInt64 globalObjectIdHash = 10;
         public bool synchronizeTransform = true;
+        [SerializeField] private bool isTransformDirty = false;
+        [SerializeField] private bool isLastTrasformFromNetwork = false;
+        
         public float tickRate = 10.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         
@@ -35,6 +38,9 @@ namespace _Scripts.Networking
             transform.position = newPos;
             transform.rotation = newQuat;
             transform.localScale = newScale;
+            
+            isTransformDirty = false;
+            isLastTrasformFromNetwork = true;
         }
 
         public MemoryStream SendNetworkTransform()
@@ -66,16 +72,25 @@ namespace _Scripts.Networking
             _writer.Write((float)transform.localScale.z);
             
             //NetworkManager.Instance.AddStateStreamQueue(_stream);
+            isTransformDirty = false;
+            
             return _stream;
         }
         
         private void Update()
         {
+            if (transform.hasChanged)
+            {
+                isTransformDirty = true;
+                isLastTrasformFromNetwork = false;
+                transform.hasChanged = false;
+            }
+            
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
             if (_tickCounter >= finalRate)
             {
-                SendNetworkTransform();
+                if (!isLastTrasformFromNetwork) SendNetworkTransform();
                 _tickCounter = 0.0f;
             }
             _tickCounter += Time.deltaTime;

@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace _Scripts
 {
-    [Serializable]
     public class SerializationTest : NetworkBehaviour
     {
         [SerializeField] public NetworkVariable<int> myNetVariableInt = new NetworkVariable<int>(10101, 0);

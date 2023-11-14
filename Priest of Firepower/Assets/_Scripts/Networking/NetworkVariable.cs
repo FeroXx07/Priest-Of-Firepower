@@ -8,7 +8,7 @@ namespace _Scripts.Networking
     public interface INetworkVariable
     {
         object GetValue();
-        void SetValue(object newValue);
+        void SetValue(object newValue, bool isFromNetwork = false);
         void WriteInBinaryWriter(BinaryWriter writer);
         void ReadFromBinaryReader(BinaryReader reader);
         bool IsDirty { get; }
@@ -27,14 +27,14 @@ namespace _Scripts.Networking
 
             if (_changeTracker != null)
                 _changeTracker.TrackChange(_trackerIndex);
-            isDirty = true;
+            isDirty = false;
+            isLastValueFromNetwork = false;
         }
 
-        [FormerlySerializedAs("_value")] [SerializeField] private T value;
+        [SerializeField] private T value;
         [SerializeField] Type _type;
-        [FormerlySerializedAs("_isDirty")] [SerializeField] private bool isDirty = false;
-        [FormerlySerializedAs("_isLastValueFromNetwork")] [SerializeField] private bool isLastValueFromNetwork = false;
-
+        [SerializeField] private bool isDirty = false;
+        [SerializeField] private bool isLastValueFromNetwork = false;
         private ChangeTracker _changeTracker = null;
         private int _trackerIndex;
         public T Value { get => value; set => SetValue(value); }
@@ -45,16 +45,16 @@ namespace _Scripts.Networking
             _changeTracker = changeTracker;
         }
 
-        public void SetValue(object newValue) 
-        { 
-            if (value.Equals(newValue) == false)
-            {
-                isDirty = true;
-                isLastValueFromNetwork = false;
+        public void SetValue(object newValue, bool isFromNetwork = false)
+        {
+            if (value.Equals(newValue)) return;
+            
+            isDirty = true;
+            isLastValueFromNetwork = isFromNetwork;
 
-                if (_changeTracker != null)
-                    _changeTracker.TrackChange(_trackerIndex);
-            }
+            if (_changeTracker != null && isLastValueFromNetwork == false)
+                _changeTracker.TrackChange(_trackerIndex);
+                
             value = (T)newValue;
         }
 
@@ -65,7 +65,13 @@ namespace _Scripts.Networking
                 Debug.Log("Writer is null");
                 return;
             }
-
+            
+            if (_changeTracker != null)
+                _changeTracker.DeTrackChange(_trackerIndex);
+            
+            isDirty = false;
+            isLastValueFromNetwork = false;
+            
             if (_type == typeof(int))
             {
                 int castedValue = Convert.ToInt32(value);
@@ -118,6 +124,7 @@ namespace _Scripts.Networking
 
             if (_changeTracker != null)
                 _changeTracker.DeTrackChange(_trackerIndex);
+            
             isDirty = false;
             isLastValueFromNetwork = true;
 
