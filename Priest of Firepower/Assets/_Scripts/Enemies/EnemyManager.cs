@@ -24,6 +24,7 @@ namespace _Scripts.Enemies
 
         public Action<int> OnEnemyCountUpdate;
         public Action<Enemy> OnEnemySpawn;
+        public Action<Enemy> OnEnemyRemove;
 
         public void SpawnEnemies(int round)
         {
@@ -77,6 +78,7 @@ namespace _Scripts.Enemies
             enemy.onDeath.RemoveListener(RemoveEnemyFromList);
             Debug.Log("enemies alive: " + enemiesAlive.Count );
             OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
+            OnEnemyRemove?.Invoke(enemy);
         }
 
         public void KillAllEnemies()

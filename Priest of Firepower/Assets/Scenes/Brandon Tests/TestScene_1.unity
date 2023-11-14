@@ -38044,7 +38044,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 589644081}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 13fc042a17bc280469ef8a7d5b59a56b, type: 3}
   m_Name: 
@@ -53381,6 +53381,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1003177811}
+  - component: {fileID: 1003177812}
   m_Layer: 5
   m_Name: EnemyOffLimitsTracker
   m_TagString: Untagged
@@ -53408,6 +53409,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1003177812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1003177810}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f514da5958cb4242934c012595def17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  screenOffsets: {x: 650, y: 450}
+  enemyManager: {fileID: 1768707733}
+  trackerRef: {fileID: 3735180897885984550, guid: ca028ddf8cc50ab4ebddc0df8e0bb234, type: 3}
 --- !u!43 &1003429098
 Mesh:
   m_ObjectHideFlags: 0
