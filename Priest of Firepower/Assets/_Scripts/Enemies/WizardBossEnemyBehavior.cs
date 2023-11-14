@@ -10,7 +10,7 @@ namespace _Scripts.Enemies
 
         private float _bulletSpeedMultiplierOne = 6.0f;
         private float _bulletSpeedMultiplierTwo = 5.0f;
-        private float _bulletSpeedMultiplierThree = 4.0f;
+        private float _bulletSpeedMultiplierThree = 8.0f;
 
         private int _shotCount = 0;
 
@@ -207,10 +207,10 @@ namespace _Scripts.Enemies
         {
             Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 3; i++)
             {
                 // Calculate the rotation for each bullet
-                float angle = (i / 4.0f) * 360.0f;
+                float angle = (i / 3.0f) * 360.0f;
                 Vector3 direction = Quaternion.Euler(0, 0, angle) * directionToPlayer;
 
                 // Instantiate the bullet and set its position

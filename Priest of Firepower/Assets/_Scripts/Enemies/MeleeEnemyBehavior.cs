@@ -26,7 +26,7 @@ namespace _Scripts.Enemies
                     // animation, particles and sound
                     Agent.SetDestination(Target.position);
 
-                    if(Vector3.Distance(Target.position, this.transform.position) <= 2)
+                    if(Vector3.Distance(Target.position, this.transform.position) <= 1)
                     {
                         EnemyState = EnemyState.ATTACK;
                     }
@@ -56,7 +56,7 @@ namespace _Scripts.Enemies
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(Target.position, this.transform.position) > 2)
+                    if (Vector3.Distance(Target.position, this.transform.position) > 1)
                     {
                         EnemyState = EnemyState.CHASE;                    
                     }
