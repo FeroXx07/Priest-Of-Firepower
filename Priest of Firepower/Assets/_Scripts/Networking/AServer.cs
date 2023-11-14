@@ -214,7 +214,7 @@ namespace _Scripts.Networking
 
         public void SendToAll(byte[] data)
         {
-            Debug.Log("Boradcasting message ...");
+            //Debug.Log("Boradcasting message ...");
             foreach (ClientData client in _clientList)
             {
                 client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.endPoint);

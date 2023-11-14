@@ -45,20 +45,36 @@ namespace _Scripts.Networking
             bitfield.CopyTo(bitfieldBytes, 0);
             writer.Write(bitfieldBytes);
 
-            foreach (var variable in NetworkVariableList)
+            int count = 0;
+            for (int i = 0; i < bitfield.Length; i++)
             {
-                if(variable.IsDirty)
+                if (bitfield[i] != NetworkVariableList[i].IsDirty)
                 {
-                    variable.WriteInBinaryWriter(writer);
+                    Debug.LogWarning("Mismatch in bitfield and isDirty!!");
+                }
+                
+                if (bitfield[i])
+                {
+                    count++;
+                    NetworkVariableList[i].WriteInBinaryWriter(writer);
                 }
             }
-            
-            BITTracker.SetAll(false);
+
+            if (count == 0)
+            {
+                return null;
+            }
+            else
+            {
+                Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Trying to send {count} variables from network behavior: {name}");
+                BITTracker.SetAll(false);
+            }
             return outputMemoryStream;
         }
 
         public virtual void Read(BinaryReader reader) 
         {
+            Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Receiving data with size network behavior: {name}");
             reader.BaseStream.Position = 0;
             // [Object State][Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]... <- End of an object packet
             //[Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...
@@ -102,18 +118,28 @@ namespace _Scripts.Networking
             }
             
             MemoryStream stream = new MemoryStream();
+            stream = FillStreamWithAction(action, stream);
+            if (stream != null)
+            {
+                Debug.Log($"{gameObject.name} -> Sending data: with size {stream.ToArray().Length} and {action}");
+                NetworkManager.Instance.AddStateStreamQueue(stream);
+            }
+        }
+
+        private MemoryStream FillStreamWithAction(NetworkAction action, MemoryStream stream)
+        {
             switch (action)
             {
                 case NetworkAction.CREATE:
                 {
                     BITTracker.SetAll(true);
-                    Write(stream, NetworkAction.CREATE);
+                    return Write(stream, NetworkAction.CREATE);
                 }
                     break;
                 case NetworkAction.UPDATE:
                 {
-                    Write(stream, NetworkAction.UPDATE);
-                } 
+                    return Write(stream, NetworkAction.UPDATE);
+                }
                     break;
                 case NetworkAction.DESTROY:
                 {
@@ -127,22 +153,18 @@ namespace _Scripts.Networking
                 case NetworkAction.EVENT:
                     break;
                 default:
-                    Write(stream, NetworkAction.UPDATE);
+                    return Write(stream, NetworkAction.UPDATE);
                     break;
             }
 
-            // MemoryStream Write(MemoryStream outputStream);
-
-            // Send MemoryStream to netowrk manager buffer
-
-            Debug.Log(gameObject.name +" Sending data :" + action);
-
-            NetworkManager.Instance.AddStateStreamQueue(stream);
+            return stream;
         }
+
         public virtual void Update()
         {
             if (!doTickUpdates)
                 return;
+            
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
             if (_tickCounter >= finalRate )

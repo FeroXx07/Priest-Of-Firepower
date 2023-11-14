@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 
 
@@ -53,7 +54,7 @@ namespace _Scripts.Networking
 
         [FormerlySerializedAs("Player")][SerializeField] GameObject player;
 
-        private ReplicationManager _replicationManager = new ReplicationManager();
+        public ReplicationManager _replicationManager = new ReplicationManager();
         //Actions
         //  Invoked when a new client is connected
         public Action OnClientConnected;
@@ -75,15 +76,20 @@ namespace _Scripts.Networking
             _sendData.cancellationToken = new CancellationTokenSource();
             _sendData.thread = new Thread(() => SendDataThread(_receiveData.cancellationToken.Token));
             _sendData.thread.Start();
-            
-            List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
-            _replicationManager.InitManager(list);
         }
+
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += ResetNetworkIds;
+        }
+
         private void OnDisable()
         {
             Debug.Log("Stopping NetworkManger threads...");
             _receiveData.Shutdown();
             _sendData.Shutdown();
+
+            SceneManager.sceneLoaded -= ResetNetworkIds;
         }
 
         #region Connection Initializers
@@ -192,12 +198,12 @@ namespace _Scripts.Networking
 
                                 if (_isClient)
                                 {
-                                    //Debug.Log("Client: sending object state of size: " + buffer.Length);
+                                    Debug.Log("Client: sending object state of size: " + buffer.Length);
                                     _client.SendPacket(buffer);
                                 }
                                 else if (_isHost)
                                 {   
-                                    //Debug.Log("Host: sending object state of size: " + buffer.Length);
+                                    Debug.Log("Host: sending object state of size: " + buffer.Length);
                                     _server.SendToAll(buffer);
                                 }
                                 else if (_isServer)
@@ -371,7 +377,7 @@ namespace _Scripts.Networking
 
             PacketType type = (PacketType)reader.ReadInt32();
 
-            //Debug.Log("Received packet type: " + type + ", Stream array length: " + stream.ToArray().Length);
+            Debug.Log("Received packet type: " + type + ", Stream array length: " + stream.ToArray().Length);
 
             switch (type)
             {
@@ -507,6 +513,12 @@ namespace _Scripts.Networking
 
             /// Endpoint (IP address and port) clients will connect to.
             public IPEndPoint ServerEndPoint => ParseNetworkEndpoint(address, port);
+        }
+
+        void ResetNetworkIds(Scene scene, LoadSceneMode mode)
+        {
+            List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
+            _replicationManager.InitManager(list);
         }
         #endregion
     }

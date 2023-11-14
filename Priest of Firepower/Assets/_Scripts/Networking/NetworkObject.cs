@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -9,7 +10,7 @@ namespace _Scripts.Networking
         [SerializeField] private UInt64 globalObjectIdHash = 10;
         public bool synchronizeTransform = true;
         [SerializeField] private bool isTransformDirty = false;
-        [SerializeField] private bool isLastTrasformFromNetwork = false;
+        [FormerlySerializedAs("isLastTrasformFromNetwork")] [SerializeField] private bool isLastTransformFromNetwork = false;
         
         public float tickRate = 10.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
@@ -34,17 +35,20 @@ namespace _Scripts.Networking
             Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             Quaternion newQuat = new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(),reader.ReadSingle());
             Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-
+            
             transform.position = newPos;
             transform.rotation = newQuat;
             transform.localScale = newScale;
             
+            Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {transform.position}, {transform.rotation}");
+
             isTransformDirty = false;
-            isLastTrasformFromNetwork = true;
+            isLastTransformFromNetwork = true;
         }
 
         public MemoryStream SendNetworkTransform()
         {
+            Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transform.position}, {transform.rotation}");
             MemoryStream _stream = new MemoryStream();
             BinaryWriter _writer = new BinaryWriter(_stream);
             
@@ -82,7 +86,7 @@ namespace _Scripts.Networking
             if (transform.hasChanged)
             {
                 isTransformDirty = true;
-                isLastTrasformFromNetwork = false;
+                isLastTransformFromNetwork = false;
                 transform.hasChanged = false;
             }
             
@@ -90,7 +94,7 @@ namespace _Scripts.Networking
             float finalRate = 1.0f / tickRate;
             if (_tickCounter >= finalRate)
             {
-                if (!isLastTrasformFromNetwork) SendNetworkTransform();
+                if (!isLastTransformFromNetwork && isTransformDirty) SendNetworkTransform();
                 _tickCounter = 0.0f;
             }
             _tickCounter += Time.deltaTime;
