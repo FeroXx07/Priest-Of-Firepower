@@ -247,26 +247,46 @@ namespace _Scripts.Networking
                 {
                     Socket incomingConnection = _serverTcp.Accept();
                     IPEndPoint IpEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
-                    //if not local host
+                   
 
-                    Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
-                    if (IpEndPoint.Address.Equals(IPAddress.Loopback))
+                    //check that the incoming socket is not being process twice
+                    foreach(ClientData client in _clientList)
                     {
-                        Debug.Log("Server : host connected ... ");
-                        CreateClient(incomingConnection, "Host", true);
+                        if(client.MetaData.endPoint == IpEndPoint)
+                        {
+                            incomingConnection.Close();
+                        }
                     }
-                    else
-                    {                        
-                        Process authenticate = new Process();
+                    foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
+                    {
+                       if(process.Key == IpEndPoint)
+                        {
+                            incomingConnection.Close();
+                       }
+                    }
 
-                        authenticate.cancellationToken = new CancellationTokenSource();
-                        authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
-                        authenticate.thread.Start();
+                    if (IsSocketConnected(incomingConnection))
+                    {
+                        //if not local host
+                        Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
+                        if (IpEndPoint.Address.Equals(IPAddress.Loopback))
+                        {
+                            Debug.Log("Server : host connected ... ");
+                            CreateClient(incomingConnection, "Host", true);
+                        }
+                        else
+                        {
+                            Process authenticate = new Process();
 
-                        _authenticationConnections[IpEndPoint] = incomingConnection;
-                        _authenticationProcesses[IpEndPoint] = authenticate;
+                            authenticate.cancellationToken = new CancellationTokenSource();
+                            authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                            authenticate.thread.Start();
 
-                    }                    
+                            _authenticationConnections[IpEndPoint] = incomingConnection;
+                            _authenticationProcesses[IpEndPoint] = authenticate;
+
+                        }
+                    }          
                 }
 
             }
@@ -416,7 +436,18 @@ namespace _Scripts.Networking
             }
         }
         #endregion
-
+        static bool IsSocketConnected(Socket socket)
+        {
+            try
+            {
+                // Poll the socket for readability and if it's not readable, it means the socket is closed.
+                return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
+            }
+            catch (SocketException)
+            {
+                return false;
+            }
+        }
         #region Authentication
         void Authenticate( Socket incomingSocket, CancellationToken cancellationToken)
         {
@@ -468,6 +499,7 @@ namespace _Scripts.Networking
             _authenticationConnections.Remove(endpoint);
         }
         public ServerAuthenticator GetAuthenticator() { return _authenticator; }
+
         #endregion
     }
 }
