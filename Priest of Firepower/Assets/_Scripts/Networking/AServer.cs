@@ -22,6 +22,26 @@ namespace _Scripts.Networking
             return clientId;
         }
     }
+    public struct Process
+    {
+        public Thread thread;
+        public CancellationTokenSource cancellationToken;
+        public void Shutdown()
+        {
+            cancellationToken.Cancel();
+
+            if (thread == null) return;
+
+            if (thread.IsAlive)
+            {
+                thread.Join();
+            }
+            if (thread.IsAlive)
+            {
+                thread.Abort();
+            }
+        }
+    }
     public class AServer : GenericSingleton<AServer>
     {
         #region variables
@@ -36,7 +56,6 @@ namespace _Scripts.Networking
 
         ClientManager _clientManager;
 
-        private List<Process> _clientThreads = new List<Process>();
         private List<ClientData> _clientList = new List<ClientData>();
         private List<ClientData> _clientListToRemove = new List<ClientData>();
 
@@ -51,12 +70,6 @@ namespace _Scripts.Networking
         Socket _serverUDP;
 
         ServerAuthenticator _authenticator = new ServerAuthenticator();
-
-        struct Process
-        {
-            public Thread Thread;
-            public CancellationTokenSource cancellationToken;
-        }
 
         private bool _isServerInitialized  = false;
         #endregion
@@ -76,13 +89,12 @@ namespace _Scripts.Networking
             public ClientSate State;
             public Socket ConnectionTcp;
             public Socket ConnectionUDP;
-            public CancellationTokenSource AuthenticationToken; //if disconnection request invoke cancellation token to shutdown all related processes
+            public Process listenProcess;//if disconnection request invoke cancellation token to shutdown all related processes
             public bool IsHost = false;
         }
         struct ClientMetadata
-        {
-            public int Port;
-            public IPAddress IP;
+        { 
+            public IPEndPoint endPoint;
             //add time stamp
         }
         public enum ClientSate
@@ -99,11 +111,11 @@ namespace _Scripts.Networking
 
             Debug.Log("Stopping server ...");
 
+            StopConnectionListener();
+
             StopAuthenticationThread();
 
             DisconnectAllClients();
-
-            StopAllClientThreads();
 
             Debug.Log("Closing server connection ...");
 
@@ -112,6 +124,7 @@ namespace _Scripts.Networking
                 _serverTcp.Shutdown(SocketShutdown.Both);
             }
             _serverTcp.Close();
+            _serverUDP.Close();
         }
         private void Update()
         {
@@ -124,52 +137,19 @@ namespace _Scripts.Networking
         {
             foreach(Process p in _authenticationProcessList)
             {
-                p.cancellationToken.Cancel();
-                if (p.Thread != null)
-                {
-                    if (p.Thread.IsAlive)
-                    {
-                        p.Thread.Join();
-                    }
-                    //make sure it is not alive
-                    if (p.Thread.IsAlive)
-                    {
-                        p.Thread.Abort();
-                    }
-                }
+                p.Shutdown();
             }
- 
         }
 
         void StopConnectionListener()
         {
-            _listenConnectionProcess.cancellationToken.Cancel();
-            if (_listenConnectionProcess.Thread.IsAlive)
-                _listenConnectionProcess.Thread.Join();
-            if (_listenConnectionProcess.Thread.IsAlive)
-                _listenConnectionProcess.Thread.Abort();
+            _listenConnectionProcess.Shutdown();
         }
         void DisconnectAllClients()
         {
             foreach (ClientData client in _clientList)
             {
                 RemoveClient(client);
-            }
-        }
-        void StopAllClientThreads()
-        {
-
-            Debug.Log("Server: Waiting for all threads to terminate.");
-            foreach (Process p in _clientThreads)
-            {
-                p.cancellationToken.Cancel();
-                if (p.Thread.IsAlive)
-                    p.Thread.Join();
-            }
-            foreach (Process p in _clientThreads)
-            {
-                if (p.Thread.IsAlive)
-                    p.Thread.Abort();
             }
         }
         void RemoveDisconectedClient()
@@ -219,8 +199,8 @@ namespace _Scripts.Networking
 
 
             _listenConnectionProcess.cancellationToken = new CancellationTokenSource();
-            _listenConnectionProcess.Thread = new Thread(() => StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
-            _listenConnectionProcess.Thread.Start();
+            _listenConnectionProcess.thread = new Thread(() => StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
+            _listenConnectionProcess.thread.Start();
 
             _isServerInitialized = true;
         }
@@ -228,9 +208,9 @@ namespace _Scripts.Networking
         public void SendToAll(byte[] data)
         {
             Debug.Log("Boradcasting message ...");
-            foreach(ClientData client in _clientList)
+            foreach (ClientData client in _clientList)
             {
-                client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.endPoint);
             }
         }
         public  void SendCriticalToAll(byte[] data)
@@ -246,7 +226,7 @@ namespace _Scripts.Networking
             {
                 if (client.ID == clientId)
                 {
-                    client.ConnectionUDP.SendTo(data,data.Length, SocketFlags.None, _endPoint);
+                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
 
                     return;
                 }
@@ -266,15 +246,15 @@ namespace _Scripts.Networking
                     if (IpEndPoint.Address.Equals(IPAddress.Loopback))
                     {
                         Debug.Log("Server : host connected ... ");
-                        CreateClient(incomingConnection, "Host");
+                        CreateClient(incomingConnection, "Host", true);
                     }
                     else
                     {                        
                         Process authenticate = new Process();
 
                         authenticate.cancellationToken = new CancellationTokenSource();
-                        authenticate.Thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
-                        authenticate.Thread.Start();
+                        authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                        authenticate.thread.Start();
                     }                    
                 }
 
@@ -289,7 +269,7 @@ namespace _Scripts.Networking
             Debug.Log("Starting Client Thread " + clientData.ID + " ...");
             try
             {
-                while (!clientData.AuthenticationToken.IsCancellationRequested)
+                while (!clientData.listenProcess.cancellationToken.IsCancellationRequested)
                 {
 
                     if (clientData.ConnectionTcp.Available > 0)
@@ -323,6 +303,7 @@ namespace _Scripts.Networking
             {
                 // Handle other exceptions
                 Debug.Log($"Exception: {e.Message}");
+                
             }
         }
         void ReceiveSocketData(Socket socket)
@@ -333,11 +314,11 @@ namespace _Scripts.Networking
                 {
                     byte[] buffer = new byte[1500];
 
-                    Debug.Log("Server: waiting for authentication ... ");
+                    //Debug.Log("Server: waiting for authentication ... ");
                     // Receive data from the client
-                    socket.Receive(buffer);
-                    Debug.Log("Server: recieved data ... ");
-                    MemoryStream stream = new MemoryStream(buffer);
+                    int size =  socket.Receive(buffer,buffer.Length,SocketFlags.None);
+  
+                    MemoryStream stream = new MemoryStream(buffer,0,size);
 
                     NetworkManager.Instance.AddIncomingDataQueue(stream);
                 }
@@ -354,7 +335,7 @@ namespace _Scripts.Networking
                 Debug.Log($"Exception: {e.Message}");
             }
         }
-        int CreateClient(Socket clientSocket, string userName)
+        int CreateClient(Socket clientSocket, string userName, bool isHost)
         {
             lock (_clientList)
             {
@@ -362,6 +343,7 @@ namespace _Scripts.Networking
 
                 clientData.ID = _clientManager.GetNextClientId();
                 clientData.Username = userName;
+                clientData.IsHost = isHost;
 
                 clientData.ConnectionTcp = clientSocket;
                 //add a time out exeption for when the client disconnects or has lag or something
@@ -376,17 +358,14 @@ namespace _Scripts.Networking
 
                 //store endpoint
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
-                clientData.MetaData.IP = clientEndPoint.Address;
-                clientData.MetaData.Port = clientEndPoint.Port;
-
-                clientData.AuthenticationToken = new CancellationTokenSource();
+                clientData.MetaData.endPoint = clientEndPoint;
 
                 _clientList.Add(clientData);
 
                 Debug.Log("Connected client Id: " + clientData.ID);
 
 
-                //Create the handeler of the chat for that client
+                //Create the process for that client
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
 
@@ -394,15 +373,13 @@ namespace _Scripts.Networking
 
                 clientProcess.cancellationToken = new CancellationTokenSource();
 
-                clientProcess.Thread = new Thread(() => HandleClient(clientData));
+                clientProcess.thread = new Thread(() => HandleClient(clientData));
 
-                clientProcess.Thread.IsBackground = true;
-                clientProcess.Thread.Name = clientData.ID.ToString();
-                clientProcess.Thread.Start();
+                clientProcess.thread.IsBackground = true;
+                clientProcess.thread.Name = clientData.ID.ToString();
+                clientProcess.thread.Start();
 
-
-
-                _clientThreads.Add(clientProcess);
+                clientData.listenProcess = clientProcess;
 
                 return clientData.ID;
             }
@@ -412,8 +389,8 @@ namespace _Scripts.Networking
             // Remove the client from the list of connected clients    
             lock (_clientList)
             {
-                // Cancel the client's cancellation token source
-                clientData.AuthenticationToken.Cancel();
+                // Shutdown client thread
+                clientData.listenProcess.Shutdown();
 
                 // Close the client's socket
                 if (clientData.ConnectionTcp.Connected)

@@ -49,10 +49,5 @@ namespace _Scripts.Networking
 
             NetworkManager.Instance.AddReliableStreamQueue(responseStream);
         }
-
-        public void RegisterSocket(Socket socket)
-        {
-
-        }
     }
 }

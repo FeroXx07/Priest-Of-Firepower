@@ -7,6 +7,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+
 namespace _Scripts.Networking
 {
     public enum PacketType
@@ -43,11 +44,6 @@ namespace _Scripts.Networking
 
         Queue<MemoryStream>_incomingStreamBuffer = new Queue<MemoryStream>();
         public readonly object IncomingStreamLock = new object();
-        struct Process
-        {
-            public Thread Thread;
-            public CancellationTokenSource CancellationToken;
-        }
 
         Process _receiveData = new Process();
         Process _sendData = new Process();
@@ -72,13 +68,13 @@ namespace _Scripts.Networking
         private void Start()
         {
             Debug.Log("Starting Network Manager ...");
-            _receiveData.CancellationToken = new CancellationTokenSource();
-            _receiveData.Thread = new Thread(() => ReceiveDataThread(_receiveData.CancellationToken.Token));
-            _receiveData.Thread.Start();
+            _receiveData.cancellationToken = new CancellationTokenSource();
+            _receiveData.thread = new Thread(() => ReceiveDataThread(_receiveData.cancellationToken.Token));
+            _receiveData.thread.Start();
 
-            _sendData.CancellationToken = new CancellationTokenSource();
-            _sendData.Thread = new Thread(() => SendDataThread(_receiveData.CancellationToken.Token));
-            _sendData.Thread.Start();
+            _sendData.cancellationToken = new CancellationTokenSource();
+            _sendData.thread = new Thread(() => SendDataThread(_receiveData.cancellationToken.Token));
+            _sendData.thread.Start();
             
             List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
             _replicationManager.InitManager(list);
@@ -86,19 +82,8 @@ namespace _Scripts.Networking
         private void OnDisable()
         {
             Debug.Log("Stopping NetworkManger threads...");
-            // When you want to stop the thread, you call cancellationTokenSource.Cancel(),
-            // and the thread will stop executing the loop.
-            _receiveData.CancellationToken?.Cancel();
-            _sendData.CancellationToken?.Cancel();
-            // You then wait for the thread to finish using thread.Join().
-            _receiveData.Thread.Join();
-            _sendData.Thread.Join();
-
-            if (_receiveData.Thread.IsAlive)
-                _receiveData.Thread.Abort();
-
-            if (_sendData.Thread.IsAlive)
-                _sendData.Thread.Abort();
+            _receiveData.Shutdown();
+            _sendData.Shutdown();
         }
 
         #region Connection Initializers
@@ -117,8 +102,6 @@ namespace _Scripts.Networking
             
             _isHost = true;
 
-            _server.InitServer(); 
-        
             if (_server.GetServerInit())
             {
                 _client.Connect(connectionAddress.ServerEndPoint);
@@ -141,8 +124,8 @@ namespace _Scripts.Networking
         void CreateServer()
         {
             IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, connectionAddress.port);
-            _server = new AServer(endPoint);      
-            
+            _server = new AServer(endPoint);
+            _server.InitServer();
         }
         #region Streams
         public void AddStateStreamQueue(MemoryStream stream)
@@ -179,6 +162,9 @@ namespace _Scripts.Networking
                 float stateTimeout = _stateBufferTimeout;
                 float inputTimeout = _inputBufferTimeout;
 
+                System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+                stopwatch.Start();
+
                 while (!token.IsCancellationRequested)
                 {
                     //State buffer
@@ -193,26 +179,32 @@ namespace _Scripts.Networking
                             //check if the totalsize + the next stream total size is less than the specified size
                             while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
                             {
-                                stateTimeout -= Time.deltaTime * 1000f;
+                                stateTimeout -= stopwatch.ElapsedMilliseconds;
                                 MemoryStream nextStream = _stateStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
                             }
 
-                            byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
+                            if(totalSize <= _mtu || stateTimeout <= 0)
+                            {
+                                byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
 
-                            if (_isClient)
-                            {
-                                _client.SendPacket(buffer);
-                            }
-                            else if (_isServer)
-                            {
-                                _server.SendToAll(buffer);
-                            }
-                            else if (_isHost)
-                            {
-                                _server.SendToAll(buffer);
-                            }
+                                if (_isClient)
+                                {
+                                    //Debug.Log("Client: sending object state of size: " + buffer.Length);
+                                    _client.SendPacket(buffer);
+                                }
+                                else if (_isHost)
+                                {   
+                                    //Debug.Log("Host: sending object state of size: " + buffer.Length);
+                                    _server.SendToAll(buffer);
+                                }
+                                else if (_isServer)
+                                {
+                                    _server.SendToAll(buffer);
+                                }
+                            }                      
+      
                         }
                     }
 
@@ -228,7 +220,7 @@ namespace _Scripts.Networking
                             //check if the totalsize + the next stream total size is less than the specified size
                             while (_inputStreamBuffer.Count > 0 && totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu && _inputBufferTimeout > 0)
                             {
-                                inputTimeout -= Time.deltaTime * 1000;
+                                inputTimeout -= stopwatch.ElapsedMilliseconds;
                                 MemoryStream nextStream = _inputStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
@@ -287,7 +279,7 @@ namespace _Scripts.Networking
                     if (stateTimeout < 0)
                         stateTimeout = _stateBufferTimeout;
 
-                    Thread.Sleep(10);
+                    Thread.Sleep(1);
                 }
             }
             catch (OperationCanceledException e)
@@ -334,7 +326,6 @@ namespace _Scripts.Networking
                 {
                     if (_incomingStreamBuffer.Count > 0)
                     {
-                        Debug.Log("helo");
                         lock (IncomingStreamLock)
                         {
                             while (_incomingStreamBuffer.Count > 0)
@@ -367,9 +358,19 @@ namespace _Scripts.Networking
         {
             // Create a replication manager
             //[packet type]
+
+            stream.Position = 0;    
             BinaryReader reader = new BinaryReader(stream);
+            
+            if (stream.Length > 1500)
+            {
+                Debug.Log("Received packet with size exceeding the maximum (1500 bytes). Discarding...");
+                return;
+            }
 
             PacketType type = (PacketType)reader.ReadInt32();
+
+            //Debug.Log("Received packet type: " + type + ", Stream array length: " + stream.ToArray().Length);
 
             switch (type)
             {
@@ -391,21 +392,32 @@ namespace _Scripts.Networking
                     }
                     break;
                 default:
+                    Debug.LogError("Unknown packet type!");
                     break;
             }
 
         }
         void HandleObjectState(MemoryStream stream, BinaryReader reader)
         {
-            while(reader.BaseStream.Position < reader.BaseStream.Length)
+            try
             {
-                // [Object Class][Object ID]
-                string objClass = reader.ReadString();
-                UInt64 id = reader.ReadUInt64();
-                NetworkAction networkAction = (NetworkAction)reader.ReadInt32();
-                //read rest of the stream
-                _replicationManager.HandleNetworkAction(id, networkAction, Type.GetType(objClass), reader);
+                //Debug.Log("base stream: " + reader.BaseStream.Length);
+                //Debug.Log("Reader position:" + reader.BaseStream.Position);
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                {
+                    // [Object Class][Object ID]
+                    string objClass = reader.ReadString();
+                    UInt64 id = reader.ReadUInt64();
+                    NetworkAction networkAction = (NetworkAction)reader.ReadInt32();
+                    //read rest of the stream
+                    _replicationManager.HandleNetworkAction(id, networkAction, Type.GetType(objClass), reader);
+                }
             }
+            catch (EndOfStreamException ex)
+            {
+                Debug.LogError($"EndOfStreamException: {ex.Message}");
+            }
+
         }
 
         private byte[] ConcatenateMemoryStreams(PacketType type,List<MemoryStream> streams)
@@ -415,13 +427,14 @@ namespace _Scripts.Networking
             BinaryWriter writer = new BinaryWriter(buffer);
         
             writer.Write((int) type);
-        
+            Debug.Log("Header:" + writer.BaseStream.Length);
             foreach(MemoryStream stream in streams)
             {
-                stream.CopyTo(buffer);
-        
+                Debug.Log("Sream length:" + stream.Length);
+                stream.CopyTo(buffer);        
             }
 
+            Debug.Log("Packet created of size: " + buffer.Length);  
             return buffer.ToArray();
         }
 

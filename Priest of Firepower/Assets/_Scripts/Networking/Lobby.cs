@@ -17,17 +17,17 @@ namespace _Scripts.Networking
 
         protected override void InitNetworkVariablesList()
         {
-            throw new System.NotImplementedException();
+          
         }
 
         protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
-            throw new System.NotImplementedException();
+            return null;
         }
 
         public override void Read(BinaryReader reader)
         {
-            throw new System.NotImplementedException();
+           
         }
     }
 }

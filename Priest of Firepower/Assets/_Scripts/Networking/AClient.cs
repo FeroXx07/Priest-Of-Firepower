@@ -13,10 +13,9 @@ namespace _Scripts.Networking
     {
         #region variables
         IPEndPoint _endPoint;
-        private Thread _connectionThread;
-
-        private CancellationTokenSource _listenerToken;
-        private Thread _listenServerThread;
+        
+        Process _authenticationProcess = new Process();
+        Process _serverListenerProcess = new Process();
 
         private Socket _connectionTcp;
         private Socket _connectionUDP;
@@ -25,15 +24,12 @@ namespace _Scripts.Networking
         public Action<byte[]> OnDataRecieved;
 
         ClientAuthenticator _authenticator = new ClientAuthenticator();
-        #endregion
-
-       
-
+        #endregion            
         #region Enable/Disable funcitons
         private void Start()
         {
             OnConnected += StartListening;
-            OnConnected += StopAuthenticationProcess;
+            OnConnected += _authenticationProcess.Shutdown;
         }
         private void OnDisable()
         {
@@ -75,22 +71,27 @@ namespace _Scripts.Networking
             Debug.Log("Client:  Socket connected to -> " + _connectionTcp.RemoteEndPoint.ToString());
             if(!NetworkManager.Instance.IsHost())
             {
-                _connectionThread = new Thread(() => Authenticate());
-                _connectionThread.Start();
+                _authenticationProcess.cancellationToken = new CancellationTokenSource();
+                _authenticationProcess.thread = new Thread(() => Authenticate(_authenticationProcess.cancellationToken.Token));
+                _authenticationProcess.thread.Start();
             }
             else
             {
+                OnConnected?.Invoke();
+
                 Debug.Log("Local host created ...");
             }
-
-
         }
-  
         void StartListening()
         {
-            _listenerToken = new CancellationTokenSource();
-            _listenServerThread = new Thread(() => ListenServer(_listenerToken.Token));
-            _listenServerThread.Start();
+            Debug.Log("Client: listening to server ...");
+            _serverListenerProcess.cancellationToken = new CancellationTokenSource();
+            _serverListenerProcess.thread = new Thread(() => ListenServer(_serverListenerProcess.cancellationToken.Token));
+            _serverListenerProcess.thread.Start();
+        }
+        void CancellAuthenticationProcess()
+        {
+            _authenticationProcess.Shutdown();
         }
         void ListenServer(CancellationToken cancellationToken)
         {
@@ -104,8 +105,9 @@ namespace _Scripts.Networking
                     if(_connectionUDP.Available > 0)
                     {
                         byte[] data= new byte[1500];
-                        _connectionUDP.Receive(data);
-                        MemoryStream stream = new MemoryStream(data);
+                        int size = _connectionUDP.Receive(data);
+                        //Debug.Log("Client receiving data:" + data.Length);
+                        MemoryStream stream = new MemoryStream(data,0,size);
                         NetworkManager.Instance.AddIncomingDataQueue(stream);
                     }     
                     if(_connectionTcp.Available > 0)
@@ -142,40 +144,23 @@ namespace _Scripts.Networking
         void Disconnect()
         {
             Debug.Log("Disconnecting client ...");
-            StopAuthenticationProcess();
 
-            if (_listenServerThread != null && _listenServerThread.IsAlive)
-            {
-                CancelThread(_listenServerThread, _listenerToken);
-            }
+
+            _serverListenerProcess.Shutdown();
+            _authenticationProcess.Shutdown();
+
             if (_connectionTcp != null)
             {
                 _connectionTcp.Shutdown(SocketShutdown.Both);
                 _connectionTcp.Close();
+                _connectionUDP.Close();
             }
-        }
-        void CancelThread(Thread thread, CancellationTokenSource token)
-        {
-            if (thread != null && thread.IsAlive)
-            {
-                // Signal the thread to exit gracefully
-                token.Cancel();
-
-                // Wait for the thread to finish before proceeding
-                thread.Join();
-            }
-        }
-
-        void StopAuthenticationProcess()
-        {
-            _connectionThread.Abort();
         }
         #endregion
         public void SendCriticalPacket(byte[] data)
         {
             try
-            {
-               
+            {               
                 if (_connectionTcp == null) return;
 
                 Debug.Log("Client: sending critical packet...");
@@ -204,6 +189,7 @@ namespace _Scripts.Networking
         {
             try
             {
+                Debug.Log("Client sending data:" + data.Length);
                 if (_connectionUDP == null) return;   
                 
                 _connectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
@@ -229,13 +215,13 @@ namespace _Scripts.Networking
         #region Helper functions
         #endregion
 
-        void Authenticate()
+        void Authenticate(CancellationToken token)
         {
             _connectionTcp.ReceiveTimeout = 1000;
             try
             {
                 _authenticator.SendAuthenticationRequest("Yololo");
-                while (_connectionTcp.Connected)
+                while (!token.IsCancellationRequested)
                 {
 
 

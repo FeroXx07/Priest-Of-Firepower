@@ -130,10 +130,12 @@ namespace _Scripts.Networking
                     Write(stream, NetworkAction.UPDATE);
                     break;
             }
-        
+
             // MemoryStream Write(MemoryStream outputStream);
 
             // Send MemoryStream to netowrk manager buffer
+
+            Debug.Log(gameObject.name +" Sending data :" + action);
 
             NetworkManager.Instance.AddStateStreamQueue(stream);
         }

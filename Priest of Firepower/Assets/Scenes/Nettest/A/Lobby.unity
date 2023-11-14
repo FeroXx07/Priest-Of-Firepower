@@ -208,7 +208,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 226912381}
-  - component: {fileID: 226912382}
   m_Layer: 5
   m_Name: Panel
   m_TagString: Untagged
@@ -238,18 +237,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &226912382
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 226912380}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c88ee2ecfc47344081cefb57ccee471, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &271126038
 GameObject:
   m_ObjectHideFlags: 0
@@ -2301,7 +2288,6 @@ GameObject:
   - component: {fileID: 1404029724}
   - component: {fileID: 1404029726}
   - component: {fileID: 1404029725}
-  - component: {fileID: 1404029727}
   m_Layer: 5
   m_Name: LobbyInfo
   m_TagString: Untagged
@@ -2369,18 +2355,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1404029723}
   m_CullTransparentMesh: 1
---- !u!114 &1404029727
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1404029723}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a71a2e00c55b68d44ba992e9e6798269, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1468891550
 GameObject:
   m_ObjectHideFlags: 0
@@ -2392,7 +2366,6 @@ GameObject:
   - component: {fileID: 1468891551}
   - component: {fileID: 1468891553}
   - component: {fileID: 1468891552}
-  - component: {fileID: 1468891554}
   m_Layer: 5
   m_Name: Chat
   m_TagString: Untagged
@@ -2460,22 +2433,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1468891550}
   m_CullTransparentMesh: 1
---- !u!114 &1468891554
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1468891550}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce6241477d7307a4294fca4d8db01aab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  mesageInputField: {fileID: 1913942339}
-  chatPanel: {fileID: 1926071461}
-  chatTextElementUi: {fileID: 2937569276419131495, guid: e2bc927b026cb5547aac5c44af69b1ab, type: 3}
-  maxMessages: 25
 --- !u!1 &1589213504
 GameObject:
   m_ObjectHideFlags: 0
