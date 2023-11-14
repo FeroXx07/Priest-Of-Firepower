@@ -15,6 +15,7 @@ namespace _Scripts.UI.WeaponTracker
         [SerializeField] Image weaponSprite;
         [SerializeField] float spriteSize;
         [SerializeField] Image magazineSprite;
+        [SerializeField] Image magazineSpriteBg;
         [SerializeField] TextMeshProUGUI totalAmmo;
 
         float _prevAmmo;
@@ -22,9 +23,13 @@ namespace _Scripts.UI.WeaponTracker
         float _currReloadTime;
         float _reloadTime;
 
+        bool _pulsingMagazineBg = false;
+        bool _stopMagazineBgPulse = false;
+
         private void OnEnable()
         {
             PlayerShooter.OnStartingReload += Reload;
+            PlayerShooter.OnShoot += TryShoot;
             PowerUpBase.PowerUpPickedGlobal += OnPowerUp;
 
 
@@ -82,6 +87,12 @@ namespace _Scripts.UI.WeaponTracker
         {
             if (weaponData == null) return;
 
+            if (weaponData.totalAmmo <= 0)
+            {
+                UseFailed();
+                return;
+            }
+
             if (weaponData.totalAmmo > weaponData.magazineSize)
             {
                 _prevAmmo = weaponData.ammoInMagazine;
@@ -98,6 +109,27 @@ namespace _Scripts.UI.WeaponTracker
             StartCoroutine(ReloadRoutine());
         }
 
+        void UseFailed()
+        {
+            if (_pulsingMagazineBg)
+            {
+                _stopMagazineBgPulse = true;
+            }
+
+            StartCoroutine(PulseColor(magazineSpriteBg, Color.red, new Color(0.5f, 0.5f, 0.5f), 0.3f));
+
+            _stopMagazineBgPulse = false;
+        }
+
+        void TryShoot()
+        {
+            if (weaponData == null) return;
+
+            if (weaponData.totalAmmo <= 0)
+            {
+                UseFailed();
+            }
+        }
 
         IEnumerator ReloadRoutine()
         {
@@ -109,6 +141,36 @@ namespace _Scripts.UI.WeaponTracker
                 yield return null;
             }
 
+        }
+
+        IEnumerator PulseColor(Image image, Color startColor, Color endColor, float time)
+        {
+            _pulsingMagazineBg = true;
+
+            float timer = 0;
+            yield return _pulsingMagazineBg;
+
+
+            while (timer < time)
+            {
+                
+                timer += Time.deltaTime;
+
+                image.color = Color.Lerp(startColor, endColor, timer / time);
+                
+
+                if (_stopMagazineBgPulse)
+                {
+                    image.color = endColor;
+                    break;
+
+                }
+                yield return null;
+
+
+            }
+            _pulsingMagazineBg = false;
+                yield return null;
         }
 
         void OnPowerUp(PowerUpBase.PowerUpType type)
