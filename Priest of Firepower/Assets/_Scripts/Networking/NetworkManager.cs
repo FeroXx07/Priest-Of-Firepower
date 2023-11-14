@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using UnityEditor.Build.Content;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -16,7 +17,8 @@ namespace _Scripts.Networking
         PING,
         OBJECT_STATE,
         INPUT,
-        AUTHENTICATION
+        AUTHENTICATION,
+        ID
     }
 
 //this class will work as a client or server or both at the same time
@@ -172,6 +174,14 @@ namespace _Scripts.Networking
                 System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
                 stopwatch.Start();
 
+                UInt64 senderid;
+
+                if (IsClient())
+                    senderid = _client.ID();
+                else
+                    senderid = 0;
+                
+
                 while (!token.IsCancellationRequested)
                 {
                     //State buffer
@@ -194,7 +204,7 @@ namespace _Scripts.Networking
 
                             if(totalSize <= _mtu || stateTimeout <= 0)
                             {
-                                byte[] buffer = ConcatenateMemoryStreams(PacketType.OBJECT_STATE, streamsToSend);
+                                byte[] buffer = ConcatenateMemoryStreams(senderid ,PacketType.OBJECT_STATE, streamsToSend);
 
                                 if (_isClient)
                                 {
@@ -232,7 +242,7 @@ namespace _Scripts.Networking
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
                             }
-                            byte[] buffer = ConcatenateMemoryStreams(PacketType.INPUT, streamsToSend);
+                            byte[] buffer = ConcatenateMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
 
                             if (_isClient)
                             {
@@ -262,6 +272,8 @@ namespace _Scripts.Networking
                             {
                             
                                 MemoryStream nextStream = _reliableStreamBuffer.Dequeue();
+
+                                BinaryWriter writer = new BinaryWriter(nextStream);
 
                                 byte[] buffer = nextStream.ToArray();
                                 if (_isClient)
@@ -322,8 +334,6 @@ namespace _Scripts.Networking
                 }
             }
         }
-
-
         private void ReceiveDataThread(CancellationToken token)
         {
             try
@@ -375,6 +385,8 @@ namespace _Scripts.Networking
                 return;
             }
 
+            UInt64 senderId = reader.ReadUInt64();
+
             PacketType type = (PacketType)reader.ReadInt32();
 
             Debug.Log("Received packet type: " + type + ", Stream array length: " + stream.ToArray().Length);
@@ -396,6 +408,12 @@ namespace _Scripts.Networking
                     else if(_isHost)
                     {
                         _server.GetAuthenticator().HandleAuthentication(stream, reader);   
+                    }
+                    break;
+                case PacketType.ID:
+                    {
+                        if (_isClient)
+                            _client.HandleRecivingID(reader);
                     }
                     break;
                 default:
@@ -426,13 +444,13 @@ namespace _Scripts.Networking
             }
 
         }
-
-        private byte[] ConcatenateMemoryStreams(PacketType type,List<MemoryStream> streams)
+        private byte[] ConcatenateMemoryStreams(UInt64 senderId,PacketType type,List<MemoryStream> streams)
         {
             MemoryStream buffer = new MemoryStream();
         
             BinaryWriter writer = new BinaryWriter(buffer);
-        
+
+            writer.Write(senderId);
             writer.Write((int) type);
             foreach(MemoryStream stream in streams)
             {

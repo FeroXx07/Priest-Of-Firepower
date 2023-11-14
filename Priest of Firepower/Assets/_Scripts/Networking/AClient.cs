@@ -24,6 +24,9 @@ namespace _Scripts.Networking
         public Action<byte[]> OnDataRecieved;
 
         ClientAuthenticator _authenticator = new ClientAuthenticator();
+
+        private UInt64 _ID;
+
         #endregion            
         #region Enable/Disable funcitons
         private void Start()
@@ -210,6 +213,13 @@ namespace _Scripts.Networking
         #region Helper functions
         #endregion
 
+
+        public void HandleRecivingID(BinaryReader reader)
+        { 
+            _ID = reader.ReadUInt64();
+            Debug.Log("recived ID :" + _ID);
+        }
+        public UInt64 ID() { return _ID; }
         void Authenticate(CancellationToken token)
         {
             _connectionTCP.ReceiveTimeout = 1000;

@@ -13,11 +13,11 @@ namespace _Scripts.Networking
 
     public class ClientManager
     {
-        private int _nextClientId = 0;
+        private UInt64 _nextClientId = 0;
 
-        public int GetNextClientId()
+        public UInt64 GetNextClientId()
         {
-            int clientId = _nextClientId;
+            UInt64 clientId = _nextClientId;
             _nextClientId++;
             return clientId;
         }
@@ -63,7 +63,7 @@ namespace _Scripts.Networking
         private List<ClientData> _clientListToRemove = new List<ClientData>();
 
         //actions
-        Action<int> _onClientAccepted;
+        Action<UInt64> _onClientAccepted;
         Action _onClientRemoved;
         Action<int> _onClientDisconnected;
         Action<byte[]> _onDataRecieved;
@@ -90,7 +90,7 @@ namespace _Scripts.Networking
         #region client data
         class ClientData
         {
-            public int ID = -1;
+            public UInt64 ID;
             public string Username = "";
             public ClientMetadata MetaData;
             public ClientSate State;
@@ -227,7 +227,19 @@ namespace _Scripts.Networking
                 client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
         }
-        public void SendToClient(int clientId, byte[] data)
+
+        public void SendCritical(UInt64 Id, byte[] data)
+        {
+            foreach (ClientData client in _clientList)
+            {
+                if (client.ID == Id)
+                { 
+                    client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint); 
+                    return;
+                }
+            }
+        }
+        public void SendToClient(UInt64 clientId,  byte[] data)
         {
             foreach (ClientData client in _clientList)
             {
@@ -365,7 +377,7 @@ namespace _Scripts.Networking
                 Debug.Log($"Exception: {e.Message}");
             }
         }
-        int CreateClient(Socket clientSocket, string userName, bool isHost)
+        UInt64 CreateClient(Socket clientSocket, string userName, bool isHost)
         {
             lock (_clientList)
             {
@@ -412,6 +424,8 @@ namespace _Scripts.Networking
 
                 Debug.Log("Created client Id: " + clientData.ID);
 
+                SendClientID(clientData.ID);
+
                 return clientData.ID;
             }
         }
@@ -448,6 +462,17 @@ namespace _Scripts.Networking
                 return false;
             }
         }
+
+        void SendClientID(UInt64 id)
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write((int)PacketType.ID);
+            writer.Write(id);
+
+            SendCritical(id, stream.ToArray());
+        }
         #region Authentication
         void Authenticate( Socket incomingSocket, CancellationToken cancellationToken)
         {
@@ -480,7 +505,7 @@ namespace _Scripts.Networking
         void AuthenticationSuccess(IPEndPoint endPoint,string username)
         {
             Socket socket = _authenticationConnections[endPoint];
-            int id = CreateClient(socket, username, false);
+            UInt64 id = CreateClient(socket, username, false);
 
             _onClientAccepted?.Invoke(id);
 

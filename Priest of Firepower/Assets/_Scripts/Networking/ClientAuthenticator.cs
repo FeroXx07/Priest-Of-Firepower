@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Net;
 using UnityEngine;
@@ -31,6 +32,8 @@ namespace _Scripts.Networking
                     break;
                 case AuthenticationState.CONFIRMATION:
                     //check response to the authorization request
+                    
+                    
                     bool isSuccess = reader.ReadBoolean();
 
                     if (isSuccess)
