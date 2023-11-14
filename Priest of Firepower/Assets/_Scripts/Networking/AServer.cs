@@ -52,7 +52,10 @@ namespace _Scripts.Networking
         // or any other condition that requires the operation to terminate prematurely.
 
         Process _listenConnectionProcess = new Process();
-        private List<Process> _authenticationProcessList = new List<Process>();
+
+        private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
+        private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
+        //private List<Process> _authenticationProcessList = new List<Process>();
 
         ClientManager _clientManager;
 
@@ -69,7 +72,7 @@ namespace _Scripts.Networking
         Socket _serverTcp;
         Socket _serverUDP;
 
-        ServerAuthenticator _authenticator = new ServerAuthenticator();
+        ServerAuthenticator _authenticator;
 
         private bool _isServerInitialized  = false;
         #endregion
@@ -77,6 +80,10 @@ namespace _Scripts.Networking
         public AServer(IPEndPoint endPoint)
         {
             _endPoint = endPoint;
+
+            _authenticator = new ServerAuthenticator();
+            _authenticator._onAuthenticationFailed += AuthenticationFailed;
+            _authenticator._onAuthenticated += AuthenticationSuccess;
         }
 
 
@@ -135,9 +142,9 @@ namespace _Scripts.Networking
         #region helper funcitons
         void StopAuthenticationThread()
         {
-            foreach(Process p in _authenticationProcessList)
+            foreach(KeyValuePair<IPEndPoint, Process> process in _authenticationProcesses)
             {
-                p.Shutdown();
+                process.Value.Shutdown();
             }
         }
 
@@ -255,6 +262,10 @@ namespace _Scripts.Networking
                         authenticate.cancellationToken = new CancellationTokenSource();
                         authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
                         authenticate.thread.Start();
+
+                        _authenticationConnections[IpEndPoint] = incomingConnection;
+                        _authenticationProcesses[IpEndPoint] = authenticate;
+
                     }                    
                 }
 
@@ -314,7 +325,6 @@ namespace _Scripts.Networking
                 {
                     byte[] buffer = new byte[1500];
 
-                    //Debug.Log("Server: waiting for authentication ... ");
                     // Receive data from the client
                     int size =  socket.Receive(buffer,buffer.Length,SocketFlags.None);
   
@@ -360,10 +370,7 @@ namespace _Scripts.Networking
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
                 clientData.MetaData.endPoint = clientEndPoint;
 
-                _clientList.Add(clientData);
-
-                Debug.Log("Connected client Id: " + clientData.ID);
-
+         
 
                 //Create the process for that client
                 //create a hole thread to recive important data from server-client
@@ -380,6 +387,10 @@ namespace _Scripts.Networking
                 clientProcess.thread.Start();
 
                 clientData.listenProcess = clientProcess;
+
+                _clientList.Add(clientData);
+
+                Debug.Log("Created client Id: " + clientData.ID);
 
                 return clientData.ID;
             }
@@ -409,8 +420,9 @@ namespace _Scripts.Networking
         #region Authentication
         void Authenticate( Socket incomingSocket, CancellationToken cancellationToken)
         {
-            incomingSocket.ReceiveTimeout = 2000;
-            Debug.Log("Server: Authentication process started ... ");
+            incomingSocket.ReceiveTimeout = 5000;
+            Debug.Log("Server: Authentication process started ... ");           
+            
             try
             {
                 //accept new Connections ... 
@@ -434,7 +446,27 @@ namespace _Scripts.Networking
             {
             }
         }
+        void AuthenticationSuccess(IPEndPoint endPoint,string username)
+        {
+            Socket socket = _authenticationConnections[endPoint];
+            int id = CreateClient(socket, username, false);
 
+            _onClientAccepted?.Invoke(id);
+
+            //stop autorized client process
+            _authenticationProcesses[endPoint].Shutdown();
+            _authenticationProcesses.Remove(endPoint);
+            _authenticationConnections.Remove(endPoint);
+        }
+        void AuthenticationFailed(IPEndPoint endpoint)
+        {
+            //remove connection
+            _authenticationProcesses[endpoint].Shutdown();
+            _authenticationProcesses.Remove(endpoint);
+            
+            _authenticationConnections[endpoint].Close();
+            _authenticationConnections.Remove(endpoint);
+        }
         public ServerAuthenticator GetAuthenticator() { return _authenticator; }
         #endregion
     }

@@ -29,8 +29,7 @@ namespace _Scripts.Networking
         }
 
         private void ConnectToServer(string ip)
-        {
-            
+        {            
             NetworkManager.Instance.connectionAddress.address = ip;
             
             if (NetworkManager.Instance.connectionAddress.ServerEndPoint != null)

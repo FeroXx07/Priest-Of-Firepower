@@ -17,7 +17,7 @@ namespace _Scripts.Networking
         Process _authenticationProcess = new Process();
         Process _serverListenerProcess = new Process();
 
-        private Socket _connectionTcp;
+        private Socket _connectionTCP;
         private Socket _connectionUDP;
 
         public Action OnConnected;
@@ -46,41 +46,49 @@ namespace _Scripts.Networking
         #region Core Functions
         public void Connect(IPEndPoint address)
         {
-            _endPoint = address;
-
-            Debug.Log("Creating connetion ...");
-            _connectionTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _connectionTcp.ReceiveTimeout = 1000;
-            _connectionTcp.SendTimeout = 1000;
-            //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
-            //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-            if (_endPoint == null)
+            try
             {
-                Debug.Log("server Ip is null ...");
-                return;
-            }
-            
-            _connectionTcp.Connect(_endPoint);
+                _endPoint = address;
 
-            if (!_connectionTcp.Connected)
-            {
-                Debug.Log("Socket connection failed.");
-                return;
-            }
+                //Debug.Log("Creating connetion ...");
+                _connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _connectionTCP.ReceiveTimeout = 1000;
+                _connectionTCP.SendTimeout = 1000;
+                //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
+                //In this case the operating system (TCP/IP stack) assigns a free port number for you.
+                if (_endPoint == null)
+                {
+                    Debug.Log("server Ip is null ...");
+                    return;
+                }
 
-            Debug.Log("Client:  Socket connected to -> " + _connectionTcp.RemoteEndPoint.ToString());
-            if(!NetworkManager.Instance.IsHost())
-            {
-                _authenticationProcess.cancellationToken = new CancellationTokenSource();
-                _authenticationProcess.thread = new Thread(() => Authenticate(_authenticationProcess.cancellationToken.Token));
-                _authenticationProcess.thread.Start();
-            }
-            else
-            {
-                OnConnected?.Invoke();
+                _connectionTCP.Connect(_endPoint);
 
-                Debug.Log("Local host created ...");
+                if (!_connectionTCP.Connected)
+                {
+                    Debug.Log("Socket connection failed.");
+                    return;
+                }
+
+                Debug.Log("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
+                if (!NetworkManager.Instance.IsHost())
+                {
+                    _authenticationProcess.cancellationToken = new CancellationTokenSource();
+                    _authenticationProcess.thread = new Thread(() => Authenticate(_authenticationProcess.cancellationToken.Token));
+                    _authenticationProcess.thread.Start();
+                    _authenticator.SetEndPoint(_endPoint);
+                }
+                else
+                {
+                    OnConnected?.Invoke();
+
+                    Debug.Log("Local host created ...");
+                }
+            }catch(Exception e)
+            {
+                Debug.LogWarning(e);
             }
+    
         }
         void StartListening()
         {
@@ -89,14 +97,11 @@ namespace _Scripts.Networking
             _serverListenerProcess.thread = new Thread(() => ListenServer(_serverListenerProcess.cancellationToken.Token));
             _serverListenerProcess.thread.Start();
         }
-        void CancellAuthenticationProcess()
-        {
-            _authenticationProcess.Shutdown();
-        }
+
         void ListenServer(CancellationToken cancellationToken)
         {
-            _connectionTcp.ReceiveTimeout = Timeout.Infinite;
-            _connectionTcp.SendTimeout = Timeout.Infinite;
+            _connectionTCP.ReceiveTimeout = Timeout.Infinite;
+            _connectionTCP.SendTimeout = Timeout.Infinite;
             Debug.Log("Listening server ...");
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -104,18 +109,11 @@ namespace _Scripts.Networking
                 {
                     if(_connectionUDP.Available > 0)
                     {
-                        byte[] data= new byte[1500];
-                        int size = _connectionUDP.Receive(data);
-                        //Debug.Log("Client receiving data:" + data.Length);
-                        MemoryStream stream = new MemoryStream(data,0,size);
-                        NetworkManager.Instance.AddIncomingDataQueue(stream);
+                        ReceiveSocketData(_connectionUDP);
                     }     
-                    if(_connectionTcp.Available > 0)
+                    if(_connectionTCP.Available > 0)
                     {
-                        byte[] data = new byte[1500];
-                        _connectionTcp.Receive(data);
-                        MemoryStream stream = new MemoryStream(data);
-                        NetworkManager.Instance.AddIncomingDataQueue(stream);
+                        ReceiveSocketData(_connectionTCP);
                     }
                 }
                 catch (SocketException se)
@@ -149,10 +147,10 @@ namespace _Scripts.Networking
             _serverListenerProcess.Shutdown();
             _authenticationProcess.Shutdown();
 
-            if (_connectionTcp != null)
+            if (_connectionTCP != null)
             {
-                _connectionTcp.Shutdown(SocketShutdown.Both);
-                _connectionTcp.Close();
+                _connectionTCP.Shutdown(SocketShutdown.Both);
+                _connectionTCP.Close();
                 _connectionUDP.Close();
             }
         }
@@ -161,11 +159,8 @@ namespace _Scripts.Networking
         {
             try
             {               
-                if (_connectionTcp == null) return;
-
-                Debug.Log("Client: sending critical packet...");
-
-                _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                if (_connectionTCP == null) return;
+                _connectionTCP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
             catch (ArgumentNullException ane)
             {
@@ -217,42 +212,61 @@ namespace _Scripts.Networking
 
         void Authenticate(CancellationToken token)
         {
-            _connectionTcp.ReceiveTimeout = 1000;
+            _connectionTCP.ReceiveTimeout = 1000;
+            bool authenticated = false;
             try
             {
                 _authenticator.SendAuthenticationRequest("Yololo");
                 while (!token.IsCancellationRequested)
                 {
 
+                    if (_connectionTCP.Available > 0)
+                    {
+                        Debug.Log("Authentication message recieved ...");
+                        ReceiveSocketData(_connectionTCP);
+                    }
 
-                    // Create an authentication packet
-                    MemoryStream authStream = new MemoryStream();
-                    BinaryWriter authWriter = new BinaryWriter(authStream);
-
-                    authWriter.Write((int)PacketType.AUTHENTICATION);
-                    authWriter.Write("hello");
-                                     
-                    NetworkManager.Instance.AddReliableStreamQueue(authStream);
-
-                    //if (authenticated)
-                    //{
-                    //    //add action dispatcher for main thread
-                    //    MainThreadDispatcher.EnqueueAction(OnConnected);
-                    //}
-                    //else
-                    //{
-                    //    Debug.Log("Failed on authentication");
-                    //}
+                    if (_authenticator.Authenticated() && !authenticated)
+                    {
+                        authenticated = true;
+                        //add action dispatcher for main thread
+                        MainThreadDispatcher.EnqueueAction(OnConnected);                    
+                    }
 
                     Thread.Sleep(100);
                 }
-  
-
-
             }
             catch (Exception e)
             {
                 Debug.LogException(e);
+            }
+        }
+        void ReceiveSocketData(Socket socket)
+        {
+            try
+            {
+                lock (NetworkManager.Instance.IncomingStreamLock)
+                {
+                    byte[] buffer = new byte[1500];
+
+                    // Receive data from the client
+                    int size = socket.Receive(buffer, buffer.Length, SocketFlags.None);
+
+                    MemoryStream stream = new MemoryStream(buffer, 0, size);
+
+                    NetworkManager.Instance.AddIncomingDataQueue(stream);
+                }
+            }
+            catch (SocketException se)
+            {
+                // Handle other socket exceptions
+                Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+
+            }
+            catch (Exception e)
+            {
+                // Handle other exceptions
+                Debug.Log($"Exception: {e.Message}");
             }
         }
         public ClientAuthenticator GetAuthenticator() { return _authenticator; }

@@ -90,6 +90,7 @@ namespace _Scripts.Networking
         public void StartClient()
         {
             CreateClient();
+            _client.Connect(connectionAddress.ServerEndPoint);
             _isClient = true;
         }
 
@@ -427,14 +428,10 @@ namespace _Scripts.Networking
             BinaryWriter writer = new BinaryWriter(buffer);
         
             writer.Write((int) type);
-            Debug.Log("Header:" + writer.BaseStream.Length);
             foreach(MemoryStream stream in streams)
             {
-                Debug.Log("Sream length:" + stream.Length);
                 stream.CopyTo(buffer);        
             }
-
-            Debug.Log("Packet created of size: " + buffer.Length);  
             return buffer.ToArray();
         }
 
@@ -442,7 +439,7 @@ namespace _Scripts.Networking
         //Client Events Interface
         public void ClientConnected()
         {
-            Debug.Log("Client Connected to server ...");
+            //Debug.Log("Client Connected to server ...");
             OnClientConnected?.Invoke();
         }
         public void ClientDisconected()
