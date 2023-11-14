@@ -53,7 +53,7 @@ namespace _Scripts.Networking
                     Debug.LogWarning("Mismatch in bitfield and isDirty!!");
                 }
                 
-                if (bitfield[i])
+                if (bitfield[i] || NetworkVariableList[i].IsDirty)
                 {
                     count++;
                     NetworkVariableList[i].WriteInBinaryWriter(writer);
