@@ -21,7 +21,7 @@ namespace _Scripts.Enemies
         protected Transform Target;
         protected NavMeshAgent Agent;
         protected HealthSystem HealthSystem;
-        protected new Collider2D Collider;
+        protected Collider2D Collider;
 
         [SerializeField] protected GameObject attackPrefab;
 

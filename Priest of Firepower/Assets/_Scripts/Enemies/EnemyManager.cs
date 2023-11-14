@@ -13,7 +13,7 @@ namespace _Scripts.Enemies
         public int numToInit = 5;
 
         [SerializeField] AnimationCurve enemyCountProgression = new AnimationCurve();
-        [SerializeField] float spawnFrequency = 0.5f;
+        // [SerializeField] float spawnFrequency = 0.5f;
         [SerializeField] List<Enemy> enemiesAlive = new List<Enemy>();
 
         //current number of enemies to spanw on the current wave
