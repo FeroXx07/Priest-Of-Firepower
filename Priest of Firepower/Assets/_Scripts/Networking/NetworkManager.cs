@@ -196,19 +196,21 @@ namespace _Scripts.Networking
                     {
                         lock (_stateQueueLock)
                         {
+                            Debug.Log("Obj state to send...");
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
-                            while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
+                            //while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
+                            while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu)
                             {
-                                stateTimeout -= stopwatch.ElapsedMilliseconds;
+                                //stateTimeout -= stopwatch.ElapsedMilliseconds;
                                 MemoryStream nextStream = _stateStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
                             }
 
-                            if(totalSize <= _mtu || stateTimeout <= 0)
+                            if(totalSize <= _mtu)
                             {
                                 byte[] buffer = ConcatenateMemoryStreams(senderid ,PacketType.OBJECT_STATE, streamsToSend);
 
@@ -415,14 +417,16 @@ namespace _Scripts.Networking
                     HandleObjectState(stream,reader);
                     break;
                 case PacketType.AUTHENTICATION:
-                    Debug.Log("AUTH message recieved ...");
+               
                     if (_isClient)
                     {
+                        Debug.Log("Client: auth message recieved ...");
                         _client.GetAuthenticator().HandleAuthentication(stream, reader);
                     }
                     else if(_isHost)
                     {
-                        _server.GetAuthenticator().HandleAuthentication(stream, reader);   
+                        Debug.Log("Server: auth message recieved ...");
+                        _server.PopulateAuthenticators(stream, reader);   
                     }
                     break;
                 case PacketType.ID:                   

@@ -11,6 +11,8 @@ namespace _Scripts.Networking
         private bool _authenticated = false;
         private IPEndPoint endPoint;
         AuthenticationState _state = AuthenticationState.REQUESTED;
+
+        public  string userName;
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
             IPEndPoint enpoint = DeserializeIPEndPoint(reader);
@@ -60,8 +62,7 @@ namespace _Scripts.Networking
 
             authWriter.Write((int)PacketType.AUTHENTICATION);
             SerializeIPEndPoint(endPoint,authWriter);
-            authWriter.Write((int)_state);
-            authWriter.Write(username);
+            authWriter.Write((int)AuthenticationState.REQUESTED);
             authWriter.Write(_authenticationCode);
 
             Debug.Log("Client: Starting authetication request ...");
@@ -77,8 +78,9 @@ namespace _Scripts.Networking
 
             authWriter.Write((int)PacketType.AUTHENTICATION);
             SerializeIPEndPoint(endPoint,authWriter);
-            authWriter.Write((int)_state);
+            authWriter.Write((int)AuthenticationState.CONFIRMATION);
             authWriter.Write("ok");
+            authWriter.Write(userName);
 
             NetworkManager.Instance.AddReliableStreamQueue(authStream);
         }

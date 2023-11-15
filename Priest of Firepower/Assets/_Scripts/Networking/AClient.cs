@@ -27,15 +27,24 @@ namespace _Scripts.Networking
 
         private UInt64 _ID = 69;
 
+        string userName = "Yololo";
+
         #endregion            
         #region Enable/Disable funcitons
         private void Start()
         {
-            OnConnected += StartListening;
-            OnConnected += _authenticationProcess.Shutdown;
+      
+        }
+        private void OnEnable()
+        {
+            //OnConnected += StartListening;
+            //OnConnected += _authenticationProcess.Shutdown;
+            _authenticator.userName = userName;
         }
         private void OnDisable()
         {
+            //OnConnected -= StartListening;
+            //OnConnected -= _authenticationProcess.Shutdown;
             Disconnect();
         }
         #endregion
@@ -43,6 +52,11 @@ namespace _Scripts.Networking
         public string GetIpAddress()
         {
             return _endPoint.ToString();
+        }
+
+        public void SetUsername(string username)
+        {
+            userName = username;
         }
         #endregion
 
@@ -83,12 +97,18 @@ namespace _Scripts.Networking
 
                 Debug.Log("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
 
+
+
+
                 if (!NetworkManager.Instance.IsHost())
                 {
-                    _authenticationProcess.cancellationToken = new CancellationTokenSource();
-                    _authenticationProcess.thread = new Thread(() => Authenticate(_authenticationProcess.cancellationToken.Token));
-                    _authenticationProcess.thread.Start();
-                    _authenticator.SetEndPoint(_endPoint);
+                    Debug.Log("Invoke ... ");
+                    OnConnected?.Invoke();
+                    StartListening();
+                    //_authenticationProcess.cancellationToken = new CancellationTokenSource();
+                    //_authenticationProcess.thread = new Thread(() => Authenticate(_authenticationProcess.cancellationToken.Token));
+                    //_authenticationProcess.thread.Start();
+                    //_authenticator.SetEndPoint(_endPoint);
                 }
                 else
                 {
@@ -117,12 +137,15 @@ namespace _Scripts.Networking
             {
                 try
                 {
-                    if(_connectionUDP.Available > 0)
+                    Debug.Log("hello ....");
+                    if (_connectionUDP.Available > 0)
                     {
+                        Debug.Log("Client: UDP data received ...");
                         ReceiveSocketData(_connectionUDP);
                     }     
                     if(_connectionTCP.Available > 0)
                     {
+                        Debug.Log("Client: TCP data received ...");
                         ReceiveSocketData(_connectionTCP);
                     }
                 }
@@ -227,12 +250,13 @@ namespace _Scripts.Networking
             bool authenticated = false;
             try
             {
-                _authenticator.SendAuthenticationRequest("Yololo");
+                _authenticator.SendAuthenticationRequest(userName);
                 while (!token.IsCancellationRequested)
                 {
 
                     if (_connectionTCP.Available > 0)
                     {
+                           Debug.Log("?????");
                            ReceiveSocketData(_connectionTCP);
                     }
 

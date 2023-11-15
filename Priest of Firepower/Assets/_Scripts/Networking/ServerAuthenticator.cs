@@ -14,6 +14,7 @@ namespace _Scripts.Networking
         public Action<IPEndPoint> _onAuthenticationFailed;
         IPEndPoint _endPointTmp;//stores temporal endpoint to retrun message
 
+
         AuthenticationState _state; 
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
@@ -23,12 +24,13 @@ namespace _Scripts.Networking
             //get in what state is the authoritation process
             _state = (AuthenticationState)reader.ReadInt32();
 
+            Debug.Log(_state);
+
             switch (_state)
             {
                 case AuthenticationState.REQUESTED:              
 
                     // Receive username and code from the client
-                    string username = reader.ReadString();
                     string clientCode = reader.ReadString();
 
                     // Validate the received code
@@ -37,7 +39,12 @@ namespace _Scripts.Networking
                     // Send authentication response to the client
                     SendAuthenticationResponse(isSuccess);
 
-                    if (isSuccess)
+                    break;
+                case AuthenticationState.CONFIRMATION:
+                    //hum
+                    string confirmation =  reader.ReadString();
+                    string username = reader.ReadString();
+                    if (confirmation == "ok")
                     {
                         Debug.Log($"Authentication successful for client: {username}");
                         _onAuthenticated?.Invoke(_endPointTmp, username);
@@ -47,11 +54,6 @@ namespace _Scripts.Networking
                         Debug.Log("Authentication failed!");
                         _onAuthenticationFailed?.Invoke(_endPointTmp);
                     }
-
-                    
-                    break;
-                case AuthenticationState.CONFIRMATION:
-                    //hum
 
                     break;
                 default:
@@ -71,7 +73,8 @@ namespace _Scripts.Networking
             SerializeIPEndPoint(_endPointTmp, responseWriter);
             responseWriter.Write((int)AuthenticationState.CONFIRMATION);
             responseWriter.Write(isSuccess);
-            responseWriter.Write((int)_state);
+  
+            Debug.Log("Sending success:" + isSuccess);
 
             NetworkManager.Instance.AddReliableStreamQueue(responseStream);
         }

@@ -75,7 +75,7 @@ namespace _Scripts.Networking
             _writer.Write((float)transform.localScale.y);
             _writer.Write((float)transform.localScale.z);
             
-            //NetworkManager.Instance.AddStateStreamQueue(_stream);
+            NetworkManager.Instance.AddStateStreamQueue(_stream);
             isTransformDirty = false;
             
             return _stream;

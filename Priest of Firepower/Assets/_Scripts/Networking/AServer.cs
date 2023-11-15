@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 
@@ -55,6 +56,9 @@ namespace _Scripts.Networking
 
         private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
         private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
+        private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
+
+
         //private List<Process> _authenticationProcessList = new List<Process>();
 
         ClientManager _clientManager;
@@ -71,8 +75,6 @@ namespace _Scripts.Networking
         //handeles connection with clients
         Socket _serverTcp;
 
-        ServerAuthenticator _authenticator;
-
         private bool _isServerInitialized  = false;
         #endregion
 
@@ -80,9 +82,9 @@ namespace _Scripts.Networking
         {
             _endPoint = endPoint;
 
-            _authenticator = new ServerAuthenticator();
-            _authenticator._onAuthenticationFailed += AuthenticationFailed;
-            _authenticator._onAuthenticated += AuthenticationSuccess;
+            //_authenticator = new ServerAuthenticator();
+            //_authenticator._onAuthenticationFailed += AuthenticationFailed;
+            //_authenticator._onAuthenticated += AuthenticationSuccess;
         }
 
 
@@ -192,8 +194,8 @@ namespace _Scripts.Networking
             //In this case the operating system (TCP/IP stack) assigns a free port number for you.
             //So for the ip any it listens to all directions ipv4 local LAN and 
             //also the public ip. TOconnect from the client use any of the ips
-            if(_endPoint == null)
-                _endPoint = new IPEndPoint(IPAddress.Any, NetworkManager.Instance.connectionAddress.port);
+            //if(_endPoint == null)
+            _endPoint = new IPEndPoint(IPAddress.Any, NetworkManager.Instance.connectionAddress.port);
 
             //bind to ip and port to listen to
             _serverTcp.Bind(_endPoint);
@@ -212,17 +214,22 @@ namespace _Scripts.Networking
 
         public void SendToAll(byte[] data)
         {
-            //Debug.Log("Boradcasting message ...");
+            
             foreach (ClientData client in _clientList)
             {
-                client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.endPoint);
+                if(client.ID != 0)
+                {
+                    Debug.Log("Server: sending to client " + client.Username);
+                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.endPoint); 
+                }
             }
         }
         public  void SendCriticalToAll(byte[] data)
         {
             foreach (ClientData client in _clientList)
             {
-                client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                if (client.ID != 0)
+                    client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
         }
 
@@ -270,7 +277,7 @@ namespace _Scripts.Networking
                     foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
                     {
                        if(process.Key == IpEndPoint)
-                        {
+                       {
                             incomingConnection.Close();
                        }
                     }
@@ -286,15 +293,16 @@ namespace _Scripts.Networking
                         }
                         else
                         {
-                            Process authenticate = new Process();
+                            CreateClient(incomingConnection, "Melon", true);
+                            //Process authenticate = new Process();
 
-                            authenticate.cancellationToken = new CancellationTokenSource();
-                            authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
-                            authenticate.thread.Start();
+                            //authenticate.cancellationToken = new CancellationTokenSource();
+                            //authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                            //authenticate.thread.Start();
 
-                            _authenticationConnections[IpEndPoint] = incomingConnection;
-                            _authenticationProcesses[IpEndPoint] = authenticate;
-
+                            //_authenticationConnections[IpEndPoint] = incomingConnection;
+                            //_authenticationProcesses[IpEndPoint] = authenticate;
+                            //_authenticators[IpEndPoint] = new ServerAuthenticator();
                         }
                     }          
                 }
@@ -304,14 +312,24 @@ namespace _Scripts.Networking
             {
                 Debug.LogException(e);
             }
-        }  
+        }
         void HandleClient(ClientData clientData)
         {
             Debug.Log("Starting Client Thread " + clientData.ID + " ...");
             try
             {
-                while (!clientData.listenProcess.cancellationToken.IsCancellationRequested)
+                while (!clientData.listenProcess.cancellationToken.Token.IsCancellationRequested)
                 {
+                    if (!clientData.ConnectionTcp.Connected)
+                    {
+                        Debug.Log("TCP not connected ... ");
+                        // Handle the case where TCP is not connected if needed
+                        break; // Exit the loop if TCP is not connected
+                    }
+                    else
+                    {
+                        Debug.Log("TCP connected ... ");
+                    }
 
                     if (clientData.ConnectionTcp.Available > 0)
                     {
@@ -321,6 +339,11 @@ namespace _Scripts.Networking
                     {
                         ReceiveSocketData(clientData.ConnectionUDP);
                     }
+
+                    //byte[] bytes = Encoding.ASCII.GetBytes("1");
+                    //clientData.ConnectionUDP.Send(bytes);
+                    //// Ensure the 
+
                     // Add some delay to avoid busy-waiting
                     Thread.Sleep(10);
                 }
@@ -344,9 +367,9 @@ namespace _Scripts.Networking
             {
                 // Handle other exceptions
                 Debug.Log($"Exception: {e.Message}");
-                
             }
         }
+
         void ReceiveSocketData(Socket socket)
         {
             try
@@ -387,17 +410,17 @@ namespace _Scripts.Networking
 
                 clientData.ConnectionTcp = clientSocket;
                 //add a time out exeption for when the client disconnects or has lag or something
-                clientData.ConnectionTcp.ReceiveTimeout = 5000;
-                clientData.ConnectionTcp.SendTimeout = 5000;
+                clientData.ConnectionTcp.ReceiveTimeout = Timeout.Infinite;
+                clientData.ConnectionTcp.SendTimeout = Timeout.Infinite;
 
                 //create udp connection
                 clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);
                 clientData.ConnectionUDP.Bind(clientSocket.RemoteEndPoint);
-                clientData.ConnectionUDP.ReceiveTimeout = 1000;
-                clientData.ConnectionUDP.SendTimeout = 1000;
+                clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
+                clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
 
                 //store endpoint
-                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
+                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.LocalEndPoint;
                 clientData.MetaData.endPoint = clientEndPoint;        
 
                 //Create the process for that client
@@ -485,7 +508,11 @@ namespace _Scripts.Networking
                         Debug.Log("Authentication message recieved ...");
                         ReceiveSocketData(incomingSocket);
                     }
-                    Thread.Sleep(100);
+
+                    string p = "puto";
+                    byte[] bytes = Encoding.ASCII.GetBytes(p);
+                    incomingSocket.Send(bytes);
+                    Thread.Sleep(10);
                 }
             }
             catch (Exception e)
@@ -519,7 +546,16 @@ namespace _Scripts.Networking
             _authenticationConnections[endpoint].Close();
             _authenticationConnections.Remove(endpoint);
         }
-        public ServerAuthenticator GetAuthenticator() { return _authenticator; }
+        public void PopulateAuthenticators(MemoryStream stream, BinaryReader reader) 
+        {
+            lock(_authenticators)
+            {
+                foreach (KeyValuePair<IPEndPoint, ServerAuthenticator> process in _authenticators)
+                {
+                    process.Value.HandleAuthentication(stream, reader);
+                }
+            }
+        }
 
         #endregion
     }
