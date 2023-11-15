@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Threading;
-using UnityEditor.Build.Content;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -12,6 +11,9 @@ using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
+
+    
+
     public enum PacketType
     {
         PING,
@@ -30,6 +32,8 @@ namespace _Scripts.Networking
         private bool _isHost = false;
         private bool _isServer = false;
         private bool _isClient = false;
+
+        public static readonly UInt64 UNKNOWN_ID = 69;
 
         uint _mtu = 1400;
         int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
@@ -389,7 +393,7 @@ namespace _Scripts.Networking
 
             PacketType type = (PacketType)reader.ReadInt32();
 
-            Debug.Log("Received packet type: " + type + ", Stream array length: " + stream.ToArray().Length);
+            Debug.Log("Received packet from :" + senderId +", type: " + type + ", Stream array length: " + stream.ToArray().Length);
 
             switch (type)
             {

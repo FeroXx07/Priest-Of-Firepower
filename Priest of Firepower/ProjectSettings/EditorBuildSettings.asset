@@ -6,15 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Nettest/A/ConnectToLobby.unity
+    path: Assets/Scenes/NetScenes/ConnectToLobby.unity
     guid: 76082f59d63e9da45b5754756053ee46
   - enabled: 1
-    path: Assets/Scenes/Nettest/A/Lobby.unity
+    path: Assets/Scenes/NetScenes/Lobby.unity
     guid: d407cd9e57de4a4498b8e9da61cfc45a
   - enabled: 0
     path: Assets/Scenes/TestScene.unity
     guid: 0c8981214729b1d43bde15b4b99ba5cf
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/TransmissionScene.unity
     guid: 294157f0880b42f46804bba55b3a45a7
   m_configObjects: {}

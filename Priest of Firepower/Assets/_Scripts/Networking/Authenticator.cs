@@ -18,9 +18,11 @@ public class Authenticator
         byte[] ipAddressBytes = endpoint.Address.GetAddressBytes();
         writer.Write((byte)ipAddressBytes.Length);
         writer.Write(ipAddressBytes);
-
+        Debug.Log(ipAddressBytes.Length + endpoint.Address.ToString() + endpoint.Port);
         // Serialize Port
         writer.Write(endpoint.Port);
+
+ 
     }
 
     protected IPEndPoint GetIPEndPoint(BinaryReader reader)

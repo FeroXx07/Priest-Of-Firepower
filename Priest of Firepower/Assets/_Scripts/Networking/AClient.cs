@@ -25,7 +25,7 @@ namespace _Scripts.Networking
 
         ClientAuthenticator _authenticator = new ClientAuthenticator();
 
-        private UInt64 _ID;
+        private UInt64 _ID = 69;
 
         #endregion            
         #region Enable/Disable funcitons
@@ -73,7 +73,16 @@ namespace _Scripts.Networking
                     return;
                 }
 
+                _connectionTCP.ReceiveTimeout = 5000;
+                _connectionTCP.SendTimeout = 5000;
+
+                //create new udp connection
+                _connectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+                _connectionUDP.Bind(_endPoint);
+
                 Debug.Log("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
+
                 if (!NetworkManager.Instance.IsHost())
                 {
                     _authenticationProcess.cancellationToken = new CancellationTokenSource();
@@ -103,8 +112,6 @@ namespace _Scripts.Networking
 
         void ListenServer(CancellationToken cancellationToken)
         {
-            _connectionTCP.ReceiveTimeout = Timeout.Infinite;
-            _connectionTCP.SendTimeout = Timeout.Infinite;
             Debug.Log("Listening server ...");
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -183,31 +190,25 @@ namespace _Scripts.Networking
                 Debug.Log("Unexpected exception : " + e.ToString());
             }
         }
-        public void SendPacket(byte[]data)
+        public void SendPacket(byte[] data)
         {
             try
             {
-                Debug.Log("Client sending data:" + data.Length);
-                if (_connectionUDP == null) return;   
-                
+                Debug.Log($"Client sending data: {_endPoint} - Length: {data.Length}");
+
                 _connectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
             catch (ArgumentNullException ane)
             {
-
-                Debug.Log("ArgumentNullException : " + ane.ToString());
+                Debug.LogError("ArgumentNullException: " + ane.ToString());
             }
             catch (SocketException se)
             {
-
-                Debug.Log("SocketException: " + se.SocketErrorCode); // Log the error code
-                Debug.Log("SocketException: " + se.Message); // Log the error message
-
+                Debug.LogError($"SocketException - Error Code: {se.SocketErrorCode}, Message: {se.Message}");
             }
-
             catch (Exception e)
             {
-                Debug.Log("Unexpected exception : " + e.ToString());
+                Debug.LogError("Unexpected exception: " + e.ToString());
             }
         }
         #region Helper functions

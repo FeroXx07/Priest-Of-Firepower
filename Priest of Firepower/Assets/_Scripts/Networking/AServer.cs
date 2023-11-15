@@ -70,7 +70,6 @@ namespace _Scripts.Networking
 
         //handeles connection with clients
         Socket _serverTcp;
-        Socket _serverUDP;
 
         ServerAuthenticator _authenticator;
 
@@ -131,7 +130,6 @@ namespace _Scripts.Networking
                 _serverTcp.Shutdown(SocketShutdown.Both);
             }
             _serverTcp.Close();
-            _serverUDP.Close();
         }
         private void Update()
         {
@@ -389,20 +387,18 @@ namespace _Scripts.Networking
 
                 clientData.ConnectionTcp = clientSocket;
                 //add a time out exeption for when the client disconnects or has lag or something
-                clientData.ConnectionTcp.ReceiveTimeout = 1000;
-                clientData.ConnectionTcp.SendTimeout = 1000;
+                clientData.ConnectionTcp.ReceiveTimeout = 5000;
+                clientData.ConnectionTcp.SendTimeout = 5000;
 
                 //create udp connection
                 clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork,SocketType.Dgram,ProtocolType.Udp);
                 clientData.ConnectionUDP.Bind(clientSocket.RemoteEndPoint);
-                clientData.ConnectionUDP.ReceiveTimeout = 100;
-                clientData.ConnectionUDP.SendTimeout = 100;
+                clientData.ConnectionUDP.ReceiveTimeout = 1000;
+                clientData.ConnectionUDP.SendTimeout = 1000;
 
                 //store endpoint
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
-                clientData.MetaData.endPoint = clientEndPoint;
-
-         
+                clientData.MetaData.endPoint = clientEndPoint;        
 
                 //Create the process for that client
                 //create a hole thread to recive important data from server-client
