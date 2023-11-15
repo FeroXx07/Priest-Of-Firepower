@@ -178,16 +178,18 @@ namespace _Scripts.Networking
                 System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
                 stopwatch.Start();
 
-                UInt64 senderid;
-
-                if (IsClient())
-                    senderid = _client.ID();
-                else
-                    senderid = 0;
-                
 
                 while (!token.IsCancellationRequested)
                 {
+
+                    UInt64 senderid;
+
+                    if (IsClient())
+                        senderid = _client.ID();
+                    else
+                        senderid = 0;
+
+
                     //State buffer
 
                     if (_stateStreamBuffer.Count > 0)
@@ -276,10 +278,17 @@ namespace _Scripts.Networking
                             {
                             
                                 MemoryStream nextStream = _reliableStreamBuffer.Dequeue();
+                                MemoryStream newStream = new MemoryStream();
 
-                                BinaryWriter writer = new BinaryWriter(nextStream);
+
+                                BinaryWriter writer = new BinaryWriter(newStream);
+
+                                ///writer.Write((UInt64)senderid);
+
+                                nextStream.CopyTo(newStream);
 
                                 byte[] buffer = nextStream.ToArray();
+
                                 if (_isClient)
                                 {
                                     _client.SendCriticalPacket(buffer);
@@ -389,15 +398,16 @@ namespace _Scripts.Networking
                 return;
             }
 
-            UInt64 senderId = reader.ReadUInt64();
+           // UInt64 senderId = reader.ReadUInt64();
 
             PacketType type = (PacketType)reader.ReadInt32();
 
-            Debug.Log("Received packet from :" + senderId +", type: " + type + ", Stream array length: " + stream.ToArray().Length);
+            Debug.Log("Received packet from :, type: " + type + ", Stream array length: " + stream.ToArray().Length);
 
             switch (type)
             {
                 case PacketType.PING:
+                    Debug.Log("PING message recieved ...");
                     break;
                 case PacketType.INPUT:
                     break;
@@ -405,7 +415,8 @@ namespace _Scripts.Networking
                     HandleObjectState(stream,reader);
                     break;
                 case PacketType.AUTHENTICATION:
-                    if(_isClient)
+                    Debug.Log("AUTH message recieved ...");
+                    if (_isClient)
                     {
                         _client.GetAuthenticator().HandleAuthentication(stream, reader);
                     }
@@ -414,8 +425,9 @@ namespace _Scripts.Networking
                         _server.GetAuthenticator().HandleAuthentication(stream, reader);   
                     }
                     break;
-                case PacketType.ID:
+                case PacketType.ID:                   
                     {
+                        Debug.Log("ID message recieved ...");
                         if (_isClient)
                             _client.HandleRecivingID(reader);
                     }
@@ -454,7 +466,7 @@ namespace _Scripts.Networking
         
             BinaryWriter writer = new BinaryWriter(buffer);
 
-            writer.Write(senderId);
+           // writer.Write(senderId);
             writer.Write((int) type);
             foreach(MemoryStream stream in streams)
             {

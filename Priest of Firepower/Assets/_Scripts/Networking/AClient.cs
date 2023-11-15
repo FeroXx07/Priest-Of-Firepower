@@ -233,8 +233,7 @@ namespace _Scripts.Networking
 
                     if (_connectionTCP.Available > 0)
                     {
-                        Debug.Log("Authentication message recieved ...");
-                        ReceiveSocketData(_connectionTCP);
+                           ReceiveSocketData(_connectionTCP);
                     }
 
                     if (_authenticator.Authenticated() && !authenticated)

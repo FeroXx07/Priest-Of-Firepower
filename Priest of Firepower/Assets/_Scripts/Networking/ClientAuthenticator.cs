@@ -13,7 +13,7 @@ namespace _Scripts.Networking
         AuthenticationState _state = AuthenticationState.REQUESTED;
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
-            IPEndPoint enpoint = GetIPEndPoint(reader);
+            IPEndPoint enpoint = DeserializeIPEndPoint(reader);
             //get the end point if it is the same then the message is for this client 
 
             if (!endPoint.Equals(enpoint))
@@ -57,16 +57,14 @@ namespace _Scripts.Networking
             // Create an authentication packet
             MemoryStream authStream = new MemoryStream();
             BinaryWriter authWriter = new BinaryWriter(authStream);
-            authWriter.Write(69);
+
             authWriter.Write((int)PacketType.AUTHENTICATION);
-            SendIPEndPoint(endPoint,authWriter);
+            SerializeIPEndPoint(endPoint,authWriter);
             authWriter.Write((int)_state);
             authWriter.Write(username);
             authWriter.Write(_authenticationCode);
 
             Debug.Log("Client: Starting authetication request ...");
-
-            Debug.Log(69.ToString() + PacketType.AUTHENTICATION + _state + username + _authenticationCode);
 
             NetworkManager.Instance.AddReliableStreamQueue(authStream);
         }
@@ -77,9 +75,8 @@ namespace _Scripts.Networking
             MemoryStream authStream = new MemoryStream();
             BinaryWriter authWriter = new BinaryWriter(authStream);
 
-            authWriter.Write(69);
             authWriter.Write((int)PacketType.AUTHENTICATION);
-            SendIPEndPoint(endPoint,authWriter);
+            SerializeIPEndPoint(endPoint,authWriter);
             authWriter.Write((int)_state);
             authWriter.Write("ok");
 

@@ -18,7 +18,7 @@ namespace _Scripts.Networking
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
             // check who is sending the request
-            _endPointTmp = GetIPEndPoint(reader);
+            _endPointTmp = DeserializeIPEndPoint(reader);
 
             //get in what state is the authoritation process
             _state = (AuthenticationState)reader.ReadInt32();
@@ -68,7 +68,7 @@ namespace _Scripts.Networking
             BinaryWriter responseWriter = new BinaryWriter(responseStream);
 
             responseWriter.Write((int)PacketType.AUTHENTICATION);
-            SendIPEndPoint(_endPointTmp, responseWriter);
+            SerializeIPEndPoint(_endPointTmp, responseWriter);
             responseWriter.Write((int)AuthenticationState.CONFIRMATION);
             responseWriter.Write(isSuccess);
             responseWriter.Write((int)_state);

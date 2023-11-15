@@ -12,25 +12,23 @@ public class Authenticator
         REQUESTED,
         CONFIRMATION
     }
-    protected void SendIPEndPoint(IPEndPoint endpoint, BinaryWriter writer)
+    protected void SerializeIPEndPoint(IPEndPoint endpoint, BinaryWriter writer)
     {
         // Serialize IP Address
         byte[] ipAddressBytes = endpoint.Address.GetAddressBytes();
-        writer.Write((byte)ipAddressBytes.Length);
+        writer.Write(ipAddressBytes.Length);
         writer.Write(ipAddressBytes);
-        Debug.Log(ipAddressBytes.Length + endpoint.Address.ToString() + endpoint.Port);
+
         // Serialize Port
         writer.Write(endpoint.Port);
-
- 
     }
 
-    protected IPEndPoint GetIPEndPoint(BinaryReader reader)
+    protected IPEndPoint DeserializeIPEndPoint(BinaryReader reader)
     {
         try
         {
             // Deserialize IP Address
-            int ipAddressLength = reader.ReadByte();
+            int ipAddressLength = reader.ReadInt32();
             byte[] ipAddressBytes = reader.ReadBytes(ipAddressLength);
             IPAddress ipAddress = new IPAddress(ipAddressBytes);
 
@@ -39,14 +37,14 @@ public class Authenticator
 
             // Create IPEndPoint
             IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
-            Debug.Log("Parsed IPEndPoint: " + ipEndPoint);
 
             return ipEndPoint;
         }
         catch (Exception ex)
         {
             Debug.LogError("Error while deserializing IPEndPoint: " + ex.Message);
+            return null;
         }
-        return null;
     }
+
 }
