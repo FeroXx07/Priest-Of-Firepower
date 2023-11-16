@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -10,8 +12,10 @@ namespace _Scripts.Networking
         [SerializeField] private UInt64 globalObjectIdHash = 10;
         public bool synchronizeTransform = true;
         [SerializeField] private bool isTransformDirty = false;
-        [FormerlySerializedAs("isLastTrasformFromNetwork")] [SerializeField] private bool isLastTransformFromNetwork = false;
-        
+        [SerializeField] private bool isLastTransformFromNetwork = false;
+        private Transform _newTransform;
+        private Queue<System.Action> TODO = new Queue<System.Action>();
+
         public float tickRate = 10.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         
@@ -30,25 +34,31 @@ namespace _Scripts.Networking
 
         public void HandleNetworkTransform(BinaryReader reader)
         {
-            reader.BaseStream.Position = 0;
-            // Read Transform
             Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             Quaternion newQuat = new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(),reader.ReadSingle());
             Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             
-            transform.position = newPos;
-            transform.rotation = newQuat;
-            transform.localScale = newScale;
+            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {  
+                transform.position = newPos;
+                transform.rotation = newQuat;
+                transform.localScale = newScale;
+            });
             
-            Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {transform.position}, {transform.rotation}");
+            Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}, {newQuat.eulerAngles}, {newScale}");
 
             isTransformDirty = false;
             isLastTransformFromNetwork = true;
         }
 
+        private void SetTransformThreaded(Vector3 newPos, Quaternion newQuat, Vector3 newScale)
+        {
+            transform.position = newPos;
+            transform.rotation = newQuat;
+            transform.localScale = newScale;
+        }
+
         public MemoryStream SendNetworkTransform()
         {
-            Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transform.position}, {transform.rotation}");
             MemoryStream _stream = new MemoryStream();
             BinaryWriter _writer = new BinaryWriter(_stream);
             
@@ -57,10 +67,10 @@ namespace _Scripts.Networking
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }
             
-            // Type objectType = this.GetType();
-            // _writer.Write(objectType.AssemblyQualifiedName);
-            // _writer.Write(globalObjectIdHash);
-            // _writer.Write((int)NetworkAction.TRANSFORM);
+            Type objectType = this.GetType();
+            _writer.Write(objectType.AssemblyQualifiedName);
+            _writer.Write(globalObjectIdHash);
+            _writer.Write((int)NetworkAction.TRANSFORM);
             
             _writer.Write((float)transform.position.x);
             _writer.Write((float)transform.position.y);
@@ -75,6 +85,7 @@ namespace _Scripts.Networking
             _writer.Write((float)transform.localScale.y);
             _writer.Write((float)transform.localScale.z);
             
+            Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transform.position}, {transform.rotation}, size: {_stream.ToArray().Length}");
             NetworkManager.Instance.AddStateStreamQueue(_stream);
             isTransformDirty = false;
             
@@ -83,10 +94,12 @@ namespace _Scripts.Networking
         
         private void Update()
         {
+            if (Time.frameCount <= 5)
+                return;
+            
             if (transform.hasChanged)
             {
                 isTransformDirty = true;
-                isLastTransformFromNetwork = false;
                 transform.hasChanged = false;
             }
             

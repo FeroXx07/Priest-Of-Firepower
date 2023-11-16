@@ -391,11 +391,11 @@ namespace _Scripts.Networking
 
             // UInt64 senderId = reader.ReadUInt64();
             PacketType type = (PacketType)reader.ReadInt32();
-            Debug.Log("Received packet from :, type: " + type + ", Stream array length: " + stream.ToArray().Length);
+            Debug.Log("Received packet from: type: " + type + ", Stream array length: " + stream.ToArray().Length);
             switch (type)
             {
                 case PacketType.PING:
-                    Debug.Log("PING message recieved ...");
+                    Debug.Log("PING message received ...");
                     break;
                 case PacketType.INPUT:
                     break;
@@ -405,19 +405,19 @@ namespace _Scripts.Networking
                 case PacketType.AUTHENTICATION:
                     if (_isClient)
                     {
-                        Debug.Log("Client: auth message recieved ...");
+                        Debug.Log("Client: auth message received ...");
                         _client.GetAuthenticator().HandleAuthentication(stream, reader);
                     }
                     else if (_isHost)
                     {
-                        Debug.Log("Server: auth message recieved ...");
+                        Debug.Log("Server: auth message received ...");
                         _server.PopulateAuthenticators(stream, reader);
                     }
 
                     break;
                 case PacketType.ID:
                 {
-                    Debug.Log("ID message recieved ...");
+                    Debug.Log("ID message received ...");
                     if (_isClient) _client.HandleRecivingID(reader);
                 }
                     break;
@@ -449,19 +449,20 @@ namespace _Scripts.Networking
             }
         }
 
-        private byte[] ConcatenateMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streams)
+        private byte[] ConcatenateMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streamsList)
         {
-            MemoryStream buffer = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(buffer);
+            MemoryStream output = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(output);
 
             // writer.Write(senderId);
             writer.Write((int)type);
-            foreach (MemoryStream stream in streams)
+            foreach (MemoryStream stream in streamsList)
             {
-                stream.CopyTo(buffer);
+                stream.Position = 0;
+                stream.CopyTo(output);
             }
 
-            return buffer.ToArray();
+            return output.ToArray();
         }
 
         #region Client Events Interface
@@ -579,7 +580,7 @@ namespace _Scripts.Networking
 
         public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {
-            Debug.Log($"HandlingNetworkAction: {id}, {action}, {type}, {reader.BaseStream.Position}");
+            Debug.Log($"HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.AssemblyQualifiedName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
                 case NetworkAction.CREATE:
@@ -627,7 +628,8 @@ namespace _Scripts.Networking
 
         private void HandleObjectTransform(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {
-            if (!networkObjectMap[id].synchronizeTransform) networkObjectMap[id].HandleNetworkTransform(reader);
+            if (networkObjectMap[id].synchronizeTransform) 
+                networkObjectMap[id].HandleNetworkTransform(reader);
         }
     }
 }
