@@ -22,7 +22,7 @@ namespace _Scripts.Networking
         }
     }
 
-    public class AServer : GenericSingleton<AServer>
+    public class AServer
     {
         #region variables
 
@@ -31,12 +31,11 @@ namespace _Scripts.Networking
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
-        Process _listenConnectionProcess = new Process();
+        Process _listenConnectionProcess;
         private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
         private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
 
-        private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators =
-            new Dictionary<IPEndPoint, ServerAuthenticator>();
+        private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
 
         //private List<Process> _authenticationProcessList = new List<Process>();
         ClientManager _clientManager;
@@ -124,9 +123,17 @@ namespace _Scripts.Networking
 
         void StopAuthenticationThread()
         {
-            foreach (KeyValuePair<IPEndPoint, Process> process in _authenticationProcesses)
+            try
             {
-                process.Value.Shutdown();
+                foreach (KeyValuePair<IPEndPoint, Process> process in _authenticationProcesses)
+                {
+                    process.Value.Shutdown();
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
             }
         }
 
@@ -134,29 +141,35 @@ namespace _Scripts.Networking
         {
             _listenConnectionProcess.Shutdown();
         }
-
+        
         void DisconnectAllClients()
         {
-            foreach (ClientData client in _clientList)
+            lock(_clientList) 
             {
-                RemoveClient(client);
+                foreach (ClientData client in _clientList)
+                {
+                    RemoveClient(client);
+                }
             }
         }
 
         void RemoveDisconectedClient()
         {
-            if (_clientListToRemove.Count > 0)
+            lock (_clientList)
             {
-                lock (_clientList)
+                if (_clientListToRemove.Count > 0)
                 {
-                    foreach (ClientData clientToRemove in _clientListToRemove)
+                    lock (_clientList)
                     {
-                        _clientList.Remove(clientToRemove);
+                        foreach (ClientData clientToRemove in _clientListToRemove)
+                        {
+                            _clientList.Remove(clientToRemove);
+                        }
                     }
-                }
 
-                Debug.Log("removed " + _clientListToRemove.Count + " clients");
-                _clientListToRemove.Clear();
+                    Debug.Log("removed " + _clientListToRemove.Count + " clients");
+                    _clientListToRemove.Clear();
+                }
             }
         }
 
@@ -195,6 +208,7 @@ namespace _Scripts.Networking
             // the Client list that will want
             // to connect to Server
             _serverTcp.Listen(4);
+            _listenConnectionProcess = new Process();
             _listenConnectionProcess.cancellationToken = new CancellationTokenSource();
             _listenConnectionProcess.thread = new Thread(() =>
                 StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
@@ -202,6 +216,20 @@ namespace _Scripts.Networking
             _isServerInitialized = true;
         }
 
+        public void Shutdown()
+        {
+            Debug.Log("Stopping server ...");
+            StopConnectionListener();
+            StopAuthenticationThread();
+            DisconnectAllClients();
+            Debug.Log("Closing server connection ...");
+            if (_serverTcp.Connected)
+            {
+                _serverTcp.Shutdown(SocketShutdown.Both);
+            }
+
+            _serverTcp.Close();
+        }
         public void SendToAll(byte[] data)
         {
             foreach (ClientData client in _clientList)
@@ -245,57 +273,108 @@ namespace _Scripts.Networking
                 }
             }
         }
-
+        private ManualResetEvent connectionListenerEvent = new ManualResetEvent(false);
         void StartConnectionListener(CancellationToken token)
         {
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-                    Socket incomingConnection = _serverTcp.Accept();
-                    IPEndPoint IpEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
+                    connectionListenerEvent.Reset(); // Reset the event before waiting for a connection
 
-                    //check that the incoming socket is not being process twice
-                    foreach (ClientData client in _clientList)
+                    // Asynchronously wait for a connection or cancellation signal
+                    IAsyncResult asyncResult = _serverTcp.BeginAccept(new AsyncCallback(AcceptCallback), null);
+
+                    // Wait for either a connection or a cancellation signal
+                    int waitResult = WaitHandle.WaitAny(new WaitHandle[] { asyncResult.AsyncWaitHandle, token.WaitHandle });
+
+                    // If the wait result is for the cancellation token, exit the loop
+                    if (waitResult == 1)
                     {
-                        if (client.MetaData.endPoint == IpEndPoint)
-                        {
-                            incomingConnection.Close();
-                        }
+                        break;
                     }
+                    connectionListenerEvent.Set();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
 
-                    foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
+        void AcceptCallback(IAsyncResult ar)
+        {
+            try
+            {
+                // Complete the asynchronous operation
+                Socket incomingConnection = null;
+                try
+                {
+                    incomingConnection = _serverTcp.EndAccept(ar);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Handle the case where the socket is already disposed
+                    return;
+                }
+                
+                if (incomingConnection == null || incomingConnection.Handle == IntPtr.Zero || incomingConnection.Connected == false)
+                {
+                    // The socket is not valid; handle accordingly
+                    return;
+                }
+                
+                IPEndPoint IpEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
+
+                // Check if the socket is connected
+                if (!IsSocketConnected(incomingConnection))
+                {
+                    incomingConnection.Close();
+                    return;
+                }
+
+                //check that the incoming socket is not being process twice
+                foreach (ClientData client in _clientList)
+                {
+                    if (client.MetaData.endPoint == IpEndPoint)
                     {
-                        if (process.Key == IpEndPoint)
-                        {
-                            incomingConnection.Close();
-                        }
-                    }
-
-                    if (IsSocketConnected(incomingConnection))
-                    {
-                        //if not local host
-                        Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
-                        if (IpEndPoint.Address.Equals(IPAddress.Loopback))
-                        {
-                            Debug.Log("Server : host connected ... ");
-                            CreateClient(incomingConnection, "Host", true);
-                        }
-                        else
-                        {
-                            CreateClient(incomingConnection, "Melon", true);
-                            //Process authenticate = new Process();
-
-                            //authenticate.cancellationToken = new CancellationTokenSource();
-                            //authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
-                            //authenticate.thread.Start();
-
-                            //_authenticationConnections[IpEndPoint] = incomingConnection;
-                            //_authenticationProcesses[IpEndPoint] = authenticate;
-                            //_authenticators[IpEndPoint] = new ServerAuthenticator();
-                        }
+                        incomingConnection.Close();
                     }
                 }
+
+                foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
+                {
+                    if (process.Key == IpEndPoint)
+                    {
+                        incomingConnection.Close();
+                    }
+                }
+
+                if (IsSocketConnected(incomingConnection))
+                {
+                    //if not local host
+                    Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
+                    if (IpEndPoint.Address.Equals(IPAddress.Loopback))
+                    {
+                        Debug.Log("Server : host connected ... ");
+                        CreateClient(incomingConnection, "Host", true);
+                    }
+                    else
+                    {
+                        CreateClient(incomingConnection, "Melon", true);
+                        //Process authenticate = new Process();
+
+                        //authenticate.cancellationToken = new CancellationTokenSource();
+                        //authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                        //authenticate.thread.Start();
+
+                        //_authenticationConnections[IpEndPoint] = incomingConnection;
+                        //_authenticationProcesses[IpEndPoint] = authenticate;
+                        //_authenticators[IpEndPoint] = new ServerAuthenticator();
+                    }
+                }
+
+                connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
             }
             catch (Exception e)
             {
@@ -414,10 +493,11 @@ namespace _Scripts.Networking
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
                 Process clientProcess = new Process();
+                clientProcess.Name = "Handle Clinet " + clientData.ID.ToString();
                 clientProcess.cancellationToken = new CancellationTokenSource();
                 clientProcess.thread = new Thread(() => HandleClient(clientData));
                 clientProcess.thread.IsBackground = true;
-                clientProcess.thread.Name = clientData.ID.ToString();
+                clientProcess.thread.Name  = "Handle Clinet " + clientData.ID.ToString();
                 clientProcess.thread.Start();
                 clientData.listenProcess = clientProcess;
                 _clientList.Add(clientData);
@@ -429,22 +509,32 @@ namespace _Scripts.Networking
 
         void RemoveClient(ClientData clientData)
         {
-            // Remove the client from the list of connected clients    
-            lock (_clientList)
+            Debug.Log("Removing client " + clientData.ID);
+            try
             {
-                // Shutdown client thread
-                clientData.listenProcess.Shutdown();
-
-                // Close the client's socket
-                if (clientData.ConnectionTcp.Connected)
+                // Remove the client from the list of connected clients    
+                lock (_clientList)
                 {
-                    clientData.ConnectionTcp.Shutdown(SocketShutdown.Both);
-                }
+                    // Shutdown client thread
+                    clientData.listenProcess.Shutdown();
 
-                clientData.ConnectionTcp.Close();
-                _clientListToRemove.Add(clientData);
-                Debug.Log("Client " + clientData.ID + " disconnected.");
+                    // Close the client's socket
+                    if (clientData.ConnectionTcp.Connected)
+                    {
+                        clientData.ConnectionTcp.Shutdown(SocketShutdown.Both);
+                    }
+
+                    clientData.ConnectionTcp.Close();
+                    _clientListToRemove.Add(clientData);
+                    Debug.Log("Client " + clientData.ID + " disconnected.");
+                }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+           
         }
 
         #endregion

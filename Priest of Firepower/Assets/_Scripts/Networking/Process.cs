@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
+using UnityEngine;
 
 namespace _Scripts.Networking
 {
@@ -6,10 +8,11 @@ namespace _Scripts.Networking
     {
         public Thread thread;
         public CancellationTokenSource cancellationToken;
+        public string Name;
+        
         public void Shutdown()
         {
-            cancellationToken?.Cancel();
-
+            cancellationToken.Cancel();
             if (thread != null && thread.IsAlive)
             {
                 thread.Join();
@@ -18,6 +21,8 @@ namespace _Scripts.Networking
             {
                 thread.Abort();
             }
+            
+            Debug.Log("thread shutting down: " + Name);
         }
     }
 }
