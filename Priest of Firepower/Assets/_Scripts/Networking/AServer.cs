@@ -142,17 +142,20 @@ namespace _Scripts.Networking
         }
         void RemoveDisconectedClient()
         {
-            if (_clientListToRemove.Count > 0)
+            lock (_clientList)
             {
-                lock (_clientList)
+                if (_clientListToRemove.Count > 0)
                 {
-                    foreach (ClientData clientToRemove in _clientListToRemove)
+                    lock (_clientList)
                     {
-                        _clientList.Remove(clientToRemove);
+                        foreach (ClientData clientToRemove in _clientListToRemove)
+                        {
+                            _clientList.Remove(clientToRemove);
+                        }
                     }
+                    Debug.LogError("removed " + _clientListToRemove.Count + " clients");
+                    _clientListToRemove.Clear();
                 }
-                Debug.LogError("removed " + _clientListToRemove.Count + " clients");
-                _clientListToRemove.Clear();
             }
         }
         #endregion
@@ -307,11 +310,6 @@ namespace _Scripts.Networking
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
-                    else
-                    {
-                        Debug.LogError("TCP connected ... ");
-                    }
-
                     if (clientData.ConnectionTcp.Available > 0)
                     {
                         ReceiveSocketData(clientData.ConnectionTcp);
@@ -434,18 +432,24 @@ namespace _Scripts.Networking
             // Remove the client from the list of connected clients    
             lock (_clientList)
             {
-                // Shutdown client thread
-                clientData.listenProcess.Shutdown();
-
-                // Close the client's socket
-                if (clientData.ConnectionTcp.Connected)
+                try
                 {
-                    clientData.ConnectionTcp.Shutdown(SocketShutdown.Both);
+                    // Shutdown client thread
+                    clientData.listenProcess.Shutdown();
+
+                    // Close the client's socket
+                    if (clientData.ConnectionTcp.Connected)
+                    {
+                        clientData.ConnectionTcp.Shutdown(SocketShutdown.Both);
+                    }
+                    clientData.ConnectionTcp.Close();
                 }
-                clientData.ConnectionTcp.Close();
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Error while removing client {clientData.ID}: {ex.Message}");
+                }
 
                 _clientListToRemove.Add(clientData);
-
                 Debug.LogError("Client " + clientData.ID + " disconnected.");
             }
         }
