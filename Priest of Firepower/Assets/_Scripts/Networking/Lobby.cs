@@ -20,14 +20,14 @@ namespace _Scripts.Networking
           
         }
 
-        protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
+        protected override bool Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
-            return null;
+            return false;
         }
 
-        public override void Read(BinaryReader reader)
+        public override bool Read(BinaryReader reader)
         {
-           
+            return false;
         }
     }
 }

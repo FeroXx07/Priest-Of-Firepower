@@ -15,19 +15,16 @@ namespace _Scripts.Networking.Network_Behaviours
             base.Awake();
             BITTracker = new ChangeTracker(3);
         }
-        public override void Read(BinaryReader reader)
+        public override bool Read(BinaryReader reader)
         {
-
-        
             int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();
             if (receivedFieldCount != fieldCount)
             {
                 UnityEngine.Debug.LogError("Mismatch in the count of fields");
-                return;
+                return false;
             }
 
-            // Read the bitfield from the input stream
             byte[] receivedBitfieldBytes = reader.ReadBytes((fieldCount + 7) / 8);
             BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
 
@@ -37,6 +34,8 @@ namespace _Scripts.Networking.Network_Behaviours
                 _username = reader.ReadString();
             if (receivedBitfield.Get(2))
                 _isHost = reader.ReadBoolean();
+            
+            return true;
         }
 
         protected override void InitNetworkVariablesList()
@@ -44,17 +43,16 @@ namespace _Scripts.Networking.Network_Behaviours
         
         }
 
-        protected override MemoryStream Write(MemoryStream outputMemoryStream, NetworkAction action)
+        protected override bool Write(MemoryStream outputMemoryStream, NetworkAction action)
         {
             MemoryStream tempStream = new MemoryStream();
             BinaryWriter tempWriter = new BinaryWriter(tempStream);
 
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             Type objectType = this.GetType();
-            writer.Write(objectType.AssemblyQualifiedName);
+            writer.Write(objectType.FullName);
             writer.Write(NetworkObject.GetNetworkId());
 
-            // Serialize the changed fields using the bitfield
             BitArray bitfield = BITTracker.GetBitfield();
 
             if (BITTracker.GetBitfield().Get(0))
@@ -71,14 +69,14 @@ namespace _Scripts.Networking.Network_Behaviours
             int fieldCount = bitfield.Length;
             writer.Write(fieldCount);
 
-            // Write the bitfield
             byte[] bitfieldBytes = new byte[(fieldCount + 7) / 8];
             bitfield.CopyTo(bitfieldBytes, 0);
             writer.Write(bitfieldBytes);
 
+            tempStream.Position = 0;
             tempStream.CopyTo(outputMemoryStream);
 
-            return outputMemoryStream;
+            return true;
         }
     }
 }
