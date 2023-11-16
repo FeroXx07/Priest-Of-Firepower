@@ -86,6 +86,9 @@ namespace _Scripts.Networking
 
         private void OnEnable()
         {
+            Debug.developerConsoleEnabled = true;
+            Debug.developerConsoleVisible = true;
+            Debug.LogError("Console Enabled");
             SceneManager.sceneLoaded += ResetNetworkIds;
         }
 

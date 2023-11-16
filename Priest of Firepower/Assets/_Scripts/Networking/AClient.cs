@@ -67,7 +67,7 @@ namespace _Scripts.Networking
             {
                 _endPoint = address;
 
-                //Debug.Log("Creating connetion ...");
+                //Debug.LogError("Creating connetion ...");
                 _connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 _connectionTCP.ReceiveTimeout = 1000;
                 _connectionTCP.SendTimeout = 1000;
@@ -75,7 +75,7 @@ namespace _Scripts.Networking
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
                 if (_endPoint == null)
                 {
-                    Debug.Log("server Ip is null ...");
+                    Debug.LogError("server Ip is null ...");
                     return;
                 }
 
@@ -83,7 +83,7 @@ namespace _Scripts.Networking
 
                 if (!_connectionTCP.Connected)
                 {
-                    Debug.Log("Socket connection failed.");
+                    Debug.LogError("Socket connection failed.");
                     return;
                 }
 
@@ -95,14 +95,14 @@ namespace _Scripts.Networking
 
                 _connectionUDP.Bind(_endPoint);
 
-                Debug.Log("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
+                Debug.LogError("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
 
 
 
 
                 if (!NetworkManager.Instance.IsHost())
                 {
-                    Debug.Log("Invoke ... ");
+                    Debug.LogError("Invoke ... ");
                     OnConnected?.Invoke();
                     StartListening();
                     //_authenticationProcess.cancellationToken = new CancellationTokenSource();
@@ -114,17 +114,17 @@ namespace _Scripts.Networking
                 {
                     OnConnected?.Invoke();
 
-                    Debug.Log("Local host created ...");
+                    Debug.LogError("Local host created ...");
                 }
             }catch(Exception e)
             {
-                Debug.LogWarning(e);
+                Debug.LogError(e);
             }
     
         }
         void StartListening()
         {
-            Debug.Log("Client: listening to server ...");
+            Debug.LogError("Client: listening to server ...");
             _serverListenerProcess.cancellationToken = new CancellationTokenSource();
             _serverListenerProcess.thread = new Thread(() => ListenServer(_serverListenerProcess.cancellationToken.Token));
             _serverListenerProcess.thread.Start();
@@ -132,20 +132,20 @@ namespace _Scripts.Networking
 
         void ListenServer(CancellationToken cancellationToken)
         {
-            Debug.Log("Listening server ...");
+            Debug.LogError("Listening server ...");
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    Debug.Log("hello ....");
+                    Debug.LogError("hello ....");
                     if (_connectionUDP.Available > 0)
                     {
-                        Debug.Log("Client: UDP data received ...");
+                        Debug.LogError("Client: UDP data received ...");
                         ReceiveSocketData(_connectionUDP);
                     }     
                     if(_connectionTCP.Available > 0)
                     {
-                        Debug.Log("Client: TCP data received ...");
+                        Debug.LogError("Client: TCP data received ...");
                         ReceiveSocketData(_connectionTCP);
                     }
                 }
@@ -155,26 +155,27 @@ namespace _Scripts.Networking
                         se.SocketErrorCode == SocketError.ConnectionAborted)
                     {
                         // Handle client disconnection (optional)
-                        Debug.Log(se);
+                        Debug.LogError(se);
                     }
                     else
                     {
                         // Handle other socket exceptions
-                        Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                        Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
                     }
                 }
                 catch (Exception e)
                 {
                     // Handle other exceptions
-                    Debug.Log($"Exception: {e.Message}");
+                    Debug.LogError($"Exception: {e.Message}");
                 }
 
                 Thread.Sleep(100);
             }
+            Debug.LogError("Ending listening server ...");
         }
         void Disconnect()
         {
-            Debug.Log("Disconnecting client ...");
+            Debug.LogError("Disconnecting client ...");
 
 
             _serverListenerProcess.Shutdown();
@@ -198,26 +199,26 @@ namespace _Scripts.Networking
             catch (ArgumentNullException ane)
             {
 
-                Debug.Log("ArgumentNullException : " + ane.ToString());
+                Debug.LogError("ArgumentNullException : " + ane.ToString());
             }
             catch (SocketException se)
             {
 
-                Debug.Log("SocketException: " + se.SocketErrorCode); // Log the error code
-                Debug.Log("SocketException: " + se.Message); // Log the error message
+                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.LogError("SocketException: " + se.Message); // Log the error message
 
             }
 
             catch (Exception e)
             {
-                Debug.Log("Unexpected exception : " + e.ToString());
+                Debug.LogError("Unexpected exception : " + e.ToString());
             }
         }
         public void SendPacket(byte[] data)
         {
             try
             {
-                Debug.Log($"Client sending data: {_endPoint} - Length: {data.Length}");
+                Debug.LogError($"Client sending data: {_endPoint} - Length: {data.Length}");
 
                 _connectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
             }
@@ -241,7 +242,7 @@ namespace _Scripts.Networking
         public void HandleRecivingID(BinaryReader reader)
         { 
             _ID = reader.ReadUInt64();
-            Debug.Log("recived ID :" + _ID);
+            Debug.LogError("recived ID :" + _ID);
         }
         public UInt64 ID() { return _ID; }
         void Authenticate(CancellationToken token)
@@ -256,7 +257,7 @@ namespace _Scripts.Networking
 
                     if (_connectionTCP.Available > 0)
                     {
-                           Debug.Log("?????");
+                           Debug.LogError("?????");
                            ReceiveSocketData(_connectionTCP);
                     }
 
@@ -294,13 +295,13 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                 // Handle other socket exceptions
-                Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
 
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.Log($"Exception: {e.Message}");
+                Debug.LogError($"Exception: {e.Message}");
             }
         }
         public ClientAuthenticator GetAuthenticator() { return _authenticator; }

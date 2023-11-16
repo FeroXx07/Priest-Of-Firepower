@@ -23,26 +23,7 @@ namespace _Scripts.Networking
             return clientId;
         }
     }
-    public struct Process
-    {
-        public Thread thread;
-        public CancellationTokenSource cancellationToken;
-        public void Shutdown()
-        {
-            cancellationToken.Cancel();
 
-            if (thread == null) return;
-
-            if (thread.IsAlive)
-            {
-                thread.Join();
-            }
-            if (thread.IsAlive)
-            {
-                thread.Abort();
-            }
-        }
-    }
     public class AServer : GenericSingleton<AServer>
     {
         #region variables
@@ -117,7 +98,7 @@ namespace _Scripts.Networking
         private void OnDisable()
         {
 
-            Debug.Log("Stopping server ...");
+            Debug.LogError("Stopping server ...");
 
             StopConnectionListener();
 
@@ -125,7 +106,7 @@ namespace _Scripts.Networking
 
             DisconnectAllClients();
 
-            Debug.Log("Closing server connection ...");
+            Debug.LogError("Closing server connection ...");
 
             if (_serverTcp.Connected)
             {
@@ -170,7 +151,7 @@ namespace _Scripts.Networking
                         _clientList.Remove(clientToRemove);
                     }
                 }
-                Debug.Log("removed " + _clientListToRemove.Count + " clients");
+                Debug.LogError("removed " + _clientListToRemove.Count + " clients");
                 _clientListToRemove.Clear();
             }
         }
@@ -185,7 +166,7 @@ namespace _Scripts.Networking
         {
             _clientManager = new ClientManager();
             //start server
-            Debug.Log("Starting server ...");
+            Debug.LogError("Starting server ...");
             //create listener tcp
             _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
@@ -219,7 +200,7 @@ namespace _Scripts.Networking
             {
                 if(client.ID != 0)
                 {
-                    Debug.Log("Server: sending to client " + client.Username);
+                    Debug.LogError("Server: sending to client " + client.Username);
                     client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.endPoint); 
                 }
             }
@@ -285,10 +266,10 @@ namespace _Scripts.Networking
                     if (IsSocketConnected(incomingConnection))
                     {
                         //if not local host
-                        Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
+                        Debug.LogError("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
                         if (IpEndPoint.Address.Equals(IPAddress.Loopback))
                         {
-                            Debug.Log("Server : host connected ... ");
+                            Debug.LogError("Server : host connected ... ");
                             CreateClient(incomingConnection, "Host", true);
                         }
                         else
@@ -315,20 +296,20 @@ namespace _Scripts.Networking
         }
         void HandleClient(ClientData clientData)
         {
-            Debug.Log("Starting Client Thread " + clientData.ID + " ...");
+            Debug.LogError("Starting Client Thread " + clientData.ID + " ...");
             try
             {
                 while (!clientData.listenProcess.cancellationToken.Token.IsCancellationRequested)
                 {
                     if (!clientData.ConnectionTcp.Connected)
                     {
-                        Debug.Log("TCP not connected ... ");
+                        Debug.LogError("TCP not connected ... ");
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
                     else
                     {
-                        Debug.Log("TCP connected ... ");
+                        Debug.LogError("TCP connected ... ");
                     }
 
                     if (clientData.ConnectionTcp.Available > 0)
@@ -354,19 +335,19 @@ namespace _Scripts.Networking
                     se.SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     // Handle client disconnection (optional)
-                    Debug.Log($"Client {clientData.ID} disconnected: {se.Message}");
+                    Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
                     RemoveClient(clientData);
                 }
                 else
                 {
                     // Handle other socket exceptions
-                    Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                    Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
                 }
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.Log($"Exception: {e.Message}");
+                Debug.LogError($"Exception: {e.Message}");
             }
         }
 
@@ -389,13 +370,13 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                // Handle other socket exceptions
-               Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+               Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
 
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.Log($"Exception: {e.Message}");
+                Debug.LogError($"Exception: {e.Message}");
             }
         }
         UInt64 CreateClient(Socket clientSocket, string userName, bool isHost)
@@ -441,7 +422,7 @@ namespace _Scripts.Networking
 
                 _clientList.Add(clientData);
 
-                Debug.Log("Created client Id: " + clientData.ID);
+                Debug.LogError("Created client Id: " + clientData.ID);
 
                 SendClientID(clientData.ID);
 
@@ -465,7 +446,7 @@ namespace _Scripts.Networking
 
                 _clientListToRemove.Add(clientData);
 
-                Debug.Log("Client " + clientData.ID + " disconnected.");
+                Debug.LogError("Client " + clientData.ID + " disconnected.");
             }
         }
         #endregion
@@ -496,7 +477,7 @@ namespace _Scripts.Networking
         void Authenticate( Socket incomingSocket, CancellationToken cancellationToken)
         {
             incomingSocket.ReceiveTimeout = 5000;
-            Debug.Log("Server: Authentication process started ... ");           
+            Debug.LogError("Server: Authentication process started ... ");           
             
             try
             {
@@ -505,7 +486,7 @@ namespace _Scripts.Networking
                 {
                     if (incomingSocket.Available > 0)
                     {
-                        Debug.Log("Authentication message recieved ...");
+                        Debug.LogError("Authentication message recieved ...");
                         ReceiveSocketData(incomingSocket);
                     }
 
@@ -519,7 +500,7 @@ namespace _Scripts.Networking
             {
                 Debug.LogException(e);
                 Thread.ResetAbort();
-                Debug.Log("Shutting down authentication process ...");
+                Debug.LogError("Shutting down authentication process ...");
             }
             finally
             {
