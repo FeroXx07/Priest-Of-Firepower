@@ -46,6 +46,11 @@ namespace _Scripts.Networking
             Disconnect();
         }
 
+        public void Shutdown()
+        {
+            Disconnect();
+        }
+
         #endregion
 
         #region Get/Setters

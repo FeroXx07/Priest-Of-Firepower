@@ -72,14 +72,15 @@ namespace _Scripts.Networking
         private void Start()
         {
             Debug.Log("Starting Network Manager ...");
+            _receiveData.Name = "NW receive data";
             _receiveData.cancellationToken = new CancellationTokenSource();
             _receiveData.thread = new Thread(() => ReceiveDataThread(_receiveData.cancellationToken.Token));
             _receiveData.thread.Start();
+            _sendData.Name = "NW send data";
             _sendData.cancellationToken = new CancellationTokenSource();
             _sendData.thread = new Thread(() => SendDataThread(_receiveData.cancellationToken.Token));
             _sendData.thread.Start();
         }
-
         private void OnEnable()
         {
             Debug.developerConsoleEnabled = true;
@@ -90,11 +91,48 @@ namespace _Scripts.Networking
 
         private void OnDisable()
         {
+            SceneManager.sceneLoaded -= ResetNetworkIds;
             Debug.Log("Stopping NetworkManger threads...");
             _receiveData.Shutdown();
             _sendData.Shutdown();
-            SceneManager.sceneLoaded -= ResetNetworkIds;
+            // Debug.Log("OnDisable - _client: " + _client);
+            // Debug.Log("OnDisable - _server: " + _server);
+
+            if (_client != null)
+            {
+                try
+                {
+                    _client.Shutdown();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
+            else
+            {
+                Debug.Log("client null");
+            }
+            if (_server != null)
+            {
+                try
+                {
+                    _server.Shutdown();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+            }
+            else
+            {
+                Debug.Log("server null");
+            }
+
         }
+    
 
         #region Connection Initializers
 
@@ -115,6 +153,9 @@ namespace _Scripts.Networking
             {
                 _client.Connect(connectionAddress.ServerEndPoint);
             }
+            
+            Debug.Log("OnEnable - _client: " + _client);
+            Debug.Log("OnEnable - _server: " + _server);
         }
 
         void StartServer()
