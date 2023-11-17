@@ -237,7 +237,7 @@ namespace _Scripts.Networking
                 if (client.ID != 0)
                 {
                     Debug.Log("Server: sending to client " + client.Username);
-                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.endPoint);
+                    client.ConnectionUDP.Send(data);
                 }
             }
         }
@@ -268,7 +268,7 @@ namespace _Scripts.Networking
             {
                 if (client.ID == clientId)
                 {
-                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                    client.ConnectionUDP.Send(data);
                     return;
                 }
             }
