@@ -395,10 +395,6 @@ namespace _Scripts.Networking
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
-                    else
-                    {
-                        Debug.Log("TCP connected ... ");
-                    }
 
                     if (clientData.ConnectionTcp.Available > 0)
                     {
@@ -410,11 +406,6 @@ namespace _Scripts.Networking
                         ReceiveSocketData(clientData.ConnectionUDP);
                     }
 
-                    //byte[] bytes = Encoding.ASCII.GetBytes("1");
-                    //clientData.ConnectionUDP.Send(bytes);
-                    //// Ensure the 
-
-                    // Add some delay to avoid busy-waiting
                     Thread.Sleep(10);
                 }
             }

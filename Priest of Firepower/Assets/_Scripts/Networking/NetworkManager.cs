@@ -45,8 +45,11 @@ namespace _Scripts.Networking
         private readonly object _stateQueueLock = new object();
         private readonly object _inputQueueLock = new object();
         private readonly object _realiableQueueLock = new object();
+
+        // store all data in streams received
         Queue<MemoryStream> _incomingStreamBuffer = new Queue<MemoryStream>();
         public readonly object IncomingStreamLock = new object();
+
         Process _receiveData = new Process();
         Process _sendData = new Process();
         [SerializeField] public ConnectionAddressData connectionAddress;
@@ -92,11 +95,10 @@ namespace _Scripts.Networking
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= ResetNetworkIds;
-            Debug.Log("Stopping NetworkManger threads...");
+            Debug.Log("Shutdown Network Manager...");
+            
             _receiveData.Shutdown();
             _sendData.Shutdown();
-            // Debug.Log("OnDisable - _client: " + _client);
-            // Debug.Log("OnDisable - _server: " + _server);
 
             if (_client != null)
             {
@@ -110,10 +112,7 @@ namespace _Scripts.Networking
                     throw;
                 }
             }
-            else
-            {
-                Debug.Log("client null");
-            }
+
             if (_server != null)
             {
                 try
@@ -126,11 +125,6 @@ namespace _Scripts.Networking
                     throw;
                 }
             }
-            else
-            {
-                Debug.Log("server null");
-            }
-
         }
     
 
@@ -445,7 +439,7 @@ namespace _Scripts.Networking
                 case PacketType.INPUT:
                     break;
                 case PacketType.OBJECT_STATE:
-                    HandleObjectState(stream, reader);
+                    MainThreadDispatcher.EnqueueAction(()=>HandleObjectState(stream, reader));
                     break;
                 case PacketType.AUTHENTICATION:
                     if (_isClient)
@@ -474,6 +468,7 @@ namespace _Scripts.Networking
 
         void HandleObjectState(MemoryStream stream, BinaryReader reader)
         {
+
             try
             {
                 //Debug.Log("base stream: " + reader.BaseStream.Length);
@@ -515,7 +510,6 @@ namespace _Scripts.Networking
         //Client Events Interface
         public void ClientConnected()
         {
-            //Debug.Log("Client Connected to server ...");
             OnClientConnected?.Invoke();
         }
 
