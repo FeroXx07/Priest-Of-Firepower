@@ -335,7 +335,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &398171424
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -427,11 +427,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 398171423}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d8907aea21d876f4c8507e3f5ab50ce8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
   tickRate: 10
   doTickUpdates: 1
   clientUiPrefab: {fileID: 0}
@@ -678,10 +679,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalObjectIdHash: 10
-  synchronizeTransform: 1
-  isTransformDirty: 0
-  isLastTransformFromNetwork: 0
   tickRate: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  isInterpolating: 0
+  lastAction: 4
+  lastReceivedTransformData:
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
+    scale: {x: 0, y: 0, z: 0}
+    timeStamp: 0
+    action: 0
+  lerpValue: 0.25
 --- !u!114 &591991117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -694,6 +706,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0014bb806e27d6418a82898da79a12d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
   tickRate: 10
   doTickUpdates: 1
   variableA:

@@ -143,16 +143,29 @@ namespace _Scripts.Networking
         public void HandleNetworkBehaviour(Type type, BinaryReader reader)
         {
             long currentPosition = reader.BaseStream.Position;
-            
-           // MainThreadDispatcher.EnqueueAction(() =>
-           // {
-                // Redirect stream from the input object state stream buffer to the NetworkBehaviour DeSerializer
-                NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
-                if (behaviour != null)
-                    behaviour.Read(reader, currentPosition);
-                else
-                    Debug.LogError("Cast failed " + type);
-           // });
+            NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
+
+
+            //read
+            //p.x = reader. x
+            //position 
+            //rotation
+            //
+            //lock(incomingPos)
+            //{
+            //    MainThreadDispatcher.EnqueueAction(()=>UpdateTransform(Type,incomingPos,rotation,scale))
+            //}
+
+            if (behaviour != null)
+                behaviour.Read(reader, currentPosition);
+            else
+                Debug.LogError("Cast failed " + type);
+
+            // MainThreadDispatcher.EnqueueAction(() =>
+            // {
+            // Redirect stream from the input object state stream buffer to the NetworkBehaviour DeSerializer
+
+            // });
         }
 
         private void Update()
