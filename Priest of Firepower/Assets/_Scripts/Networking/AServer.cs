@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using UnityEngine;
 
@@ -50,6 +49,7 @@ namespace _Scripts.Networking
 
         //handeles connection with clients
         Socket _serverTcp;
+        Socket _serverUdp;
         private bool _isServerInitialized = false;
 
         #endregion
@@ -67,17 +67,17 @@ namespace _Scripts.Networking
 
         class ClientData
         {
-            public UInt64 ID;
-            public string Username = "";
-            public ClientMetadata MetaData;
-            public ClientSate State;
-            public Socket ConnectionTcp;
-            public Socket ConnectionUDP;
+            public UInt64 id;
+            public string username = "";
+            public ClientMetadata metaData;
+            public ClientSate state;
+            public Socket connectionTcp;
+            // public Socket ConnectionUDP;
 
             public Process
                 listenProcess; //if disconnection request invoke cancellation token to shutdown all related processes
 
-            public bool IsHost = false;
+            public bool isHost = false;
         }
 
         struct ClientMetadata
@@ -193,7 +193,7 @@ namespace _Scripts.Networking
             Debug.Log("Starting server ...");
             //create listener tcp
             _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-
+            _serverUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             //create end point
             //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
             //In this case the operating system (TCP/IP stack) assigns a free port number for you.
@@ -204,6 +204,7 @@ namespace _Scripts.Networking
 
             //bind to ip and port to listen to
             _serverTcp.Bind(_endPoint);
+            _serverUdp.Bind(_endPoint);
             // Using ListenForConnections() method we create 
             // the Client list that will want
             // to connect to Server
@@ -232,55 +233,103 @@ namespace _Scripts.Networking
         }
         public void SendToAll(byte[] data)
         {
-            foreach (ClientData client in _clientList)
+            try
             {
-                if (client.ID != 0)
-                {
-                    Debug.Log("Server: sending to client " + client.Username);
-                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
+                foreach (ClientData client in _clientList)
+                { 
+                    if (client.id != 0)
+                    {
+                        // For UDP SendTo() is obligatory, or just use Connect() before if not using SendTo.
+                       _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.metaData.endPoint);
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error sending data to all clients: {e.Message}");
+            }
+            
+            // foreach (ClientData client in _clientList)
+            // {
+            //     if (client.ID != 0)
+            //     {
+            //         Debug.Log("Server: sending to client " + client.Username);
+            //         client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
+            //     }
+            // }
         }
 
         public void SendCriticalToAll(byte[] data)
         {
-            foreach (ClientData client in _clientList)
+            try
             {
-                if (client.ID != 0) client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
-            }
-        }
-
-        public void SendCritical(UInt64 Id, byte[] data)
-        {
-            foreach (ClientData client in _clientList)
-            {
-                if (client.ID == Id)
-                {
-                    client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
-                    return;
+                foreach (ClientData client in _clientList)
+                { 
+                    if (client.id != 0)
+                    {
+                        client.connectionTcp.Send(data); // For TCP SendTo isn't necessary since connection is established already.
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error sending data to all clients: {e.Message}");
+            }
+            
+            // foreach (ClientData client in _clientList)
+            // {
+            //     if (client.ID != 0) client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
+            // }
+        }
+
+        public void SendCritical(UInt64 id, byte[] data)
+        {
+            try
+            {
+                foreach (ClientData client in _clientList)
+                { 
+                    if (client.id == id)
+                    {
+                        client.connectionTcp.Send(data); // For TCP SendTo isn't necessary since connection is established already.
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error sending data to all clients: {e.Message}");
+            }
+            
+            // foreach (ClientData client in _clientList)
+            // {
+            //     if (client.ID == Id)
+            //     {
+            //         client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
+            //         return;
+            //     }
+            // }
         }
 
         public void SendToClient(UInt64 clientId, byte[] data)
         {
             foreach (ClientData client in _clientList)
             {
-                if (client.ID == clientId)
+                if (client.id == clientId)
                 {
-                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
+                    // For UDP SendTo() is obligatory, or just use Connect() before if not using SendTo.
+                    _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.metaData.endPoint);
+                    //client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
                     return;
                 }
             }
         }
-        private ManualResetEvent connectionListenerEvent = new ManualResetEvent(false);
+        private ManualResetEvent _connectionListenerEvent = new ManualResetEvent(false);
         void StartConnectionListener(CancellationToken token)
         {
             try
             {
                 while (!token.IsCancellationRequested)
                 {
-                    connectionListenerEvent.Reset(); // Reset the event before waiting for a connection
+                    _connectionListenerEvent.Reset(); // Reset the event before waiting for a connection
 
                     // Asynchronously wait for a connection or cancellation signal
                     IAsyncResult asyncResult = _serverTcp.BeginAccept(new AsyncCallback(AcceptCallback), null);
@@ -293,7 +342,7 @@ namespace _Scripts.Networking
                     {
                         break;
                     }
-                    connectionListenerEvent.Set();
+                    _connectionListenerEvent.Set();
                 }
             }
             catch (Exception e)
@@ -324,8 +373,9 @@ namespace _Scripts.Networking
                     return;
                 }
                 
-                IPEndPoint IpEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
-
+                IPEndPoint ipEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
+                if (ipEndPoint == null) throw new ArgumentNullException(nameof(ipEndPoint));
+               
                 // Check if the socket is connected
                 if (!IsSocketConnected(incomingConnection))
                 {
@@ -336,7 +386,7 @@ namespace _Scripts.Networking
                 //check that the incoming socket is not being process twice
                 foreach (ClientData client in _clientList)
                 {
-                    if (client.MetaData.endPoint == IpEndPoint)
+                    if (client.metaData.endPoint.Equals(ipEndPoint))
                     {
                         incomingConnection.Close();
                     }
@@ -344,7 +394,7 @@ namespace _Scripts.Networking
 
                 foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
                 {
-                    if (process.Key == IpEndPoint)
+                    if (process.Key.Equals(ipEndPoint))
                     {
                         incomingConnection.Close();
                     }
@@ -353,8 +403,8 @@ namespace _Scripts.Networking
                 if (IsSocketConnected(incomingConnection))
                 {
                     //if not local host
-                    Debug.Log("Socket address: " + IpEndPoint.Address + " local address:" + IPAddress.Loopback);
-                    if (IpEndPoint.Address.Equals(IPAddress.Loopback))
+                    Debug.Log("Socket address: " + ipEndPoint.Address + " local address:" + IPAddress.Loopback);
+                    if (ipEndPoint.Address.Equals(IPAddress.Loopback))
                     {
                         Debug.Log("Server : host connected ... ");
                         CreateClient(incomingConnection, "Host", true);
@@ -374,7 +424,7 @@ namespace _Scripts.Networking
                     }
                 }
 
-                connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
+                _connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
             }
             catch (Exception e)
             {
@@ -384,28 +434,26 @@ namespace _Scripts.Networking
 
         void HandleClient(ClientData clientData)
         {
-            Debug.Log("Starting Client Thread " + clientData.ID + " ...");
+            Debug.Log("Starting Client Thread " + clientData.id + " ...");
             try
             {
                 while (!clientData.listenProcess.cancellationToken.Token.IsCancellationRequested)
                 {
-                    if (!clientData.ConnectionTcp.Connected)
+                    if (!clientData.connectionTcp.Connected)
                     {
                         Debug.Log("TCP not connected ... ");
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
 
-                    if (clientData.ConnectionTcp.Available > 0)
+                    if (clientData.connectionTcp.Available > 0)
                     {
-                        ReceiveSocketData(clientData.ConnectionTcp);
+                        ReceiveTcpSocketData(clientData.connectionTcp);
                     }
 
-                    if (clientData.ConnectionUDP.Available > 0)
-                    {
-                        ReceiveSocketData(clientData.ConnectionUDP);
-                    }
-
+                    // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
+                    ReceiveUDPSocketData(_serverUdp, clientData);
+                    
                     Thread.Sleep(10);
                 }
             }
@@ -415,7 +463,7 @@ namespace _Scripts.Networking
                     se.SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     // Handle client disconnection (optional)
-                    Debug.LogError($"Client {clientData.ID} disconnected: {se.Message}");
+                    Debug.LogError($"Client {clientData.id} disconnected: {se.Message}");
                     RemoveClient(clientData);
                 }
                 else
@@ -431,7 +479,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void ReceiveSocketData(Socket socket)
+        void ReceiveTcpSocketData(Socket socket)
         {
             try
             {
@@ -457,50 +505,89 @@ namespace _Scripts.Networking
             }
         }
 
+        void ReceiveUDPSocketData(Socket socket, ClientData clientData)
+        {
+            try
+            {
+                lock (NetworkManager.Instance.IncomingStreamLock)
+                {
+                    if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
+                    {
+                        byte[] buffer = new byte[1500];
+                        EndPoint senderEndPoint = clientData.metaData.endPoint;
+                        int size = socket.ReceiveFrom(buffer, ref senderEndPoint);
+                        MemoryStream stream = new MemoryStream(buffer, 0, size);
+                        NetworkManager.Instance.AddIncomingDataQueue(stream);
+                    }
+                    // byte[] buffer = new byte[1500];
+                    //
+                    // // Receive data from the client
+                    // int size = socket.Receive(buffer, buffer.Length, SocketFlags.None);
+                    // MemoryStream stream = new MemoryStream(buffer, 0, size);
+                    // NetworkManager.Instance.AddIncomingDataQueue(stream);
+                }
+            }
+            catch (SocketException se)
+            {
+                // Handle other socket exceptions
+                Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+            }
+            catch (Exception e)
+            {
+                // Handle other exceptions
+                Debug.LogError($"Exception: {e.Message}");
+            }
+        }
+
         UInt64 CreateClient(Socket clientSocket, string userName, bool isHost)
         {
             lock (_clientList)
             {
                 ClientData clientData = new ClientData();
-                clientData.ID = _clientManager.GetNextClientId();
-                clientData.Username = userName;
-                clientData.IsHost = isHost;
-                clientData.ConnectionTcp = clientSocket;
+                clientData.id = _clientManager.GetNextClientId();
+                clientData.username = userName;
+                clientData.isHost = isHost;
+                clientData.connectionTcp = clientSocket;
                 //add a time out exeption for when the client disconnects or has lag or something
-                clientData.ConnectionTcp.ReceiveTimeout = Timeout.Infinite;
-                clientData.ConnectionTcp.SendTimeout = Timeout.Infinite;
+                clientData.connectionTcp.ReceiveTimeout = Timeout.Infinite;
+                clientData.connectionTcp.SendTimeout = Timeout.Infinite;
 
-                //create udp connection
-                clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                clientData.ConnectionUDP.Bind(clientSocket.LocalEndPoint);
-                clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
-                clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
+                // NO NEED TO THIS UNLIKE IN TCP CONNECTIONS WHERE YOU HAVE A CONNECTION ORIENTED PROTOCOL
+                // YOU USUALLY SAVE THE SOCKETS FOR THAT CONNECTION, IN UDP YOU DON'T
+                // _ServerUdp IS the RESPONSIBLE FOR BOTH SENDING AND LISTENING,
+                // YOU JUST HAVE TO SPECIFY WHAT CLIENTS YOU WANT TO LISTEN OR SEND AT EACH MOMENT.
+                
+                //create udp connection 
+                // clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                // clientData.ConnectionUDP.Bind(clientSocket.LocalEndPoint);
+                // clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
+                // clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
 
                 //store endpoint
                 IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.LocalEndPoint;
-                clientData.MetaData.endPoint = clientEndPoint;
+                clientData.metaData.endPoint = clientEndPoint;
 
                 //Create the process for that client
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
                 Process clientProcess = new Process();
-                clientProcess.Name = "Handle Clinet " + clientData.ID.ToString();
+                clientProcess.Name = "Handle Client " + clientData.id.ToString();
                 clientProcess.cancellationToken = new CancellationTokenSource();
                 clientProcess.thread = new Thread(() => HandleClient(clientData));
                 clientProcess.thread.IsBackground = true;
-                clientProcess.thread.Name  = "Handle Clinet " + clientData.ID.ToString();
+                clientProcess.thread.Name  = "Handle Clinet " + clientData.id.ToString();
                 clientProcess.thread.Start();
                 clientData.listenProcess = clientProcess;
                 _clientList.Add(clientData);
-                Debug.Log("Created client Id: " + clientData.ID);
-                SendClientID(clientData.ID);
-                return clientData.ID;
+                Debug.Log("Created client Id: " + clientData.id);
+                SendClientID(clientData.id);
+                return clientData.id;
             }
         }
 
         void RemoveClient(ClientData clientData)
         {
-            Debug.Log("Removing client " + clientData.ID);
+            Debug.Log("Removing client " + clientData.id);
             try
             {
                 // Remove the client from the list of connected clients    
@@ -510,14 +597,14 @@ namespace _Scripts.Networking
                     clientData.listenProcess.Shutdown();
 
                     // Close the client's socket
-                    if (clientData.ConnectionTcp.Connected)
+                    if (clientData.connectionTcp.Connected)
                     {
-                        clientData.ConnectionTcp.Shutdown(SocketShutdown.Both);
+                        clientData.connectionTcp.Shutdown(SocketShutdown.Both);
                     }
 
-                    clientData.ConnectionTcp.Close();
+                    clientData.connectionTcp.Close();
                     _clientListToRemove.Add(clientData);
-                    Debug.Log("Client " + clientData.ID + " disconnected.");
+                    Debug.Log("Client " + clientData.id + " disconnected.");
                 }
             }
             catch (Exception e)
@@ -554,6 +641,7 @@ namespace _Scripts.Networking
 
         #region Authentication
 
+/*
         void Authenticate(Socket incomingSocket, CancellationToken cancellationToken)
         {
             incomingSocket.ReceiveTimeout = 5000;
@@ -566,7 +654,7 @@ namespace _Scripts.Networking
                     if (incomingSocket.Available > 0)
                     {
                         Debug.Log("Authentication message recieved ...");
-                        ReceiveSocketData(incomingSocket);
+                        ReceiveTCPSocketData(incomingSocket);
                     }
 
                     string p = "puto";
@@ -582,7 +670,9 @@ namespace _Scripts.Networking
                 Debug.LogError("Shutting down authentication process ...");
             }
         }
+*/
 
+/*
         void AuthenticationSuccess(IPEndPoint endPoint, string username)
         {
             Socket socket = _authenticationConnections[endPoint];
@@ -594,7 +684,9 @@ namespace _Scripts.Networking
             _authenticationProcesses.Remove(endPoint);
             _authenticationConnections.Remove(endPoint);
         }
+*/
 
+/*
         void AuthenticationFailed(IPEndPoint endpoint)
         {
             //remove connection
@@ -603,6 +695,7 @@ namespace _Scripts.Networking
             _authenticationConnections[endpoint].Close();
             _authenticationConnections.Remove(endpoint);
         }
+*/
 
         public void PopulateAuthenticators(MemoryStream stream, BinaryReader reader)
         {
