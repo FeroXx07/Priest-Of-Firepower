@@ -679,9 +679,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalObjectIdHash: 10
-  tickRate: 10
+  tickRate: 0
   tickCounter: 0
-  showDebugInfo: 0
+  showDebugInfo: 1
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1

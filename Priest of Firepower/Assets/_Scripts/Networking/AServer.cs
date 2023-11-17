@@ -472,7 +472,7 @@ namespace _Scripts.Networking
 
                 //create udp connection
                 clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                clientData.ConnectionUDP.Bind(clientSocket.RemoteEndPoint);
+                clientData.ConnectionUDP.Bind(clientSocket.LocalEndPoint);
                 clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
                 clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
 
