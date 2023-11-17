@@ -25,7 +25,7 @@ namespace _Scripts.Networking
             return false;
         }
 
-        public override bool Read(BinaryReader reader)
+        public override bool Read(BinaryReader reader, long currentPosition = 0)
         {
             return false;
         }

@@ -38,6 +38,8 @@ namespace _Scripts.Networking
         
         #region TransformInfo
         public bool synchronizeTransform = true;
+        public bool sendEveryChange = false;
+        public bool sendTickChange = true;
         [SerializeField] private bool isInterpolating = false;
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         public TransformData lastReceivedTransformData;
@@ -140,12 +142,16 @@ namespace _Scripts.Networking
 
         public void HandleNetworkBehaviour(Type type, BinaryReader reader)
         {
-            // Redirect stream from the input object state stream buffer to the NetworkBehaviour DeSerializer
-            NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
-            if (behaviour != null)
-                behaviour.Read(reader);
-            else
-                Debug.LogError("Cast failed " + type);
+            long currentPosition = reader.BaseStream.Position;
+            MainThreadDispatcher.EnqueueAction(() =>
+            {
+                // Redirect stream from the input object state stream buffer to the NetworkBehaviour DeSerializer
+                NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
+                if (behaviour != null)
+                    behaviour.Read(reader, currentPosition);
+                else
+                    Debug.LogError("Cast failed " + type);
+            });
         }
 
         private void Update()
@@ -162,7 +168,7 @@ namespace _Scripts.Networking
                 transform.hasChanged = false;
             }
             
-            if (transform.hasChanged)
+            if (transform.hasChanged && sendEveryChange)
             {
                 SendNetworkTransform(TransformAction.INTERPOLATE);
                 lastAction = TransformAction.NETWORK_SEND;
@@ -192,7 +198,7 @@ namespace _Scripts.Networking
             {
                 tickCounter = 0.0f;
                 
-                if (!isInterpolating) // Only server should be able to these send sanity snapshots!
+                if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
                     SendNetworkTransform(TransformAction.NETWORK_SET);
             }
 

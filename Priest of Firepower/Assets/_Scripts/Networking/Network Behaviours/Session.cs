@@ -15,7 +15,7 @@ namespace _Scripts.Networking.Network_Behaviours
             base.Awake();
             BITTracker = new ChangeTracker(3);
         }
-        public override bool Read(BinaryReader reader)
+        public override bool Read(BinaryReader reader, long currentPosition = 0)
         {
             int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();

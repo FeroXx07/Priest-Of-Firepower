@@ -46,6 +46,14 @@ namespace _Scripts.Networking
             writer.Write((int)action);
             
             BitArray bitfield = BITTracker.GetBitfield();
+            for (int i = 0; i < bitfield.Length; i++)
+            {
+                if (NetworkVariableList[i].IsDirty)
+                {
+                    BITTracker.TrackChange(i);
+                }
+            }
+
             int fieldCount = bitfield.Length;
             
             writer.Write(fieldCount);
@@ -94,8 +102,10 @@ namespace _Scripts.Networking
         /// </summary>
         /// <param name="reader"></param>
         /// <returns>True: stream has been read correctly. False: stream has not been read corrcetly.</returns>
-        public virtual bool Read(BinaryReader reader) 
+        public virtual bool Read(BinaryReader reader, long position = 0)
         {
+            long currentReaderPos = reader.BaseStream.Position;
+            reader.BaseStream.Position = position;
             // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
             if (showDebugInfo)
                 Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Receiving data network behavior: {name}");
@@ -112,6 +122,7 @@ namespace _Scripts.Networking
             BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
 
             DeSerializeFieldsData(reader, receivedFieldCount, receivedBitfield);
+            reader.BaseStream.Position = currentReaderPos;
             return true;
         }
 

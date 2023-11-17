@@ -244,14 +244,18 @@ namespace _Scripts.Networking
                             while (_stateStreamBuffer.Count > 0 &&
                                    totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu)
                             {
-                                //stateTimeout -= stopwatch.ElapsedMilliseconds;
+                                stateTimeout -= stopwatch.ElapsedMilliseconds;
+                                stopwatch.Restart();
+                                Debug.Log($"Timeout: {stateTimeout}");
                                 MemoryStream nextStream = _stateStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
                             }
 
-                            if (totalSize <= _mtu)
+                            if (totalSize <= _mtu || stateTimeout <= 0.0f)
                             {
+                                stateTimeout = _stateBufferTimeout;
+                                
                                 byte[] buffer =
                                     ConcatenateMemoryStreams(senderid, PacketType.OBJECT_STATE, streamsToSend);
                                 if (_isClient)
