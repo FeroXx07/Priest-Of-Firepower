@@ -99,7 +99,7 @@ namespace _Scripts.Networking
 
                 //create new udp connection
                 _connectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                _connectionUDP.Connect(_endPoint);
+                _connectionUDP.Bind(_endPoint);
                 Debug.Log("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
                 if (!NetworkManager.Instance.IsHost())
                 {

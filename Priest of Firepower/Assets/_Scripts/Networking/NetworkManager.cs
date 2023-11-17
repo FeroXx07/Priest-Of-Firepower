@@ -24,6 +24,8 @@ namespace _Scripts.Networking
     {
         AClient _client;
         AServer _server;
+        public int tcpPort = 12345;
+        public int udpPort = 12346;
         private bool _isHost = false;
         private bool _isServer = false;
         private bool _isClient = false;

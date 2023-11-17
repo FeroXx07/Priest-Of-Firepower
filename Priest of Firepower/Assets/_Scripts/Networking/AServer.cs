@@ -26,7 +26,8 @@ namespace _Scripts.Networking
     {
         #region variables
 
-        IPEndPoint _endPoint;
+        IPEndPoint _TcpEndPoint;
+        IPEndPoint _UdpEndPoint;
 
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
@@ -50,13 +51,14 @@ namespace _Scripts.Networking
 
         //handeles connection with clients
         Socket _serverTcp;
+        Socket _serverUdp;
         private bool _isServerInitialized = false;
 
         #endregion
 
         public AServer(IPEndPoint endPoint)
         {
-            _endPoint = endPoint;
+            _TcpEndPoint = endPoint;
 
             //_authenticator = new ServerAuthenticator();
             //_authenticator._onAuthenticationFailed += AuthenticationFailed;
@@ -82,7 +84,8 @@ namespace _Scripts.Networking
 
         struct ClientMetadata
         {
-            public IPEndPoint endPoint;
+            public IPEndPoint TcpEndPoint;
+            public IPEndPoint UdpEndPoint;
             //add time stamp
         }
 
@@ -200,10 +203,15 @@ namespace _Scripts.Networking
             //So for the ip any it listens to all directions ipv4 local LAN and 
             //also the public ip. TOconnect from the client use any of the ips
             //if(_endPoint == null)
-            _endPoint = new IPEndPoint(IPAddress.Any, NetworkManager.Instance.connectionAddress.port);
+            _TcpEndPoint = new IPEndPoint(IPAddress.Any, NetworkManager.Instance.tcpPort);
 
             //bind to ip and port to listen to
-            _serverTcp.Bind(_endPoint);
+            _serverTcp.Bind(_TcpEndPoint);
+            
+            _serverUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _UdpEndPoint= new IPEndPoint(IPAddress.Any, NetworkManager.Instance.udpPort);
+            _serverUdp.Bind(_UdpEndPoint);
+            
             // Using ListenForConnections() method we create 
             // the Client list that will want
             // to connect to Server
@@ -237,7 +245,7 @@ namespace _Scripts.Networking
                 if (client.ID != 0)
                 {
                     Debug.Log("Server: sending to client " + client.Username);
-                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
+                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.UdpEndPoint);
                 }
             }
         }
@@ -268,7 +276,7 @@ namespace _Scripts.Networking
             {
                 if (client.ID == clientId)
                 {
-                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
+                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.MetaData.UdpEndPoint);
                     return;
                 }
             }
@@ -336,7 +344,7 @@ namespace _Scripts.Networking
                 //check that the incoming socket is not being process twice
                 foreach (ClientData client in _clientList)
                 {
-                    if (client.MetaData.endPoint == IpEndPoint)
+                    if (client.MetaData.TcpEndPoint == IpEndPoint)
                     {
                         incomingConnection.Close();
                     }
@@ -472,14 +480,18 @@ namespace _Scripts.Networking
 
                 //create udp connection
                 clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                clientData.ConnectionUDP.Bind(clientSocket.LocalEndPoint);
+                //clientData.ConnectionUDP.Bind(clientSocket.LocalEndPoint);
                 clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
                 clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
 
                 //store endpoint
-                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.LocalEndPoint;
-                clientData.MetaData.endPoint = clientEndPoint;
+                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint;
+                clientData.MetaData.TcpEndPoint = clientEndPoint;
+                clientData.MetaData.UdpEndPoint = new IPEndPoint(((IPEndPoint)clientSocket.RemoteEndPoint).Address,NetworkManager.Instance.udpPort);
+                
 
+                
+                
                 //Create the process for that client
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
