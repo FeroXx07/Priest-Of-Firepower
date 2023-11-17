@@ -237,7 +237,7 @@ namespace _Scripts.Networking
                 if (client.ID != 0)
                 {
                     Debug.Log("Server: sending to client " + client.Username);
-                    client.ConnectionUDP.Send(data);
+                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
                 }
             }
         }
@@ -246,7 +246,7 @@ namespace _Scripts.Networking
         {
             foreach (ClientData client in _clientList)
             {
-                if (client.ID != 0) client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                if (client.ID != 0) client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
             }
         }
 
@@ -256,7 +256,7 @@ namespace _Scripts.Networking
             {
                 if (client.ID == Id)
                 {
-                    client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                    client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
                     return;
                 }
             }
@@ -268,7 +268,7 @@ namespace _Scripts.Networking
             {
                 if (client.ID == clientId)
                 {
-                    client.ConnectionUDP.Send(data);
+                    client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
                     return;
                 }
             }
