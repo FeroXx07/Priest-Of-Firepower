@@ -621,7 +621,7 @@ namespace _Scripts.Networking
 
         public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {
-            Debug.Log($"HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.AssemblyQualifiedName}, Stream Position: {reader.BaseStream.Position}");
+            Debug.Log($"HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
                 case NetworkAction.CREATE:
