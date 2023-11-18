@@ -15,8 +15,10 @@ namespace _Scripts.Networking
         private UInt64 _id = 69;
         private string _userName = "Yololo";
         
-        private IPEndPoint _remoteEndPoint;
-        private IPEndPoint _localEndPoint;
+        private IPEndPoint _remoteEndPointTcp;
+        private IPEndPoint _remoteEndPointUdp;
+        private IPEndPoint _localEndPointTcp;
+        private IPEndPoint _localEndPointUdp;
         
         private Process _authenticationProcess = new Process();
         private Process _serverListenerProcess = new Process();
@@ -29,11 +31,12 @@ namespace _Scripts.Networking
         
         private ClientAuthenticator _authenticator = new ClientAuthenticator();
 
-        public AClient(string name, IPEndPoint localEndPoint, Action onConnected)
+        public AClient(string name, IPEndPoint localEndPointTcp, Action onConnected)
         {
             _userName = name;
-            _localEndPoint = localEndPoint;
+            _localEndPointTcp = localEndPointTcp;
             OnConnected += onConnected;
+            _localEndPointUdp = new IPEndPoint(localEndPointTcp.Address, NetworkManager.Instance.defaultClientUdpPort);
         }
         #endregion
 
@@ -41,15 +44,11 @@ namespace _Scripts.Networking
 
         private void OnEnable()
         {
-            //OnConnected += StartListening;
-            //OnConnected += _authenticationProcess.Shutdown;
             _authenticator.userName = _userName;
         }
 
         private void OnDisable()
         {
-            //OnConnected -= StartListening;
-            //OnConnected -= _authenticationProcess.Shutdown;
             Disconnect();
         }
 
@@ -80,24 +79,25 @@ namespace _Scripts.Networking
         {
             try
             {
-                _remoteEndPoint = serverEndPoint;
-
+                _remoteEndPointTcp = serverEndPoint;
+                
                 _connectionTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                _connectionTcp.Bind(_localEndPoint);
+                _connectionTcp.Bind(_localEndPointTcp);
                 _connectionTcp.ReceiveTimeout = 1000;
                 _connectionTcp.SendTimeout = 1000;
                 
                 
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-                if (_remoteEndPoint == null)
+                if (_remoteEndPointTcp == null)
                 {
-                    Debug.Log($"Client {_userName}_{_id}: {_remoteEndPoint} is null");
+                    Debug.Log($"Client {_userName}_{_id}: {_remoteEndPointTcp} is null");
                     return;
                 }
                 
-                Debug.Log($"Client {_userName}_{_id}: Trying to connect TCP local EP {_localEndPoint} to server EP {_remoteEndPoint}.");
-                _connectionTcp.Connect(_remoteEndPoint);
+                Debug.Log($"Client {_userName}_{_id}: Trying to connect TCP local EP {_localEndPointTcp} to server EP {_remoteEndPointTcp}.");
+                _connectionTcp.Connect(_remoteEndPointTcp);
+                _localEndPointTcp = (IPEndPoint)_connectionTcp.LocalEndPoint;
                 
                 if (_connectionTcp.Connected)
                 {
@@ -113,10 +113,13 @@ namespace _Scripts.Networking
 
                 //create new udp connection
                 _connectionUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                _connectionUdp.Bind(_localEndPoint);
-                
-                Debug.Log($"Client {_userName}_{_id}: Trying to connect UDP local EP {_localEndPoint} to server EP {_remoteEndPoint}.");
-                _connectionUdp.Connect(_remoteEndPoint);
+                _connectionUdp.Bind(_localEndPointUdp);
+                _remoteEndPointUdp = new IPEndPoint(_remoteEndPointTcp.Address,
+                    NetworkManager.Instance.defaultServerUdpPort);
+                    
+                Debug.Log($"Client {_userName}_{_id}: Trying to connect UDP local EP {_localEndPointTcp} to server EP {_remoteEndPointUdp}.");
+                _connectionUdp.Connect(_remoteEndPointUdp);
+                _localEndPointUdp = (IPEndPoint)_connectionUdp.LocalEndPoint;
                 
                 if (_connectionTcp.Connected)
                 {
@@ -215,12 +218,12 @@ namespace _Scripts.Networking
 
         #endregion
 
-        public void SendCriticalPacket(byte[] data)
+        public void SendTcp(byte[] data)
         {
             try
             {
                 Debug.Log($"Client {_userName}_{_id}: Sending Tcp packet from {_connectionTcp.LocalEndPoint}to {_connectionTcp.RemoteEndPoint} - Length: {data.Length}");
-                _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _remoteEndPoint);
+                _connectionTcp.Send(data);
             }
             catch (ArgumentNullException ane)
             {

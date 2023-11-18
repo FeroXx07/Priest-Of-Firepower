@@ -40,14 +40,14 @@ namespace _Scripts.Networking
 
         private void ConnectToServer(string ip)
         {            
-            NetworkManager.Instance.connectionAddress.address = ip;
+            NetworkManager.Instance.serverEndPointTcp.Address = IPAddress.Parse(ip);
 
-            if (NetworkManager.Instance.connectionAddress.isServerOnSameMachine)
+            if (NetworkManager.Instance.isServerOnSameMachine)
             {
-                NetworkManager.Instance.connectionAddress.address = "127.0.0.1";
+                NetworkManager.Instance.serverEndPointTcp.Address = IPAddress.Parse("127.0.0.1");
             }
             
-            if (NetworkManager.Instance.connectionAddress.serverEndPoint != null)
+            if (NetworkManager.Instance.serverEndPointTcp != null)
             {
                 NetworkManager.Instance.StartClient();
             }

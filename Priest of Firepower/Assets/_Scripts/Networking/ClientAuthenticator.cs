@@ -9,16 +9,16 @@ namespace _Scripts.Networking
     {
         private string _authenticationCode = "IM_VALID_USER_LOVE_ME";
         private bool _authenticated = false;
-        private IPEndPoint endPoint;
+        private IPEndPoint localEndPointTcp;
         AuthenticationState _state = AuthenticationState.REQUESTED;
 
         public  string userName;
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
-            IPEndPoint enpoint = DeserializeIPEndPoint(reader);
+            IPEndPoint localEndPointTcp = DeserializeIPEndPoint(reader);
             //get the end point if it is the same then the message is for this client 
 
-            if (!endPoint.Equals(enpoint))
+            if (!localEndPointTcp.Equals(localEndPointTcp))
             {
                 reader.BaseStream.Position = reader.BaseStream.Length;
                 return;
@@ -61,7 +61,7 @@ namespace _Scripts.Networking
             BinaryWriter authWriter = new BinaryWriter(authStream);
 
             authWriter.Write((int)PacketType.AUTHENTICATION);
-            SerializeIPEndPoint(endPoint,authWriter);
+            SerializeIPEndPoint(localEndPointTcp,authWriter);
             authWriter.Write((int)AuthenticationState.REQUESTED);
             authWriter.Write(_authenticationCode);
 
@@ -77,7 +77,7 @@ namespace _Scripts.Networking
             BinaryWriter authWriter = new BinaryWriter(authStream);
 
             authWriter.Write((int)PacketType.AUTHENTICATION);
-            SerializeIPEndPoint(endPoint,authWriter);
+            SerializeIPEndPoint(localEndPointTcp,authWriter);
             authWriter.Write((int)AuthenticationState.CONFIRMATION);
             authWriter.Write("ok");
             authWriter.Write(userName);
@@ -92,7 +92,7 @@ namespace _Scripts.Networking
 
         public void SetEndPoint(IPEndPoint endpoint)
         {
-            endPoint = endpoint;           
+            localEndPointTcp = endpoint;           
         }
     }
 }

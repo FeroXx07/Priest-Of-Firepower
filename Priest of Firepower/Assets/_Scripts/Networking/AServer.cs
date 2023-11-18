@@ -26,7 +26,8 @@ namespace _Scripts.Networking
     {
         #region Fields
 
-        private IPEndPoint _localEndPoint;
+        private IPEndPoint _localEndPointTcp;
+        private IPEndPoint _localEndPointUdp;
 
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
@@ -55,13 +56,11 @@ namespace _Scripts.Networking
         public Action<byte[]> onDataRecieved;
         #endregion
 
-        public AServer(IPEndPoint localEndPoint)
+        public AServer(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
         {
-            _localEndPoint = localEndPoint;
+            _localEndPointTcp = localEndPointTcp;
+            _localEndPointUdp = localEndPointUdp;
             InitServer();
-            //_authenticator = new ServerAuthenticator();
-            //_authenticator._onAuthenticationFailed += AuthenticationFailed;
-            //_authenticator._onAuthenticated += AuthenticationSuccess;
         }
 
         #region Client Data
@@ -70,7 +69,8 @@ namespace _Scripts.Networking
         {
             public UInt64 id;
             public string username = "";
-            public ClientMetadata metaData;
+            public IPEndPoint endPointTcp;
+            public IPEndPoint endPointUdp;
             public ClientSate state;
             public Socket connectionTcp;
             // public Socket ConnectionUDP;
@@ -79,12 +79,6 @@ namespace _Scripts.Networking
                 listenProcess; //if disconnection request invoke cancellation token to shutdown all related processes
 
             public bool isHost = false;
-        }
-
-        private struct ClientMetadata
-        {
-            public IPEndPoint endPoint;
-            //add time stamp
         }
 
         public enum ClientSate
@@ -120,7 +114,7 @@ namespace _Scripts.Networking
         {
             lock(_clientList) 
             {
-                Debug.Log($"Server {_localEndPoint}: Disconnecting all clients");
+                Debug.Log($"Server {_localEndPointTcp}: Disconnecting all clients");
                 foreach (ClientData client in _clientList)
                 {
                     RemoveClient(client);
@@ -137,11 +131,11 @@ namespace _Scripts.Networking
                     {
                         foreach (ClientData clientToRemove in _clientListToRemove)
                         {
-                            Debug.Log($"Server {_localEndPoint}: Removing {clientToRemove.metaData.endPoint}");
+                            //Debug.Log($"Server {_localEndPoint}: Removing {clientToRemove.metaData.endPoint}");
                             _clientList.Remove(clientToRemove);
                         }
                     }
-                    Debug.Log($"Server {_localEndPoint}: Removed {_clientListToRemove.Count} clients");
+                    Debug.Log($"Server {_localEndPointTcp}: Removed {_clientListToRemove.Count} clients");
                     _clientListToRemove.Clear();
                 }
             }
@@ -152,13 +146,13 @@ namespace _Scripts.Networking
         public void InitServer()
         {
             _clientManager = new ClientManager();
-            Debug.Log($"Server {_localEndPoint}: Starting server...");
+            Debug.Log($"Server: Starting server... TCP LOCAL ENDPOINT:{_localEndPointTcp}, UDP LOCAL ENDPOINT:{_localEndPointUdp}:");
             
             _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _serverUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             
-            _serverTcp.Bind(_localEndPoint);
-            _serverUdp.Bind(_localEndPoint);
+            _serverTcp.Bind(_localEndPointTcp);
+            _serverUdp.Bind(_localEndPointUdp);
 
             _serverTcp.Listen(4);
             _listenConnectionProcess = new Process
@@ -169,19 +163,19 @@ namespace _Scripts.Networking
                 StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
             _listenConnectionProcess.thread.Start();
             isServerInitialized = true;
-            Debug.Log($"Server {_localEndPoint}: Server started successfully");
+            Debug.Log($"Server {_localEndPointTcp}: Server started successfully");
         }
 
         public void Shutdown()
         {
-            Debug.Log($"Server {_localEndPoint}: Starting to disable server...");
+            Debug.Log($"Server {_localEndPointTcp}: Starting to disable server...");
             
             StopConnectionListener();
             StopAuthenticationThread();
             DisconnectAllClients();
             
-            Debug.Log($"Server {_localEndPoint}: Server disabled successfully");
-            Debug.Log($"Server {_localEndPoint}: Starting to shutdown sockets...");
+            Debug.Log($"Server {_localEndPointTcp}: Server disabled successfully");
+            Debug.Log($"Server {_localEndPointTcp}: Starting to shutdown sockets...");
             
             if (_serverTcp.Connected)
             {
@@ -191,25 +185,25 @@ namespace _Scripts.Networking
             _serverUdp.Close();
             _serverTcp.Close();
             
-            Debug.Log($"Server {_localEndPoint}: Sockets shutdown successfully");
+            Debug.Log($"Server {_localEndPointTcp}: Sockets shutdown successfully");
         }
-        public void SendToAll(byte[] data)
+        public void SendUdpToAll(byte[] data)
         {
-            Debug.Log($"Server {_localEndPoint}: Sending Udp data to all...");
+            Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to all...");
             foreach (ClientData client in _clientList)
             { 
                 if (client.id != 0)
                 {
                     // For UDP SendTo() is obligatory, or just use Connect() before if not using SendTo.
-                    Debug.Log($"Server {_localEndPoint}: Sending Udp data to client {client.username} with Id: {client.id} and EP: {client.metaData.endPoint}:");
+                    Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to client {client.username} with Id: {client.id} and EP: {client.endPointUdp}:");
                     try
                     {
-                        _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.metaData.endPoint);
+                        _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.endPointUdp);
                     }
                     catch (Exception e)
                     {
                         Debug.LogError(
-                            $"Server {_localEndPoint}: Error sending Udp data to all clients: {e.Message}");
+                            $"Server {_localEndPointTcp}: Error sending Udp data to all clients: {e.Message}");
                     }
 
                 } 
@@ -224,14 +218,14 @@ namespace _Scripts.Networking
             // }
         }
 
-        public void SendCriticalToAll(byte[] data)
+        public void SendTcpToAll(byte[] data)
         {
-            Debug.Log($"Server {_localEndPoint}: Sending critical Tcp data to all...");
+            Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to all...");
             foreach (ClientData client in _clientList)
             { 
                 if (client.id != 0)
                 {
-                    Debug.Log($"Server {_localEndPoint}: Sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.metaData.endPoint}:");
+                    Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.endPointTcp}:");
                     try
                     {
                         client.connectionTcp
@@ -239,7 +233,7 @@ namespace _Scripts.Networking
                     }
                     catch (Exception e)
                     {
-                        Debug.LogError($"Server {_localEndPoint}: Error sending critical Tcp data to all clients: {e.Message}");
+                        Debug.LogError($"Server {_localEndPointTcp}: Error sending critical Tcp data to all clients: {e.Message}");
                     }
                 }
             }
@@ -249,17 +243,17 @@ namespace _Scripts.Networking
             // }
         }
 
-        public void SendCritical(UInt64 id, byte[] data)
+        public void SendTcp(UInt64 id, byte[] data)
         {
             ClientData client = _clientList.First(cl => cl.id == id);
-            Debug.Log($"Server {_localEndPoint}: Sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.metaData.endPoint}:");
+            Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.endPointTcp}:");
             try
             {
                 client.connectionTcp.Send(data);
             }
             catch (Exception e)
             {
-                Debug.LogError($"Server {_localEndPoint}: Error sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.metaData.endPoint}: {e}");
+                Debug.LogError($"Server {_localEndPointTcp}: Error sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.endPointTcp}: {e}");
             }
                 // foreach (ClientData client in _clientList)
                 // { 
@@ -280,21 +274,21 @@ namespace _Scripts.Networking
             //     }
             // }
 
-        public void SendToClient(UInt64 clientId, byte[] data)
+        public void SendUdp(UInt64 clientId, byte[] data)
         {
             foreach (ClientData client in _clientList)
             {
                 if (client.id == clientId)
                 {
-                    Debug.Log($"Server {_localEndPoint}: Sending Udp data to client {client.username} with Id: {client.id} and EP: {client.metaData.endPoint}:");
+                    Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to client {client.username} with Id: {client.id} and EP: {client.endPointUdp}:");
                     // For UDP SendTo() is obligatory, or just use Connect() before if not using SendTo.
                     try
                     {
-                        _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.metaData.endPoint);
+                        _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.endPointUdp);
                     }
                     catch (Exception e)
                     {
-                        Debug.LogError($"Server {_localEndPoint}: Error sending Ucp data to Client {client.username} with Id: {client.id} and EP: {client.metaData.endPoint}: {e}");
+                        Debug.LogError($"Server {_localEndPointTcp}: Error sending Ucp data to Client {client.username} with Id: {client.id} and EP: {client.endPointUdp}: {e}");
                     }
                     //client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
                     return;
@@ -305,7 +299,7 @@ namespace _Scripts.Networking
 
         private void StartConnectionListener(CancellationToken token)
         {
-            Debug.Log($"Server {_localEndPoint}: Starting connection listener");
+            Debug.Log($"Server {_localEndPointTcp}: Starting connection listener");
             try
             {
                 while (!token.IsCancellationRequested)
@@ -321,7 +315,7 @@ namespace _Scripts.Networking
                     // If the wait result is for the cancellation token, exit the loop
                     if (waitResult == 1)
                     {
-                        Debug.Log($"Server {_localEndPoint}: Ending connection listener");
+                        Debug.Log($"Server {_localEndPointTcp}: Ending connection listener");
                         break;
                     }
                     _connectionListenerEvent.Set();
@@ -329,7 +323,7 @@ namespace _Scripts.Networking
             }
             catch (Exception e)
             {
-                Debug.LogError($"Server {_localEndPoint}: exception:");
+                Debug.LogError($"Server {_localEndPointTcp}: exception:");
                 Debug.LogException(e);
             }
         }
@@ -343,19 +337,19 @@ namespace _Scripts.Networking
                 try
                 {
                     incomingConnection = _serverTcp.EndAccept(ar);
-                    Debug.Log($"Server {_localEndPoint}: Incoming connection -> Local EP {incomingConnection.LocalEndPoint}, Remote EP {incomingConnection.RemoteEndPoint}");
+                    Debug.Log($"Server {_localEndPointTcp}: Incoming connection -> Local EP {incomingConnection.LocalEndPoint}, Remote EP {incomingConnection.RemoteEndPoint}");
                 }
                 catch (ObjectDisposedException ode)
                 {
                     // Handle the case where the socket is already disposed
-                    Debug.LogError($"Server {_localEndPoint}: exception {ode}");
+                    Debug.LogError($"Server {_localEndPointTcp}: exception {ode}");
                     return;
                 }
                 
                 if (incomingConnection == null || incomingConnection.Handle == IntPtr.Zero || incomingConnection.Connected == false)
                 {
                     // The socket is not valid; handle accordingly
-                    Debug.LogError($"Server {_localEndPoint}: Incoming connection is not valid");
+                    Debug.LogError($"Server {_localEndPointTcp}: Incoming connection is not valid");
                     return;
                 }
                 
@@ -365,7 +359,7 @@ namespace _Scripts.Networking
                 // Check if the socket is connected
                 if (!IsSocketConnected(incomingConnection))
                 {
-                    Debug.LogWarning($"Server {_localEndPoint}: Incoming connection is not connected, closing it");
+                    Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is not connected, closing it");
                     incomingConnection.Close();
                     return;
                 }
@@ -373,9 +367,9 @@ namespace _Scripts.Networking
                 //check that the incoming socket is not being process twice
                 foreach (ClientData client in _clientList)
                 {
-                    if (client.metaData.endPoint.Equals(ipEndPoint))
+                    if (client.endPointTcp.Equals(ipEndPoint))
                     {
-                        Debug.LogWarning($"Server {_localEndPoint}: Incoming connection is being processed twice, closing it");
+                        Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is being processed twice, closing it");
                         incomingConnection.Close();
                     }
                 }
@@ -384,7 +378,7 @@ namespace _Scripts.Networking
                 {
                     if (process.Key.Equals(ipEndPoint))
                     {
-                        Debug.LogWarning($"Server {_localEndPoint}: Incoming connection is already in _authenticationConnections, closing it");
+                        Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is already in _authenticationConnections, closing it");
                         incomingConnection.Close();
                     }
                 }
@@ -395,14 +389,28 @@ namespace _Scripts.Networking
                     {
                         if (ipEndPoint.Address.Equals(IPAddress.Loopback))
                         {
-                            Debug.Log($"Server {_localEndPoint}: Incoming connection is local host, storing host client");
+                            // 1. Save into dictionary
+                            // 2. Create
+                            //
+                            Debug.Log($"Server {_localEndPointTcp}: Incoming connection is local host, storing host client");
                             StoreClient(incomingConnection, "Host", true);
                         }
                     }
                     else
                     {
-                        Debug.Log($"Server {_localEndPoint}: Incoming connection is not host, creating normal client");
+                        Debug.Log($"Server {_localEndPointTcp}: Incoming connection is not host, creating normal client");
                         StoreClient(incomingConnection, $"User_{_clientList.Count+1}", true);
+                        
+                        // Process authenticate = new Process();
+                        // authenticate.cancellationToken = new CancellationTokenSource();
+                        // authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                        // authenticate.thread.Start();
+                        //
+                        // _authenticationConnections[IpEndPoint] = incomingConnection;
+                        // _authenticationProcesses[IpEndPoint] = authenticate;
+                        // _authenticators[IpEndPoint] = new ServerAuthenticator();
+                        // //_authenticator._onAuthenticationFailed += AuthenticationFailed;
+                        //_authenticator._onAuthenticated += AuthenticationSuccess;
                     }
                     // //if not local host
                     // Debug.Log("Socket address: " + ipEndPoint.Address + " local address:" + IPAddress.Loopback);
@@ -430,21 +438,21 @@ namespace _Scripts.Networking
             }
             catch (Exception e)
             {
-                Debug.LogError($"Server {_localEndPoint}: exception:");
+                Debug.LogError($"Server {_localEndPointTcp}: exception:");
                 Debug.LogException(e);
             }
         }
 
         private void HandleClient(ClientData clientData)
         {
-            Debug.Log($"Server {_localEndPoint}: Starting client thread {clientData.username} with Id: {clientData.id} and EP: {clientData.metaData.endPoint}");
+            Debug.Log($"Server {_localEndPointTcp}: Starting client thread {clientData.username} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
             try
             {
                 while (!clientData.listenProcess.cancellationToken.Token.IsCancellationRequested)
                 {
                     if (!clientData.connectionTcp.Connected)
                     {
-                        Debug.Log($"Server {_localEndPoint}: Tcp is not connected client {clientData.username} with Id: {clientData.id} and EP: {clientData.metaData.endPoint}");
+                        Debug.Log($"Server {_localEndPointTcp}: Tcp is not connected client {clientData.username} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
@@ -466,19 +474,19 @@ namespace _Scripts.Networking
                     se.SocketErrorCode == SocketError.ConnectionAborted)
                 {
                     // Handle client disconnection (optional)
-                    Debug.Log($"Server {_localEndPoint}: Client {clientData.username} with Id: {clientData.id} and EP: {clientData.metaData.endPoint} just disconnected: {se.Message}");
+                    Debug.Log($"Server {_localEndPointTcp}: Client {clientData.username} with Id: {clientData.id} and EP: {clientData.endPointTcp} just disconnected: {se.Message}");
                     RemoveClient(clientData);
                 }
                 else
                 {
                     // Handle other socket exceptions
-                    Debug.LogError($"Server {_localEndPoint}: SocketException: {se.SocketErrorCode}, {se.Message}");
+                    Debug.LogError($"Server {_localEndPointTcp}: SocketException: {se.SocketErrorCode}, {se.Message}");
                 }
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.LogError($"Server {_localEndPoint}: Exception: {e.Message}");
+                Debug.LogError($"Server {_localEndPointTcp}: Exception: {e.Message}");
             }
         }
 
@@ -488,7 +496,7 @@ namespace _Scripts.Networking
             {
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
-                    Debug.LogError($"Server {_localEndPoint}: Has received Tcp Data from {socket.RemoteEndPoint}");
+                    Debug.LogError($"Server {_localEndPointTcp}: Has received Tcp Data from {socket.RemoteEndPoint}");
                     byte[] buffer = new byte[1500];
 
                     // Receive data from the client
@@ -500,12 +508,12 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                 // Handle other socket exceptions
-                Debug.LogError($"Server {_localEndPoint}: SocketException: {se.SocketErrorCode}, {se.Message}");
+                Debug.LogError($"Server {_localEndPointTcp}: SocketException: {se.SocketErrorCode}, {se.Message}");
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.LogError($"Server {_localEndPoint}: Exception: {e.Message}");
+                Debug.LogError($"Server {_localEndPointTcp}: Exception: {e.Message}");
             }
         }
 
@@ -517,9 +525,9 @@ namespace _Scripts.Networking
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
-                        Debug.LogError($"Server {_localEndPoint}: Has received Tcp Data from {socket.RemoteEndPoint}");
+                        Debug.LogError($"Server {_localEndPointTcp}: Has received Tcp Data from {socket.RemoteEndPoint}");
                         byte[] buffer = new byte[1500];
-                        EndPoint senderEndPoint = clientData.metaData.endPoint;
+                        EndPoint senderEndPoint = clientData.endPointUdp;
                         int size = socket.ReceiveFrom(buffer, ref senderEndPoint);
                         MemoryStream stream = new MemoryStream(buffer, 0, size);
                         NetworkManager.Instance.AddIncomingDataQueue(stream);
@@ -535,12 +543,12 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                 // Handle other socket exceptions
-                Debug.LogError($"Server {_localEndPoint}: SocketException: {se.SocketErrorCode}, {se.Message}");
+                Debug.LogError($"Server {_localEndPointTcp}: SocketException: {se.SocketErrorCode}, {se.Message}");
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.LogError($"Server {_localEndPoint}: Exception: {e.Message}");
+                Debug.LogError($"Server {_localEndPointTcp}: Exception: {e.Message}");
             }
         }
 
@@ -569,9 +577,11 @@ namespace _Scripts.Networking
                 // clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
 
                 // Local in this case is server, remote is client
-                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint; 
-                clientData.metaData.endPoint = clientEndPoint;
-
+                IPEndPoint clientEndPointTCP = (IPEndPoint)clientSocket.RemoteEndPoint; 
+                clientData.endPointTcp = clientEndPointTCP;
+                clientData.endPointUdp  = new IPEndPoint(clientData.endPointTcp.Address,
+                    NetworkManager.Instance.defaultClientUdpPort);
+                
                 //Create the process for that client
                 //create a hole thread to recive important data from server-client
                 //like game state, caharacter selection, map etc
@@ -585,7 +595,7 @@ namespace _Scripts.Networking
                 clientData.listenProcess = clientProcess;
                 _clientList.Add(clientData);
                 
-                Debug.Log($"Server {_localEndPoint}: Client {clientData.username} stored with Id: {clientData.id} and EP: {clientData.metaData.endPoint}");
+                Debug.Log($"Server {_localEndPointTcp}: Client {clientData.username} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                 
                 SendClientID(clientData.id);
                 return clientData.id;
@@ -594,7 +604,7 @@ namespace _Scripts.Networking
 
         private void RemoveClient(ClientData clientData)
         {
-            Debug.Log($"Server {_localEndPoint}: Client {clientData.username} removed with Id: {clientData.id} and EP: {clientData.metaData.endPoint}");
+            Debug.Log($"Server {_localEndPointTcp}: Client {clientData.username} removed with Id: {clientData.id} and EP: {clientData.endPointTcp}");
             try
             {
                 // Remove the client from the list of connected clients    
@@ -611,7 +621,7 @@ namespace _Scripts.Networking
 
                     clientData.connectionTcp.Close();
                     _clientListToRemove.Add(clientData);
-                    Debug.Log($"Server {_localEndPoint}: Client {clientData.username} with Id: {clientData.id} and EP: {clientData.metaData.endPoint} disconnected:");
+                    Debug.Log($"Server {_localEndPointTcp}: Client {clientData.username} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected:");
                 }
             }
             catch (Exception e)
@@ -643,13 +653,13 @@ namespace _Scripts.Networking
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write((int)PacketType.ID);
             writer.Write(id);
-            SendCritical(id, stream.ToArray());
+            SendTcp(id, stream.ToArray());
         }
 
         #region Authentication
 
 /*
-        void Authenticate(Socket incomingSocket, CancellationToken cancellationToken)
+        void Authenticate(Socket incomingSocket, CancellationToken cancellationToken, Action<Socket> onConfirmed)
         {
             incomingSocket.ReceiveTimeout = 5000;
             Debug.Log("Server: Authentication process started ... ");
@@ -708,10 +718,12 @@ namespace _Scripts.Networking
         {
             lock (_authenticators)
             {
-                foreach (KeyValuePair<IPEndPoint, ServerAuthenticator> process in _authenticators)
-                {
-                    process.Value.HandleAuthentication(stream, reader);
-                }
+                // IEP local del cliente  = reader.stream;
+                
+                // foreach (KeyValuePair<IPEndPoint, ServerAuthenticator> process in _authenticators)
+                // {
+                //     process.Value.HandleAuthentication(stream, reader);
+                // }
             }
         }
 

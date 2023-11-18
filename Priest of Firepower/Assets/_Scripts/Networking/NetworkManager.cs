@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using Random = System.Random;
 
 namespace _Scripts.Networking
@@ -23,6 +24,13 @@ namespace _Scripts.Networking
 //this class will work as a client or server or both at the same time
     public class NetworkManager : GenericSingleton<NetworkManager>
     {
+        public ushort defaultClientTcpPort = 15009;
+        public ushort defaultClientUdpPort = 15010;
+        public ushort defaultServerTcpPort = 12345;
+        public ushort defaultServerUdpPort = 12443;
+        
+        private IPAddress defaultAdressToInit = IPAddress.Any;
+        
         static readonly string[] firstNames = {"John","Paul","Ringo","George"};
         private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
         public static string GenerateName()
@@ -63,7 +71,39 @@ namespace _Scripts.Networking
         public readonly object IncomingStreamLock = new object();
         private Process _receiveData = new Process();
         private Process _sendData = new Process();
-        [SerializeField] public ConnectionAddressData connectionAddress;
+        public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
+        {
+            try
+            {
+                IPAddress[] localIPs = Dns.GetHostAddresses(Dns.GetHostName());
+                IPAddress loopback = IPAddress.Parse("127.0.0.1");
+
+                // Check if any local IP matches the server's IP
+                foreach (IPAddress localIP in localIPs)
+                {
+                    if (localIP.Equals(IPAddress.Parse(serverIpAddress)))
+                    {
+                        return true; // Server IP matches one of the local IPs, so it's on the same machine
+                    }
+                }
+
+                // Attempt a connection using loopback address
+                Socket loopbackSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                loopbackSocket.Connect(loopback, serverPort);
+                loopbackSocket.Close();
+
+                return true; // Loopback connection successful, server is on the same machine
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return false; // Error occurred or connection failed, server might not be on the same machine
+            }
+        }
+        IPEndPoint ParseNetworkEndpoint(string adress, ushort port) => new IPEndPoint(IPAddress.Parse(adress), port);
+        public IPEndPoint serverEndPointTcp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerTcpPort);
+        public IPEndPoint serverEndPointUdp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerUdpPort);
+        public bool isServerOnSameMachine => IsServerOnSameMachine(defaultAdressToInit.ToString(), defaultServerTcpPort);
 
         [SerializeField] private GameObject player;
 
@@ -140,14 +180,14 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, defaultClientTcpPort), ClientConnected);
             
-            if (connectionAddress.isServerOnSameMachine)
+            if (isServerOnSameMachine)
             {
-                connectionAddress.address = "127.0.0.1";
+                serverEndPointTcp.Address = IPAddress.Parse("127.0.0.1");
             }
             
-            _client.Connect(connectionAddress.serverEndPoint);
+            _client.Connect(serverEndPointTcp);
             _isClient = true;
         }
 
@@ -155,26 +195,19 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _server = new AServer(new IPEndPoint(IPAddress.Any, connectionAddress.port));
-            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _server = new AServer(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
+            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, defaultClientTcpPort), ClientConnected);
             _isHost = true;
             
             if (_server.isServerInitialized)
             {
                 // Localhost client!
-                _client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), connectionAddress.port));
+                _client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), defaultServerTcpPort));
             }
 
             Debug.Log("Network Manager: OnEnable -> _client: " + _client);
             Debug.Log("Network Manager: OnEnable -> _server: " + _server);
         }
-
-        void StartServer()
-        {
-            _server = new AServer(new IPEndPoint(IPAddress.Any, connectionAddress.port));
-            _isServer = true;
-        }
-
         #endregion
         
         #region Streams
@@ -261,12 +294,12 @@ namespace _Scripts.Networking
                                     else if (_isHost)
                                     {
                                         Debug.Log($"Network Manager: Sending state stream buffer as host, buffer size {buffer.Length} and timeout {stateTimeout}");
-                                        _server.SendToAll(buffer);
+                                        _server.SendUdpToAll(buffer);
                                     }
                                     else if (_isServer)
                                     {
                                         Debug.Log($"Network Manager: Sending state stream buffer as server, buffer size {buffer.Length} and timeout {stateTimeout}");
-                                        _server.SendToAll(buffer);
+                                        _server.SendUdpToAll(buffer);
                                     }
 
                                     // Clear the streams to send for the next iteration
@@ -312,12 +345,12 @@ namespace _Scripts.Networking
                                     else if (_isServer)
                                     {
                                         Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
-                                        _server.SendToAll(buffer);
+                                        _server.SendUdpToAll(buffer);
                                     }
                                     else if (_isHost)
                                     {
                                         Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
-                                        _server.SendToAll(buffer);
+                                        _server.SendUdpToAll(buffer);
                                     }
                                 }
                             }
@@ -340,15 +373,15 @@ namespace _Scripts.Networking
                                 byte[] buffer = nextStream.ToArray();
                                 if (_isClient)
                                 {
-                                    _client.SendCriticalPacket(buffer);
+                                    _client.SendTcp(buffer);
                                 }
                                 else if (_isServer)
                                 {
-                                    _server.SendCriticalToAll(buffer);
+                                    _server.SendTcpToAll(buffer);
                                 }
                                 else if (_isHost)
                                 {
-                                    _server.SendCriticalToAll(buffer);
+                                    _server.SendTcpToAll(buffer);
                                 }
                             }
                         }
@@ -548,20 +581,6 @@ namespace _Scripts.Networking
 
         #endregion
 
-        #region Server Events Interface
-
-        //Server Events Interface
-        public void ConnectClient()
-        {
-            if (connectionAddress.isServerOnSameMachine)
-            {
-                connectionAddress.address = "127.0.0.1";
-            }
-            _client.Connect(connectionAddress.serverEndPoint);
-        }
-
-        #endregion
-
         #region Getters
 
         public bool IsHost()
@@ -584,63 +603,6 @@ namespace _Scripts.Networking
         // Structure to store the address to connect to
 
         #region address
-
-        [Serializable]
-        public struct ConnectionAddressData
-        {
-            [Tooltip("IP address of the server (address to which clients will connect to).")]
-            [SerializeField]
-            public string address;
-
-            [Tooltip("UDP port of the server.")] 
-            [SerializeField]
-            public ushort port;
-
-            private static IPEndPoint ParseNetworkEndpoint(string ip, ushort port)
-            {
-                IPAddress address = IPAddress.Parse(ip);
-                if (address == null)
-                {
-                    Debug.Log(ip + " address is not valid ...");
-                    return null;
-                }
-
-                return new IPEndPoint(address, port);
-            }
-            
-            public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
-            {
-                try
-                {
-                    IPAddress[] localIPs = Dns.GetHostAddresses(Dns.GetHostName());
-                    IPAddress loopback = IPAddress.Parse("127.0.0.1");
-
-                    // Check if any local IP matches the server's IP
-                    foreach (IPAddress localIP in localIPs)
-                    {
-                        if (localIP.Equals(IPAddress.Parse(serverIpAddress)))
-                        {
-                            return true; // Server IP matches one of the local IPs, so it's on the same machine
-                        }
-                    }
-
-                    // Attempt a connection using loopback address
-                    Socket loopbackSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    loopbackSocket.Connect(loopback, serverPort);
-                    loopbackSocket.Close();
-
-                    return true; // Loopback connection successful, server is on the same machine
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                    return false; // Error occurred or connection failed, server might not be on the same machine
-                }
-            }
-            public IPEndPoint serverEndPoint => ParseNetworkEndpoint(address, port);
-            public bool isServerOnSameMachine => IsServerOnSameMachine(address, port);
-        }
-
         void ResetNetworkIds(Scene scene, LoadSceneMode mode)
         {
             List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
