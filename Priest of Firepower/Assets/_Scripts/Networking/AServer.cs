@@ -395,14 +395,14 @@ namespace _Scripts.Networking
                     {
                         if (ipEndPoint.Address.Equals(IPAddress.Loopback))
                         {
-                            Debug.Log($"Server {_localEndPoint}: Incoming connection is local host, creating host client");
-                            CreateClient(incomingConnection, "Host", true);
+                            Debug.Log($"Server {_localEndPoint}: Incoming connection is local host, storing host client");
+                            StoreClient(incomingConnection, "Host", true);
                         }
                     }
                     else
                     {
                         Debug.Log($"Server {_localEndPoint}: Incoming connection is not host, creating normal client");
-                        CreateClient(incomingConnection, $"User_{_clientList.Count+1}", true);
+                        StoreClient(incomingConnection, $"User_{_clientList.Count+1}", true);
                     }
                     // //if not local host
                     // Debug.Log("Socket address: " + ipEndPoint.Address + " local address:" + IPAddress.Loopback);
@@ -544,7 +544,7 @@ namespace _Scripts.Networking
             }
         }
 
-        private UInt64 CreateClient(Socket clientSocket, string userName, bool isHost)
+        private UInt64 StoreClient(Socket clientSocket, string userName, bool isHost)
         {
             lock (_clientList)
             {

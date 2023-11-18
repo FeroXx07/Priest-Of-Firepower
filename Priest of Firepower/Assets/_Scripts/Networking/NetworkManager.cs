@@ -29,7 +29,7 @@ namespace _Scripts.Networking
         {
             var random = new Random();
             string firstName = firstNames[random.Next(0, firstNames.Length)];
-            string lastName = firstNames[random.Next(0, firstNames.Length)];
+            string lastName = lastNames[random.Next(0, firstNames.Length)];
 
             return $"{firstName}_{lastName}";
         }
@@ -368,7 +368,7 @@ namespace _Scripts.Networking
                 // Clean up resources
                 lock (_stateQueueLock)
                 {
-                    Debug.LogError($"Network Manager: Disposing state stream buffer");
+                    Debug.Log($"Network Manager: Disposing state stream buffer");
                     foreach (MemoryStream incomingStream in _stateStreamBuffer)
                     {
                         incomingStream.Dispose();
@@ -379,7 +379,7 @@ namespace _Scripts.Networking
 
                 lock (_inputQueueLock)
                 {
-                    Debug.LogError($"Network Manager: Disposing input stream buffer");
+                    Debug.Log($"Network Manager: Disposing input stream buffer");
                     foreach (MemoryStream incomingStream in _inputStreamBuffer)
                     {
                         incomingStream.Dispose();
@@ -390,7 +390,7 @@ namespace _Scripts.Networking
 
                 lock (_reliableStreamBuffer)
                 {
-                    Debug.LogError($"Network Manager: Disposing reliable stream buffer");
+                    Debug.Log($"Network Manager: Disposing reliable stream buffer");
                     foreach (MemoryStream incomingStream in _reliableStreamBuffer)
                     {
                         incomingStream.Dispose();
