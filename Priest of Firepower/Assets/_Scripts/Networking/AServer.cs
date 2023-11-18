@@ -23,40 +23,40 @@ namespace _Scripts.Networking
 
     public class AServer
     {
-        #region variables
+        #region Fields
 
-        IPEndPoint _endPoint;
+        private IPEndPoint _localEndPoint;
 
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
-        Process _listenConnectionProcess;
+        private Process _listenConnectionProcess;
+        
+        private Socket _serverTcp;
+        private Socket _serverUdp;
+        private bool _isServerInitialized = false;
+        
         private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
         private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
 
         private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
 
         //private List<Process> _authenticationProcessList = new List<Process>();
-        ClientManager _clientManager;
+        private ClientManager _clientManager;
+        
         private List<ClientData> _clientList = new List<ClientData>();
         private List<ClientData> _clientListToRemove = new List<ClientData>();
 
         //actions
-        Action<UInt64> _onClientAccepted;
-        Action _onClientRemoved;
-        Action<int> _onClientDisconnected;
-        Action<byte[]> _onDataRecieved;
-
-        //handeles connection with clients
-        Socket _serverTcp;
-        Socket _serverUdp;
-        private bool _isServerInitialized = false;
-
+        public Action<UInt64> onClientAccepted;
+        public Action onClientRemoved;
+        public Action<int> onClientDisconnected;
+        public Action<byte[]> onDataRecieved;
         #endregion
 
-        public AServer(IPEndPoint endPoint)
+        public AServer(IPEndPoint localEndPoint)
         {
-            _endPoint = endPoint;
+            _localEndPoint = localEndPoint;
 
             //_authenticator = new ServerAuthenticator();
             //_authenticator._onAuthenticationFailed += AuthenticationFailed;
@@ -65,7 +65,7 @@ namespace _Scripts.Networking
 
         #region client data
 
-        class ClientData
+        private class ClientData
         {
             public UInt64 id;
             public string username = "";
@@ -80,7 +80,7 @@ namespace _Scripts.Networking
             public bool isHost = false;
         }
 
-        struct ClientMetadata
+        private struct ClientMetadata
         {
             public IPEndPoint endPoint;
             //add time stamp
@@ -92,7 +92,6 @@ namespace _Scripts.Networking
             AUTHENTICATED,
             IN_GAME
         }
-
         #endregion
 
         #region enable/disable functions
@@ -110,6 +109,7 @@ namespace _Scripts.Networking
             }
 
             _serverTcp.Close();
+            _serverUdp.Close();
         }
 
         private void Update()
@@ -121,7 +121,7 @@ namespace _Scripts.Networking
 
         #region helper funcitons
 
-        void StopAuthenticationThread()
+        private void StopAuthenticationThread()
         {
             try
             {
@@ -137,12 +137,12 @@ namespace _Scripts.Networking
             }
         }
 
-        void StopConnectionListener()
+        private void StopConnectionListener()
         {
             _listenConnectionProcess.Shutdown();
         }
-        
-        void DisconnectAllClients()
+
+        private void DisconnectAllClients()
         {
             lock(_clientList) 
             {
@@ -153,7 +153,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void RemoveDisconectedClient()
+        private void RemoveDisconectedClient()
         {
             lock (_clientList)
             {
@@ -189,28 +189,19 @@ namespace _Scripts.Networking
         public void InitServer()
         {
             _clientManager = new ClientManager();
-            //start server
             Debug.Log("Starting server ...");
-            //create listener tcp
+            
             _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             _serverUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-            //create end point
-            //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
-            //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-            //So for the ip any it listens to all directions ipv4 local LAN and 
-            //also the public ip. TOconnect from the client use any of the ips
-            //if(_endPoint == null)
-            _endPoint = new IPEndPoint(IPAddress.Any, NetworkManager.Instance.connectionAddress.port);
+            
+            _serverTcp.Bind(_localEndPoint);
+            _serverUdp.Bind(_localEndPoint);
 
-            //bind to ip and port to listen to
-            _serverTcp.Bind(_endPoint);
-            _serverUdp.Bind(_endPoint);
-            // Using ListenForConnections() method we create 
-            // the Client list that will want
-            // to connect to Server
             _serverTcp.Listen(4);
-            _listenConnectionProcess = new Process();
-            _listenConnectionProcess.cancellationToken = new CancellationTokenSource();
+            _listenConnectionProcess = new Process
+            {
+                cancellationToken = new CancellationTokenSource()
+            };
             _listenConnectionProcess.thread = new Thread(() =>
                 StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
             _listenConnectionProcess.thread.Start();
@@ -224,11 +215,13 @@ namespace _Scripts.Networking
             StopAuthenticationThread();
             DisconnectAllClients();
             Debug.Log("Closing server connection ...");
+            
             if (_serverTcp.Connected)
             {
                 _serverTcp.Shutdown(SocketShutdown.Both);
             }
-
+            
+            _serverUdp.Close();
             _serverTcp.Close();
         }
         public void SendToAll(byte[] data)
@@ -323,7 +316,8 @@ namespace _Scripts.Networking
             }
         }
         private ManualResetEvent _connectionListenerEvent = new ManualResetEvent(false);
-        void StartConnectionListener(CancellationToken token)
+
+        private void StartConnectionListener(CancellationToken token)
         {
             try
             {
@@ -351,7 +345,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void AcceptCallback(IAsyncResult ar)
+        private void AcceptCallback(IAsyncResult ar)
         {
             try
             {
@@ -432,7 +426,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void HandleClient(ClientData clientData)
+        private void HandleClient(ClientData clientData)
         {
             Debug.Log("Starting Client Thread " + clientData.id + " ...");
             try
@@ -479,7 +473,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void ReceiveTcpSocketData(Socket socket)
+        private void ReceiveTcpSocketData(Socket socket)
         {
             try
             {
@@ -505,7 +499,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void ReceiveUDPSocketData(Socket socket, ClientData clientData)
+        private void ReceiveUDPSocketData(Socket socket, ClientData clientData)
         {
             try
             {
@@ -539,7 +533,7 @@ namespace _Scripts.Networking
             }
         }
 
-        UInt64 CreateClient(Socket clientSocket, string userName, bool isHost)
+        private UInt64 CreateClient(Socket clientSocket, string userName, bool isHost)
         {
             lock (_clientList)
             {
@@ -585,7 +579,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void RemoveClient(ClientData clientData)
+        private void RemoveClient(ClientData clientData)
         {
             Debug.Log("Removing client " + clientData.id);
             try
@@ -617,7 +611,7 @@ namespace _Scripts.Networking
 
         #endregion
 
-        static bool IsSocketConnected(Socket socket)
+        private static bool IsSocketConnected(Socket socket)
         {
             try
             {
@@ -630,7 +624,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void SendClientID(UInt64 id)
+        private void SendClientID(UInt64 id)
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);

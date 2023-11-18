@@ -11,32 +11,32 @@ namespace _Scripts.Networking
 {
     public class AClient : GenericSingleton<AClient>
     {
-        #region variables
-
-        IPEndPoint _endPoint;
-        Process _authenticationProcess = new Process();
-        Process _serverListenerProcess = new Process();
-        private Socket _connectionTCP;
-        private Socket _connectionUDP;
+        #region Fields
+        private UInt64 _id = 69;
+        private string _userName = "Yololo";
+        
+        private IPEndPoint _remoteEndPoint;
+        private IPEndPoint _localEndPoint;
+        
+        private Process _authenticationProcess = new Process();
+        private Process _serverListenerProcess = new Process();
+        
+        private Socket _connectionTcp;
+        private Socket _connectionUdp;
+        
         public Action OnConnected;
         public Action<byte[]> OnDataRecieved;
-        ClientAuthenticator _authenticator = new ClientAuthenticator();
-        private UInt64 _ID = 69;
-        string userName = "Yololo";
-
+        
+        private ClientAuthenticator _authenticator = new ClientAuthenticator();
         #endregion
 
         #region Enable/Disable funcitons
-
-        private void Start()
-        {
-        }
 
         private void OnEnable()
         {
             //OnConnected += StartListening;
             //OnConnected += _authenticationProcess.Shutdown;
-            _authenticator.userName = userName;
+            _authenticator.userName = _userName;
         }
 
         private void OnDisable()
@@ -53,54 +53,59 @@ namespace _Scripts.Networking
 
         #endregion
 
-        #region Get/Setters
-
-        public string GetIpAddress()
-        {
-            return _endPoint.ToString();
-        }
-
-        public void SetUsername(string username)
-        {
-            userName = username;
-        }
-
-        #endregion
+        // #region Get/Setters
+        //
+        // public string GetIpAddress()
+        // {
+        //     return _endPoint.ToString();
+        // }
+        //
+        // public void SetUsername(string username)
+        // {
+        //     userName = username;
+        // }
+        //
+        // #endregion
 
         #region Core Functions
 
-        public void Connect(IPEndPoint address)
+        public void Connect(IPEndPoint serverEndPoint)
         {
             try
             {
-                _endPoint = address;
+                _remoteEndPoint = serverEndPoint;
+                _localEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
                 //Debug.Log("Creating connetion ...");
-                _connectionTCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                _connectionTCP.ReceiveTimeout = 1000;
-                _connectionTCP.SendTimeout = 1000;
+                _connectionTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                _connectionTcp.Bind(_localEndPoint);
+                _connectionTcp.ReceiveTimeout = 1000;
+                _connectionTcp.SendTimeout = 1000;
+    
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
-                if (_endPoint == null)
+                if (_remoteEndPoint == null)
                 {
                     Debug.Log("server Ip is null ...");
                     return;
                 }
 
-                _connectionTCP.Connect(_endPoint);
-                if (!_connectionTCP.Connected)
+                _connectionTcp.Connect(_remoteEndPoint);
+                if (!_connectionTcp.Connected)
                 {
                     Debug.Log("Socket connection failed.");
                     return;
                 }
 
-                _connectionTCP.ReceiveTimeout = 5000;
-                _connectionTCP.SendTimeout = 5000;
+                _connectionTcp.ReceiveTimeout = 5000;
+                _connectionTcp.SendTimeout = 5000;
 
                 //create new udp connection
-                _connectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                _connectionUDP.Connect(_endPoint);
-                Debug.Log("Client:  Socket connected to -> " + _connectionTCP.RemoteEndPoint.ToString());
+                _connectionUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                _connectionUdp.Bind(_localEndPoint);
+                _connectionUdp.Connect(_remoteEndPoint);
+                
+                Debug.Log("Client:  Socket connected to -> " + _connectionTcp.RemoteEndPoint.ToString());
                 if (!NetworkManager.Instance.IsHost())
                 {
                     Debug.Log("Invoke ... ");
@@ -139,17 +144,13 @@ namespace _Scripts.Networking
             {
                 try
                 {
-                    // Debug.Log("hello ....");
-                    if (_connectionUDP.Available > 0)
-                    {
-                        Debug.Log("Client: UDP data received ...");
-                        ReceiveSocketData(_connectionUDP);
-                    }
+                    // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
+                    ReceiveUDPSocketData(_connectionUdp);
 
-                    if (_connectionTCP.Available > 0)
+                    if (_connectionTcp.Available > 0)
                     {
                         Debug.Log("Client: TCP data received ...");
-                        ReceiveSocketData(_connectionTCP);
+                        ReceiveSocketData(_connectionTcp);
                     }
                 }
                 catch (SocketException se)
@@ -183,11 +184,11 @@ namespace _Scripts.Networking
             Debug.Log("Disconnecting client ...");
             _serverListenerProcess.Shutdown();
             _authenticationProcess.Shutdown();
-            if (_connectionTCP != null)
+            if (_connectionTcp != null)
             {
-                _connectionTCP.Shutdown(SocketShutdown.Both);
-                _connectionTCP.Close();
-                _connectionUDP.Close();
+                _connectionTcp.Shutdown(SocketShutdown.Both);
+                _connectionTcp.Close();
+                _connectionUdp.Close();
             }
         }
 
@@ -197,8 +198,8 @@ namespace _Scripts.Networking
         {
             try
             {
-                if (_connectionTCP == null) return;
-                _connectionTCP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                if (_connectionTcp == null) return;
+                _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _remoteEndPoint);
             }
             catch (ArgumentNullException ane)
             {
@@ -219,8 +220,8 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log($"Client sending data: {_endPoint} - Length: {data.Length}");
-                _connectionUDP.SendTo(data, data.Length, SocketFlags.None, _endPoint);
+                Debug.Log($"Client sending data: {_remoteEndPoint} - Length: {data.Length}");
+                _connectionUdp.Send(data);
             }
             catch (ArgumentNullException ane)
             {
@@ -242,28 +243,28 @@ namespace _Scripts.Networking
 
         public void HandleRecivingID(BinaryReader reader)
         {
-            _ID = reader.ReadUInt64();
-            Debug.Log("recived ID :" + _ID);
+            _id = reader.ReadUInt64();
+            Debug.Log("recived ID :" + _id);
         }
 
         public UInt64 ID()
         {
-            return _ID;
+            return _id;
         }
 
         void Authenticate(CancellationToken token)
         {
-            _connectionTCP.ReceiveTimeout = 1000;
+            _connectionTcp.ReceiveTimeout = 1000;
             bool authenticated = false;
             try
             {
-                _authenticator.SendAuthenticationRequest(userName);
+                _authenticator.SendAuthenticationRequest(_userName);
                 while (!token.IsCancellationRequested)
                 {
-                    if (_connectionTCP.Available > 0)
+                    if (_connectionTcp.Available > 0)
                     {
                         Debug.Log("?????");
-                        ReceiveSocketData(_connectionTCP);
+                        ReceiveSocketData(_connectionTcp);
                     }
 
                     if (_authenticator.Authenticated() && !authenticated)
@@ -294,6 +295,36 @@ namespace _Scripts.Networking
                     int size = socket.Receive(buffer, buffer.Length, SocketFlags.None);
                     MemoryStream stream = new MemoryStream(buffer, 0, size);
                     NetworkManager.Instance.AddIncomingDataQueue(stream);
+                }
+            }
+            catch (SocketException se)
+            {
+                // Handle other socket exceptions
+                Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+            }
+            catch (Exception e)
+            {
+                // Handle other exceptions
+                Debug.LogError($"Exception: {e.Message}");
+            }
+        }
+        
+        void ReceiveUDPSocketData(Socket socket)
+        {
+            try
+            {
+                lock (NetworkManager.Instance.IncomingStreamLock)
+                {
+                    if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
+                    {
+                        byte[] buffer = new byte[1500];
+                        int size = socket.Receive(buffer);
+                        MemoryStream stream = new MemoryStream(buffer, 0, size);
+                        NetworkManager.Instance.AddIncomingDataQueue(stream);
+                    }
+                    /*If you are using a connectionless protocol such as UDP, you do not have to call Connect before sending and receiving data.
+                     You can use SendTo and ReceiveFrom to synchronously communicate with a remote host. 
+                     If you do call Connect, any datagrams that arrive from an address other than the specified default will be discarded. */
                 }
             }
             catch (SocketException se)

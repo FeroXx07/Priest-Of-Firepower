@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -49,13 +50,11 @@ namespace _Scripts.Networking
         // store all data in streams received
         Queue<MemoryStream> _incomingStreamBuffer = new Queue<MemoryStream>();
         public readonly object IncomingStreamLock = new object();
-
         Process _receiveData = new Process();
         Process _sendData = new Process();
         [SerializeField] public ConnectionAddressData connectionAddress;
 
-        [FormerlySerializedAs("Player")] [SerializeField]
-        GameObject player;
+        [SerializeField] GameObject player;
 
         public ReplicationManager _replicationManager = new ReplicationManager();
 
@@ -84,6 +83,7 @@ namespace _Scripts.Networking
             _sendData.thread = new Thread(() => SendDataThread(_receiveData.cancellationToken.Token));
             _sendData.thread.Start();
         }
+
         private void OnEnable()
         {
             Debug.developerConsoleEnabled = true;
@@ -96,10 +96,8 @@ namespace _Scripts.Networking
         {
             SceneManager.sceneLoaded -= ResetNetworkIds;
             Debug.Log("Shutdown Network Manager...");
-            
             _receiveData.Shutdown();
             _sendData.Shutdown();
-
             if (_client != null)
             {
                 try
@@ -126,28 +124,34 @@ namespace _Scripts.Networking
                 }
             }
         }
-    
 
         #region Connection Initializers
 
         public void StartClient()
         {
             CreateClient();
-            _client.Connect(connectionAddress.ServerEndPoint);
+            
+            if (connectionAddress.isServerOnSameMachine)
+            {
+                connectionAddress.address = "127.0.0.1";
+            }
+            
+            _client.Connect(connectionAddress.serverEndPoint);
             _isClient = true;
         }
 
         public void StartHost()
         {
-            connectionAddress.address = IPAddress.Loopback.ToString();
             CreateServer();
             CreateClient();
             _isHost = true;
+            
             if (_server.GetServerInit())
             {
-                _client.Connect(connectionAddress.ServerEndPoint);
+                // Localhost client!
+                _client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), connectionAddress.port));
             }
-            
+
             Debug.Log("OnEnable - _client: " + _client);
             Debug.Log("OnEnable - _server: " + _server);
         }
@@ -218,16 +222,12 @@ namespace _Scripts.Networking
                 stopwatch.Start();
                 while (!token.IsCancellationRequested)
                 {
-                    UInt64 senderid;
-                    if (IsClient())
-                        senderid = _client.ID();
-                    else
-                        senderid = 0;
+                    UInt64 senderid = IsClient() ? _client.ID() : 0;
 
                     //State buffer
-                    if (_stateStreamBuffer.Count > 0)
+                    lock (_stateQueueLock)
                     {
-                        lock (_stateQueueLock)
+                        if (_stateStreamBuffer.Count > 0)
                         {
                             Debug.Log("Obj state to send...");
                             int totalSize = 0;
@@ -235,45 +235,50 @@ namespace _Scripts.Networking
 
                             //check if the totalsize + the next stream total size is less than the specified size
                             //while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
+                            // Accumulate data packets until exceeding the MTU or the buffer is empty
                             while (_stateStreamBuffer.Count > 0 &&
                                    totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu)
                             {
-                                stateTimeout -= stopwatch.ElapsedMilliseconds;
-                                stopwatch.Restart();
-                                Debug.Log($"Timeout: {stateTimeout}");
                                 MemoryStream nextStream = _stateStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
-                            }
 
-                            if (totalSize <= _mtu || stateTimeout <= 0.0f)
-                            {
-                                stateTimeout = _stateBufferTimeout;
-                                
-                                byte[] buffer =
-                                    ConcatenateMemoryStreams(senderid, PacketType.OBJECT_STATE, streamsToSend);
-                                if (_isClient)
+                                // Adjust timeout based on elapsed time
+                                stateTimeout -= stopwatch.ElapsedMilliseconds;
+                                stopwatch.Restart();
+                                Debug.Log($"Timeout: {stateTimeout}");
+                                if (totalSize > 0 && (totalSize <= _mtu || stateTimeout <= 0.0f))
                                 {
-                                    Debug.Log("Client: sending object state of size: " + buffer.Length);
-                                    _client.SendPacket(buffer);
-                                }
-                                else if (_isHost)
-                                {
-                                    Debug.Log("Host: sending object state of size: " + buffer.Length);
-                                    _server.SendToAll(buffer);
-                                }
-                                else if (_isServer)
-                                {
-                                    _server.SendToAll(buffer);
+                                    stateTimeout = _stateBufferTimeout;
+                                    byte[] buffer = ConcatenateMemoryStreams(senderid, PacketType.OBJECT_STATE,
+                                        streamsToSend);
+                                    if (_isClient)
+                                    {
+                                        Debug.Log("Client: sending object state of size: " + buffer.Length);
+                                        _client.SendPacket(buffer);
+                                    }
+                                    else if (_isHost)
+                                    {
+                                        Debug.Log("Host: sending object state of size: " + buffer.Length);
+                                        _server.SendToAll(buffer);
+                                    }
+                                    else if (_isServer)
+                                    {
+                                        _server.SendToAll(buffer);
+                                    }
+
+                                    // Clear the streams to send for the next iteration
+                                    streamsToSend.Clear();
+                                    totalSize = 0;
                                 }
                             }
                         }
                     }
 
-                    //Input buffer
-                    if (_inputStreamBuffer.Count > 0)
+                    lock (_inputQueueLock)
                     {
-                        lock (_inputQueueLock)
+                        //Input buffer
+                        if (_inputStreamBuffer.Count > 0)
                         {
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
@@ -282,7 +287,7 @@ namespace _Scripts.Networking
                             while (_inputStreamBuffer.Count > 0 &&
                                    totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu && _inputBufferTimeout > 0)
                             {
-                                inputTimeout -= stopwatch.ElapsedMilliseconds;
+                                //inputTimeout -= stopwatch.ElapsedMilliseconds;
                                 MemoryStream nextStream = _inputStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
@@ -304,10 +309,10 @@ namespace _Scripts.Networking
                         }
                     }
 
-                    // reliable buffer
-                    if (_reliableStreamBuffer.Count > 0)
+                    lock (_realiableQueueLock)
                     {
-                        lock (_realiableQueueLock)
+                        // reliable buffer
+                        if (_reliableStreamBuffer.Count > 0)
                         {
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
                             while (_reliableStreamBuffer.Count > 0)
@@ -439,7 +444,7 @@ namespace _Scripts.Networking
                 case PacketType.INPUT:
                     break;
                 case PacketType.OBJECT_STATE:
-                    MainThreadDispatcher.EnqueueAction(()=>HandleObjectState(stream, reader));
+                    MainThreadDispatcher.EnqueueAction(() => HandleObjectState(stream, reader));
                     break;
                 case PacketType.AUTHENTICATION:
                     if (_isClient)
@@ -468,7 +473,6 @@ namespace _Scripts.Networking
 
         void HandleObjectState(MemoryStream stream, BinaryReader reader)
         {
-
             try
             {
                 //Debug.Log("base stream: " + reader.BaseStream.Length);
@@ -525,7 +529,11 @@ namespace _Scripts.Networking
         //Server Events Interface
         public void ConnectClient()
         {
-            _client.Connect(connectionAddress.ServerEndPoint);
+            if (connectionAddress.isServerOnSameMachine)
+            {
+                connectionAddress.address = "127.0.0.1";
+            }
+            _client.Connect(connectionAddress.serverEndPoint);
         }
 
         #endregion
@@ -556,15 +564,12 @@ namespace _Scripts.Networking
         [Serializable]
         public struct ConnectionAddressData
         {
-            // IP address of the server (address to which clients will connect to).
-            [FormerlySerializedAs("Address")]
             [Tooltip("IP address of the server (address to which clients will connect to).")]
             [SerializeField]
             public string address;
 
-            // UDP port of the server.
-
-            [FormerlySerializedAs("Port")] [Tooltip("UDP port of the server.")] [SerializeField]
+            [Tooltip("UDP port of the server.")] 
+            [SerializeField]
             public ushort port;
 
             private static IPEndPoint ParseNetworkEndpoint(string ip, ushort port)
@@ -578,9 +583,38 @@ namespace _Scripts.Networking
 
                 return new IPEndPoint(address, port);
             }
+            
+            public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
+            {
+                try
+                {
+                    IPAddress[] localIPs = Dns.GetHostAddresses(Dns.GetHostName());
+                    IPAddress loopback = IPAddress.Parse("127.0.0.1");
 
-            /// Endpoint (IP address and port) clients will connect to.
-            public IPEndPoint ServerEndPoint => ParseNetworkEndpoint(address, port);
+                    // Check if any local IP matches the server's IP
+                    foreach (IPAddress localIP in localIPs)
+                    {
+                        if (localIP.Equals(IPAddress.Parse(serverIpAddress)))
+                        {
+                            return true; // Server IP matches one of the local IPs, so it's on the same machine
+                        }
+                    }
+
+                    // Attempt a connection using loopback address
+                    Socket loopbackSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    loopbackSocket.Connect(loopback, serverPort);
+                    loopbackSocket.Close();
+
+                    return true; // Loopback connection successful, server is on the same machine
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}");
+                    return false; // Error occurred or connection failed, server might not be on the same machine
+                }
+            }
+            public IPEndPoint serverEndPoint => ParseNetworkEndpoint(address, port);
+            public bool isServerOnSameMachine => IsServerOnSameMachine(address, port);
         }
 
         void ResetNetworkIds(Scene scene, LoadSceneMode mode)
@@ -619,7 +653,8 @@ namespace _Scripts.Networking
 
         public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {
-            Debug.Log($"HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
+            Debug.Log(
+                $"HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
                 case NetworkAction.CREATE:
@@ -667,8 +702,7 @@ namespace _Scripts.Networking
 
         private void HandleObjectTransform(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {
-            if (networkObjectMap[id].synchronizeTransform) 
-                networkObjectMap[id].HandleNetworkTransform(reader);
+            if (networkObjectMap[id].synchronizeTransform) networkObjectMap[id].HandleNetworkTransform(reader);
         }
     }
 }
