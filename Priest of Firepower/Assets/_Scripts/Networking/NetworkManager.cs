@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
+using Random = System.Random;
 
 namespace _Scripts.Networking
 {
@@ -23,8 +23,19 @@ namespace _Scripts.Networking
 //this class will work as a client or server or both at the same time
     public class NetworkManager : GenericSingleton<NetworkManager>
     {
-        AClient _client;
-        AServer _server;
+        static readonly string[] firstNames = {"John","Paul","Ringo","George"};
+        private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
+        public static string GenerateName()
+        {
+            var random = new Random();
+            string firstName = firstNames[random.Next(0, firstNames.Length)];
+            string lastName = firstNames[random.Next(0, firstNames.Length)];
+
+            return $"{firstName}_{lastName}";
+        }
+        
+        private AClient _client;
+        private AServer _server;
         private bool _isHost = false;
         private bool _isServer = false;
         private bool _isClient = false;
@@ -34,13 +45,13 @@ namespace _Scripts.Networking
         int _inputBufferTimeout = 100; // time with no activity to send not fulled packets
 
         // store all state streams to send
-        Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
+        private Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
 
         // store all input streams to send
-        Queue<MemoryStream> _inputStreamBuffer = new Queue<MemoryStream>();
+        private Queue<MemoryStream> _inputStreamBuffer = new Queue<MemoryStream>();
 
         // store all critical data streams to send (TCP)
-        Queue<MemoryStream> _reliableStreamBuffer = new Queue<MemoryStream>();
+        private Queue<MemoryStream> _reliableStreamBuffer = new Queue<MemoryStream>();
 
         // Mutex for thread safety
         private readonly object _stateQueueLock = new object();
@@ -48,13 +59,13 @@ namespace _Scripts.Networking
         private readonly object _realiableQueueLock = new object();
 
         // store all data in streams received
-        Queue<MemoryStream> _incomingStreamBuffer = new Queue<MemoryStream>();
+        private Queue<MemoryStream> _incomingStreamBuffer = new Queue<MemoryStream>();
         public readonly object IncomingStreamLock = new object();
-        Process _receiveData = new Process();
-        Process _sendData = new Process();
+        private Process _receiveData = new Process();
+        private Process _sendData = new Process();
         [SerializeField] public ConnectionAddressData connectionAddress;
 
-        [SerializeField] GameObject player;
+        [SerializeField] private GameObject player;
 
         public ReplicationManager _replicationManager = new ReplicationManager();
 
@@ -73,7 +84,7 @@ namespace _Scripts.Networking
 
         private void Start()
         {
-            Debug.Log("Starting Network Manager ...");
+            Debug.Log("Network Manager: Starting");
             _receiveData.Name = "NW receive data";
             _receiveData.cancellationToken = new CancellationTokenSource();
             _receiveData.thread = new Thread(() => ReceiveDataThread(_receiveData.cancellationToken.Token));
@@ -88,14 +99,14 @@ namespace _Scripts.Networking
         {
             Debug.developerConsoleEnabled = true;
             Debug.developerConsoleVisible = true;
-            Debug.LogError("Console Enabled");
+            Debug.LogError("Network Manager: Console Enabled");
             SceneManager.sceneLoaded += ResetNetworkIds;
         }
 
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= ResetNetworkIds;
-            Debug.Log("Shutdown Network Manager...");
+            Debug.Log("Network Manager: Shutting down");
             _receiveData.Shutdown();
             _sendData.Shutdown();
             if (_client != null)
@@ -106,8 +117,7 @@ namespace _Scripts.Networking
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
-                    throw;
+                    Debug.LogError($"Network Manager: Shutting down exception {e}");
                 }
             }
 
@@ -119,8 +129,7 @@ namespace _Scripts.Networking
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
-                    throw;
+                    Debug.LogError($"Network Manager: Shutting down exception {e}");
                 }
             }
         }
@@ -129,7 +138,9 @@ namespace _Scripts.Networking
 
         public void StartClient()
         {
-            CreateClient();
+            string clientName = GenerateName();
+            
+            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             
             if (connectionAddress.isServerOnSameMachine)
             {
@@ -142,44 +153,31 @@ namespace _Scripts.Networking
 
         public void StartHost()
         {
-            CreateServer();
-            CreateClient();
+            string clientName = GenerateName();
+            
+            _server = new AServer(new IPEndPoint(IPAddress.Any, connectionAddress.port));
+            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             
-            if (_server.GetServerInit())
+            if (_server.isServerInitialized)
             {
                 // Localhost client!
                 _client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), connectionAddress.port));
             }
 
-            Debug.Log("OnEnable - _client: " + _client);
-            Debug.Log("OnEnable - _server: " + _server);
+            Debug.Log("Network Manager: OnEnable -> _client: " + _client);
+            Debug.Log("Network Manager: OnEnable -> _server: " + _server);
         }
 
         void StartServer()
         {
-            CreateServer();
+            _server = new AServer(new IPEndPoint(IPAddress.Any, connectionAddress.port));
             _isServer = true;
         }
 
         #endregion
-
-        //Initializers for the actions
-        void CreateClient()
-        {
-            _client = new AClient();
-            _client.OnConnected += ClientConnected;
-        }
-
-        void CreateServer()
-        {
-            IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, connectionAddress.port);
-            _server = new AServer(endPoint);
-            _server.InitServer();
-        }
-
+        
         #region Streams
-
         public void AddStateStreamQueue(MemoryStream stream)
         {
             lock (_stateQueueLock)
@@ -215,21 +213,23 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log("Network Manager Send data thread started...");
+                Debug.Log("Network Manager: Send data thread started");
                 float stateTimeout = _stateBufferTimeout;
                 float inputTimeout = _inputBufferTimeout;
-                System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-                stopwatch.Start();
+                System.Diagnostics.Stopwatch stateStopwatch = new System.Diagnostics.Stopwatch();
+                System.Diagnostics.Stopwatch inputStopwatch = new System.Diagnostics.Stopwatch();
+                stateStopwatch.Start();
+                inputStopwatch.Start();
                 while (!token.IsCancellationRequested)
                 {
-                    UInt64 senderid = IsClient() ? _client.ID() : 0;
+                    UInt64 senderid = IsClient() ? _client.GetId() : 0;
 
                     //State buffer
                     lock (_stateQueueLock)
                     {
                         if (_stateStreamBuffer.Count > 0)
                         {
-                            Debug.Log("Obj state to send...");
+                            Debug.Log("Network Manager: Preparing state stream buffer");
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
@@ -244,9 +244,10 @@ namespace _Scripts.Networking
                                 streamsToSend.Add(nextStream);
 
                                 // Adjust timeout based on elapsed time
-                                stateTimeout -= stopwatch.ElapsedMilliseconds;
-                                stopwatch.Restart();
-                                Debug.Log($"Timeout: {stateTimeout}");
+                                stateTimeout -= stateStopwatch.ElapsedMilliseconds;
+                                stateStopwatch.Restart();
+                                
+                                Debug.Log($"Network Manager: Timeout state stream buffer {stateTimeout}");
                                 if (totalSize > 0 && (totalSize <= _mtu || stateTimeout <= 0.0f))
                                 {
                                     stateTimeout = _stateBufferTimeout;
@@ -254,16 +255,17 @@ namespace _Scripts.Networking
                                         streamsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log("Client: sending object state of size: " + buffer.Length);
+                                        Debug.Log($"Network Manager: Sending state stream buffer as client, buffer size {buffer.Length} and timeout {stateTimeout}");
                                         _client.SendPacket(buffer);
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log("Host: sending object state of size: " + buffer.Length);
+                                        Debug.Log($"Network Manager: Sending state stream buffer as host, buffer size {buffer.Length} and timeout {stateTimeout}");
                                         _server.SendToAll(buffer);
                                     }
                                     else if (_isServer)
                                     {
+                                        Debug.Log($"Network Manager: Sending state stream buffer as server, buffer size {buffer.Length} and timeout {stateTimeout}");
                                         _server.SendToAll(buffer);
                                     }
 
@@ -280,31 +282,44 @@ namespace _Scripts.Networking
                         //Input buffer
                         if (_inputStreamBuffer.Count > 0)
                         {
+                            Debug.Log("Network Manager: Preparing input stream buffer");
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
                             while (_inputStreamBuffer.Count > 0 &&
-                                   totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu && _inputBufferTimeout > 0)
+                                   totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu)
                             {
                                 //inputTimeout -= stopwatch.ElapsedMilliseconds;
                                 MemoryStream nextStream = _inputStreamBuffer.Dequeue();
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
-                            }
-
-                            byte[] buffer = ConcatenateMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
-                            if (_isClient)
-                            {
-                                _client.SendPacket(buffer);
-                            }
-                            else if (_isServer)
-                            {
-                                _server.SendToAll(buffer);
-                            }
-                            else if (_isHost)
-                            {
-                                _server.SendToAll(buffer);
+                                
+                                // Adjust timeout based on elapsed time
+                                inputTimeout -= inputStopwatch.ElapsedMilliseconds;
+                                inputStopwatch.Restart();
+                                
+                                Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
+                                if (totalSize > 0 && (totalSize <= _mtu || inputTimeout <= 0.0f))
+                                {
+                                    inputTimeout = _inputBufferTimeout;
+                                    byte[] buffer = ConcatenateMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                                    if (_isClient)
+                                    {
+                                        Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        _client.SendPacket(buffer);
+                                    }
+                                    else if (_isServer)
+                                    {
+                                        Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        _server.SendToAll(buffer);
+                                    }
+                                    else if (_isHost)
+                                    {
+                                        Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        _server.SendToAll(buffer);
+                                    }
+                                }
                             }
                         }
                     }
@@ -346,13 +361,14 @@ namespace _Scripts.Networking
             }
             catch (OperationCanceledException e)
             {
-                Debug.LogException(e);
+                Debug.LogError($"Network Manager: OperationCanceledException {e}");
             }
             finally
             {
                 // Clean up resources
                 lock (_stateQueueLock)
                 {
+                    Debug.LogError($"Network Manager: Disposing state stream buffer");
                     foreach (MemoryStream incomingStream in _stateStreamBuffer)
                     {
                         incomingStream.Dispose();
@@ -363,6 +379,7 @@ namespace _Scripts.Networking
 
                 lock (_inputQueueLock)
                 {
+                    Debug.LogError($"Network Manager: Disposing input stream buffer");
                     foreach (MemoryStream incomingStream in _inputStreamBuffer)
                     {
                         incomingStream.Dispose();
@@ -373,6 +390,7 @@ namespace _Scripts.Networking
 
                 lock (_reliableStreamBuffer)
                 {
+                    Debug.LogError($"Network Manager: Disposing reliable stream buffer");
                     foreach (MemoryStream incomingStream in _reliableStreamBuffer)
                     {
                         incomingStream.Dispose();
@@ -387,7 +405,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log("Network Manager receive data thread started...");
+                Debug.Log("Network Manager: Receive data thread started...");
                 while (!token.IsCancellationRequested)
                 {
                     if (_incomingStreamBuffer.Count > 0)
@@ -429,44 +447,50 @@ namespace _Scripts.Networking
             BinaryReader reader = new BinaryReader(stream);
             if (stream.Length > 1500)
             {
-                Debug.Log("Received packet with size exceeding the maximum (1500 bytes). Discarding...");
+                Debug.LogWarning("Network Manager: Received packet with size exceeding the maximum (1500 bytes). Discarding...");
                 return;
             }
 
             // UInt64 senderId = reader.ReadUInt64();
             PacketType type = (PacketType)reader.ReadInt32();
-            Debug.Log("Received packet from: type: " + type + ", Stream array length: " + stream.ToArray().Length);
+            Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+
             switch (type)
             {
                 case PacketType.PING:
-                    Debug.Log("PING message received ...");
+                    Debug.Log("Network Manager: PING message received");
                     break;
                 case PacketType.INPUT:
+                    Debug.Log("Network Manager: INPUT message received");
                     break;
                 case PacketType.OBJECT_STATE:
+                {
+                    Debug.Log("Network Manager: OBJECT_STATE message received");
                     MainThreadDispatcher.EnqueueAction(() => HandleObjectState(stream, reader));
+                }
                     break;
                 case PacketType.AUTHENTICATION:
+                {
                     if (_isClient)
                     {
-                        Debug.Log("Client: auth message received ...");
+                        Debug.Log("Network Manager: Client auth message received");
                         _client.GetAuthenticator().HandleAuthentication(stream, reader);
                     }
                     else if (_isHost)
                     {
-                        Debug.Log("Server: auth message received ...");
+                        Debug.Log("Network Manager: Host auth message received");
                         _server.PopulateAuthenticators(stream, reader);
                     }
-
+                }
                     break;
                 case PacketType.ID:
                 {
-                    Debug.Log("ID message received ...");
+                    Debug.Log("Network Manager: Id message received");
                     if (_isClient) _client.HandleRecivingID(reader);
                 }
                     break;
                 default:
-                    Debug.LogError("Unknown packet type!");
+                    Debug.LogError("Network Manager: Unknown packet type!");
                     break;
             }
         }
@@ -489,7 +513,7 @@ namespace _Scripts.Networking
             }
             catch (EndOfStreamException ex)
             {
-                Debug.LogError($"EndOfStreamException: {ex.Message}");
+                Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
             }
         }
 
@@ -654,7 +678,7 @@ namespace _Scripts.Networking
         public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
         {
             Debug.Log(
-                $"HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
+                $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
                 case NetworkAction.CREATE:
@@ -706,3 +730,4 @@ namespace _Scripts.Networking
         }
     }
 }
+

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace _Scripts.Networking
 {
-    public class AClient : GenericSingleton<AClient>
+    public class AClient 
     {
         #region Fields
         private UInt64 _id = 69;
@@ -28,6 +28,13 @@ namespace _Scripts.Networking
         public Action<byte[]> OnDataRecieved;
         
         private ClientAuthenticator _authenticator = new ClientAuthenticator();
+
+        public AClient(string name, IPEndPoint localEndPoint, Action onConnected)
+        {
+            _userName = name;
+            _localEndPoint = localEndPoint;
+            OnConnected += onConnected;
+        }
         #endregion
 
         #region Enable/Disable funcitons
@@ -74,27 +81,31 @@ namespace _Scripts.Networking
             try
             {
                 _remoteEndPoint = serverEndPoint;
-                _localEndPoint = new IPEndPoint(IPAddress.Any, 0);
 
-                //Debug.Log("Creating connetion ...");
                 _connectionTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 _connectionTcp.Bind(_localEndPoint);
                 _connectionTcp.ReceiveTimeout = 1000;
                 _connectionTcp.SendTimeout = 1000;
-    
+                
+                
                 //If the port number doesn't matter you could pass 0 for the port to the IPEndPoint.
                 //In this case the operating system (TCP/IP stack) assigns a free port number for you.
                 if (_remoteEndPoint == null)
                 {
-                    Debug.Log("server Ip is null ...");
+                    Debug.Log($"Client {_userName}_{_id}: {_remoteEndPoint} is null");
                     return;
                 }
-
+                
+                Debug.Log($"Client {_userName}_{_id}: Trying to connect TCP local EP {_localEndPoint} to server EP {_remoteEndPoint}.");
                 _connectionTcp.Connect(_remoteEndPoint);
-                if (!_connectionTcp.Connected)
+                
+                if (_connectionTcp.Connected)
                 {
-                    Debug.Log("Socket connection failed.");
-                    return;
+                    Debug.Log($"Client {_userName}_{_id}: Successfully connected TCP local EP {_connectionTcp.LocalEndPoint} to server EP {_connectionTcp.RemoteEndPoint}.");
+                }
+                else
+                {
+                    Debug.Log($"Client {_userName}_{_id}: Failed to connected TCP local EP {_connectionTcp.LocalEndPoint} to server EP {_connectionTcp.RemoteEndPoint}.");
                 }
 
                 _connectionTcp.ReceiveTimeout = 5000;
@@ -103,12 +114,22 @@ namespace _Scripts.Networking
                 //create new udp connection
                 _connectionUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 _connectionUdp.Bind(_localEndPoint);
+                
+                Debug.Log($"Client {_userName}_{_id}: Trying to connect UDP local EP {_localEndPoint} to server EP {_remoteEndPoint}.");
                 _connectionUdp.Connect(_remoteEndPoint);
                 
-                Debug.Log("Client:  Socket connected to -> " + _connectionTcp.RemoteEndPoint.ToString());
+                if (_connectionTcp.Connected)
+                {
+                    Debug.Log($"Client {_userName}_{_id}: Successfully connected UDP local EP {_connectionUdp.LocalEndPoint} to server EP {_connectionUdp.RemoteEndPoint}.");
+                }
+                else
+                {
+                    Debug.Log($"Client {_userName}_{_id}: Failed to connected UDP local EP {_connectionUdp.LocalEndPoint} to server EP {_connectionUdp.RemoteEndPoint}.");
+                }
+                
                 if (!NetworkManager.Instance.IsHost())
                 {
-                    Debug.Log("Invoke ... ");
+                    Debug.Log($"Client {_userName}_{_id}: Is NOT hosting and invoking.");
                     OnConnected?.Invoke();
                     StartListening();
                     //_authenticationProcess.cancellationToken = new CancellationTokenSource();
@@ -119,18 +140,19 @@ namespace _Scripts.Networking
                 else
                 {
                     OnConnected?.Invoke();
-                    Debug.Log("Local host created ...");
+                    Debug.Log($"Client {_userName}_{_id}: Is Hosting and invoking.");
                 }
             }
             catch (Exception e)
             {
-                Debug.Log(e);
+                Debug.Log($"Client {_userName}_{_id}: Has exception!");
+                Debug.LogException(e);
             }
         }
 
         void StartListening()
         {
-            Debug.Log("Client: listening to server ...");
+            Debug.Log($"Client {_userName}_{_id}: Will be starting to listen server.");
             _serverListenerProcess.cancellationToken = new CancellationTokenSource();
             _serverListenerProcess.thread =
                 new Thread(() => ListenServer(_serverListenerProcess.cancellationToken.Token));
@@ -139,18 +161,17 @@ namespace _Scripts.Networking
 
         void ListenServer(CancellationToken cancellationToken)
         {
-            Debug.Log("Listening server ...");
+            Debug.Log($"Client {_userName}_{_id}: Is about to starting to listen server.");
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
                     // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
-                    ReceiveUDPSocketData(_connectionUdp);
+                    ReceiveUdpSocketData(_connectionUdp);
 
                     if (_connectionTcp.Available > 0)
                     {
-                        Debug.Log("Client: TCP data received ...");
-                        ReceiveSocketData(_connectionTcp);
+                        ReceiveTcpSocketData(_connectionTcp);
                     }
                 }
                 catch (SocketException se)
@@ -164,7 +185,7 @@ namespace _Scripts.Networking
                     else
                     {
                         // Handle other socket exceptions
-                        Debug.Log($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                        Debug.Log($"Client {_userName}_{_id}: SocketException: {se.SocketErrorCode}, {se.Message}");
                     }
                 }
                 catch (Exception e)
@@ -176,12 +197,12 @@ namespace _Scripts.Networking
                 Thread.Sleep(100);
             }
 
-            Debug.Log("Ending listening server ...");
+            Debug.Log($"Client {_userName}_{_id}: Is ending listening server.");
         }
 
         void Disconnect()
         {
-            Debug.Log("Disconnecting client ...");
+            Debug.Log($"Client {_userName}_{_id}: Is disconnecting and shutting down the sockets.");
             _serverListenerProcess.Shutdown();
             _authenticationProcess.Shutdown();
             if (_connectionTcp != null)
@@ -198,21 +219,22 @@ namespace _Scripts.Networking
         {
             try
             {
+                Debug.Log($"Client {_userName}_{_id}: Is sending critical packet");
                 if (_connectionTcp == null) return;
                 _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _remoteEndPoint);
             }
             catch (ArgumentNullException ane)
             {
-                Debug.LogError("ArgumentNullException : " + ane.ToString());
+                Debug.LogError($"Client {_userName}_{_id}: ArgumentNullException : {ane.ToString()}");
             }
             catch (SocketException se)
             {
-                Debug.LogError("SocketException: " + se.SocketErrorCode); // Log the error code
-                Debug.LogError("SocketException: " + se.Message); // Log the error message
+                Debug.LogError($"Client {_userName}_{_id}: SocketException: " + se.SocketErrorCode); // Log the error code
+                Debug.LogError($"Client {_userName}_{_id}: SocketException: " + se.Message); // Log the error message
             }
             catch (Exception e)
             {
-                Debug.LogError("Unexpected exception : " + e.ToString());
+                Debug.LogError($"Client {_userName}_{_id}: Unexpected exception : {e.ToString()}");
             }
         }
 
@@ -220,34 +242,31 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log($"Client sending data: {_remoteEndPoint} - Length: {data.Length}");
+                Debug.Log($"Client {_userName}_{_id}: Sending data to {_remoteEndPoint} - Length: {data.Length}");
                 _connectionUdp.Send(data);
             }
             catch (ArgumentNullException ane)
             {
-                Debug.LogError("ArgumentNullException: " + ane.ToString());
+                Debug.LogError($"Client {_userName}_{_id}: ArgumentNullException: {ane.ToString()}");
             }
             catch (SocketException se)
             {
-                Debug.LogError($"SocketException - Error Code: {se.SocketErrorCode}, Message: {se.Message}");
+                Debug.LogError($"Client {_userName}_{_id}: SocketException - Error Code: {se.SocketErrorCode}, Message: {se.Message}");
             }
             catch (Exception e)
             {
-                Debug.LogError("Unexpected exception: " + e.ToString());
+                Debug.LogError($"Client {_userName}_{_id}: Unexpected exception: {e.ToString()}" );
             }
         }
 
-        #region Helper functions
-
-        #endregion
-
         public void HandleRecivingID(BinaryReader reader)
         {
+            UInt64 oldId = _id;
             _id = reader.ReadUInt64();
-            Debug.Log("recived ID :" + _id);
+            Debug.Log($"Client {_userName}_{oldId}: + has received new {_id}");
         }
 
-        public UInt64 ID()
+        public UInt64 GetId()
         {
             return _id;
         }
@@ -264,7 +283,7 @@ namespace _Scripts.Networking
                     if (_connectionTcp.Available > 0)
                     {
                         Debug.Log("?????");
-                        ReceiveSocketData(_connectionTcp);
+                        ReceiveTcpSocketData(_connectionTcp);
                     }
 
                     if (_authenticator.Authenticated() && !authenticated)
@@ -283,10 +302,11 @@ namespace _Scripts.Networking
             }
         }
 
-        void ReceiveSocketData(Socket socket)
+        void ReceiveTcpSocketData(Socket socket)
         {
             try
             {
+                Debug.Log($"Client {_userName}_{_id}: Has received Tcp Data");
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
                     byte[] buffer = new byte[1500];
@@ -300,19 +320,20 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                 // Handle other socket exceptions
-                Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                Debug.LogError($"Client {_userName}_{_id}: SocketException: {se.SocketErrorCode}, {se.Message}");
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.LogError($"Exception: {e.Message}");
+                Debug.LogError($"Client {_userName}_{_id}: Exception: {e.Message}");
             }
         }
         
-        void ReceiveUDPSocketData(Socket socket)
+        void ReceiveUdpSocketData(Socket socket)
         {
             try
             {
+                Debug.Log($"Client {_userName}_{_id}: Has received Udp Data");
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
@@ -330,12 +351,12 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                 // Handle other socket exceptions
-                Debug.LogError($"SocketException: {se.SocketErrorCode}, {se.Message}");
+                MainThreadDispatcher.EnqueueAction(() =>  Debug.LogError($"Client {_userName}_{_id}: SocketException: {se.SocketErrorCode}, {se.Message}"));
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                Debug.LogError($"Exception: {e.Message}");
+                MainThreadDispatcher.EnqueueAction(() => Debug.LogError($"Client {_userName}_{_id}: Exception: {e.Message}"));
             }
         }
 
