@@ -256,7 +256,7 @@ namespace _Scripts.Networking
                                     if (_isClient)
                                     {
                                         Debug.Log($"Network Manager: Sending state stream buffer as client, buffer size {buffer.Length} and timeout {stateTimeout}");
-                                        _client.SendPacket(buffer);
+                                        _client.SendUdpPacket(buffer);
                                     }
                                     else if (_isHost)
                                     {
@@ -307,7 +307,7 @@ namespace _Scripts.Networking
                                     if (_isClient)
                                     {
                                         Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
-                                        _client.SendPacket(buffer);
+                                        _client.SendUdpPacket(buffer);
                                     }
                                     else if (_isServer)
                                     {

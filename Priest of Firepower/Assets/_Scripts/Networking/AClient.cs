@@ -219,8 +219,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log($"Client {_userName}_{_id}: Is sending critical packet");
-                if (_connectionTcp == null) return;
+                Debug.Log($"Client {_userName}_{_id}: Sending Tcp packet from {_connectionTcp.LocalEndPoint}to {_connectionTcp.RemoteEndPoint} - Length: {data.Length}");
                 _connectionTcp.SendTo(data, data.Length, SocketFlags.None, _remoteEndPoint);
             }
             catch (ArgumentNullException ane)
@@ -238,11 +237,11 @@ namespace _Scripts.Networking
             }
         }
 
-        public void SendPacket(byte[] data)
+        public void SendUdpPacket(byte[] data)
         {
             try
             {
-                Debug.Log($"Client {_userName}_{_id}: Sending data to {_remoteEndPoint} - Length: {data.Length}");
+                Debug.Log($"Client {_userName}_{_id}: Sending Udp packet from {_connectionUdp.LocalEndPoint}to {_connectionUdp.RemoteEndPoint} - Length: {data.Length}");
                 _connectionUdp.Send(data);
             }
             catch (ArgumentNullException ane)
@@ -333,11 +332,11 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log($"Client {_userName}_{_id}: Has received Udp Data");
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
+                        Debug.Log($"Client {_userName}_{_id}: Has received Udp Data from {socket.RemoteEndPoint}");
                         byte[] buffer = new byte[1500];
                         int size = socket.Receive(buffer);
                         MemoryStream stream = new MemoryStream(buffer, 0, size);

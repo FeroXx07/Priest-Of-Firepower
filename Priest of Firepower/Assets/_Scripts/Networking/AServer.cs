@@ -486,9 +486,9 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.LogError($"Server {_localEndPoint}: Has received Tcp data");
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
+                    Debug.LogError($"Server {_localEndPoint}: Has received Tcp Data from {socket.RemoteEndPoint}");
                     byte[] buffer = new byte[1500];
 
                     // Receive data from the client
@@ -513,11 +513,11 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.LogError($"Server {_localEndPoint}: Has received Udp data");
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
+                        Debug.LogError($"Server {_localEndPoint}: Has received Tcp Data from {socket.RemoteEndPoint}");
                         byte[] buffer = new byte[1500];
                         EndPoint senderEndPoint = clientData.metaData.endPoint;
                         int size = socket.ReceiveFrom(buffer, ref senderEndPoint);
