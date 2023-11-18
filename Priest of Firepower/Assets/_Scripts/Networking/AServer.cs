@@ -367,7 +367,7 @@ namespace _Scripts.Networking
                     return;
                 }
                 
-                IPEndPoint ipEndPoint = incomingConnection.LocalEndPoint as IPEndPoint;
+                IPEndPoint ipEndPoint = incomingConnection.RemoteEndPoint as IPEndPoint;
                 if (ipEndPoint == null) throw new ArgumentNullException(nameof(ipEndPoint));
                
                 // Check if the socket is connected
@@ -396,26 +396,38 @@ namespace _Scripts.Networking
 
                 if (IsSocketConnected(incomingConnection))
                 {
-                    //if not local host
-                    Debug.Log("Socket address: " + ipEndPoint.Address + " local address:" + IPAddress.Loopback);
-                    if (ipEndPoint.Address.Equals(IPAddress.Loopback))
+                    if (_clientList.Count == 0)
                     {
-                        Debug.Log("Server : host connected ... ");
-                        CreateClient(incomingConnection, "Host", true);
+                        if (ipEndPoint.Address.Equals(IPAddress.Loopback))
+                        {
+                            Debug.Log("Server : host connected ... ");
+                            CreateClient(incomingConnection, "Host", true);
+                        }
                     }
                     else
                     {
-                        CreateClient(incomingConnection, "Melon", true);
-                        //Process authenticate = new Process();
-
-                        //authenticate.cancellationToken = new CancellationTokenSource();
-                        //authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
-                        //authenticate.thread.Start();
-
-                        //_authenticationConnections[IpEndPoint] = incomingConnection;
-                        //_authenticationProcesses[IpEndPoint] = authenticate;
-                        //_authenticators[IpEndPoint] = new ServerAuthenticator();
+                        CreateClient(incomingConnection, $"User_{_clientList.Count+1}", true);
                     }
+                    // //if not local host
+                    // Debug.Log("Socket address: " + ipEndPoint.Address + " local address:" + IPAddress.Loopback);
+                    // if (ipEndPoint.Address.Equals(IPAddress.Loopback))
+                    // {
+                    //     Debug.Log("Server : host connected ... ");
+                    //     CreateClient(incomingConnection, "Host", true);
+                    // }
+                    // else
+                    // {
+                    //     CreateClient(incomingConnection, "Melon", true);
+                    //     //Process authenticate = new Process();
+                    //
+                    //     //authenticate.cancellationToken = new CancellationTokenSource();
+                    //     //authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                    //     //authenticate.thread.Start();
+                    //
+                    //     //_authenticationConnections[IpEndPoint] = incomingConnection;
+                    //     //_authenticationProcesses[IpEndPoint] = authenticate;
+                    //     //_authenticators[IpEndPoint] = new ServerAuthenticator();
+                    // }
                 }
 
                 _connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
@@ -557,8 +569,8 @@ namespace _Scripts.Networking
                 // clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
                 // clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
 
-                //store endpoint
-                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.LocalEndPoint;
+                // Local in this case is server, remote is client
+                IPEndPoint clientEndPoint = (IPEndPoint)clientSocket.RemoteEndPoint; 
                 clientData.metaData.endPoint = clientEndPoint;
 
                 //Create the process for that client

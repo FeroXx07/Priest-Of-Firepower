@@ -170,7 +170,7 @@ namespace _Scripts.Networking
                 catch (Exception e)
                 {
                     // Handle other exceptions
-                    Debug.LogError($"Exception: {e.Message}");
+                    Debug.LogException(e);
                 }
 
                 Thread.Sleep(100);
