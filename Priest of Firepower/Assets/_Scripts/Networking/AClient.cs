@@ -37,7 +37,7 @@ namespace _Scripts.Networking
             _userName = name;
             _localEndPointTcp = localEndPointTcp;
             OnConnected += onConnected;
-            _localEndPointUdp = new IPEndPoint(localEndPointTcp.Address, NetworkManager.Instance.defaultClientUdpPort);
+            _localEndPointUdp = new IPEndPoint(IPAddress.Any, 0);
         }
         #endregion
 
@@ -103,8 +103,7 @@ namespace _Scripts.Networking
                 //create new udp connection
                 _connectionUdp = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
                 _connectionUdp.Bind(_localEndPointUdp);
-                _remoteEndPointUdp = new IPEndPoint(_remoteEndPointTcp.Address,
-                    NetworkManager.Instance.defaultServerUdpPort);
+                _remoteEndPointUdp = new IPEndPoint(IPAddress.Any, 0);
                     
                 Debug.Log($"Client {_userName}_{_id}: Trying to connect UDP local EP {_localEndPointTcp} to server EP {_remoteEndPointUdp}.");
                 _connectionUdp.Connect(_remoteEndPointUdp);
@@ -268,7 +267,7 @@ namespace _Scripts.Networking
             bool authenticated = false;
             try
             {
-                _authenticator.SendAuthenticationRequest(_userName);
+                //_authenticator.SendAuthenticationRequest(_userName);
                 while (!token.IsCancellationRequested)
                 {
                     if (_connectionTcp.Available > 0)
@@ -277,12 +276,12 @@ namespace _Scripts.Networking
                         ReceiveTcpSocketData(_connectionTcp);
                     }
 
-                    if (_authenticator.Authenticated() && !authenticated)
-                    {
-                        authenticated = true;
-                        //add action dispatcher for main thread
-                        MainThreadDispatcher.EnqueueAction(OnConnected);
-                    }
+                    // if (_authenticator.Authenticated() && !authenticated)
+                    // {
+                    //     authenticated = true;
+                    //     //add action dispatcher for main thread
+                    //     MainThreadDispatcher.EnqueueAction(OnConnected);
+                    // }
 
                     Thread.Sleep(100);
                 }

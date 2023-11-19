@@ -16,6 +16,10 @@ namespace _Scripts.Networking
     /// </summary>
     public class ClientData
     {
+        public ClientData()
+        {
+            
+        }
         public ClientData(UInt64 id, string username, IPEndPoint endPointTcp, IPEndPoint endPointUdp)
         {
             this.id = id;
