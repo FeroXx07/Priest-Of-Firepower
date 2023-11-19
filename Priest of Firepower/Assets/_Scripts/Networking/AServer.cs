@@ -6,137 +6,108 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using _Scripts.Networking.Network_Behaviours;
 using UnityEngine;
 
 namespace _Scripts.Networking
 {
-    public class ClientManager
-    {
-        private UInt64 _nextClientId = 0;
-
-        public UInt64 GetNextClientId()
-        {
-            UInt64 clientId = _nextClientId;
-            _nextClientId++;
-            return clientId;
-        }
-    }
-
     public class AServer
     {
-        #region Fields
-
-        private IPEndPoint _localEndPointTcp;
-        private IPEndPoint _localEndPointUdp;
-
-        // It's used to signal to an asynchronous operation that it should stop or be interrupted.
-        // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
-        // or any other condition that requires the operation to terminate prematurely.
-        private Process _listenConnectionProcess;
-        
-        private Socket _serverTcp;
-        private Socket _serverUdp;
-        public bool isServerInitialized { get; private set; } = false;
-        
-        private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
-        private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
-
-        private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
-
-        //private List<Process> _authenticationProcessList = new List<Process>();
-        private ClientManager _clientManager;
-        
-        private List<ClientData> _clientList = new List<ClientData>();
-        private List<ClientData> _clientListToRemove = new List<ClientData>();
-
-        //actions
-        public Action<UInt64> onClientAccepted;
-        public Action onClientRemoved;
-        public Action<int> onClientDisconnected;
-        public Action<byte[]> onDataRecieved;
-        #endregion
-
         public AServer(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
         {
             _localEndPointTcp = localEndPointTcp;
             _localEndPointUdp = localEndPointUdp;
             InitServer();
         }
+        
+        #region Fields
+        private IPEndPoint _localEndPointTcp;
+        private IPEndPoint _localEndPointUdp;
+        private Socket _serverTcp;
+        private Socket _serverUdp;
+        public bool isServerInitialized { get; private set; } = false;
+        private UInt64 _nextClientId = 0;
+        
+        private List<ClientData> _clientsList = new List<ClientData>();
+        private List<ClientData> _clientsToRemove = new List<ClientData>();
+        
+        private Process _listenConnectionsProcess;
 
-        #region Client Data
+        // It's used to signal to an asynchronous operation that it should stop or be interrupted.
+        // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
+        // or any other condition that requires the operation to terminate prematurely.
+        
+        // private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
+        // private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
+        // private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
+        // private List<Process> _authenticationProcessList = new List<Process>();
 
-        private class ClientData
+        public UInt64 getNextClient
         {
-            public UInt64 id;
-            public string username = "";
-            public IPEndPoint endPointTcp;
-            public IPEndPoint endPointUdp;
-            public ClientSate state;
-            public Socket connectionTcp;
-            // public Socket ConnectionUDP;
-
-            public Process
-                listenProcess; //if disconnection request invoke cancellation token to shutdown all related processes
-
-            public bool isHost = false;
-        }
-
-        public enum ClientSate
-        {
-            CONNECTED,
-            AUTHENTICATED,
-            IN_GAME
+            get
+            {
+                UInt64 clientId = _nextClientId;
+                _nextClientId++;
+                return clientId;
+            }
         }
         #endregion
 
-        #region Helper Functions
+        #region  Actions
+        public Action<UInt64> onClientAccepted;
+        public Action<UInt64> onClientRemoved;
+        public Action<UInt64> onClientDisconnected;
+        public Action<UInt64, byte[]> onDataRecieved;
+        #endregion
+        
+        #region Disconnections & Threads Cancellation
         private void StopAuthenticationThread()
         {
-            try
-            {
-                foreach (KeyValuePair<IPEndPoint, Process> process in _authenticationProcesses)
-                {
-                    process.Value.Shutdown();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            // try
+            // {
+            //     foreach (KeyValuePair<IPEndPoint, Process> process in _authenticationProcesses)
+            //     {
+            //         process.Value.Shutdown();
+            //     }
+            // }
+            // catch (Exception e)
+            // {
+            //     Console.WriteLine(e);
+            //     throw;
+            // }
         }
         private void StopConnectionListener()
         {
-            _listenConnectionProcess.Shutdown();
+            _listenConnectionsProcess.Shutdown();
         }
 
         private void DisconnectAllClients()
         {
-            lock(_clientList) 
+            lock(_clientsList) 
             {
                 Debug.Log($"Server {_localEndPointTcp}: Disconnecting all clients");
-                foreach (ClientData client in _clientList)
+                foreach (ClientData client in _clientsList)
                 {
                     RemoveClient(client);
                 }
             }
         }
-        private void RemoveDisconectedClient()
+        private void UpdatePendingDisconnections()
         {
-            lock (_clientList)
+            lock (_clientsList)
             {
-                if (_clientListToRemove.Count > 0)
+                if (_clientsToRemove.Count > 0)
                 {
-                    lock (_clientList)
+                    lock (_clientsList)
                     {
-                        foreach (ClientData clientToRemove in _clientListToRemove)
+                        foreach (ClientData clientToRemove in _clientsToRemove)
                         {
                             //Debug.Log($"Server {_localEndPoint}: Removing {clientToRemove.metaData.endPoint}");
-                            _clientList.Remove(clientToRemove);
+                            _clientsList.Remove(clientToRemove);
                         }
                     }
-                    Debug.Log($"Server {_localEndPointTcp}: Removed {_clientListToRemove.Count} clients");
-                    _clientListToRemove.Clear();
+                    Debug.Log($"Server {_localEndPointTcp}: Removed {_clientsToRemove.Count} clients");
+                    _clientsToRemove.Clear();
                 }
             }
         }
@@ -145,7 +116,6 @@ namespace _Scripts.Networking
         #region Core Functions
         public void InitServer()
         {
-            _clientManager = new ClientManager();
             Debug.Log($"Server: Starting server... TCP LOCAL ENDPOINT:{_localEndPointTcp}, UDP LOCAL ENDPOINT:{_localEndPointUdp}:");
             
             _serverTcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -155,13 +125,13 @@ namespace _Scripts.Networking
             _serverUdp.Bind(_localEndPointUdp);
 
             _serverTcp.Listen(4);
-            _listenConnectionProcess = new Process
+            _listenConnectionsProcess = new Process
             {
                 cancellationToken = new CancellationTokenSource()
             };
-            _listenConnectionProcess.thread = new Thread(() =>
-                StartConnectionListener(_listenConnectionProcess.cancellationToken.Token));
-            _listenConnectionProcess.thread.Start();
+            _listenConnectionsProcess.thread = new Thread(() =>
+                StartConnectionListener(_listenConnectionsProcess.cancellationToken.Token));
+            _listenConnectionsProcess.thread.Start();
             isServerInitialized = true;
             Debug.Log($"Server {_localEndPointTcp}: Server started successfully");
         }
@@ -190,7 +160,7 @@ namespace _Scripts.Networking
         public void SendUdpToAll(byte[] data)
         {
             Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to all...");
-            foreach (ClientData client in _clientList)
+            foreach (ClientData client in _clientsList)
             { 
                 if (client.id != 0)
                 {
@@ -221,7 +191,7 @@ namespace _Scripts.Networking
         public void SendTcpToAll(byte[] data)
         {
             Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to all...");
-            foreach (ClientData client in _clientList)
+            foreach (ClientData client in _clientsList)
             { 
                 if (client.id != 0)
                 {
@@ -245,7 +215,7 @@ namespace _Scripts.Networking
 
         public void SendTcp(UInt64 id, byte[] data)
         {
-            ClientData client = _clientList.First(cl => cl.id == id);
+            ClientData client = _clientsList.First(cl => cl.id == id);
             Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to client {client.username} with Id: {client.id} and EP: {client.endPointTcp}:");
             try
             {
@@ -276,7 +246,7 @@ namespace _Scripts.Networking
 
         public void SendUdp(UInt64 clientId, byte[] data)
         {
-            foreach (ClientData client in _clientList)
+            foreach (ClientData client in _clientsList)
             {
                 if (client.id == clientId)
                 {
@@ -365,7 +335,7 @@ namespace _Scripts.Networking
                 }
 
                 //check that the incoming socket is not being process twice
-                foreach (ClientData client in _clientList)
+                foreach (ClientData client in _clientsList)
                 {
                     if (client.endPointTcp.Equals(ipEndPoint))
                     {
@@ -374,18 +344,18 @@ namespace _Scripts.Networking
                     }
                 }
 
-                foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
-                {
-                    if (process.Key.Equals(ipEndPoint))
-                    {
-                        Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is already in _authenticationConnections, closing it");
-                        incomingConnection.Close();
-                    }
-                }
+                // foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
+                // {
+                //     if (process.Key.Equals(ipEndPoint))
+                //     {
+                //         Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is already in _authenticationConnections, closing it");
+                //         incomingConnection.Close();
+                //     }
+                // }
 
                 if (IsSocketConnected(incomingConnection))
                 {
-                    if (_clientList.Count == 0)
+                    if (_clientsList.Count == 0)
                     {
                         if (ipEndPoint.Address.Equals(IPAddress.Loopback))
                         {
@@ -399,7 +369,7 @@ namespace _Scripts.Networking
                     else
                     {
                         Debug.Log($"Server {_localEndPointTcp}: Incoming connection is not host, creating normal client");
-                        StoreClient(incomingConnection, $"User_{_clientList.Count+1}", true);
+                        StoreClient(incomingConnection, $"User_{_clientsList.Count+1}", true);
                         
                         // Process authenticate = new Process();
                         // authenticate.cancellationToken = new CancellationTokenSource();
@@ -554,10 +524,10 @@ namespace _Scripts.Networking
 
         private UInt64 StoreClient(Socket clientSocket, string userName, bool isHost)
         {
-            lock (_clientList)
+            lock (_clientsList)
             {
                 ClientData clientData = new ClientData();
-                clientData.id = _clientManager.GetNextClientId();
+                clientData.id = getNextClient;
                 clientData.username = userName;
                 clientData.isHost = isHost;
                 clientData.connectionTcp = clientSocket;
@@ -579,8 +549,8 @@ namespace _Scripts.Networking
                 // Local in this case is server, remote is client
                 IPEndPoint clientEndPointTCP = (IPEndPoint)clientSocket.RemoteEndPoint; 
                 clientData.endPointTcp = clientEndPointTCP;
-                clientData.endPointUdp  = new IPEndPoint(clientData.endPointTcp.Address,
-                    NetworkManager.Instance.defaultClientUdpPort);
+                //clientData.endPointUdp  = new IPEndPoint(clientData.endPointTcp.Address,
+                   // NetworkManager.Instance.defaultClientUdpPort);
                 
                 //Create the process for that client
                 //create a hole thread to recive important data from server-client
@@ -593,7 +563,7 @@ namespace _Scripts.Networking
                 clientProcess.thread.Name  = "Handle Clinet " + clientData.id.ToString();
                 clientProcess.thread.Start();
                 clientData.listenProcess = clientProcess;
-                _clientList.Add(clientData);
+                _clientsList.Add(clientData);
                 
                 Debug.Log($"Server {_localEndPointTcp}: Client {clientData.username} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                 
@@ -608,7 +578,7 @@ namespace _Scripts.Networking
             try
             {
                 // Remove the client from the list of connected clients    
-                lock (_clientList)
+                lock (_clientsList)
                 {
                     // Shutdown client thread
                     clientData.listenProcess.Shutdown();
@@ -620,7 +590,7 @@ namespace _Scripts.Networking
                     }
 
                     clientData.connectionTcp.Close();
-                    _clientListToRemove.Add(clientData);
+                    _clientsToRemove.Add(clientData);
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.username} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected:");
                 }
             }
@@ -716,15 +686,15 @@ namespace _Scripts.Networking
 
         public void PopulateAuthenticators(MemoryStream stream, BinaryReader reader)
         {
-            lock (_authenticators)
-            {
-                // IEP local del cliente  = reader.stream;
-                
-                // foreach (KeyValuePair<IPEndPoint, ServerAuthenticator> process in _authenticators)
-                // {
-                //     process.Value.HandleAuthentication(stream, reader);
-                // }
-            }
+            // lock (_authenticators)
+            // {
+            //     // IEP local del cliente  = reader.stream;
+            //     
+            //     // foreach (KeyValuePair<IPEndPoint, ServerAuthenticator> process in _authenticators)
+            //     // {
+            //     //     process.Value.HandleAuthentication(stream, reader);
+            //     // }
+            // }
         }
 
         #endregion

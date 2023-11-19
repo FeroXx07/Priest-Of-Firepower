@@ -39,17 +39,16 @@ namespace _Scripts.Networking
         }
 
         private void ConnectToServer(string ip)
-        {            
-            NetworkManager.Instance.serverEndPointTcp.Address = IPAddress.Parse(ip);
+        {
+            NetworkManager manager = NetworkManager.Instance;
 
-            if (NetworkManager.Instance.isServerOnSameMachine)
+            if (IPAddress.TryParse(ip, out manager.serverAdress))
             {
-                NetworkManager.Instance.serverEndPointTcp.Address = IPAddress.Parse("127.0.0.1");
-            }
-            
-            if (NetworkManager.Instance.serverEndPointTcp != null)
-            {
-                NetworkManager.Instance.StartClient();
+                if (manager.isServerOnSameMachine)
+                {
+                    manager.serverAdress = IPAddress.Parse("127.0.0.1");
+                }
+                manager.StartClient();
             }
             else
             {

@@ -28,8 +28,9 @@ namespace _Scripts.Networking
         
         public Action OnConnected;
         public Action<byte[]> OnDataRecieved;
-        
-        private ClientAuthenticator _authenticator = new ClientAuthenticator();
+
+        private ClientAuthenticator _authenticator;
+        public ClientAuthenticator authenticator => _authenticator;
 
         public AClient(string name, IPEndPoint localEndPointTcp, Action onConnected)
         {
@@ -41,22 +42,10 @@ namespace _Scripts.Networking
         #endregion
 
         #region Enable/Disable funcitons
-
-        private void OnEnable()
-        {
-            _authenticator.userName = _userName;
-        }
-
-        private void OnDisable()
-        {
-            Disconnect();
-        }
-
         public void Shutdown()
         {
             Disconnect();
         }
-
         #endregion
 
         // #region Get/Setters
@@ -75,7 +64,7 @@ namespace _Scripts.Networking
 
         #region Core Functions
 
-        public void Connect(IPEndPoint serverEndPoint)
+        public void ConnectTcp(IPEndPoint serverEndPoint)
         {
             try
             {
@@ -360,11 +349,6 @@ namespace _Scripts.Networking
                 // Handle other exceptions
                 MainThreadDispatcher.EnqueueAction(() => Debug.LogError($"Client {_userName}_{_id}: Exception: {e.Message}"));
             }
-        }
-
-        public ClientAuthenticator GetAuthenticator()
-        {
-            return _authenticator;
         }
     }
 }

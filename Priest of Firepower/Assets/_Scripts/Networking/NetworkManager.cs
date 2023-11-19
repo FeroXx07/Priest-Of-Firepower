@@ -7,7 +7,6 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 using Random = System.Random;
 
 namespace _Scripts.Networking
@@ -24,12 +23,11 @@ namespace _Scripts.Networking
 //this class will work as a client or server or both at the same time
     public class NetworkManager : GenericSingleton<NetworkManager>
     {
-        public ushort defaultClientTcpPort = 15009;
-        public ushort defaultClientUdpPort = 15010;
+        // public ushort defaultClientTcpPort = 15009;
+        // public ushort defaultClientUdpPort = 15010;
+        public IPAddress serverAdress = IPAddress.Any;
         public ushort defaultServerTcpPort = 12345;
-        public ushort defaultServerUdpPort = 12443;
-        
-        private IPAddress defaultAdressToInit = IPAddress.Any;
+        // public ushort defaultServerUdpPort = 12443;
         
         static readonly string[] firstNames = {"John","Paul","Ringo","George"};
         private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
@@ -69,8 +67,8 @@ namespace _Scripts.Networking
         // store all data in streams received
         private Queue<MemoryStream> _incomingStreamBuffer = new Queue<MemoryStream>();
         public readonly object IncomingStreamLock = new object();
-        private Process _receiveData = new Process();
-        private Process _sendData = new Process();
+        private Process _receiveData;
+        private Process _sendData;
         public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
         {
             try
@@ -101,9 +99,9 @@ namespace _Scripts.Networking
             }
         }
         IPEndPoint ParseNetworkEndpoint(string adress, ushort port) => new IPEndPoint(IPAddress.Parse(adress), port);
-        public IPEndPoint serverEndPointTcp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerTcpPort);
-        public IPEndPoint serverEndPointUdp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerUdpPort);
-        public bool isServerOnSameMachine => IsServerOnSameMachine(defaultAdressToInit.ToString(), defaultServerTcpPort);
+        //public IPEndPoint serverEndPointTcp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerTcpPort);
+        //public IPEndPoint serverEndPointUdp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerUdpPort);
+        public bool isServerOnSameMachine => IsServerOnSameMachine(serverAdress.ToString(), defaultServerTcpPort);
 
         [SerializeField] private GameObject player;
 
@@ -180,14 +178,14 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, defaultClientTcpPort), ClientConnected);
+            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             
             if (isServerOnSameMachine)
             {
-                serverEndPointTcp.Address = IPAddress.Parse("127.0.0.1");
+                serverAdress = IPAddress.Parse("127.0.0.1");
             }
             
-            _client.Connect(serverEndPointTcp);
+            _client.ConnectTcp(new IPEndPoint(serverAdress, defaultServerTcpPort));
             _isClient = true;
         }
 
@@ -195,14 +193,14 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _server = new AServer(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
-            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, defaultClientTcpPort), ClientConnected);
+            _server = new AServer(new IPEndPoint(IPAddress.Any, 0), new IPEndPoint(IPAddress.Any, 0));
+            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             
             if (_server.isServerInitialized)
             {
                 // Localhost client!
-                _client.Connect(new IPEndPoint(IPAddress.Parse("127.0.0.1"), defaultServerTcpPort));
+                _client.ConnectTcp(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
             }
 
             Debug.Log("Network Manager: OnEnable -> _client: " + _client);
@@ -507,7 +505,7 @@ namespace _Scripts.Networking
                     if (_isClient)
                     {
                         Debug.Log("Network Manager: Client auth message received");
-                        _client.GetAuthenticator().HandleAuthentication(stream, reader);
+                        _client.authenticator.HandleAuthentication(stream, reader);
                     }
                     else if (_isHost)
                     {
