@@ -26,8 +26,8 @@ namespace _Scripts.Networking
         // public ushort defaultClientTcpPort = 15009;
         // public ushort defaultClientUdpPort = 15010;
         public IPAddress serverAdress = IPAddress.Any;
-        public ushort defaultServerTcpPort = 12345;
-        // public ushort defaultServerUdpPort = 12443;
+        public int defaultServerTcpPort = 12345;
+        public int defaultServerUdpPort = 12443;
         
         static readonly string[] firstNames = {"John","Paul","Ringo","George"};
         private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};

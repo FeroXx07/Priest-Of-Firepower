@@ -36,7 +36,7 @@ namespace _Scripts.Networking
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
-        
+        private List<ServerAuthenticator> _authenticationProcesses = new List<ServerAuthenticator>();
         // private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
         // private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
         // private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
@@ -63,18 +63,19 @@ namespace _Scripts.Networking
         #region Disconnections & Threads Cancellation
         private void StopAuthenticationThread()
         {
-            // try
-            // {
-            //     foreach (KeyValuePair<IPEndPoint, Process> process in _authenticationProcesses)
-            //     {
-            //         process.Value.Shutdown();
-            //     }
-            // }
-            // catch (Exception e)
-            // {
-            //     Console.WriteLine(e);
-            //     throw;
-            // }
+            try
+            {
+                Debug.Log($"Server {_localEndPointTcp}: Stopping authentication threads");
+                foreach (ServerAuthenticator authProcess in _authenticationProcesses)
+                {
+                    authProcess.process.Shutdown();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Server {_localEndPointTcp}: Error stopping authentication threads {e}");
+                throw;
+            }
         }
         private void StopConnectionListener()
         {
@@ -277,7 +278,7 @@ namespace _Scripts.Networking
                     _connectionListenerEvent.Reset(); // Reset the event before waiting for a connection
 
                     // Asynchronously wait for a connection or cancellation signal
-                    IAsyncResult asyncResult = _serverTcp.BeginAccept(new AsyncCallback(AcceptCallback), null);
+                    IAsyncResult asyncResult = _serverTcp.BeginAccept(new AsyncCallback(AcceptNewClientCallback), null);
 
                     // Wait for either a connection or a cancellation signal
                     int waitResult = WaitHandle.WaitAny(new WaitHandle[] { asyncResult.AsyncWaitHandle, token.WaitHandle });
@@ -298,7 +299,7 @@ namespace _Scripts.Networking
             }
         }
 
-        private void AcceptCallback(IAsyncResult ar)
+        private void AcceptNewClientCallback(IAsyncResult ar)
         {
             try
             {
@@ -324,12 +325,11 @@ namespace _Scripts.Networking
                 }
                 
                 IPEndPoint ipEndPoint = incomingConnection.RemoteEndPoint as IPEndPoint;
-                if (ipEndPoint == null) throw new ArgumentNullException(nameof(ipEndPoint));
-               
+                
                 // Check if the socket is connected
                 if (!IsSocketConnected(incomingConnection))
                 {
-                    Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is not connected, closing it");
+                    Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection {ipEndPoint} is not connected, closing it");
                     incomingConnection.Close();
                     return;
                 }
@@ -339,49 +339,54 @@ namespace _Scripts.Networking
                 {
                     if (client.endPointTcp.Equals(ipEndPoint))
                     {
-                        Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is being processed twice, closing it");
+                        Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection {ipEndPoint} is being processed twice, closing it");
                         incomingConnection.Close();
+                        return;
                     }
                 }
 
-                // foreach (KeyValuePair<IPEndPoint, Socket> process in _authenticationConnections)
-                // {
-                //     if (process.Key.Equals(ipEndPoint))
-                //     {
-                //         Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection is already in _authenticationConnections, closing it");
-                //         incomingConnection.Close();
-                //     }
-                // }
-
-                if (IsSocketConnected(incomingConnection))
+                foreach (ServerAuthenticator authProcess in _authenticationProcesses)
                 {
-                    if (_clientsList.Count == 0)
+                    if (authProcess.clientEndPointTcp.Equals(ipEndPoint))
                     {
-                        if (ipEndPoint.Address.Equals(IPAddress.Loopback))
-                        {
-                            // 1. Save into dictionary
-                            // 2. Create
-                            //
-                            Debug.Log($"Server {_localEndPointTcp}: Incoming connection is local host, storing host client");
-                            StoreClient(incomingConnection, "Host", true);
-                        }
+                        Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection {ipEndPoint} is already in _authenticationProcesses, closing it");
+                        incomingConnection.Close();
+                        return;
                     }
-                    else
+                }
+                //
+                // Process authenticate = new Process();
+                // authenticate.cancellationToken = new CancellationTokenSource();
+                // authenticate.thread = new Thread(() => ServerAuthenticator(incomingConnection, authenticate.cancellationToken.Token));
+                // authenticate.thread.Start();
+                
+                if (_clientsList.Count == 0) // Host client
+                {
+                    if (ipEndPoint.Address.Equals(IPAddress.Loopback))
                     {
-                        Debug.Log($"Server {_localEndPointTcp}: Incoming connection is not host, creating normal client");
-                        StoreClient(incomingConnection, $"User_{_clientsList.Count+1}", true);
-                        
-                        // Process authenticate = new Process();
-                        // authenticate.cancellationToken = new CancellationTokenSource();
-                        // authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
-                        // authenticate.thread.Start();
+                        // 1. Save into dictionary
+                        // 2. Create
                         //
-                        // _authenticationConnections[IpEndPoint] = incomingConnection;
-                        // _authenticationProcesses[IpEndPoint] = authenticate;
-                        // _authenticators[IpEndPoint] = new ServerAuthenticator();
-                        // //_authenticator._onAuthenticationFailed += AuthenticationFailed;
-                        //_authenticator._onAuthenticated += AuthenticationSuccess;
+                        Debug.Log($"Server {_localEndPointTcp}: Incoming connection is local host, storing host client");
+                        StoreClient(incomingConnection, "Host", true);
                     }
+                }
+                else
+                {
+                    Debug.Log($"Server {_localEndPointTcp}: Incoming connection is not host, creating normal client");
+                    StoreClient(incomingConnection, $"User_{_clientsList.Count+1}", true);
+                    
+                    // Process authenticate = new Process();
+                    // authenticate.cancellationToken = new CancellationTokenSource();
+                    // authenticate.thread = new Thread(() => Authenticate(incomingConnection, authenticate.cancellationToken.Token));
+                    // authenticate.thread.Start();
+                    //
+                    // _authenticationConnections[IpEndPoint] = incomingConnection;
+                    // _authenticationProcesses[IpEndPoint] = authenticate;
+                    // _authenticators[IpEndPoint] = new ServerAuthenticator();
+                    // //_authenticator._onAuthenticationFailed += AuthenticationFailed;
+                    //_authenticator._onAuthenticated += AuthenticationSuccess;
+                }
                     // //if not local host
                     // Debug.Log("Socket address: " + ipEndPoint.Address + " local address:" + IPAddress.Loopback);
                     // if (ipEndPoint.Address.Equals(IPAddress.Loopback))
@@ -402,7 +407,7 @@ namespace _Scripts.Networking
                     //     //_authenticationProcesses[IpEndPoint] = authenticate;
                     //     //_authenticators[IpEndPoint] = new ServerAuthenticator();
                     // }
-                }
+                
 
                 _connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
             }
@@ -413,7 +418,7 @@ namespace _Scripts.Networking
             }
         }
 
-        private void HandleClient(ClientData clientData)
+        private void ListenDataFromClient(ClientData clientData)
         {
             Debug.Log($"Server {_localEndPointTcp}: Starting client thread {clientData.username} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
             try
@@ -558,7 +563,7 @@ namespace _Scripts.Networking
                 Process clientProcess = new Process();
                 clientProcess.Name = "Handle Client " + clientData.id.ToString();
                 clientProcess.cancellationToken = new CancellationTokenSource();
-                clientProcess.thread = new Thread(() => HandleClient(clientData));
+                clientProcess.thread = new Thread(() => ListenDataFromClient(clientData));
                 clientProcess.thread.IsBackground = true;
                 clientProcess.thread.Name  = "Handle Clinet " + clientData.id.ToString();
                 clientProcess.thread.Start();
@@ -601,18 +606,18 @@ namespace _Scripts.Networking
             }
            
         }
-
         #endregion
 
-        private static bool IsSocketConnected(Socket socket)
+        private bool IsSocketConnected(Socket socket)
         {
             try
             {
                 // Poll the socket for readability and if it's not readable, it means the socket is closed.
                 return !(socket.Poll(1, SelectMode.SelectRead) && socket.Available == 0);
             }
-            catch (SocketException)
+            catch (SocketException se)
             {
+                Debug.LogError($"Server {_localEndPointTcp}: {socket} is closed! {se}");
                 return false;
             }
         }
@@ -627,37 +632,35 @@ namespace _Scripts.Networking
         }
 
         #region Authentication
+        // void Authenticate(Socket incomingSocket, CancellationToken cancellationToken,Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed)
+        // {
+        //     incomingSocket.ReceiveTimeout = 5000;
+        //     Debug.Log($"Server {_localEndPointTcp}: Authentication process started ... ");
+        //     try
+        //     {
+        //         //accept new Connections ... 
+        //         while (!cancellationToken.IsCancellationRequested)
+        //         {
+        //             if (incomingSocket.Available > 0)
+        //             {
+        //                 Debug.Log("Authentication message recieved ...");
+        //                 ReceiveTcpSocketData(incomingSocket);
+        //             }
+        //
+        //             string p = "puto";
+        //             byte[] bytes = Encoding.ASCII.GetBytes(p);
+        //             incomingSocket.Send(bytes);
+        //             Thread.Sleep(10);
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         Debug.LogException(e);
+        //         Thread.ResetAbort();
+        //         Debug.LogError("Shutting down authentication process ...");
+        //     }
+        // }
 
-/*
-        void Authenticate(Socket incomingSocket, CancellationToken cancellationToken, Action<Socket> onConfirmed)
-        {
-            incomingSocket.ReceiveTimeout = 5000;
-            Debug.Log("Server: Authentication process started ... ");
-            try
-            {
-                //accept new Connections ... 
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    if (incomingSocket.Available > 0)
-                    {
-                        Debug.Log("Authentication message recieved ...");
-                        ReceiveTCPSocketData(incomingSocket);
-                    }
-
-                    string p = "puto";
-                    byte[] bytes = Encoding.ASCII.GetBytes(p);
-                    incomingSocket.Send(bytes);
-                    Thread.Sleep(10);
-                }
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-                Thread.ResetAbort();
-                Debug.LogError("Shutting down authentication process ...");
-            }
-        }
-*/
 
 /*
         void AuthenticationSuccess(IPEndPoint endPoint, string username)

@@ -20,9 +20,10 @@ namespace _Scripts.Networking
         protected const string AuthenticationCode = "IM_VALID_USER_LOVE_ME";
         protected const string HandshakeOne = "HandshakeOne";
         protected const string AcknowledgmentOne = "AcknowledgmentOne";
-        protected IPEndPoint clientEndPointTcp;
-        protected Socket socketClientTcp;
+        public IPEndPoint clientEndPointTcp { get; protected set; }
+        public Socket socketClientTcp{ get; protected set; }
         protected AuthenticationState state;
+        public Process process;
         public bool isAuthenticated => (state == AuthenticationState.CONFIRMED);
         #endregion
 
