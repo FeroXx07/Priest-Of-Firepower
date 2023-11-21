@@ -44,15 +44,7 @@ namespace _Scripts.Networking
         // private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
         // private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
         // private List<Process> _authenticationProcessList = new List<Process>();
-
-        public UInt64 getNextClient
-        {
-            get
-            {
-                UInt64 clientId = _nextClientId++;
-                return clientId;
-            }
-        }
+        
         #endregion
 
         #region  Actions
@@ -142,22 +134,18 @@ namespace _Scripts.Networking
         public void Shutdown()
         {
             Debug.Log($"Server {_localEndPointTcp}: Starting to disable server...");
-            
-            StopConnectionListener();
-            StopAuthenticationThread();
-            DisconnectAllClients();
-            
-            Debug.Log($"Server {_localEndPointTcp}: Server disabled successfully");
-            Debug.Log($"Server {_localEndPointTcp}: Starting to shutdown sockets...");
-            
+            //frist disconnect all sockets
             if (_serverTcp.Connected)
             {
                 _serverTcp.Shutdown(SocketShutdown.Both);
             }
-            
             _serverUdp.Close();
             _serverTcp.Close();
-            
+
+            StopConnectionListener();
+            StopAuthenticationThread();
+            DisconnectAllClients();
+
             Debug.Log($"Server {_localEndPointTcp}: Sockets shutdown successfully");
         }
         #endregion
@@ -381,21 +369,9 @@ namespace _Scripts.Networking
             {
                 while (!token.IsCancellationRequested)
                 {
-                    _connectionListenerEvent.Reset(); // Reset the event before waiting for a connection
-
-                    // Asynchronously wait for a connection or cancellation signal
-                    IAsyncResult asyncResult = _serverTcp.BeginAccept(new AsyncCallback(AcceptNewClientCallback), null);
-
-                    // Wait for either a connection or a cancellation signal
-                    int waitResult = WaitHandle.WaitAny(new WaitHandle[] { asyncResult.AsyncWaitHandle, token.WaitHandle });
-
-                    // If the wait result is for the cancellation token, exit the loop
-                    if (waitResult == 1)
-                    {
-                        Debug.Log($"Server {_localEndPointTcp}: Ending connection listener");
-                        break;
-                    }
-                    _connectionListenerEvent.Set();
+                    Socket incomingSocket = _serverTcp.Accept();
+                    AcceptNewClient(incomingSocket);
+                    Thread.Sleep(100);
                 }
             }
             catch (Exception e)
@@ -405,21 +381,8 @@ namespace _Scripts.Networking
             }
         }
 
-        private void AcceptNewClientCallback(IAsyncResult ar)
+        private void AcceptNewClient(Socket incomingConnection)
         {
-            // Complete the asynchronous operation
-            Socket incomingConnection = null;
-            try
-            {
-                incomingConnection = _serverTcp.EndAccept(ar);
-                Debug.Log($"Server {_localEndPointTcp}: Incoming connection -> Local EP {incomingConnection.LocalEndPoint}, Remote EP {incomingConnection.RemoteEndPoint}");
-            }
-            catch (ObjectDisposedException ode)
-            {
-                // Handle the case where the socket is already disposed
-                Debug.LogError($"Server {_localEndPointTcp}: exception {ode}");
-                return;
-            }
             
             // Check if the socket is valid
             if (incomingConnection.Handle == IntPtr.Zero || incomingConnection.Connected == false)
@@ -462,8 +425,8 @@ namespace _Scripts.Networking
             
             // After all checks create a new client and put it on verification
 
-          
-            UInt64 newId = getNextClient;
+
+            UInt64 newId = GetNextClientID();
             if (_clientsList.Count == 0 && ipEndPoint.Address.Equals(IPAddress.Loopback)) // Host client
             {
                 Debug.Log($"Server {_localEndPointTcp}: Incoming connection is possible local host, authenticating possible host client");
@@ -573,6 +536,13 @@ namespace _Scripts.Networking
         }
         #endregion
         #region Authentication
+
+        private UInt64 GetNextClientID()
+        {
+            UInt64 currentID = _nextClientId;
+            _nextClientId++;
+            return currentID;
+        }
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
             long posToReset = reader.BaseStream.Position;
