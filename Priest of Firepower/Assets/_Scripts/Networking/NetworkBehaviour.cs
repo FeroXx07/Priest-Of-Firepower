@@ -104,7 +104,6 @@ namespace _Scripts.Networking
         /// <returns>True: stream has been read correctly. False: stream has not been read corrcetly.</returns>
         public virtual bool Read(BinaryReader reader, long position = 0)
         {
-            long currentReaderPos = reader.BaseStream.Position;
             reader.BaseStream.Position = position;
             // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
             if (showDebugInfo)
@@ -122,7 +121,6 @@ namespace _Scripts.Networking
             BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
 
             DeSerializeFieldsData(reader, receivedFieldCount, receivedBitfield);
-            reader.BaseStream.Position = currentReaderPos;
             return true;
         }
 

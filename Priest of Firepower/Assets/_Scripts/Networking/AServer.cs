@@ -334,7 +334,7 @@ namespace _Scripts.Networking
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
-                        Debug.LogError($"Server {_localEndPointTcp}: Has received Tcp Data from {clientData.endPointUdp}");
+                        Debug.Log($"Server {_localEndPointTcp}: Has received Tcp Data from {clientData.endPointUdp}");
                         byte[] buffer = new byte[1500];
                         EndPoint senderEndPoint = clientData.endPointUdp;
                         int size = socket.ReceiveFrom(buffer, ref senderEndPoint);
