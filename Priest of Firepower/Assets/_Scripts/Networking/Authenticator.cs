@@ -11,7 +11,6 @@ namespace _Scripts.Networking
         protected Authenticator(Socket tcp)
         {
             socketTcp = tcp;
-            clientEndPointTcp = socketTcp.RemoteEndPoint as IPEndPoint;
         }
         
         #region Fields

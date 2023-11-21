@@ -475,6 +475,7 @@ namespace _Scripts.Networking
                 hostClient.endPointUdp = new IPEndPoint(IPAddress.Loopback,0000);
                 hostClient.id = newId;
                 StoreAuthenticatedClient(hostClient, true);
+                Debug.Log($"Server {_localEndPointTcp}: Successfully created host!");
             }
             else
             {
@@ -490,7 +491,8 @@ namespace _Scripts.Networking
                 serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.IsBackground = true;
                 serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Name = $"Handle Client {newId}";
                 serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Start();
-            
+                serverAuthenticator.RequestClientToStartAuthentication();
+                
                 _authenticationProcesses.Add(serverAuthenticator);
             }
             _connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections

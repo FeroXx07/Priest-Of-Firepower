@@ -20,6 +20,7 @@ namespace _Scripts.Networking
             clientBeingAuthenticated = new ClientData();
             clientBeingAuthenticated.connectionTcp = tcp;
             clientBeingAuthenticated.endPointTcp = clientBeingAuthenticated.connectionTcp.RemoteEndPoint as IPEndPoint;
+            clientEndPointTcp = socketTcp.RemoteEndPoint as IPEndPoint;
         }
         public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
@@ -94,6 +95,16 @@ namespace _Scripts.Networking
                 }
                     break;
             }
+        }
+
+        public void RequestClientToStartAuthentication()
+        {
+            MemoryStream authStream = new MemoryStream();
+            BinaryWriter authWriter = new BinaryWriter(authStream);
+            authWriter.Write((int)PacketType.AUTHENTICATION);
+            SerializeIPEndPoint(clientEndPointTcp, authWriter);
+            authWriter.Write((int)AuthenticationState.RESPONSE);
+            clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
         }
     }
 }
