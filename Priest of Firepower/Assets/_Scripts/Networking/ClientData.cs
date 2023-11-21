@@ -14,7 +14,8 @@ namespace _Scripts.Networking
     {
         public ClientData()
         {
-            
+            id = ulong.MaxValue;
+            userName = "NoName";
         }
         public ClientData(UInt64 id, string userName, IPEndPoint endPointTcp, IPEndPoint endPointUdp)
         {
@@ -25,7 +26,7 @@ namespace _Scripts.Networking
         }
 
         public UInt64 id;
-        public string userName = "NoName";
+        public string userName;
         public IPEndPoint endPointTcp;
         public IPEndPoint endPointUdp;
         public ClientSate state;

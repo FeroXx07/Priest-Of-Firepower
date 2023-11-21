@@ -205,7 +205,7 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _server = new AServer(new IPEndPoint(IPAddress.Any, 0), new IPEndPoint(IPAddress.Any, 0));
+            _server = new AServer(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
             _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             

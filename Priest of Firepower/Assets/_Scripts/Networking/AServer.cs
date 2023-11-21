@@ -481,6 +481,7 @@ namespace _Scripts.Networking
             }
             serverAuthenticator.clientBeingAuthenticated.id = newId;
             Process clientProcess = new Process();
+            serverAuthenticator.clientBeingAuthenticated.listenProcess = clientProcess;
             clientProcess.Name = $"Handle Client {newId}";
             clientProcess.cancellationToken = new CancellationTokenSource();
             clientProcess.thread = new Thread(() => ListenDataFromClient(serverAuthenticator.clientBeingAuthenticated));

@@ -11,7 +11,7 @@ namespace _Scripts.Networking
         private ClientData _clientData;
         public Action onAuthenticationSuccessful;
         public Action onAuthenticationFailed;
-        public ClientAuthenticator(ClientData clientData, Socket client, Action onAuthenticationSuccessful, Action onAuthenticationFailed) : base(client)
+        public ClientAuthenticator(ClientData clientData, Socket clientSocketTcp, Action onAuthenticationSuccessful, Action onAuthenticationFailed) : base(clientSocketTcp)
         {
             _clientData = clientData;
             this.onAuthenticationSuccessful += onAuthenticationSuccessful;
@@ -37,7 +37,7 @@ namespace _Scripts.Networking
                     bool isSuccess = reader.ReadBoolean();
                     if (isSuccess)
                     {
-                        Debug.Log($"Authentication {localEndPointTcp}: Sending authentication response");
+                        Debug.Log($"Client Authenticator {localEndPointTcp}: Sending authentication response");
                         
                         // Create an authentication packet
                         authWriter.Write((int)PacketType.AUTHENTICATION);
@@ -50,12 +50,11 @@ namespace _Scripts.Networking
                         authWriter.Write(_clientData.endPointTcp.Port);
                         authWriter.Write(_clientData.endPointUdp.Address.ToString());
                         authWriter.Write(_clientData.endPointUdp.Port);
-                        
                         NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
                     {
-                        Debug.LogError($"Authentication {localEndPointTcp}: has failed!");
+                        Debug.LogError($"Client Authenticator {localEndPointTcp}: has failed!");
                     }
                 }
                     break;
@@ -81,7 +80,7 @@ namespace _Scripts.Networking
             SerializeIPEndPoint(_clientData.connectionTcp.LocalEndPoint as IPEndPoint,authWriter);
             authWriter.Write((int)AuthenticationState.REQUESTED);
             authWriter.Write(AuthenticationCode);
-            Debug.Log($"Authentication {_clientData.connectionTcp.LocalEndPoint}: Starting authentication request");
+            Debug.Log($"Client Authenticator {_clientData.connectionTcp.LocalEndPoint}: Starting authentication request");
             NetworkManager.Instance.AddReliableStreamQueue(authStream);
         }
     }

@@ -15,10 +15,13 @@ namespace _Scripts.Networking
         public Action<ClientData> onAuthenticationSuccessful;
         public Action<IPEndPoint> onAuthenticationFailed;
    
-        public ServerAuthenticator(Socket client, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(client)
+        public ServerAuthenticator(Socket clientSocketTcp, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(clientSocketTcp)
         {
             this.onAuthenticationSuccessful += onAuthenticationSuccessful;
             this.onAuthenticationFailed += onAuthenticationFailed;
+            clientBeingAuthenticated = new ClientData();
+            clientBeingAuthenticated.connectionTcp = clientSocketTcp;
+            clientBeingAuthenticated.endPointTcp = clientBeingAuthenticated.connectionTcp.RemoteEndPoint as IPEndPoint;
         }
         public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
@@ -44,7 +47,7 @@ namespace _Scripts.Networking
                     authWriter.Write((int)AuthenticationState.RESPONSE);
                     authWriter.Write(isSuccess);
                     authWriter.Write(isSuccess);
-                    Debug.Log($"Authentication {localEndPointTcp}: Replying authentication request");
+                    Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication request");
                     clientBeingAuthenticated.connectionTcp.Send(stream.ToArray());
                     //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                 }
@@ -54,7 +57,7 @@ namespace _Scripts.Networking
                     string confirmation =  reader.ReadString();
                     if (confirmation.Equals(HandshakeOne))
                     {
-                        Debug.Log($"Authentication {localEndPointTcp}: Replying authentication response");
+                        Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication response");
                         
                         UInt64 id = reader.ReadUInt64();
                         string userName = reader.ReadString();
@@ -71,7 +74,7 @@ namespace _Scripts.Networking
                     }
                     else
                     {
-                        Debug.Log($"Authentication {localEndPointTcp}: Replying authentication response failed");
+                        Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication response failed");
                         onAuthenticationFailed?.Invoke(localEndPointTcp);
                     }
                 }
@@ -81,13 +84,13 @@ namespace _Scripts.Networking
                     string ack =  reader.ReadString();
                     if (ack.Equals(AcknowledgmentOne))
                     {
-                        Debug.Log($"Authentication {localEndPointTcp}: Replying authentication confirmation");
+                        Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication confirmation");
                         clientBeingAuthenticated.listenProcess = listenProcess;
                         onAuthenticationSuccessful?.Invoke(clientBeingAuthenticated);
                     }
                     else
                     {
-                        Debug.Log($"Authentication {localEndPointTcp}: Replying authentication confirmation failed");
+                        Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication confirmation failed");
                         onAuthenticationFailed?.Invoke(localEndPointTcp);
                     }
                 }
