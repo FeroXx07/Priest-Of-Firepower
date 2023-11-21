@@ -29,6 +29,7 @@ namespace _Scripts.Networking
             }
 
             state = (AuthenticationState)reader.ReadInt32();
+            Debug.Log(state);
             MemoryStream authStream = new MemoryStream();
             BinaryWriter authWriter = new BinaryWriter(authStream);
             switch(state)
@@ -39,7 +40,7 @@ namespace _Scripts.Networking
                     SerializeIPEndPoint(_clientData.connectionTcp.LocalEndPoint as IPEndPoint,authWriter);
                     authWriter.Write((int)AuthenticationState.REQUESTED);
                     authWriter.Write(AuthenticationCode);
-                    Debug.Log($"Client Authenticator {_clientData.connectionTcp.LocalEndPoint}: Starting authentication request");
+                    Debug.Log($"Client Authenticator {_clientData.connectionTcp.LocalEndPoint}: Responding authentication request");
                     _clientData.connectionTcp.Send(authStream.ToArray());
                 }
                     break;
@@ -50,7 +51,7 @@ namespace _Scripts.Networking
                     
                     if (isSuccess)
                     {
-                        Debug.Log($"Client Authenticator {localEndPointTcp}: Sending authentication response");
+                        Debug.Log($"Client Authenticator {localEndPointTcp}: Responding authentication response");
                         
                         // Create an authentication packet
                         authWriter.Write((int)PacketType.AUTHENTICATION);
@@ -82,6 +83,7 @@ namespace _Scripts.Networking
                     _clientData.connectionTcp.Send(authStream.ToArray());
                     //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     onAuthenticationSuccessful?.Invoke();
+                    Debug.Log($"Client Authenticator {localEndPointTcp}: Responding authentication confirmation");
                 }
                     break;
             }

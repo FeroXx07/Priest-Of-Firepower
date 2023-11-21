@@ -304,7 +304,7 @@ namespace _Scripts.Networking
             {
                 lock (NetworkManager.Instance.IncomingStreamLock)
                 {
-                    Debug.LogError($"Server {_localEndPointTcp}: Has received Tcp Data from {socket.RemoteEndPoint}");
+                    Debug.Log($"Server {_localEndPointTcp}: Has received Tcp Data from {socket.RemoteEndPoint}");
                     byte[] buffer = new byte[1500];
 
                     // Receive data from the client
