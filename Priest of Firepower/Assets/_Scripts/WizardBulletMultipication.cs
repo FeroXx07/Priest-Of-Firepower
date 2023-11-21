@@ -7,25 +7,32 @@ namespace _Scripts
     {
         public float multiplicationTimer = 3.0f;
         public float angleOffset = 30.0f;
+        public int multiplierCounter = 3;
         public GameObject objectCloned;
 
         private float _currentTimer = 0.0f;
-        private Rigidbody _rb;
+        private Rigidbody2D _rb;
         private bool _isCloningScheduled = false;
 
         private void OnEnable()
         {
-            _rb = GetComponent<Rigidbody>();
+            _rb = GetComponent<Rigidbody2D>();
+            _isCloningScheduled = false;
         }
 
         private void Update()
         {
+            
             _currentTimer += Time.deltaTime;
             if (_currentTimer >= multiplicationTimer && !_isCloningScheduled)
             {
-                CreateClones();
-                DisposeGameObject();
                 _isCloningScheduled = true;  // Ensure cloning happens only once
+                if (multiplierCounter > 0)
+                {
+                    CreateClones();
+                    DisposeGameObject();
+                }
+                
             }
         }
 
@@ -36,10 +43,15 @@ namespace _Scripts
 
             foreach (float angle in angles)
             {
-                Quaternion rotationOffset = Quaternion.Euler(0, angle, 0);
+                Quaternion rotationOffset = Quaternion.Euler(0, 0, angle);
                 GameObject clone = Instantiate(objectCloned, transform.position, rotationOffset * transform.rotation);
-                clone.GetComponent<Rigidbody>().velocity = rotationOffset * velocity;
+
+                Vector3 direction = Quaternion.Euler(0, 0, angle) * velocity;
+                clone.GetComponent<Rigidbody2D>().velocity = direction;
+
+                clone.GetComponent<WizardBulletMultiplication>().multiplierCounter--;
             }
+
         }
 
         private void DisposeGameObject()

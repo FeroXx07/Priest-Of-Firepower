@@ -249,6 +249,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0138222f3a4b2d04d8a90deb602bc92a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  multiplicationTimer: 1
+  multiplicationTimer: 0.5
   angleOffset: 30
+  multiplierCounter: 3
   objectCloned: {fileID: 4472022888998543014}
