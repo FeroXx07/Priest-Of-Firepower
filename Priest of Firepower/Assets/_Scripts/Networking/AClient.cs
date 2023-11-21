@@ -97,6 +97,8 @@ namespace _Scripts.Networking
                 _serverListenerProcess.thread =
                     new Thread(() => ListenToServer(_serverListenerProcess.cancellationToken.Token));
                 _serverListenerProcess.thread.Start();
+                
+                Thread.Sleep(100);
                 _authenticator.SendAuthenticationRequest();
             }
             catch (Exception e)

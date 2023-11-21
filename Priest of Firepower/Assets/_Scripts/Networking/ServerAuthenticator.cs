@@ -44,7 +44,8 @@ namespace _Scripts.Networking
                     SerializeIPEndPoint(clientEndPointTcp, authWriter);
                     authWriter.Write((int)AuthenticationState.RESPONSE);
                     authWriter.Write(isSuccess);
-                    authWriter.Write(isSuccess);
+                    authWriter.Write(clientBeingAuthenticated.id);
+                    
                     Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication request");
                     clientBeingAuthenticated.connectionTcp.Send(stream.ToArray());
                     //NetworkManager.Instance.AddReliableStreamQueue(authStream);

@@ -18,7 +18,9 @@ namespace _Scripts.Networking
         {
             _localEndPointTcp = localEndPointTcp;
             _localEndPointUdp = localEndPointUdp;
+            _nextClientId = 0;
             InitServer();
+            NetworkManager.Instance.OnHostCreated += portUdp => _clientsList[0].endPointUdp.Port = portUdp;
         }
         
         #region Fields
@@ -47,7 +49,6 @@ namespace _Scripts.Networking
         {
             get
             {
-                _nextClientId = (ulong)_clientsList.Count;
                 UInt64 clientId = _nextClientId++;
                 return clientId;
             }
@@ -183,19 +184,11 @@ namespace _Scripts.Networking
 
                 } 
             }
-            // foreach (ClientData client in _clientList)
-            // {
-            //     if (client.ID != 0)
-            //     {
-            //         Debug.Log("Server: sending to client " + client.Username);
-            //         client.ConnectionUDP.SendTo(data, data.Length, SocketFlags.None, client.ConnectionUDP.RemoteEndPoint);
-            //     }
-            // }
         }
 
         public void SendTcpToAll(byte[] data)
         {
-            Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to all...");
+            // Debug.Log($"Server {_localEndPointTcp}: Sending critical Tcp data to all...");
             foreach (ClientData client in _clientsList)
             { 
                 if (client.id != 0)
@@ -468,61 +461,48 @@ namespace _Scripts.Networking
             }
             
             // After all checks create a new client and put it on verification
-            UInt64 newId = getNextClient;
+
             ServerAuthenticator serverAuthenticator;
+            UInt64 newId = getNextClient;
             if (_clientsList.Count == 0 && ipEndPoint.Address.Equals(IPAddress.Loopback)) // Host client
             {
                 Debug.Log($"Server {_localEndPointTcp}: Incoming connection is possible local host, authenticating possible host client");
-                serverAuthenticator = new ServerAuthenticator(incomingConnection, newClientData => StoreAuthenticatedClient(newClientData, true), null);
+                //serverAuthenticator = new ServerAuthenticator(incomingConnection, newClientData => StoreAuthenticatedClient(newClientData, true), null);
+                ClientData hostClient = new ClientData();
+
+                hostClient.connectionTcp = incomingConnection;
+                hostClient.endPointTcp = incomingConnection.RemoteEndPoint as IPEndPoint;
+                hostClient.endPointUdp = new IPEndPoint(IPAddress.Loopback,0000);
+                hostClient.id = newId;
+                StoreAuthenticatedClient(hostClient, true);
             }
             else
             {
                 Debug.Log($"Server {_localEndPointTcp}: Incoming connection is not host, authenticating normal client");
                 serverAuthenticator = new ServerAuthenticator(incomingConnection, newClientData => StoreAuthenticatedClient(newClientData, false), null);
                 _authenticationProcesses.Add(serverAuthenticator);
-            }
-            serverAuthenticator.clientBeingAuthenticated.id = newId;
-            serverAuthenticator.clientBeingAuthenticated.listenProcess =  new Process();;
-            serverAuthenticator.clientBeingAuthenticated.listenProcess.Name = $"Handle Client {newId}";
-            serverAuthenticator.clientBeingAuthenticated.listenProcess.cancellationToken = new CancellationTokenSource();
-            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread = new Thread(() => ListenDataFromClient(serverAuthenticator.clientBeingAuthenticated));
-            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.IsBackground = true;
-            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Name = $"Handle Client {newId}";
-            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Start();
+
+                serverAuthenticator.clientBeingAuthenticated.id = newId;
+                serverAuthenticator.clientBeingAuthenticated.listenProcess =  new Process();;
+                serverAuthenticator.clientBeingAuthenticated.listenProcess.Name = $"Handle Client {newId}";
+                serverAuthenticator.clientBeingAuthenticated.listenProcess.cancellationToken = new CancellationTokenSource();
+                serverAuthenticator.clientBeingAuthenticated.listenProcess.thread = new Thread(() => ListenDataFromClient(serverAuthenticator.clientBeingAuthenticated));
+                serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.IsBackground = true;
+                serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Name = $"Handle Client {newId}";
+                serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Start();
             
-            _authenticationProcesses.Add(serverAuthenticator);
+                _authenticationProcesses.Add(serverAuthenticator);
+            }
             _connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
         }
         private UInt64 StoreAuthenticatedClient(ClientData clientData, bool isHost = false)
         {
             lock (_clientsList)
             {
-                clientData.id = getNextClient;
                 clientData.isHost = isHost;
                 //add a time out exeption for when the client disconnects or has lag or something
                 clientData.connectionTcp.ReceiveTimeout = Timeout.Infinite;
                 clientData.connectionTcp.SendTimeout = Timeout.Infinite;
-                
-                // NO NEED TO THIS UNLIKE IN TCP CONNECTIONS WHERE YOU HAVE A CONNECTION ORIENTED PROTOCOL
-                // YOU USUALLY SAVE THE SOCKETS FOR THAT CONNECTION, IN UDP YOU DON'T
-                // _ServerUdp IS the RESPONSIBLE FOR BOTH SENDING AND LISTENING,
-                // YOU JUST HAVE TO SPECIFY WHAT CLIENTS YOU WANT TO LISTEN OR SEND AT EACH MOMENT.
-                
-                //create udp connection 
-                // clientData.ConnectionUDP = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                // clientData.ConnectionUDP.Bind(clientSocket.LocalEndPoint);
-                // clientData.ConnectionUDP.ReceiveTimeout = Timeout.Infinite;
-                // clientData.ConnectionUDP.SendTimeout = Timeout.Infinite;
-
-                // Local in this case is server, remote is client
-                clientData.endPointTcp = (IPEndPoint)clientData.endPointTcp;
-                //clientData.endPointUdp  = new IPEndPoint(clientData.endPointTcp.Address,
-                   // NetworkManager.Instance.defaultClientUdpPort);
-                
-                //Create the process for that client
-                //create a hole thread to recive important data from server-client
-                //like game state, caharacter selection, map etc
-                
                 _clientsList.Add(clientData);
                 Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                 return clientData.id;
@@ -576,6 +556,8 @@ namespace _Scripts.Networking
         #region Authentication
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
+            long posToReset = reader.BaseStream.Position;
+            
             string ip = reader.ReadString();
             int port = reader.ReadInt32();
             
@@ -586,6 +568,9 @@ namespace _Scripts.Networking
             }
             IPEndPoint ipEndPoint = new IPEndPoint(address, port);
 
+            //reset stream position to read the ip and port again on the authenticator
+            reader.BaseStream.Position = posToReset;
+            
             foreach (ServerAuthenticator authenticator in _authenticationProcesses)
             {
                 if (authenticator.clientEndPointTcp.Equals(ipEndPoint))

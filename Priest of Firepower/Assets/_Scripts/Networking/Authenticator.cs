@@ -36,7 +36,7 @@ namespace _Scripts.Networking
         protected void SerializeIPEndPoint(IPEndPoint endpoint, BinaryWriter writer)
         {
             // Serialize IP Address
-            byte[] ipAddressBytes = endpoint.Address.GetAddressBytes();
+            
             writer.Write(endpoint.Address.ToString());
             writer.Write(endpoint.Port);
         }

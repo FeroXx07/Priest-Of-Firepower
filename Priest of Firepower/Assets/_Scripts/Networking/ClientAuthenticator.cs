@@ -35,6 +35,8 @@ namespace _Scripts.Networking
                 case AuthenticationState.RESPONSE:
                 {
                     bool isSuccess = reader.ReadBoolean();
+                    _clientData.id = reader.ReadUInt64();
+                    
                     if (isSuccess)
                     {
                         Debug.Log($"Client Authenticator {localEndPointTcp}: Sending authentication response");
@@ -50,7 +52,10 @@ namespace _Scripts.Networking
                         authWriter.Write(_clientData.endPointTcp.Port);
                         authWriter.Write(_clientData.endPointUdp.Address.ToString());
                         authWriter.Write(_clientData.endPointUdp.Port);
-                        NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                        
+                        _clientData.connectionTcp.Send(authStream.ToArray());
+                        
+                        //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
                     {
@@ -64,7 +69,8 @@ namespace _Scripts.Networking
                     SerializeIPEndPoint(localEndPointTcp,authWriter);
                     authWriter.Write((int)AuthenticationState.CONFIRMED);
                     authWriter.Write(AcknowledgmentOne);
-                    NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                    _clientData.connectionTcp.Send(authStream.ToArray());
+                    //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     onAuthenticationSuccessful?.Invoke();
                 }
                     break;
@@ -81,7 +87,9 @@ namespace _Scripts.Networking
             authWriter.Write((int)AuthenticationState.REQUESTED);
             authWriter.Write(AuthenticationCode);
             Debug.Log($"Client Authenticator {_clientData.connectionTcp.LocalEndPoint}: Starting authentication request");
-            NetworkManager.Instance.AddReliableStreamQueue(authStream);
+            
+            _clientData.connectionTcp.Send(authStream.ToArray());
+            //NetworkManager.Instance.AddReliableStreamQueue(authStream);
         }
     }
 }

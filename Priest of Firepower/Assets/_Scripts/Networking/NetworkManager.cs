@@ -52,6 +52,8 @@ namespace _Scripts.Networking
         private bool _isClient = false;
         
         public static readonly UInt64 UNKNOWN_ID = 69;
+
+        public string PlayerName = "testeo"; 
         #endregion
 
         #region Buffers
@@ -126,6 +128,8 @@ namespace _Scripts.Networking
         public Action<byte[]> OnRecivedServerData;
         // Invoken when server recives data from clients
         public Action<byte[]> OnRecivedClientData;
+
+        public Action<int> OnHostCreated;
         #endregion
         #endregion
         
