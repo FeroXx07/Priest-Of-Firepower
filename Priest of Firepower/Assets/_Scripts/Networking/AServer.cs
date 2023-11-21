@@ -462,7 +462,7 @@ namespace _Scripts.Networking
             
             // After all checks create a new client and put it on verification
 
-            ServerAuthenticator serverAuthenticator;
+          
             UInt64 newId = getNextClient;
             if (_clientsList.Count == 0 && ipEndPoint.Address.Equals(IPAddress.Loopback)) // Host client
             {
@@ -478,9 +478,9 @@ namespace _Scripts.Networking
             }
             else
             {
-                Debug.Log($"Server {_localEndPointTcp}: Incoming connection is not host, authenticating normal client");
-                serverAuthenticator = new ServerAuthenticator(incomingConnection, newClientData => StoreAuthenticatedClient(newClientData, false), null);
-                _authenticationProcesses.Add(serverAuthenticator);
+                ServerAuthenticator serverAuthenticator;
+                Debug.Log($"Server {_localEndPointTcp}: Incoming client: " + newId);
+                serverAuthenticator = new ServerAuthenticator(incomingConnection, newClientData => StoreAuthenticatedClient(newClientData,false), null);
 
                 serverAuthenticator.clientBeingAuthenticated.id = newId;
                 serverAuthenticator.clientBeingAuthenticated.listenProcess =  new Process();;
@@ -504,6 +504,23 @@ namespace _Scripts.Networking
                 clientData.connectionTcp.ReceiveTimeout = Timeout.Infinite;
                 clientData.connectionTcp.SendTimeout = Timeout.Infinite;
                 _clientsList.Add(clientData);
+
+                lock (_authenticationProcesses)
+                {
+                    ServerAuthenticator toRemove = null;
+                    foreach (ServerAuthenticator process in _authenticationProcesses)
+                    {
+                        if (clientData.id == process.clientBeingAuthenticated.id)
+                        {
+                            toRemove = process;
+                            break;
+                        }
+                    }
+                    
+                    if(toRemove != null)
+                        _authenticationProcesses.Remove(toRemove);
+                }
+                
                 Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                 return clientData.id;
             }

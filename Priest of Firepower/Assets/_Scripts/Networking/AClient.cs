@@ -98,8 +98,8 @@ namespace _Scripts.Networking
                     new Thread(() => ListenToServer(_serverListenerProcess.cancellationToken.Token));
                 _serverListenerProcess.thread.Start();
                 
-                Thread.Sleep(100);
-                _authenticator.SendAuthenticationRequest();
+                if(NetworkManager.Instance.IsClient())
+                    _authenticator.SendAuthenticationRequest();
             }
             catch (Exception e)
             {
