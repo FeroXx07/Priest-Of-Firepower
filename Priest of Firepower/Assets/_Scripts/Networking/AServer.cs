@@ -444,6 +444,8 @@ namespace _Scripts.Networking
                 hostClient.id = newId;
                 StoreAuthenticatedClient(hostClient, true);
                 Debug.Log($"Server {_localEndPointTcp}: Successfully created host!");
+                
+                MainThreadDispatcher.EnqueueAction(NetworkManager.Instance.ClientConnected);
             }
             else
             {
@@ -474,7 +476,9 @@ namespace _Scripts.Networking
                 clientData.connectionTcp.ReceiveTimeout = Timeout.Infinite;
                 clientData.connectionTcp.SendTimeout = Timeout.Infinite;
                 _clientsList.Add(clientData);
-
+                
+         
+                
                 lock (_authenticationProcesses)
                 {
                     ServerAuthenticator toRemove = null;
@@ -488,7 +492,7 @@ namespace _Scripts.Networking
                     }
                     
                     if(toRemove != null)
-                        _authenticationProcesses.Remove(toRemove);
+                        MainThreadDispatcher.EnqueueAction(()=>_authenticationProcesses.Remove(toRemove) );
                 }
                 
                 Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
@@ -564,12 +568,14 @@ namespace _Scripts.Networking
 
             //reset stream position to read the ip and port again on the authenticator
             reader.BaseStream.Position = posToReset;
-            
-            foreach (ServerAuthenticator authenticator in _authenticationProcesses)
-            {
-                if (authenticator.clientEndPointTcp.Equals(ipEndPoint))
+            lock(_authenticationProcesses)
+            { 
+                foreach (ServerAuthenticator authenticator in _authenticationProcesses)
                 {
-                    authenticator.HandleAuthentication(stream, reader);
+                    if (authenticator.clientEndPointTcp.Equals(ipEndPoint))
+                    {
+                        authenticator.HandleAuthentication(stream, reader);
+                    }
                 }
             }
 
