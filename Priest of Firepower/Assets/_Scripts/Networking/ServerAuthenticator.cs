@@ -10,8 +10,6 @@ namespace _Scripts.Networking
     public class ServerAuthenticator : Authenticator
     {
         public ClientData clientBeingAuthenticated;
-        public Process listenProcess;
-
         public Action<ClientData> onAuthenticationSuccessful;
         public Action<IPEndPoint> onAuthenticationFailed;
    
@@ -85,7 +83,6 @@ namespace _Scripts.Networking
                     if (ack.Equals(AcknowledgmentOne))
                     {
                         Debug.Log($"Server Authenticator {localEndPointTcp}: Replying authentication confirmation");
-                        clientBeingAuthenticated.listenProcess = listenProcess;
                         onAuthenticationSuccessful?.Invoke(clientBeingAuthenticated);
                     }
                     else
