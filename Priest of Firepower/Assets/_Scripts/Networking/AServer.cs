@@ -68,6 +68,7 @@ namespace _Scripts.Networking
                 Debug.Log($"Server {_localEndPointTcp}: Stopping authentication threads");
                 foreach (ServerAuthenticator authProcess in _authenticationProcesses)
                 {
+                    authProcess.clientBeingAuthenticated.listenProcess.Shutdown();
                     authProcess.process.Shutdown();
                 }
             }
@@ -289,7 +290,7 @@ namespace _Scripts.Networking
                     }
 
                     // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
-                    if(!clientData.connectionUdp.Equals(null))
+                    if(clientData.connectionUdp != null)
                         ReceiveUDPSocketData(_serverUdp, clientData);
                     
                     Thread.Sleep(10);
