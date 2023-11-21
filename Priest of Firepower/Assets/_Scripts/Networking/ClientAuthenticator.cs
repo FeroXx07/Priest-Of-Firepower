@@ -9,9 +9,13 @@ namespace _Scripts.Networking
     public class ClientAuthenticator : Authenticator
     {
         private ClientData _clientData;
-        public ClientAuthenticator(ClientData clientData, Socket client, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(client, onAuthenticationSuccessful, onAuthenticationFailed)
+        public Action onAuthenticationSuccessful;
+        public Action onAuthenticationFailed;
+        public ClientAuthenticator(ClientData clientData, Socket client, Action onAuthenticationSuccessful, Action onAuthenticationFailed) : base(client)
         {
             _clientData = clientData;
+            this.onAuthenticationSuccessful += onAuthenticationSuccessful;
+            this.onAuthenticationFailed += onAuthenticationFailed;
         }
         public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
@@ -28,17 +32,6 @@ namespace _Scripts.Networking
             BinaryWriter authWriter = new BinaryWriter(authStream);
             switch(state)
             {
-                case AuthenticationState.REQUESTED:
-                {
-                    // Create an authentication packet
-                    authWriter.Write((int)PacketType.AUTHENTICATION);
-                    SerializeIPEndPoint(localEndPointTcp,authWriter);
-                    authWriter.Write((int)AuthenticationState.REQUESTED);
-                    authWriter.Write(AuthenticationCode);
-                    Debug.Log($"Authentication {localEndPointTcp}: Starting authentication request");
-                    NetworkManager.Instance.AddReliableStreamQueue(authStream);
-                }
-                    break;
                 case AuthenticationState.RESPONSE:
                 {
                     bool isSuccess = reader.ReadBoolean();
@@ -52,7 +45,7 @@ namespace _Scripts.Networking
                         authWriter.Write((int)AuthenticationState.RESPONSE);
                         authWriter.Write(HandshakeOne);
                         authWriter.Write(_clientData.id);
-                        authWriter.Write(_clientData.username);
+                        authWriter.Write(_clientData.userName);
                         authWriter.Write(_clientData.endPointTcp.Address.ToString());
                         authWriter.Write(_clientData.endPointTcp.Port);
                         authWriter.Write(_clientData.endPointUdp.Address.ToString());
@@ -73,10 +66,23 @@ namespace _Scripts.Networking
                     authWriter.Write((int)AuthenticationState.CONFIRMED);
                     authWriter.Write(AcknowledgmentOne);
                     NetworkManager.Instance.AddReliableStreamQueue(authStream);
-                    onAuthenticationSuccessful?.Invoke(_clientData);
+                    onAuthenticationSuccessful?.Invoke();
                 }
                     break;
             }
+        }
+        public void SendAuthenticationRequest()
+        {
+            MemoryStream authStream = new MemoryStream();
+            BinaryWriter authWriter = new BinaryWriter(authStream);
+            
+            // Create an authentication packet
+            authWriter.Write((int)PacketType.AUTHENTICATION);
+            SerializeIPEndPoint(_clientData.connectionTcp.LocalEndPoint as IPEndPoint,authWriter);
+            authWriter.Write((int)AuthenticationState.REQUESTED);
+            authWriter.Write(AuthenticationCode);
+            Debug.Log($"Authentication {_clientData.connectionTcp.LocalEndPoint}: Starting authentication request");
+            NetworkManager.Instance.AddReliableStreamQueue(authStream);
         }
     }
 }

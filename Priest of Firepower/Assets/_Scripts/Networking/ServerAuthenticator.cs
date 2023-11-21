@@ -9,12 +9,16 @@ namespace _Scripts.Networking
 {
     public class ServerAuthenticator : Authenticator
     {
-        private UInt64 id = 0;
-        private string userName = "none";
-        private string epTcp = "none";
-        private int portTcp = 0;
-        public ServerAuthenticator(Socket client, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(client, onAuthenticationSuccessful, onAuthenticationFailed)
+        public ClientData clientBeingAuthenticated;
+        public Process listenProcess;
+
+        public Action<ClientData> onAuthenticationSuccessful;
+        public Action<IPEndPoint> onAuthenticationFailed;
+   
+        public ServerAuthenticator(Socket client, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(client)
         {
+            this.onAuthenticationSuccessful += onAuthenticationSuccessful;
+            this.onAuthenticationFailed += onAuthenticationFailed;
         }
         public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
@@ -39,8 +43,10 @@ namespace _Scripts.Networking
                     SerializeIPEndPoint(clientEndPointTcp, authWriter);
                     authWriter.Write((int)AuthenticationState.RESPONSE);
                     authWriter.Write(isSuccess);
+                    authWriter.Write(isSuccess);
                     Debug.Log($"Authentication {localEndPointTcp}: Replying authentication request");
-                    NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                    clientBeingAuthenticated.connectionTcp.Send(stream.ToArray());
+                    //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                 }
                     break;
                 case AuthenticationState.RESPONSE:
@@ -50,17 +56,18 @@ namespace _Scripts.Networking
                     {
                         Debug.Log($"Authentication {localEndPointTcp}: Replying authentication response");
                         
-                        id = reader.ReadUInt64();
-                        userName = reader.ReadString();
-                        epTcp = reader.ReadString();
-                        portTcp = reader.ReadInt32();
+                        UInt64 id = reader.ReadUInt64();
+                        string userName = reader.ReadString();
+                        string epTcp = reader.ReadString();
+                        int portTcp = reader.ReadInt32();
                         string epUdp = reader.ReadString();
                         int portUdp = reader.ReadInt32();
                         
                         authWriter.Write((int)PacketType.AUTHENTICATION);
                         SerializeIPEndPoint(clientEndPointTcp, authWriter);
                         authWriter.Write((int)AuthenticationState.CONFIRMED);
-                        NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                        clientBeingAuthenticated.connectionTcp.Send(stream.ToArray());
+                        //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
                     {
@@ -75,7 +82,8 @@ namespace _Scripts.Networking
                     if (ack.Equals(AcknowledgmentOne))
                     {
                         Debug.Log($"Authentication {localEndPointTcp}: Replying authentication confirmation");
-                        onAuthenticationSuccessful?.Invoke(new ClientData(2, "22", localEndPointTcp, localEndPointTcp));
+                        clientBeingAuthenticated.listenProcess = listenProcess;
+                        onAuthenticationSuccessful?.Invoke(clientBeingAuthenticated);
                     }
                     else
                     {

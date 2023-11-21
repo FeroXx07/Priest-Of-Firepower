@@ -8,11 +8,9 @@ namespace _Scripts.Networking
 {
     public abstract class Authenticator 
     {
-        protected Authenticator(Socket client, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed)
+        protected Authenticator(Socket client)
         {
             socketClientTcp = client;
-            this.onAuthenticationSuccessful += onAuthenticationSuccessful;
-            this.onAuthenticationFailed += onAuthenticationFailed;
             clientEndPointTcp = socketClientTcp.RemoteEndPoint as IPEndPoint;
         }
         
@@ -26,11 +24,7 @@ namespace _Scripts.Networking
         public Process process;
         public bool isAuthenticated => (state == AuthenticationState.CONFIRMED);
         #endregion
-
-        #region Actions
-        public Action<ClientData> onAuthenticationSuccessful;
-        public Action<IPEndPoint> onAuthenticationFailed;
-        #endregion
+        
         protected enum AuthenticationState
         {
             REQUESTED,

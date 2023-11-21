@@ -17,18 +17,20 @@ namespace _Scripts.Networking
         OBJECT_STATE,
         INPUT,
         AUTHENTICATION,
-        ID
     }
 
 //this class will work as a client or server or both at the same time
     public class NetworkManager : GenericSingleton<NetworkManager>
     {
-        // public ushort defaultClientTcpPort = 15009;
-        // public ushort defaultClientUdpPort = 15010;
+        #region Fields
+
+        #region Default Ep Fields
         public IPAddress serverAdress = IPAddress.Any;
         public int defaultServerTcpPort = 12345;
         public int defaultServerUdpPort = 12443;
-        
+        #endregion
+
+        #region Name Generator Fields
         static readonly string[] firstNames = {"John","Paul","Ringo","George"};
         private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
         public static string GenerateName()
@@ -39,23 +41,28 @@ namespace _Scripts.Networking
 
             return $"{firstName}_{lastName}";
         }
-        
+        #endregion
+
+        #region Server/Client Fields
         private AClient _client;
         private AServer _server;
+        
         private bool _isHost = false;
         private bool _isServer = false;
         private bool _isClient = false;
+        
         public static readonly UInt64 UNKNOWN_ID = 69;
+        #endregion
+
+        #region Buffers
         uint _mtu = 1400;
         int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
         int _inputBufferTimeout = 100; // time with no activity to send not fulled packets
 
         // store all state streams to send
         private Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
-
         // store all input streams to send
         private Queue<MemoryStream> _inputStreamBuffer = new Queue<MemoryStream>();
-
         // store all critical data streams to send (TCP)
         private Queue<MemoryStream> _reliableStreamBuffer = new Queue<MemoryStream>();
 
@@ -69,6 +76,9 @@ namespace _Scripts.Networking
         public readonly object IncomingStreamLock = new object();
         private Process _receiveData;
         private Process _sendData;
+        #endregion
+
+        #region Utility
         public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
         {
             try
@@ -98,28 +108,29 @@ namespace _Scripts.Networking
                 return false; // Error occurred or connection failed, server might not be on the same machine
             }
         }
-        IPEndPoint ParseNetworkEndpoint(string adress, ushort port) => new IPEndPoint(IPAddress.Parse(adress), port);
-        //public IPEndPoint serverEndPointTcp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerTcpPort);
-        //public IPEndPoint serverEndPointUdp => ParseNetworkEndpoint(defaultAdressToInit.ToString(), defaultServerUdpPort);
+        IPEndPoint ParseNetworkEndpoint(string address, ushort port) => new IPEndPoint(IPAddress.Parse(address), port);
         public bool isServerOnSameMachine => IsServerOnSameMachine(serverAdress.ToString(), defaultServerTcpPort);
+        
 
+        #endregion
+        
         [SerializeField] private GameObject player;
-
         public ReplicationManager _replicationManager = new ReplicationManager();
 
-        //Actions
+        #region Actions
         //  Invoked when a new client is connected
         public Action OnClientConnected;
-
         //  Invoken when a client is disconnected
         public Action OnClientDisconnected;
-
         // Invoken when client recieves server data
         public Action<byte[]> OnRecivedServerData;
-
         // Invoken when server recives data from clients
         public Action<byte[]> OnRecivedClientData;
+        #endregion
+        #endregion
+        
 
+        #region Enable/Disable
         private void Start()
         {
             Debug.Log("Network Manager: Starting");
@@ -171,9 +182,10 @@ namespace _Scripts.Networking
                 }
             }
         }
+        #endregion
+      
 
         #region Connection Initializers
-
         public void StartClient()
         {
             string clientName = GenerateName();
@@ -185,7 +197,7 @@ namespace _Scripts.Networking
                 serverAdress = IPAddress.Parse("127.0.0.1");
             }
             
-            _client.ConnectTcp(new IPEndPoint(serverAdress, defaultServerTcpPort));
+            _client.ConnectToServer(new IPEndPoint(serverAdress, defaultServerTcpPort), new IPEndPoint(serverAdress, defaultServerUdpPort));
             _isClient = true;
         }
 
@@ -200,7 +212,7 @@ namespace _Scripts.Networking
             if (_server.isServerInitialized)
             {
                 // Localhost client!
-                _client.ConnectTcp(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 0));
+                _client.ConnectToServer(new IPEndPoint(IPAddress.Parse("127.0.0.1"), defaultServerTcpPort), new IPEndPoint(IPAddress.Parse("127.0.0.1"), defaultServerUdpPort));
             }
 
             Debug.Log("Network Manager: OnEnable -> _client: " + _client);
@@ -208,7 +220,7 @@ namespace _Scripts.Networking
         }
         #endregion
         
-        #region Streams
+        #region Output Streams 
         public void AddStateStreamQueue(MemoryStream stream)
         {
             lock (_stateQueueLock)
@@ -232,14 +244,7 @@ namespace _Scripts.Networking
                 _reliableStreamBuffer.Enqueue(stream);
             }
         }
-
-        public void AddIncomingDataQueue(MemoryStream stream)
-        {
-            _incomingStreamBuffer.Enqueue(stream);
-        }
-
-        #endregion
-
+        
         private void SendDataThread(CancellationToken token)
         {
             try
@@ -431,8 +436,15 @@ namespace _Scripts.Networking
                 }
             }
         }
+        #endregion
 
-        private void ReceiveDataThread(CancellationToken token)
+
+        #region Input Streams
+        public void AddIncomingDataQueue(MemoryStream stream)
+        {
+            _incomingStreamBuffer.Enqueue(stream);
+        }
+         private void ReceiveDataThread(CancellationToken token)
         {
             try
             {
@@ -510,14 +522,8 @@ namespace _Scripts.Networking
                     else if (_isHost)
                     {
                         Debug.Log("Network Manager: Host auth message received");
-                        _server.PopulateAuthenticators(stream, reader);
+                        _server.HandleAuthentication(stream, reader);
                     }
-                }
-                    break;
-                case PacketType.ID:
-                {
-                    Debug.Log("Network Manager: Id message received");
-                    if (_isClient) _client.HandleRecivingID(reader);
                 }
                     break;
                 default:
@@ -547,6 +553,8 @@ namespace _Scripts.Networking
                 Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
             }
         }
+        #endregion
+       
 
         private byte[] ConcatenateMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streamsList)
         {
