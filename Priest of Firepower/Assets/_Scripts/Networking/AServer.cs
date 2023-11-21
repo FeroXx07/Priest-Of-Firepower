@@ -44,7 +44,7 @@ namespace _Scripts.Networking
         // private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
         // private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
         // private List<Process> _authenticationProcessList = new List<Process>();
-        
+        private Dictionary<IPEndPoint, Socket> _incomingConnections = new Dictionary<IPEndPoint, Socket>();
         #endregion
 
         #region  Actions
@@ -383,6 +383,11 @@ namespace _Scripts.Networking
 
         private void AcceptNewClient(Socket incomingConnection)
         {
+            //check if that conencion already exist
+            if (_incomingConnections.ContainsKey(incomingConnection.RemoteEndPoint as IPEndPoint))
+                return;
+            
+            _incomingConnections[incomingConnection.RemoteEndPoint as IPEndPoint] = incomingConnection;
             
             // Check if the socket is valid
             if (incomingConnection.Handle == IntPtr.Zero || incomingConnection.Connected == false)
