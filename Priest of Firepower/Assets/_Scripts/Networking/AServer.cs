@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using _Scripts.Networking.Network_Behaviours;
 using Unity.VisualScripting;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace _Scripts.Networking
@@ -271,7 +272,7 @@ namespace _Scripts.Networking
                     }
 
                     // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
-                    if(clientData.connectionUdp != null)
+                    if(clientData.endPointUdp != null)
                         ReceiveUDPSocketData(_serverUdp, clientData);
                     
                     Thread.Sleep(10);
@@ -333,7 +334,7 @@ namespace _Scripts.Networking
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
-                        Debug.LogError($"Server {_localEndPointTcp}: Has received Tcp Data from {socket.RemoteEndPoint}");
+                        Debug.LogError($"Server {_localEndPointTcp}: Has received Tcp Data from {clientData.endPointUdp}");
                         byte[] buffer = new byte[1500];
                         EndPoint senderEndPoint = clientData.endPointUdp;
                         int size = socket.ReceiveFrom(buffer, ref senderEndPoint);
