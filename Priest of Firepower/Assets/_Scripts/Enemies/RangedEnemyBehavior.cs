@@ -60,7 +60,7 @@ namespace _Scripts.Enemies
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(Target.position, this.transform.position) > 8)  
+                    if (Vector3.Distance(Target.position, this.transform.position) > 8 || (CheckLineOfSight(Target) == false))  
                     {
                         EnemyState = EnemyState.CHASE;
                     }
@@ -117,35 +117,7 @@ namespace _Scripts.Enemies
             CooldownTimer = CooldownDuration;
         }
 
-        bool CheckLineOfSight(Transform playerTransform)
-        {
-            Vector2 directionToPlayer = (playerTransform.position - transform.position);
-            float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
-
-
-            int playerMask = LayerMask.GetMask("Player");
-
-            // Cast a ray from the enemy towards the player
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, directionToPlayer, distanceToPlayer, playerMask);
-
-
-            //// Draw the ray in the editor for debugging purposes
-            //if (hit)
-            //{
-            //    // Draw a red line to show that line of sight is blocked
-            //    Debug.DrawRay(transform.position, directionToPlayer, Color.green);
-
-            //}
-            //else
-            //{
-            //    // Draw a green line to show that line of sight is clear
-            //    Debug.DrawRay(transform.position, directionToPlayer, Color.red);
-
-            //}
-
-            // If we hit something, check if it was the player
-            return hit.collider != null && hit.collider.transform == playerTransform;
-        }
+        
 
         private void DisposeGameObject()
         {

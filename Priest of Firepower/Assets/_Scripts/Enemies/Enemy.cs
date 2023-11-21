@@ -98,5 +98,40 @@ namespace _Scripts.Enemies
         {
             return PointsOnDeath;
         }
+
+        protected bool CheckLineOfSight(Transform playerTransform)
+        {
+            Vector2 directionToPlayer = (playerTransform.position - transform.position);
+            float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
+
+
+            int playerMask = LayerMask.GetMask("Player");
+            int mapMask = LayerMask.GetMask("Enviroment");
+
+            int combinedMask = playerMask | mapMask;
+
+            // Cast a ray from the enemy towards the player
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, directionToPlayer, distanceToPlayer, combinedMask);
+
+
+
+
+            //// Draw the ray in the editor for debugging purposes
+            //if (hit)
+            //{
+            //    // Draw a red line to show that line of sight is blocked
+            //    Debug.DrawRay(transform.position, directionToPlayer, Color.green);
+
+            //}
+            //else
+            //{
+            //    // Draw a green line to show that line of sight is clear
+            //    Debug.DrawRay(transform.position, directionToPlayer, Color.red);
+
+            //}
+
+            // If we hit something, check if it was the player
+            return hit.collider != null && hit.collider.transform == playerTransform;
+        }
     }
 }

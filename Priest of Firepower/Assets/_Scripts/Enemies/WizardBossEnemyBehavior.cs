@@ -50,7 +50,7 @@ namespace _Scripts.Enemies
 
                     //Debug.Log("Chase");
 
-                    if (distance <= 9 && distance >= 3) // && (CheckLineOfSight(target) == true)
+                    if (distance <= 9 && distance >= 3 && (CheckLineOfSight(Target) == true)) 
                     {
                         EnemyState = EnemyState.ATTACK;
                         // Debug.Log("Attack mode");
@@ -110,7 +110,7 @@ namespace _Scripts.Enemies
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(Target.position, this.transform.position) > 9)
+                    if (Vector3.Distance(Target.position, this.transform.position) > 9 || (CheckLineOfSight(Target) == false))
                     {
                         EnemyState = EnemyState.CHASE;
 
