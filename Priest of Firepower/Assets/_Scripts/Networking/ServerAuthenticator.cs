@@ -67,6 +67,9 @@ namespace _Scripts.Networking
                         int portTcp = reader.ReadInt32();
                         string epUdp = reader.ReadString();
                         int portUdp = reader.ReadInt32();
+
+                        clientBeingAuthenticated.userName = userName;
+                        clientBeingAuthenticated.endPointUdp = new IPEndPoint(IPAddress.Parse(epUdp), portUdp);
                         
                         authWriter.Write((int)PacketType.AUTHENTICATION);
                         SerializeIPEndPoint(clientEndPointTcp, authWriter);
