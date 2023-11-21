@@ -289,7 +289,8 @@ namespace _Scripts.Networking
                     }
 
                     // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
-                    ReceiveUDPSocketData(_serverUdp, clientData);
+                    if(!clientData.connectionUdp.Equals(null))
+                        ReceiveUDPSocketData(_serverUdp, clientData);
                     
                     Thread.Sleep(10);
                 }
