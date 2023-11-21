@@ -480,14 +480,14 @@ namespace _Scripts.Networking
                 _authenticationProcesses.Add(serverAuthenticator);
             }
             serverAuthenticator.clientBeingAuthenticated.id = newId;
-            Process clientProcess = new Process();
-            serverAuthenticator.clientBeingAuthenticated.listenProcess = clientProcess;
-            clientProcess.Name = $"Handle Client {newId}";
-            clientProcess.cancellationToken = new CancellationTokenSource();
-            clientProcess.thread = new Thread(() => ListenDataFromClient(serverAuthenticator.clientBeingAuthenticated));
-            clientProcess.thread.IsBackground = true;
-            clientProcess.thread.Name = $"Handle Client {newId}";
-            clientProcess.thread.Start();
+            serverAuthenticator.clientBeingAuthenticated.listenProcess =  new Process();;
+            serverAuthenticator.clientBeingAuthenticated.listenProcess.Name = $"Handle Client {newId}";
+            serverAuthenticator.clientBeingAuthenticated.listenProcess.cancellationToken = new CancellationTokenSource();
+            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread = new Thread(() => ListenDataFromClient(serverAuthenticator.clientBeingAuthenticated));
+            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.IsBackground = true;
+            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Name = $"Handle Client {newId}";
+            serverAuthenticator.clientBeingAuthenticated.listenProcess.thread.Start();
+            
             _authenticationProcesses.Add(serverAuthenticator);
             _connectionListenerEvent.Set(); // Set the event to allow the loop to continue waiting for connections
         }
