@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using _Scripts.Networking.Network_Behaviours;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace _Scripts.Networking
@@ -576,8 +577,24 @@ namespace _Scripts.Networking
         #region Authentication
         public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
         {
-            // IEP local del cliente  = reader.stream;
-            // 
+            string ip = reader.ReadString();
+            int port = reader.ReadInt32();
+            
+            IPAddress address = IPAddress.Any;
+            if (!IPAddress.TryParse(ip, out address))
+            {
+                Debug.LogError("Authenticator: Couldn't deserialize IEP!");
+            }
+            IPEndPoint ipEndPoint = new IPEndPoint(address, port);
+
+            foreach (ServerAuthenticator authenticator in _authenticationProcesses)
+            {
+                if (authenticator.clientEndPointTcp.Equals(ipEndPoint))
+                {
+                    authenticator.HandleAuthentication(stream, reader);
+                }
+            }
+
         }
         #endregion
     }
