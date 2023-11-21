@@ -50,7 +50,7 @@ namespace _Scripts.Networking
                     authWriter.Write(clientBeingAuthenticated.id);
                     
                     Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}: Request client to send response ");
-                    clientBeingAuthenticated.connectionTcp.Send(stream.ToArray());
+                    clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
                     //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                 }
                     break;
@@ -71,7 +71,7 @@ namespace _Scripts.Networking
                         authWriter.Write((int)PacketType.AUTHENTICATION);
                         SerializeIPEndPoint(clientEndPointTcp, authWriter);
                         authWriter.Write((int)AuthenticationState.CONFIRMED);
-                        clientBeingAuthenticated.connectionTcp.Send(stream.ToArray());
+                        clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
                         //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
