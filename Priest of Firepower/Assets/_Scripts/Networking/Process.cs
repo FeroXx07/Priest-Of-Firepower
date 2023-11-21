@@ -12,7 +12,11 @@ namespace _Scripts.Networking
         
         public void Shutdown()
         {
-            cancellationToken.Cancel();
+            if (cancellationToken != null)
+            {
+                cancellationToken.Cancel();
+            }
+                
             if (thread != null && thread.IsAlive)
             {
                 thread.Join();

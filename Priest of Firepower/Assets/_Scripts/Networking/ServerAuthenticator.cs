@@ -13,12 +13,12 @@ namespace _Scripts.Networking
         public Action<ClientData> onAuthenticationSuccessful;
         public Action<IPEndPoint> onAuthenticationFailed;
    
-        public ServerAuthenticator(Socket clientSocketTcp, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(clientSocketTcp)
+        public ServerAuthenticator(Socket tcp, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(tcp)
         {
             this.onAuthenticationSuccessful += onAuthenticationSuccessful;
             this.onAuthenticationFailed += onAuthenticationFailed;
             clientBeingAuthenticated = new ClientData();
-            clientBeingAuthenticated.connectionTcp = clientSocketTcp;
+            clientBeingAuthenticated.connectionTcp = tcp;
             clientBeingAuthenticated.endPointTcp = clientBeingAuthenticated.connectionTcp.RemoteEndPoint as IPEndPoint;
         }
         public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)

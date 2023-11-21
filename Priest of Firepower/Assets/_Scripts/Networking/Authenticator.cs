@@ -8,10 +8,10 @@ namespace _Scripts.Networking
 {
     public abstract class Authenticator 
     {
-        protected Authenticator(Socket clientSocketTcp)
+        protected Authenticator(Socket tcp)
         {
-            socketClientSocketTcpTcp = clientSocketTcp;
-            clientEndPointTcp = socketClientSocketTcpTcp.RemoteEndPoint as IPEndPoint;
+            socketTcp = tcp;
+            clientEndPointTcp = socketTcp.RemoteEndPoint as IPEndPoint;
         }
         
         #region Fields
@@ -19,9 +19,8 @@ namespace _Scripts.Networking
         protected const string HandshakeOne = "HandshakeOne";
         protected const string AcknowledgmentOne = "AcknowledgmentOne";
         public IPEndPoint clientEndPointTcp { get; protected set; }
-        public Socket socketClientSocketTcpTcp{ get; protected set; }
+        public Socket socketTcp{ get; protected set; }
         protected AuthenticationState state;
-        public Process process;
         public bool isAuthenticated => (state == AuthenticationState.CONFIRMED);
         #endregion
         

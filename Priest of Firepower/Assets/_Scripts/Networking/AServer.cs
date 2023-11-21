@@ -70,7 +70,6 @@ namespace _Scripts.Networking
                 foreach (ServerAuthenticator authProcess in _authenticationProcesses)
                 {
                     authProcess.clientBeingAuthenticated.listenProcess.Shutdown();
-                    authProcess.process.Shutdown();
                 }
             }
             catch (Exception e)
