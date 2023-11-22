@@ -29,6 +29,8 @@ namespace _Scripts.Networking
         public override void Awake()
         {
             base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
             NetworkManager.Instance.OnClientConnected += OnClientConnected;
         }
 
