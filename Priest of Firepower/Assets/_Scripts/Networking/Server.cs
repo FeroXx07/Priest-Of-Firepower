@@ -396,7 +396,7 @@ namespace _Scripts.Networking
             // Check if the socket is connected
             if (!IsSocketConnected(incomingConnection))
             {
-                Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection {ipEndPoint} is not connected, closing it");
+                Debug.LogWarning($"Server {_localEndPointTcp}: Incoming connection {ipEndPoint} is connected, closing it");
                 incomingConnection.Close();
                 return;
             }

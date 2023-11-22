@@ -12,10 +12,10 @@ namespace _Scripts.Networking
     }
     public class ClientData
     {
-        public ClientData()
+        public ClientData(string userName = "NoName")
         {
             id = ulong.MaxValue;
-            userName = "NoName";
+            this.userName = userName;
         }
         public ClientData(UInt64 id, string userName, IPEndPoint endPointTcp, IPEndPoint endPointUdp)
         {
@@ -37,5 +37,6 @@ namespace _Scripts.Networking
             listenProcess;
 
         public bool isHost = false;
+        public bool playerInstantiated = false;
     }
 }

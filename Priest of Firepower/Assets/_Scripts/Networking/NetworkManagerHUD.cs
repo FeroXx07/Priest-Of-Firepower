@@ -9,7 +9,7 @@ namespace _Scripts.Networking
 {
     public class NetworkManagerHUD : MonoBehaviour
     {
-        [SerializeField] private string nextSceneToLoad = "Lobby";
+        [SerializeField] private string nextSceneToLoad = "Game_Networking_Test";
         [SerializeField] Button hostBtn;
         [SerializeField] TMP_InputField ipInputField;
         [SerializeField] TMP_InputField userNameInputField;

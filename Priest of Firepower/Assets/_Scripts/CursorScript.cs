@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace _Scripts
@@ -11,13 +12,17 @@ namespace _Scripts
         }
 
         // Update is called once per frame
-        void Update()
+        private void FixedUpdate()
         {
-
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mouseWorldPos.z = 0;
-
             transform.position = mouseWorldPos; 
         }
+
+        // void Update()
+        // {
+        //
+        //     
+        // }
     }
 }

@@ -197,14 +197,12 @@ namespace _Scripts.Networking
                 lastAction = TransformAction.NETWORK_SEND;
                 transform.hasChanged = false;
             }
-
-
-            foreach (Action action in _actionsToDo)
+            
+            while (_actionsToDo.TryDequeue(out var action))
             {
                 action?.Invoke();
             }
-
-
+            
             // Check if interpolation is needed and apply it
             if (lastReceivedTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
             {

@@ -30,18 +30,18 @@ namespace _Scripts.Networking
         public int defaultServerUdpPort = 12443;
         #endregion
 
-        #region Name Generator Fields
-        static readonly string[] firstNames = {"John","Paul","Ringo","George"};
-        private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
-        public static string GenerateName()
-        {
-            var random = new Random();
-            string firstName = firstNames[random.Next(0, firstNames.Length)];
-            string lastName = lastNames[random.Next(0, firstNames.Length)];
-
-            return $"{firstName}_{lastName}";
-        }
-        #endregion
+        // #region Name Generator Fields
+        // static readonly string[] firstNames = {"John","Paul","Ringo","George"};
+        // private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
+        // public static string GenerateName()
+        // {
+        //     var random = new Random();
+        //     string firstName = firstNames[random.Next(0, firstNames.Length)];
+        //     string lastName = lastNames[random.Next(0, firstNames.Length)];
+        //
+        //     return $"{firstName}_{lastName}";
+        // }
+        // #endregion
 
         #region Server/Client Fields
         private Client _client;
@@ -116,7 +116,7 @@ namespace _Scripts.Networking
         #endregion
         
         public GameObject player { get; set; }
-        public GameObject playerPrefab;
+        public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
         
         public ReplicationManager _replicationManager = new ReplicationManager();
 
@@ -131,6 +131,7 @@ namespace _Scripts.Networking
         public Action<byte[]> OnRecivedClientData;
 
         public Action<int> OnHostCreated;
+        public Action<GameObject> OnHostPlayerCreated;
         #endregion
         #endregion
         
@@ -155,23 +156,29 @@ namespace _Scripts.Networking
             Debug.developerConsoleVisible = true;
             Debug.LogError("Network Manager: Console Enabled");
             SceneManager.sceneLoaded += ResetNetworkIds;
-            SceneManager.sceneLoaded += InstantiatePlayer;
         }
 
-        private void InstantiatePlayer(Scene arg0, LoadSceneMode arg1)
+        public void InstantiatePlayer()
         {
-            if (arg0.name == "Game_Networking_Test")
+            
+            if (SceneManager.GetActiveScene().name == "Game_Networking_Test")
             {
                 if (_isHost)
                 {
+                    var prefab = instantiatablesPrefabs.Find(p => p.name == "PlayerPrefab");
+                    
                     foreach (ClientData clientData in _server.GetClients())
                     {
-                        GameObject go = InstantiateNetworkObject(Instance.playerPrefab, clientData.id);
+                        if (clientData.playerInstantiated)
+                            continue;
+                        
+                        GameObject go = Server_InstantiateNetworkObject(prefab, clientData);
                         go.gameObject.name = clientData.userName;
             
                         Player.Player player = go.GetComponent<Player.Player>();
                         player.SetName(clientData.userName);
                         player.SetPlayerId(clientData.id);
+                        clientData.playerInstantiated = true;
                     }
                 }
             }
@@ -180,7 +187,6 @@ namespace _Scripts.Networking
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= ResetNetworkIds;
-            SceneManager.sceneLoaded -= InstantiatePlayer;
             Debug.Log("Network Manager: Shutting down");
             _receiveData.Shutdown();
             _sendData.Shutdown();
@@ -213,9 +219,7 @@ namespace _Scripts.Networking
         #region Connection Initializers
         public void StartClient()
         {
-            string clientName = GenerateName();
-            
-            _client = new Client(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             
             if (isServerOnSameMachine)
             {
@@ -227,10 +231,8 @@ namespace _Scripts.Networking
         }
         public void StartHost()
         {
-            string clientName = GenerateName();
-            
             _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
-            _client = new Client(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             
             if (_server.isServerInitialized)
@@ -514,16 +516,16 @@ namespace _Scripts.Networking
                 case PacketType.INPUT:
                 {
                     Debug.Log("Network Manager: INPUT message received");
-                    UInt64 packetSenderId =  reader.ReadUInt64();
-                    long packetTimeStamp =  reader.ReadInt64();
+                    UInt64 packetSenderId = reader.ReadUInt64();
+                    long packetTimeStamp = reader.ReadInt64();
                     MainThreadDispatcher.EnqueueAction(() => HandleInput(reader));
                 }
                     break;
                 case PacketType.OBJECT_STATE:
                 {
                     Debug.Log("Network Manager: OBJECT_STATE message received");
-                    UInt64 packetSenderId =  reader.ReadUInt64();
-                    long packetTimeStamp =  reader.ReadInt64();
+                    UInt64 packetSenderId = reader.ReadUInt64();
+                    long packetTimeStamp = reader.ReadInt64();
                     MainThreadDispatcher.EnqueueAction(() => HandleObjectState(reader));
                 }
                     break;
@@ -648,11 +650,45 @@ namespace _Scripts.Networking
         }
         #endregion
         
-        public GameObject InstantiateNetworkObject(GameObject prefab, UInt64 playerInstantiater)
+        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ClientData clientData)
         {
             NetworkObject newGo = Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
-            _replicationManager.RegisterObject(newGo);
+            UInt64 newId = _replicationManager.RegisterObjectLocally(newGo);
+            Server_ObjectCreationRegistrySend(newId, prefab, clientData);
             return newGo.gameObject;
+        }
+
+        public void Server_ObjectCreationRegistrySend(UInt64 newNetObjId, GameObject prefab, ClientData clientData)
+        {
+            // Send replication packet to clients to create this prefab
+            MemoryStream outputMemoryStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            Type objectType = this.GetType();
+            writer.Write(objectType.FullName);
+            writer.Write(newNetObjId);
+            writer.Write((int)ReplicationAction.CREATE);
+            writer.Write(prefab.name);
+            writer.Write(clientData.userName);
+            writer.Write(clientData.id);
+            AddStateStreamQueue(outputMemoryStream);
+        }
+
+        public void Client_ObjectCreationRegistryRead(UInt64 serverAssignedNetObjId, BinaryReader reader)
+        {
+            string prefabName = reader.ReadString();
+            string clientName = reader.ReadString();
+            UInt64 clientId = reader.ReadUInt64();
+            var prefab = instantiatablesPrefabs.First(p => p.name == prefabName);
+            NetworkObject newGo = Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
+            _replicationManager.RegisterObjectFromServer(serverAssignedNetObjId, newGo);
+
+            if (prefabName.Equals("PlayerPrefab"))
+            {
+                Player.Player player = newGo.GetComponent<Player.Player>();
+                player.SetName(clientName);
+                player.SetPlayerId(clientId);
+                _client._clientData.playerInstantiated = true;
+            }
         }
     }
 
@@ -676,15 +712,23 @@ namespace _Scripts.Networking
             networkObjectMap.Clear();
             foreach (var networkObject in listNetObj)
             {
-                RegisterObject(networkObject);
+                RegisterObjectLocally(networkObject);
             }
         }
 
-        public void RegisterObject(NetworkObject obj)
+        public UInt64 RegisterObjectLocally(NetworkObject obj)
         {
             obj.SetNetworkId(id);
             networkObjectMap.Add(id, obj);
             id++;
+            return obj.GetNetworkId();
+        }
+
+        public UInt64 RegisterObjectFromServer(UInt64 id_, NetworkObject obj)
+        {
+            obj.SetNetworkId(id_);
+            networkObjectMap.Add(id_, obj);
+            return id_;
         }
 
         public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
@@ -694,6 +738,9 @@ namespace _Scripts.Networking
             switch (action)
             {
                 case ReplicationAction.CREATE:
+                {
+                    NetworkManager.Instance.Client_ObjectCreationRegistryRead(id, reader);
+                }
                     break;
                 case ReplicationAction.UPDATE:
                     networkObjectMap[id].HandleNetworkBehaviour(type, reader);

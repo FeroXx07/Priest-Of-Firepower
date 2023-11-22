@@ -12,7 +12,7 @@ namespace _Scripts.Networking
     public class Client 
     {
         #region Fields
-        private ClientData _clientData;
+        public ClientData _clientData { get; private set; }
         private IPEndPoint _remoteEndPointTcp;
         private IPEndPoint _remoteEndPointUdp;
         

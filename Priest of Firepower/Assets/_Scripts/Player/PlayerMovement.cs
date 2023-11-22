@@ -19,6 +19,8 @@ namespace _Scripts.Player
     public class PlayerMovement : NetworkBehaviour, INetworkInput
     {
         [SerializeField] private bool isHost => NetworkManager.Instance.IsHost();
+        [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
+        [SerializeField] private Player player;
         protected override void InitNetworkVariablesList()
         {
             //throw new NotImplementedException();
@@ -33,7 +35,8 @@ namespace _Scripts.Player
             input[0] = false; 
             input[1] = false; 
             input[2] = false; 
-            input[3] = false; 
+            input[3] = false;
+            player = GetComponent<Player>();
             _rb = GetComponent<Rigidbody2D>();
         }
 
@@ -56,7 +59,7 @@ namespace _Scripts.Player
             base.FixedUpdate();
             SendInputToServer();
 
-            if (isHost)
+            if (myId == player.GetPlayerId())
             {
                 Vector2 direction = Vector2.zero;
                 if (input[0]) direction += Vector2.up;

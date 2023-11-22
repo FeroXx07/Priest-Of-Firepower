@@ -9,18 +9,20 @@ namespace _Scripts.Points.UI
     {
         [SerializeField] PointSystem pointSystem;
         [SerializeField] TMP_Text pointsTxt;
-
-        private void Awake()
+        private void SetPlayer(GameObject obj)
         {
             pointSystem = NetworkManager.Instance.player.GetComponent<PointSystem>();
+            if(pointSystem != null) pointSystem.OnPointsChanged += UpdatePoints;
         }
         
         private void OnEnable()
         {
-            if(pointSystem != null) pointSystem.OnPointsChanged += UpdatePoints;
+            NetworkManager.Instance.OnHostPlayerCreated += SetPlayer;
         }
+        
         private void OnDisable()
         {
+            NetworkManager.Instance.OnHostPlayerCreated -= SetPlayer;
             if(pointSystem != null) pointSystem.OnPointsChanged -= UpdatePoints;
         }
 
