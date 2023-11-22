@@ -1,3 +1,5 @@
+using System;
+using _Scripts.Networking;
 using UnityEngine;
 
 namespace _Scripts
@@ -7,6 +9,11 @@ namespace _Scripts
         [SerializeField] private Transform playerTransform;
         [SerializeField] private Camera mainCamera;
         [Range(2, 100)][SerializeField] private float cameraTargetDivider;
+
+        private void Awake()
+        {
+            playerTransform = NetworkManager.Instance.player.transform;
+        }
 
         private void Update()
         {

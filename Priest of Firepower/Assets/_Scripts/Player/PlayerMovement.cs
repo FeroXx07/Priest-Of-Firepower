@@ -19,15 +19,17 @@ namespace _Scripts.Player
     public class PlayerMovement : NetworkBehaviour, INetworkInput
     {
         [SerializeField] private bool isHost => NetworkManager.Instance.IsHost();
-        public NetworkObject networkObject;
         protected override void InitNetworkVariablesList()
         {
             //throw new NotImplementedException();
         }
 
-        private void Awake()
+        public override void Awake()
         {
-            networkObject = GetComponent<NetworkObject>();
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+            
             input[0] = false; 
             input[1] = false; 
             input[2] = false; 

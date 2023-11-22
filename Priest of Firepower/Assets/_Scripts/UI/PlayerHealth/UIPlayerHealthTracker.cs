@@ -11,10 +11,7 @@ namespace _Scripts.UI.PlayerHealth
         [SerializeField] Image healthBar;
         [FormerlySerializedAs("healthBar_bg")] [SerializeField] Image healthBarBg;
         [SerializeField] Gradient healthColor;
-
-
-
-
+        
         // Update is called once per frame
         void Update()
         {

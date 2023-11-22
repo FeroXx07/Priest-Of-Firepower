@@ -47,4 +47,4 @@ MonoBehaviour:
   defaultServerTcpPort: 12345
   defaultServerUdpPort: 12443
   PlayerName: testeo
-  player: {fileID: 0}
+  playerPrefab: {fileID: 1747872900250147753, guid: d8a41d9ffc3dad24eb4139bdec85de48, type: 3}

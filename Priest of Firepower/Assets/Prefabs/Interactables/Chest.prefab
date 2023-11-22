@@ -20,7 +20,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1897267876575666528
 Transform:
   m_ObjectHideFlags: 0
@@ -37,7 +37,7 @@ Transform:
   - {fileID: 1976169429354997253}
   - {fileID: 7454091956583269067}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1897267876575666543
 SpriteRenderer:
@@ -396,6 +396,10 @@ PrefabInstance:
     - target: {fileID: 1873773341647793512, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_PropertySheet.m_Float.m_Array.Array.data[0].m_Overridden
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793513, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_RootOrder

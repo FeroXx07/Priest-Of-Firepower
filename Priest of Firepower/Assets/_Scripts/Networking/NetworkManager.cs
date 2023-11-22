@@ -51,7 +51,7 @@ namespace _Scripts.Networking
         private bool _isClient = false;
         
         public static readonly UInt64 UNKNOWN_ID = 69;
-
+        public UInt64 getId => IsClient() ? _client.GetId() : 0;
         public string PlayerName = "testeo"; 
         #endregion
 
@@ -115,7 +115,9 @@ namespace _Scripts.Networking
 
         #endregion
         
-        [SerializeField] private GameObject player;
+        public GameObject player { get; set; }
+        public GameObject playerPrefab;
+        
         public ReplicationManager _replicationManager = new ReplicationManager();
 
         #region Actions
@@ -153,11 +155,32 @@ namespace _Scripts.Networking
             Debug.developerConsoleVisible = true;
             Debug.LogError("Network Manager: Console Enabled");
             SceneManager.sceneLoaded += ResetNetworkIds;
+            SceneManager.sceneLoaded += InstantiatePlayer;
+        }
+
+        private void InstantiatePlayer(Scene arg0, LoadSceneMode arg1)
+        {
+            if (arg0.name == "Game_Networking_Test")
+            {
+                if (_isHost)
+                {
+                    foreach (ClientData clientData in _server.GetClients())
+                    {
+                        GameObject go = InstantiateNetworkObject(Instance.playerPrefab, clientData.id);
+                        go.gameObject.name = clientData.userName;
+            
+                        Player.Player player = go.GetComponent<Player.Player>();
+                        player.SetName(clientData.userName);
+                        player.SetPlayerId(clientData.id);
+                    }
+                }
+            }
         }
 
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= ResetNetworkIds;
+            SceneManager.sceneLoaded -= InstantiatePlayer;
             Debug.Log("Network Manager: Shutting down");
             _receiveData.Shutdown();
             _sendData.Shutdown();
@@ -480,8 +503,7 @@ namespace _Scripts.Networking
             }
             
             PacketType type = (PacketType)reader.ReadInt32();
-            UInt64 packetSenderId =  reader.ReadUInt64();
-            long packetTimeStamp =  reader.ReadInt64();
+            
             
             Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
             switch (type)
@@ -492,12 +514,16 @@ namespace _Scripts.Networking
                 case PacketType.INPUT:
                 {
                     Debug.Log("Network Manager: INPUT message received");
+                    UInt64 packetSenderId =  reader.ReadUInt64();
+                    long packetTimeStamp =  reader.ReadInt64();
                     MainThreadDispatcher.EnqueueAction(() => HandleInput(reader));
                 }
                     break;
                 case PacketType.OBJECT_STATE:
                 {
                     Debug.Log("Network Manager: OBJECT_STATE message received");
+                    UInt64 packetSenderId =  reader.ReadUInt64();
+                    long packetTimeStamp =  reader.ReadInt64();
                     MainThreadDispatcher.EnqueueAction(() => HandleObjectState(reader));
                 }
                     break;
@@ -621,6 +647,13 @@ namespace _Scripts.Networking
             _replicationManager.InitManager(list);
         }
         #endregion
+        
+        public GameObject InstantiateNetworkObject(GameObject prefab, UInt64 playerInstantiater)
+        {
+            NetworkObject newGo = Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
+            _replicationManager.RegisterObject(newGo);
+            return newGo.gameObject;
+        }
     }
 
     public enum ReplicationAction
@@ -634,18 +667,24 @@ namespace _Scripts.Networking
 
     public class ReplicationManager
     {
+        public GameObject gameObject;
+        public UInt64 id { get; private set; }
         public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
 
         public void InitManager(List<NetworkObject> listNetObj)
         {
             networkObjectMap.Clear();
-            UInt64 id = 0;
             foreach (var networkObject in listNetObj)
             {
-                networkObject.SetNetworkId(id);
-                networkObjectMap.Add(id, networkObject);
-                id++;
+                RegisterObject(networkObject);
             }
+        }
+
+        public void RegisterObject(NetworkObject obj)
+        {
+            obj.SetNetworkId(id);
+            networkObjectMap.Add(id, obj);
+            id++;
         }
 
         public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
