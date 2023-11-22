@@ -44,8 +44,7 @@ namespace _Scripts.Networking
             }
     
             //If host update the client list cuz the event is triggered before entering the lobby
-
-                OnClientConnected();
+            OnClientConnected();
 
             //Set the Ip where is connected to
             ipAddress.text = NetworkManager.Instance.serverAdress.ToString();
@@ -102,11 +101,14 @@ namespace _Scripts.Networking
 
         void UpdatePlayerList(List<ClientData> newPlayerList)
         {
-            foreach (GameObject p in playerList)
+            //clear the list transform
+            foreach (Transform t in listHolder)
             {
-                Destroy(p);
+                Destroy(t.gameObject);
             }
-
+            //clear all the items in the holder
+            playerList.Clear();
+            
             foreach (ClientData p in newPlayerList)
             {
                 GameObject go = Instantiate(clientUiPrefab, listHolder);
@@ -121,6 +123,7 @@ namespace _Scripts.Networking
                 {
                     go.GetComponentInChildren<Button>().enabled = false;
                 }
+                playerList.Add(go);
             }
         }
         
