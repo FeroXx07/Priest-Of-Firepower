@@ -334,7 +334,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionAddress:
-    address: 192.168.204.29
+    address: 192.168.1.140
     port: 12345
   player: {fileID: 0}
 --- !u!4 &312316823

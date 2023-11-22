@@ -1,9 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using _Scripts.Networking;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -46,6 +46,8 @@ namespace _Scripts.Networking
         public float lerpValue = 0.25f;
         #endregion
 
+        private Queue<Action> _actionsToDo = new Queue<Action>();
+        
         private void Awake()
         {
             // previousTransform = new TransformData(Vector3.zero, quaternion.identity, Vector3.one );
@@ -66,14 +68,16 @@ namespace _Scripts.Networking
             
             // Before starting to interpolate to the new value,
             // If previous value hasn't been interpolated completely, finish it
-            UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
-            {
+           
+            _actionsToDo.Clear();
+            _actionsToDo.Enqueue(() => {Debug.Log("New Interpolation NETWORK_SET");
+            
                 transform.position = lastReceivedTransformData.position;
                 transform.rotation = lastReceivedTransformData.rotation;
                 transform.localScale = lastReceivedTransformData.scale;
-                    
-                lastAction = TransformAction.NETWORK_SET;
-            });
+                
+                lastAction = TransformAction.NETWORK_SET;});
+            
             
             // Cache the new value
             lastReceivedTransformData.position = newPos;
@@ -87,14 +91,22 @@ namespace _Scripts.Networking
             }
             else if (lastReceivedTransformData.action == TransformAction.NETWORK_SET)
             {
-                UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
+                _actionsToDo.Clear();                
+                _actionsToDo.Enqueue(() =>
                 {
+                    Debug.Log("Direct NETWORK_SET");
                     transform.position = newPos;
                     transform.rotation = newQuat;
                     transform.localScale = newScale;
-                    
+
                     lastAction = TransformAction.NETWORK_SET;
                 });
+                
+                // UnityMainThreadDispatcher.Dispatcher.RemoveLastEnqueuedAction();
+                // UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
+                // {
+                //    
+                // });
             }
             
             if(showDebugInfo)
@@ -145,27 +157,10 @@ namespace _Scripts.Networking
             long currentPosition = reader.BaseStream.Position;
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
 
-
-            //read
-            //p.x = reader. x
-            //position 
-            //rotation
-            //
-            //lock(incomingPos)
-            //{
-            //    MainThreadDispatcher.EnqueueAction(()=>UpdateTransform(Type,incomingPos,rotation,scale))
-            //}
-
             if (behaviour != null)
                 behaviour.Read(reader, currentPosition);
             else
                 Debug.LogError("Cast failed " + type);
-
-            // MainThreadDispatcher.EnqueueAction(() =>
-            // {
-            // Redirect stream from the input object state stream buffer to the NetworkBehaviour DeSerializer
-
-            // });
         }
 
         private void Update()
@@ -188,12 +183,19 @@ namespace _Scripts.Networking
                 lastAction = TransformAction.NETWORK_SEND;
                 transform.hasChanged = false;
             }
-            
+
+
+            foreach (Action action in _actionsToDo)
+            {
+                action?.Invoke();
+            }
+
+
             // Check if interpolation is needed and apply it
             if (lastReceivedTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
             {
                 lastAction = TransformAction.INTERPOLATE;
-
+                Debug.Log($"Interpolating to position: {lastReceivedTransformData.position}, rotation: {lastReceivedTransformData.rotation}, scale_ {lastReceivedTransformData.scale}");
                 long currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
                 float lerpFactor = Mathf.Clamp01((currentTime - lastReceivedTransformData.timeStamp) / lerpValue); // 0.5f is an example time to interpolate
                 transform.position = Vector3.Lerp(transform.position, lastReceivedTransformData.position, lerpFactor);
@@ -216,6 +218,8 @@ namespace _Scripts.Networking
                     SendNetworkTransform(TransformAction.NETWORK_SET);
             }
 
+            tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
+            
             tickCounter += Time.deltaTime;
         }
     }

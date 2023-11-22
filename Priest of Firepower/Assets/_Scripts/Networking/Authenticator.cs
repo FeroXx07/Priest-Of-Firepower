@@ -1,50 +1,56 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Net.Sockets;
 using UnityEngine;
 
-public class Authenticator 
+namespace _Scripts.Networking
 {
-    protected enum AuthenticationState
+    public abstract class Authenticator 
     {
-        REQUESTED,
-        CONFIRMATION
-    }
-    protected void SerializeIPEndPoint(IPEndPoint endpoint, BinaryWriter writer)
-    {
-        // Serialize IP Address
-        byte[] ipAddressBytes = endpoint.Address.GetAddressBytes();
-        writer.Write(ipAddressBytes.Length);
-        writer.Write(ipAddressBytes);
+        protected Authenticator(Socket tcp)
+        {
+            socketTcp = tcp;
+        }
+        
+        #region Fields
+        protected const string AuthenticationCode = "IM_VALID_USER_LOVE_ME";
+        protected const string HandshakeOne = "HandshakeOne";
+        protected const string AcknowledgmentOne = "AcknowledgmentOne";
+        public IPEndPoint clientEndPointTcp { get; protected set; }
+        public Socket socketTcp{ get; protected set; }
+        protected AuthenticationState state;
+        public bool isAuthenticated => (state == AuthenticationState.CONFIRMED);
+        #endregion
+        
+        protected enum AuthenticationState
+        {
+            REQUESTED,
+            RESPONSE,
+            CONFIRMED
+        }
 
-        // Serialize Port
-        writer.Write(endpoint.Port);
-    }
-
-    protected IPEndPoint DeserializeIPEndPoint(BinaryReader reader)
-    {
-        try
+        public abstract void HandleAuthentication(MemoryStream stream, BinaryReader reader);
+        
+        protected void SerializeIPEndPoint(IPEndPoint endpoint, BinaryWriter writer)
+        {
+            // Serialize IP Address
+            
+            writer.Write(endpoint.Address.ToString());
+            writer.Write(endpoint.Port);
+        }
+        protected IPEndPoint DeserializeIPEndPoint(BinaryReader reader)
         {
             // Deserialize IP Address
-            int ipAddressLength = reader.ReadInt32();
-            byte[] ipAddressBytes = reader.ReadBytes(ipAddressLength);
-            IPAddress ipAddress = new IPAddress(ipAddressBytes);
-
-            // Deserialize Port
-            int port = reader.ReadInt32();
-
-            // Create IPEndPoint
-            IPEndPoint ipEndPoint = new IPEndPoint(ipAddress, port);
-
+            string ipString = reader.ReadString();
+            int tcpPort = reader.ReadInt32();
+            IPAddress address = IPAddress.Any;
+            if (!IPAddress.TryParse(ipString, out address))
+            {
+                Debug.LogError("Authenticator: Couldn't deserialize IEP!");
+            }
+            IPEndPoint ipEndPoint = new IPEndPoint(address, tcpPort);
             return ipEndPoint;
         }
-        catch (Exception ex)
-        {
-            Debug.LogError("Error while deserializing IPEndPoint: " + ex.Message);
-            return null;
-        }
     }
-
 }

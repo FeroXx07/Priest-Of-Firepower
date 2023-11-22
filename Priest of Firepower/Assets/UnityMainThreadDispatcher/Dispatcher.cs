@@ -28,5 +28,10 @@ namespace UnityMainThreadDispatcher
         {
             _actionQueue.Enqueue(action);
         }
+
+        public static void RemoveLastEnqueuedAction()
+        {
+            _actionQueue.TryDequeue(out var action);
+        }
     }
 }

@@ -8,76 +8,109 @@ using UnityEngine;
 namespace _Scripts.Networking
 {
     public class ServerAuthenticator : Authenticator
-    { 
-        private string _authenticationCode = "IM_VALID_USER_LOVE_ME";
-        public Action<IPEndPoint, string> _onAuthenticated;
-        public Action<IPEndPoint> _onAuthenticationFailed;
-        IPEndPoint _endPointTmp;//stores temporal endpoint to retrun message
-
-
-        AuthenticationState _state; 
-        public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
+    {
+        public ClientData clientBeingAuthenticated;
+        public Action<ClientData> onAuthenticationSuccessful;
+        public Action<IPEndPoint> onAuthenticationFailed;
+   
+        public ServerAuthenticator(Socket tcp, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(tcp)
         {
-            // check who is sending the request
-            _endPointTmp = DeserializeIPEndPoint(reader);
-
-            //get in what state is the authoritation process
-            _state = (AuthenticationState)reader.ReadInt32();
-
-            Debug.Log(_state);
-
-            switch (_state)
+            this.onAuthenticationSuccessful += onAuthenticationSuccessful;
+            this.onAuthenticationFailed += onAuthenticationFailed;
+            clientBeingAuthenticated = new ClientData();
+            clientBeingAuthenticated.connectionTcp = tcp;
+            clientBeingAuthenticated.endPointTcp = clientBeingAuthenticated.connectionTcp.RemoteEndPoint as IPEndPoint;
+            clientEndPointTcp = socketTcp.RemoteEndPoint as IPEndPoint;
+        }
+        public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
+        {
+            IPEndPoint localEndPointTcp  = DeserializeIPEndPoint(reader);
+            
+            if (!clientEndPointTcp.Equals(localEndPointTcp))
             {
-                case AuthenticationState.REQUESTED:              
-
-                    // Receive username and code from the client
+                reader.BaseStream.Position = reader.BaseStream.Length;
+                return;
+            }
+            
+            state = (AuthenticationState)reader.ReadInt32();
+            Debug.Log(state);
+            MemoryStream authStream = new MemoryStream();
+            BinaryWriter authWriter = new BinaryWriter(authStream);
+            switch (state)
+            {
+                case AuthenticationState.REQUESTED:
+                {
                     string clientCode = reader.ReadString();
-
-                    // Validate the received code
-                    bool isSuccess = (clientCode == _authenticationCode);
-
-                    // Send authentication response to the client
-                    SendAuthenticationResponse(isSuccess);
-
+                    bool isSuccess = (clientCode == AuthenticationCode);
+                    
+                    authWriter.Write((int)PacketType.AUTHENTICATION);
+                    SerializeIPEndPoint(clientEndPointTcp, authWriter);
+                    authWriter.Write((int)AuthenticationState.RESPONSE);
+                    authWriter.Write(isSuccess);
+                    authWriter.Write(clientBeingAuthenticated.id);
+                    
+                    Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}: Request client to send response ");
+                    clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
+                    //NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                }
                     break;
-                case AuthenticationState.CONFIRMATION:
-                    //hum
+                case AuthenticationState.RESPONSE:
+                {
                     string confirmation =  reader.ReadString();
-                    string username = reader.ReadString();
-                    if (confirmation == "ok")
+                    if (confirmation.Equals(HandshakeOne))
                     {
-                        Debug.Log($"Authentication successful for client: {username}");
-                        _onAuthenticated?.Invoke(_endPointTmp, username);
+                        Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}:  Request client to send confirm ");
+                        
+                        UInt64 id = reader.ReadUInt64();
+                        string userName = reader.ReadString();
+                        string epTcp = reader.ReadString();
+                        int portTcp = reader.ReadInt32();
+                        string epUdp = reader.ReadString();
+                        int portUdp = reader.ReadInt32();
+
+                        clientBeingAuthenticated.userName = userName;
+                        clientBeingAuthenticated.endPointUdp = new IPEndPoint(IPAddress.Parse(epUdp), portUdp);
+                        
+                        authWriter.Write((int)PacketType.AUTHENTICATION);
+                        SerializeIPEndPoint(clientEndPointTcp, authWriter);
+                        authWriter.Write((int)AuthenticationState.CONFIRMED);
+                        clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
+                        //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
                     {
-                        Debug.Log("Authentication failed!");
-                        _onAuthenticationFailed?.Invoke(_endPointTmp);
+                        Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}: authentication response failed");
+                        onAuthenticationFailed?.Invoke(localEndPointTcp);
                     }
-
+                }
                     break;
-                default:
+                case AuthenticationState.CONFIRMED:
+                {
+                    string ack =  reader.ReadString();
+                    if (ack.Equals(AcknowledgmentOne))
+                    {
+                        Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}:  authentication confirmation successful");
+                        onAuthenticationSuccessful?.Invoke(clientBeingAuthenticated);
+                    }
+                    else
+                    {
+                        Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}:  authentication confirmation failed");
+                        onAuthenticationFailed?.Invoke(localEndPointTcp);
+                    }
+                }
                     break;
-           
             }
-            _endPointTmp = null;
         }
-        //create new functions to send messages
-        private void SendAuthenticationResponse(bool isSuccess)
+
+        public void RequestClientToStartAuthentication()
         {
-            // Create an authentication response packet
-            MemoryStream responseStream = new MemoryStream();
-            BinaryWriter responseWriter = new BinaryWriter(responseStream);
-
-            responseWriter.Write((int)PacketType.AUTHENTICATION);
-            SerializeIPEndPoint(_endPointTmp, responseWriter);
-            responseWriter.Write((int)AuthenticationState.CONFIRMATION);
-            responseWriter.Write(isSuccess);
-  
-            Debug.Log("Sending success:" + isSuccess);
-
-            NetworkManager.Instance.AddReliableStreamQueue(responseStream);
+            MemoryStream authStream = new MemoryStream();
+            BinaryWriter authWriter = new BinaryWriter(authStream);
+            authWriter.Write((int)PacketType.AUTHENTICATION);
+            SerializeIPEndPoint(clientEndPointTcp, authWriter);
+            authWriter.Write((int)AuthenticationState.REQUESTED);
+            clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
+            Debug.Log($"Server Authenticator: Request Client To Start Authentication!");
         }
-        
     }
 }

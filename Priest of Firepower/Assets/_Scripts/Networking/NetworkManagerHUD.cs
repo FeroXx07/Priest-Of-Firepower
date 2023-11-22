@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using TMPro;
 using UnityEngine;
@@ -10,12 +11,21 @@ namespace _Scripts.Networking
     {
         [SerializeField] Button hostBtn;
         [SerializeField] TMP_InputField ipInputField;
-        private void Start()
+
+        private void OnEnable()
         {
             hostBtn.onClick.AddListener(HostGame);
             NetworkManager.Instance.OnClientConnected += Lobby;
             ipInputField.onEndEdit.AddListener(ConnectToServer);
         }
+
+        private void OnDisable()
+        {
+            hostBtn.onClick.RemoveListener(HostGame);
+            NetworkManager.Instance.OnClientConnected -= Lobby;
+            ipInputField.onEndEdit.RemoveListener(ConnectToServer);
+        }
+        
         void HostGame()
         {
             NetworkManager.Instance.StartHost();
@@ -29,12 +39,16 @@ namespace _Scripts.Networking
         }
 
         private void ConnectToServer(string ip)
-        {            
-            NetworkManager.Instance.connectionAddress.address = ip;
-            
-            if (NetworkManager.Instance.connectionAddress.ServerEndPoint != null)
+        {
+            NetworkManager manager = NetworkManager.Instance;
+
+            if (IPAddress.TryParse(ip, out manager.serverAdress))
             {
-                NetworkManager.Instance.StartClient();
+                if (manager.isServerOnSameMachine)
+                {
+                    manager.serverAdress = IPAddress.Parse("127.0.0.1");
+                }
+                manager.StartClient();
             }
             else
             {
