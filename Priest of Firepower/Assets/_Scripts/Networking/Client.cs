@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace _Scripts.Networking
 {
-    public class AClient 
+    public class Client 
     {
         #region Fields
         private ClientData _clientData;
@@ -24,7 +24,7 @@ namespace _Scripts.Networking
         private ClientAuthenticator _authenticator;
         public ClientAuthenticator authenticator => _authenticator;
 
-        public AClient(string name, IPEndPoint localEndPointTcp, Action onConnected)
+        public Client(string name, IPEndPoint localEndPointTcp, Action onConnected)
         {
             _clientData = new ClientData(69, name, localEndPointTcp, new IPEndPoint(IPAddress.Any, 0));
             this.onConnected += onConnected;

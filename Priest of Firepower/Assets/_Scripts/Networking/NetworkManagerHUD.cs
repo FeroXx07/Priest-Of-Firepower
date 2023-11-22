@@ -34,7 +34,7 @@ namespace _Scripts.Networking
         //if client connected send to lobby
         void Lobby()
         {
-            SceneManager.LoadScene(1);
+            SceneManager.LoadScene("Game_Networking_Test");
             Debug.Log("Going to lobby ...");
         }
 

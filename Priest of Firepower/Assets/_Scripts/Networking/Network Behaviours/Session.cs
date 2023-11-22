@@ -15,7 +15,7 @@ namespace _Scripts.Networking.Network_Behaviours
             base.Awake();
             BITTracker = new ChangeTracker(3);
         }
-        public override bool Read(BinaryReader reader, long currentPosition = 0)
+        public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
         {
             int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();
@@ -43,7 +43,7 @@ namespace _Scripts.Networking.Network_Behaviours
         
         }
 
-        protected override bool Write(MemoryStream outputMemoryStream, NetworkAction action)
+        protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             MemoryStream tempStream = new MemoryStream();
             BinaryWriter tempWriter = new BinaryWriter(tempStream);

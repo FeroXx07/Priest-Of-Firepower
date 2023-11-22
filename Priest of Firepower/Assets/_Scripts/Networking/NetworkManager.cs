@@ -44,11 +44,10 @@ namespace _Scripts.Networking
         #endregion
 
         #region Server/Client Fields
-        private AClient _client;
-        private AServer _server;
+        private Client _client;
+        private Server _server;
         
         private bool _isHost = false;
-        private bool _isServer = false;
         private bool _isClient = false;
         
         public static readonly UInt64 UNKNOWN_ID = 69;
@@ -193,7 +192,7 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client = new Client(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             
             if (isServerOnSameMachine)
             {
@@ -207,8 +206,8 @@ namespace _Scripts.Networking
         {
             string clientName = GenerateName();
             
-            _server = new AServer(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
-            _client = new AClient(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
+            _client = new Client(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             
             if (_server.isServerInitialized)
@@ -302,12 +301,6 @@ namespace _Scripts.Networking
                                         Debug.Log($"Network Manager: Sending state stream buffer as host, buffer size {buffer.Length} and timeout {stateTimeout}");
                                         _server.SendUdpToAll(buffer);
                                     }
-                                    else if (_isServer)
-                                    {
-                                        Debug.Log($"Network Manager: Sending state stream buffer as server, buffer size {buffer.Length} and timeout {stateTimeout}");
-                                        _server.SendUdpToAll(buffer);
-                                    }
-
                                     // Clear the streams to send for the next iteration
                                     streamsToSend.Clear();
                                     totalSize = 0;
@@ -348,11 +341,6 @@ namespace _Scripts.Networking
                                         Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
                                         _client.SendUdpPacket(buffer);
                                     }
-                                    else if (_isServer)
-                                    {
-                                        Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
-                                        _server.SendUdpToAll(buffer);
-                                    }
                                     else if (_isHost)
                                     {
                                         Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
@@ -380,10 +368,6 @@ namespace _Scripts.Networking
                                 if (_isClient)
                                 {
                                     _client.SendTcp(buffer);
-                                }
-                                else if (_isServer)
-                                {
-                                    _server.SendTcpToAll(buffer);
                                 }
                                 else if (_isHost)
                                 {
@@ -487,8 +471,6 @@ namespace _Scripts.Networking
 
         public void ProcessIncomingData(MemoryStream stream)
         {
-            // Create a replication manager
-            //[packet type]
             stream.Position = 0;
             BinaryReader reader = new BinaryReader(stream);
             if (stream.Length > 1500)
@@ -507,12 +489,15 @@ namespace _Scripts.Networking
                     Debug.Log("Network Manager: PING message received");
                     break;
                 case PacketType.INPUT:
+                {
                     Debug.Log("Network Manager: INPUT message received");
+                    MainThreadDispatcher.EnqueueAction(() => HandleInput(reader));
+                }
                     break;
                 case PacketType.OBJECT_STATE:
                 {
                     Debug.Log("Network Manager: OBJECT_STATE message received");
-                    MainThreadDispatcher.EnqueueAction(() => HandleObjectState(stream, reader));
+                    MainThreadDispatcher.EnqueueAction(() => HandleObjectState(reader));
                 }
                     break;
                 case PacketType.AUTHENTICATION:
@@ -520,12 +505,12 @@ namespace _Scripts.Networking
                     if (_isClient)
                     {
                         Debug.Log("Network Manager: Client auth message received");
-                        _client.authenticator.HandleAuthentication(stream, reader);
+                        _client.authenticator.HandleAuthentication(reader);
                     }
                     else if (_isHost)
                     {
                         Debug.Log("Network Manager: Host auth message received");
-                        _server.HandleAuthentication(stream, reader);
+                        _server.HandleAuthentication(reader);
                     }
                 }
                     break;
@@ -535,7 +520,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void HandleObjectState(MemoryStream stream, BinaryReader reader)
+        void HandleObjectState(BinaryReader reader)
         {
             try
             {
@@ -546,9 +531,26 @@ namespace _Scripts.Networking
                     // [Object Class][Object ID]
                     string objClass = reader.ReadString();
                     UInt64 id = reader.ReadUInt64();
-                    NetworkAction networkAction = (NetworkAction)reader.ReadInt32();
+                    ReplicationAction replicationAction = (ReplicationAction)reader.ReadInt32();
                     //read rest of the stream
-                    _replicationManager.HandleNetworkAction(id, networkAction, Type.GetType(objClass), reader);
+                    _replicationManager.HandleReplication(id, replicationAction, Type.GetType(objClass), reader);
+                }
+            }
+            catch (EndOfStreamException ex)
+            {
+                Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+            }
+        }
+
+        void HandleInput(BinaryReader reader)
+        {
+            try
+            {
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                {
+                    string objClass = reader.ReadString();
+                    UInt64 id = reader.ReadUInt64();
+                    _replicationManager.networkObjectMap[id].HandleNetworkInput(Type.GetType(objClass), reader);
                 }
             }
             catch (EndOfStreamException ex)
@@ -576,18 +578,14 @@ namespace _Scripts.Networking
         }
 
         #region Client Events Interface
-
-        //Client Events Interface
         public void ClientConnected()
         {
             OnClientConnected?.Invoke();
         }
-
         public void ClientDisconected()
         {
             OnClientDisconnected?.Invoke();
         }
-
         #endregion
 
         #region Getters
@@ -596,23 +594,17 @@ namespace _Scripts.Networking
         {
             return _isHost;
         }
-
-        public bool IsServer()
-        {
-            return _isServer;
-        }
-
         public bool IsClient()
         {
             return _isClient;
         }
 
-        public AClient GetClient()
+        public Client GetClient()
         {
             return _client;
         }
 
-        public AServer GetServer()
+        public Server GetServer()
         {
             if (_isHost) 
                 return _server;
@@ -620,20 +612,16 @@ namespace _Scripts.Networking
                 return null;
         }
         #endregion
-
-        // Structure to store the address to connect to
-
         #region address
         void ResetNetworkIds(Scene scene, LoadSceneMode mode)
         {
             List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
             _replicationManager.InitManager(list);
         }
-
         #endregion
     }
 
-    public enum NetworkAction
+    public enum ReplicationAction
     {
         CREATE,
         UPDATE,
@@ -658,25 +646,25 @@ namespace _Scripts.Networking
             }
         }
 
-        public void HandleNetworkAction(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
             Debug.Log(
                 $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
-                case NetworkAction.CREATE:
+                case ReplicationAction.CREATE:
                     HandleObjectCreation(id, action, type, reader);
                     break;
-                case NetworkAction.UPDATE:
+                case ReplicationAction.UPDATE:
                     HandleObjectUpdate(id, action, type, reader);
                     break;
-                case NetworkAction.DESTROY:
+                case ReplicationAction.DESTROY:
                     HandleObjectDeSpawn(id, action, type, reader);
                     break;
-                case NetworkAction.EVENT:
+                case ReplicationAction.EVENT:
                     HandleObjectEvent(id, action, type, reader);
                     break;
-                case NetworkAction.TRANSFORM:
+                case ReplicationAction.TRANSFORM:
                     HandleObjectTransform(id, action, type, reader);
                     break;
                 default:
@@ -684,7 +672,7 @@ namespace _Scripts.Networking
             }
         }
 
-        private void HandleObjectCreation(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        private void HandleObjectCreation(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
             /*
             i) Instantiate new object
@@ -693,23 +681,23 @@ namespace _Scripts.Networking
              */
         }
 
-        private void HandleObjectUpdate(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        private void HandleObjectUpdate(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
             networkObjectMap[id].HandleNetworkBehaviour(type, reader);
         }
 
-        private void HandleObjectDeSpawn(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        private void HandleObjectDeSpawn(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
             // Destroy or return to pool
         }
 
-        private void HandleObjectEvent(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        private void HandleObjectEvent(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
         }
 
-        private void HandleObjectTransform(UInt64 id, NetworkAction action, Type type, BinaryReader reader)
+        private void HandleObjectTransform(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
-            if (networkObjectMap[id].synchronizeTransform) networkObjectMap[id].HandleNetworkTransform(reader);
+            if (networkObjectMap[id].synchronizeTransform) networkObjectMap[id].ReadReplicationTransform(reader);
         }
     }
 }

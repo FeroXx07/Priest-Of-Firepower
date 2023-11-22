@@ -22,7 +22,7 @@ namespace _Scripts.Networking
             clientBeingAuthenticated.endPointTcp = clientBeingAuthenticated.connectionTcp.RemoteEndPoint as IPEndPoint;
             clientEndPointTcp = socketTcp.RemoteEndPoint as IPEndPoint;
         }
-        public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
+        public override void HandleAuthentication(BinaryReader reader)
         {
             IPEndPoint localEndPointTcp  = DeserializeIPEndPoint(reader);
             

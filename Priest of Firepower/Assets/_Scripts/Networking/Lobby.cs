@@ -60,7 +60,7 @@ namespace _Scripts.Networking
           
         }
 
-        protected override bool Write(MemoryStream outputMemoryStream, NetworkAction action)
+        protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             
@@ -90,10 +90,10 @@ namespace _Scripts.Networking
         public void OnClientConnected()
         {
             _lobbyAction = LobbyAction.UPDATE_LIST;
-            SendData(NetworkAction.UPDATE);
+            SendReplicationData(ReplicationAction.UPDATE);
         }
         
-        public override bool Read(BinaryReader reader, long currentPosition = 0)
+        public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
         {
             _lobbyAction = (LobbyAction)reader.ReadInt32();
             switch (_lobbyAction)

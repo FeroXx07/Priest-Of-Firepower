@@ -34,9 +34,9 @@ namespace _Scripts.Networking
         /// <param name="outputMemoryStream">Stream to fill with serialization data</param>
         /// <param name="action">The network action header to include</param>
         /// <returns>True: stream has been filled. False: stream has not been filled</returns>
-        protected virtual bool Write(MemoryStream outputMemoryStream, NetworkAction action)
+        protected virtual bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
-            // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
+            // [Object State] -- We are here! -- [Object Class][Object ID][NetworkAction][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][NetworkAction][Bitfield Lenght]...
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             
             // Serialize
@@ -102,7 +102,7 @@ namespace _Scripts.Networking
         /// </summary>
         /// <param name="reader"></param>
         /// <returns>True: stream has been read correctly. False: stream has not been read corrcetly.</returns>
-        public virtual bool Read(BinaryReader reader, long position = 0)
+        public virtual bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
             reader.BaseStream.Position = position;
             // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
@@ -145,7 +145,7 @@ namespace _Scripts.Networking
                 Debug.LogWarning("A NetworkBehaviour needs a NetworkObject");
             }
         }
-        public void SendData(NetworkAction action)
+        public void SendReplicationData(ReplicationAction action)
         {
             // Cannot send data if no network manager
             if (NetworkManager.Instance == false && NetworkObject == false)
@@ -153,34 +153,37 @@ namespace _Scripts.Networking
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }
             
+            if (NetworkManager.Instance.IsClient())
+                return;
+            
             MemoryStream stream = new MemoryStream();
             switch (action)
             {
-                case NetworkAction.CREATE:
+                case ReplicationAction.CREATE:
                 {
                     BITTracker.SetAll(true);
-                    Write(stream, NetworkAction.CREATE);
+                    WriteReplicationPacket(stream, ReplicationAction.CREATE);
                 }
                     break;
-                case NetworkAction.UPDATE:
+                case ReplicationAction.UPDATE:
                 {
-                    if(Write(stream, NetworkAction.UPDATE) == false)
+                    if(WriteReplicationPacket(stream, ReplicationAction.UPDATE) == false)
                         return;
                 }
                     break;
-                case NetworkAction.DESTROY:
+                case ReplicationAction.DESTROY:
                 {
                     BinaryWriter writer = new BinaryWriter(stream);
                     Type objectType = this.GetType();
                     writer.Write(objectType.FullName);
                     writer.Write(NetworkObject.GetNetworkId());
-                    writer.Write((int)NetworkAction.DESTROY);
+                    writer.Write((int)ReplicationAction.DESTROY);
                 }
                     break;
-                case NetworkAction.EVENT:
+                case ReplicationAction.EVENT:
                     break;
                 default:
-                    if(Write(stream, NetworkAction.UPDATE) == false)
+                    if(WriteReplicationPacket(stream, ReplicationAction.UPDATE) == false)
                         return;
                     break;
             }
@@ -188,7 +191,7 @@ namespace _Scripts.Networking
             if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
             NetworkManager.Instance.AddStateStreamQueue(stream);
         }
-        public virtual void Update()
+        public virtual void FixedUpdate()
         {
             if (!doTickUpdates)
                 return;
@@ -197,7 +200,7 @@ namespace _Scripts.Networking
             float finalRate = 1.0f / tickRate;
             if (_tickCounter >= finalRate )
             {
-                SendData(NetworkAction.UPDATE);
+                SendReplicationData(ReplicationAction.UPDATE);
                 _tickCounter = 0.0f;
             }
             _tickCounter += Time.deltaTime;

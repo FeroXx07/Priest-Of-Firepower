@@ -13,9 +13,9 @@ using UnityEngine;
 
 namespace _Scripts.Networking
 {
-    public class AServer
+    public class Server
     {
-        public AServer(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
+        public Server(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
         {
             _localEndPointTcp = localEndPointTcp;
             _localEndPointUdp = localEndPointUdp;
@@ -557,7 +557,7 @@ namespace _Scripts.Networking
             _nextClientId++;
             return currentID;
         }
-        public void HandleAuthentication(MemoryStream stream, BinaryReader reader)
+        public void HandleAuthentication(BinaryReader reader)
         {
             long posToReset = reader.BaseStream.Position;
             
@@ -579,7 +579,7 @@ namespace _Scripts.Networking
                 {
                     if (authenticator.clientEndPointTcp.Equals(ipEndPoint))
                     {
-                        authenticator.HandleAuthentication(stream, reader);
+                        authenticator.HandleAuthentication(reader);
                     }
                 }
             }

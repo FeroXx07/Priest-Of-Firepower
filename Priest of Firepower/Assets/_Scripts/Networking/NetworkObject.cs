@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using _Scripts.Interfaces;
 using _Scripts.Networking;
 using Unity.Mathematics;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace _Scripts.Networking
     public class NetworkObject : MonoBehaviour
     {
         #region NetworkId
-        [SerializeField] private UInt64 globalObjectIdHash = 10;
+        [SerializeField] private UInt64 globalObjectIdHash = 0;
         public void SetNetworkId(UInt64 id)
         {
             globalObjectIdHash = id;
@@ -55,7 +56,7 @@ namespace _Scripts.Networking
         }
 
         #region Network Transforms
-        public void HandleNetworkTransform(BinaryReader reader)
+        public void ReadReplicationTransform(BinaryReader reader)
         {
             lastReceivedTransformData.action = (TransformAction)reader.ReadInt32();
             lastReceivedTransformData.timeStamp = reader.ReadInt64();
@@ -113,7 +114,7 @@ namespace _Scripts.Networking
                 Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}, {newQuat.eulerAngles}, {newScale}");
         }
 
-        public MemoryStream SendNetworkTransform(TransformAction transformAction)
+        public MemoryStream WriteReplicationTransform(TransformAction transformAction)
         {
             // DeSerialize
             MemoryStream _stream = new MemoryStream();
@@ -126,7 +127,7 @@ namespace _Scripts.Networking
             Type objectType = this.GetType();
             _writer.Write(objectType.FullName);
             _writer.Write(globalObjectIdHash);
-            _writer.Write((int)NetworkAction.TRANSFORM);
+            _writer.Write((int)ReplicationAction.TRANSFORM);
             _writer.Write((int)transformAction);
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             _writer.Write(milliseconds);
@@ -158,12 +159,26 @@ namespace _Scripts.Networking
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
 
             if (behaviour != null)
-                behaviour.Read(reader, currentPosition);
+                behaviour.ReadReplicationPacket(reader, currentPosition);
+            else
+                Debug.LogError("Cast failed " + type);
+        }
+        
+        public void HandleNetworkInput(Type type, BinaryReader reader)
+        {
+            long currentPosition = reader.BaseStream.Position;
+            NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
+
+            if (behaviour != null)
+            {
+                INetworkInput input = behaviour as INetworkInput;
+                if (input != null) input.ReceiveInputFromClient(reader);
+            }
             else
                 Debug.LogError("Cast failed " + type);
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (Time.frameCount <= 300) return;
 
@@ -179,7 +194,7 @@ namespace _Scripts.Networking
             
             if (transform.hasChanged && sendEveryChange)
             {
-                SendNetworkTransform(TransformAction.INTERPOLATE);
+                WriteReplicationTransform(TransformAction.INTERPOLATE);
                 lastAction = TransformAction.NETWORK_SEND;
                 transform.hasChanged = false;
             }
@@ -215,7 +230,7 @@ namespace _Scripts.Networking
                 tickCounter = 0.0f;
                 
                 if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
-                    SendNetworkTransform(TransformAction.NETWORK_SET);
+                    WriteReplicationTransform(TransformAction.NETWORK_SET);
             }
 
             tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;

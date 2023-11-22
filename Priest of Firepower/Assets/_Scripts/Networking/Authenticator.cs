@@ -30,7 +30,7 @@ namespace _Scripts.Networking
             CONFIRMED
         }
 
-        public abstract void HandleAuthentication(MemoryStream stream, BinaryReader reader);
+        public abstract void HandleAuthentication(BinaryReader reader);
         
         protected void SerializeIPEndPoint(IPEndPoint endpoint, BinaryWriter writer)
         {

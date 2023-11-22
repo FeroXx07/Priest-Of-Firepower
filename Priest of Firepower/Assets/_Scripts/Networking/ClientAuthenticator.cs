@@ -18,7 +18,7 @@ namespace _Scripts.Networking
             this.onAuthenticationFailed += onAuthenticationFailed;
             clientEndPointTcp = socketTcp.LocalEndPoint as IPEndPoint;
         }
-        public override void HandleAuthentication(MemoryStream stream, BinaryReader reader)
+        public override void HandleAuthentication(BinaryReader reader)
         {
             IPEndPoint localEndPointTcp = DeserializeIPEndPoint(reader);
             
