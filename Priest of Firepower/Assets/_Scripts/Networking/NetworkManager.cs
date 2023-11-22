@@ -187,8 +187,7 @@ namespace _Scripts.Networking
             }
         }
         #endregion
-      
-
+        
         #region Connection Initializers
         public void StartClient()
         {
@@ -204,7 +203,6 @@ namespace _Scripts.Networking
             _client.ConnectToServer(new IPEndPoint(serverAdress, defaultServerTcpPort), new IPEndPoint(serverAdress, defaultServerUdpPort));
             _isClient = true;
         }
-
         public void StartHost()
         {
             string clientName = GenerateName();
@@ -219,6 +217,7 @@ namespace _Scripts.Networking
                 _client.ConnectToServer(new IPEndPoint(IPAddress.Parse("127.0.0.1"), defaultServerTcpPort), new IPEndPoint(IPAddress.Parse("127.0.0.1"), defaultServerUdpPort));
             }
 
+            serverAdress = IPAddress.Loopback;
             Debug.Log("Network Manager: OnEnable -> _client: " + _client);
             Debug.Log("Network Manager: OnEnable -> _server: " + _server);
         }
@@ -608,6 +607,18 @@ namespace _Scripts.Networking
             return _isClient;
         }
 
+        public AClient GetClient()
+        {
+            return _client;
+        }
+
+        public AServer GetServer()
+        {
+            if (_isHost) 
+                return _server;
+            else
+                return null;
+        }
         #endregion
 
         // Structure to store the address to connect to

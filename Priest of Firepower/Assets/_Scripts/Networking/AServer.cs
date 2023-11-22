@@ -531,6 +531,10 @@ namespace _Scripts.Networking
            
         }
 
+        public List<ClientData> GetClients()
+        {
+            return _clientsList;
+        }
         private bool IsSocketConnected(Socket socket)
         {
             try
