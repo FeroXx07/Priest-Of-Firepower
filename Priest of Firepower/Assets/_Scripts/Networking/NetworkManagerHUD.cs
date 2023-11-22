@@ -20,8 +20,6 @@ namespace _Scripts.Networking
             hostBtn.onClick.AddListener(HostGame);
             NetworkManager.Instance.OnClientConnected += Lobby;
             ipInputField.onEndEdit.AddListener(ConnectToServer);
-            ipInputField.onSubmit.AddListener(ConnectToServer);
-            
         }
 
         private void OnDisable()
@@ -29,7 +27,6 @@ namespace _Scripts.Networking
             hostBtn.onClick.RemoveListener(HostGame);
             NetworkManager.Instance.OnClientConnected -= Lobby;
             ipInputField.onEndEdit.RemoveListener(ConnectToServer);
-            ipInputField.onSubmit.RemoveListener(ConnectToServer);
         }
         
         void HostGame()
