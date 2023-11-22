@@ -10,10 +10,13 @@ namespace _Scripts.Networking
     public class ServerAuthenticator : Authenticator
     {
         public ClientData clientBeingAuthenticated;
-
+        public Action<ClientData> onAuthenticationSuccessful;
+        public Action<IPEndPoint> onAuthenticationFailed;
    
         public ServerAuthenticator(Socket tcp, Action<ClientData> onAuthenticationSuccessful, Action<IPEndPoint> onAuthenticationFailed) : base(tcp)
         {
+            this.onAuthenticationSuccessful += onAuthenticationSuccessful;
+            this.onAuthenticationFailed += onAuthenticationFailed;
             clientBeingAuthenticated = new ClientData();
             clientBeingAuthenticated.connectionTcp = tcp;
             clientBeingAuthenticated.endPointTcp = clientBeingAuthenticated.connectionTcp.RemoteEndPoint as IPEndPoint;
@@ -72,10 +75,12 @@ namespace _Scripts.Networking
                         SerializeIPEndPoint(clientEndPointTcp, authWriter);
                         authWriter.Write((int)AuthenticationState.CONFIRMED);
                         clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
+                        //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
                     {
                         Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}: authentication response failed");
+                        onAuthenticationFailed?.Invoke(localEndPointTcp);
                     }
                 }
                     break;
@@ -85,11 +90,12 @@ namespace _Scripts.Networking
                     if (ack.Equals(AcknowledgmentOne))
                     {
                         Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}:  authentication confirmation successful");
-                        MainThreadDispatcher.EnqueueAction(NetworkManager.Instance.OnClientConnected);
+                        onAuthenticationSuccessful?.Invoke(clientBeingAuthenticated);
                     }
                     else
                     {
                         Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}:  authentication confirmation failed");
+                        onAuthenticationFailed?.Invoke(localEndPointTcp);
                     }
                 }
                     break;

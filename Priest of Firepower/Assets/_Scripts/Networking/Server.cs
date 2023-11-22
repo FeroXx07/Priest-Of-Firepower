@@ -341,12 +341,6 @@ namespace _Scripts.Networking
                         MemoryStream stream = new MemoryStream(buffer, 0, size);
                         NetworkManager.Instance.AddIncomingDataQueue(stream);
                     }
-                    // byte[] buffer = new byte[1500];
-                    //
-                    // // Receive data from the client
-                    // int size = socket.Receive(buffer, buffer.Length, SocketFlags.None);
-                    // MemoryStream stream = new MemoryStream(buffer, 0, size);
-                    // NetworkManager.Instance.AddIncomingDataQueue(stream);
                 }
             }
             catch (SocketException se)
@@ -445,8 +439,7 @@ namespace _Scripts.Networking
                 hostClient.id = newId;
                 StoreAuthenticatedClient(hostClient, true);
                 Debug.Log($"Server {_localEndPointTcp}: Successfully created host!");
-                
-                MainThreadDispatcher.EnqueueAction(NetworkManager.Instance.ClientConnected);
+
             }
             else
             {
@@ -478,8 +471,10 @@ namespace _Scripts.Networking
                 clientData.connectionTcp.SendTimeout = Timeout.Infinite;
                 _clientsList.Add(clientData);
                 
-         
+                //Call event that the client is connected successfully
+                MainThreadDispatcher.EnqueueAction(NetworkManager.Instance.OnClientConnected);
                 
+                //shutdown authentication process
                 lock (_authenticationProcesses)
                 {
                     ServerAuthenticator toRemove = null;
