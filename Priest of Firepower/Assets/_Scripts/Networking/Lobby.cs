@@ -117,11 +117,11 @@ namespace _Scripts.Networking
                 //enable or disable the kick button
                 if (NetworkManager.Instance.IsHost())
                 {
-                    go.GetComponentInChildren<Button>().enabled = true;
+                    go.GetComponentInChildren<Button>().gameObject.SetActive(true);
                 }
                 else
                 {
-                    go.GetComponentInChildren<Button>().enabled = false;
+                    go.GetComponentInChildren<Button>().gameObject.SetActive(false);
                 }
                 playerList.Add(go);
             }
@@ -169,7 +169,6 @@ namespace _Scripts.Networking
                 newPlayerList.Add(client);
             }
             UpdatePlayerList(newPlayerList);
-
         }
     }
 }
