@@ -171,8 +171,7 @@ namespace _Scripts.Networking
 
             if (behaviour != null)
             {
-                INetworkInput input = behaviour as INetworkInput;
-                if (input != null) input.ReceiveInputFromClient(reader);
+                if (behaviour is INetworkInput input) input.ReceiveInputFromClient(reader);
             }
             else
                 Debug.LogError("Cast failed " + type);

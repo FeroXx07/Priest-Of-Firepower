@@ -289,7 +289,7 @@ namespace _Scripts.Networking
                                 if (totalSize > 0 && (totalSize <= _mtu || stateTimeout <= 0.0f))
                                 {
                                     stateTimeout = _stateBufferTimeout;
-                                    byte[] buffer = ConcatenateMemoryStreams(senderid, PacketType.OBJECT_STATE,
+                                    byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.OBJECT_STATE,
                                         streamsToSend);
                                     if (_isClient)
                                     {
@@ -335,7 +335,7 @@ namespace _Scripts.Networking
                                 if (totalSize > 0 && (totalSize <= _mtu || inputTimeout <= 0.0f))
                                 {
                                     inputTimeout = _inputBufferTimeout;
-                                    byte[] buffer = ConcatenateMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                                    byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
                                     if (_isClient)
                                     {
                                         Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
@@ -444,7 +444,7 @@ namespace _Scripts.Networking
                         {
                             while (_incomingStreamBuffer.Count > 0)
                             {
-                                ProcessIncomingData(_incomingStreamBuffer.Dequeue());
+                                ProcessIncomingPacket(_incomingStreamBuffer.Dequeue());
                             }
                         }
                     }
@@ -469,7 +469,7 @@ namespace _Scripts.Networking
             }
         }
 
-        public void ProcessIncomingData(MemoryStream stream)
+        public void ProcessIncomingPacket(MemoryStream stream)
         {
             stream.Position = 0;
             BinaryReader reader = new BinaryReader(stream);
@@ -478,11 +478,12 @@ namespace _Scripts.Networking
                 Debug.LogWarning("Network Manager: Received packet with size exceeding the maximum (1500 bytes). Discarding...");
                 return;
             }
-
-            // UInt64 senderId = reader.ReadUInt64();
+            
             PacketType type = (PacketType)reader.ReadInt32();
+            UInt64 packetSenderId =  reader.ReadUInt64();
+            long packetTimeStamp =  reader.ReadInt64();
+            
             Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-
             switch (type)
             {
                 case PacketType.PING:
@@ -549,8 +550,8 @@ namespace _Scripts.Networking
                 while (reader.BaseStream.Position < reader.BaseStream.Length)
                 {
                     string objClass = reader.ReadString();
-                    UInt64 id = reader.ReadUInt64();
-                    _replicationManager.networkObjectMap[id].HandleNetworkInput(Type.GetType(objClass), reader);
+                    UInt64 netObjId = reader.ReadUInt64();
+                    _replicationManager.networkObjectMap[netObjId].HandleNetworkInput(Type.GetType(objClass), reader);
                 }
             }
             catch (EndOfStreamException ex)
@@ -561,13 +562,14 @@ namespace _Scripts.Networking
         #endregion
        
 
-        private byte[] ConcatenateMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streamsList)
+        private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streamsList)
         {
             MemoryStream output = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(output);
 
-            // writer.Write(senderId);
             writer.Write((int)type);
+            writer.Write(senderId);
+            writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
             foreach (MemoryStream stream in streamsList)
             {
                 stream.Position = 0;
@@ -653,51 +655,22 @@ namespace _Scripts.Networking
             switch (action)
             {
                 case ReplicationAction.CREATE:
-                    HandleObjectCreation(id, action, type, reader);
                     break;
                 case ReplicationAction.UPDATE:
-                    HandleObjectUpdate(id, action, type, reader);
+                    networkObjectMap[id].HandleNetworkBehaviour(type, reader);
                     break;
                 case ReplicationAction.DESTROY:
-                    HandleObjectDeSpawn(id, action, type, reader);
                     break;
                 case ReplicationAction.EVENT:
-                    HandleObjectEvent(id, action, type, reader);
                     break;
                 case ReplicationAction.TRANSFORM:
-                    HandleObjectTransform(id, action, type, reader);
+                {
+                    if (networkObjectMap[id].synchronizeTransform) networkObjectMap[id].ReadReplicationTransform(reader);
+                }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, null);
             }
-        }
-
-        private void HandleObjectCreation(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
-        {
-            /*
-            i) Instantiate new object
-            ii) Register in the linking context
-            iii) Deserialize fields
-             */
-        }
-
-        private void HandleObjectUpdate(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
-        {
-            networkObjectMap[id].HandleNetworkBehaviour(type, reader);
-        }
-
-        private void HandleObjectDeSpawn(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
-        {
-            // Destroy or return to pool
-        }
-
-        private void HandleObjectEvent(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
-        {
-        }
-
-        private void HandleObjectTransform(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
-        {
-            if (networkObjectMap[id].synchronizeTransform) networkObjectMap[id].ReadReplicationTransform(reader);
         }
     }
 }
