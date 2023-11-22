@@ -9,14 +9,19 @@ namespace _Scripts.Networking
 {
     public class NetworkManagerHUD : MonoBehaviour
     {
+        [SerializeField] private string nextSceneToLoad = "Lobby";
         [SerializeField] Button hostBtn;
         [SerializeField] TMP_InputField ipInputField;
+        [SerializeField] TMP_InputField userNameInputField;
+        
 
         private void OnEnable()
         {
             hostBtn.onClick.AddListener(HostGame);
             NetworkManager.Instance.OnClientConnected += Lobby;
             ipInputField.onEndEdit.AddListener(ConnectToServer);
+            ipInputField.onSubmit.AddListener(ConnectToServer);
+            
         }
 
         private void OnDisable()
@@ -24,6 +29,7 @@ namespace _Scripts.Networking
             hostBtn.onClick.RemoveListener(HostGame);
             NetworkManager.Instance.OnClientConnected -= Lobby;
             ipInputField.onEndEdit.RemoveListener(ConnectToServer);
+            ipInputField.onSubmit.RemoveListener(ConnectToServer);
         }
         
         void HostGame()
@@ -34,7 +40,7 @@ namespace _Scripts.Networking
         //if client connected send to lobby
         void Lobby()
         {
-            SceneManager.LoadScene("Game_Networking_Test");
+            SceneManager.LoadScene(nextSceneToLoad);
             Debug.Log("Going to lobby ...");
         }
 

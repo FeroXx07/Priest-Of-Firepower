@@ -453,12 +453,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalObjectIdHash: 10
-  tickRate: 10
+  tickRate: 0
   tickCounter: 0
   showDebugInfo: 0
-  synchronizeTransform: 1
+  synchronizeTransform: 0
   sendEveryChange: 0
-  sendTickChange: 1
+  sendTickChange: 0
   isInterpolating: 0
   lastAction: 4
   lastReceivedTransformData:

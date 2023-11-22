@@ -890,8 +890,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78aaeb2a4b50ae44b863befebba47d54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nextSceneToLoad: Lobby
   hostBtn: {fileID: 645362915}
   ipInputField: {fileID: 1873951899}
+  userNameInputField: {fileID: 0}
 --- !u!1 &1220033454
 GameObject:
   m_ObjectHideFlags: 0
@@ -1647,6 +1649,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetworkManager
       objectReference: {fileID: 0}
+    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
+      propertyPath: player
+      value: 
+      objectReference: {fileID: 1747872900250147753, guid: d8a41d9ffc3dad24eb4139bdec85de48, type: 3}
     - target: {fileID: 9178497600898120432, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
       propertyPath: m_RootOrder
       value: 4

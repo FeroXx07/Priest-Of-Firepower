@@ -42,7 +42,7 @@ namespace _Scripts.Networking
             }
     
             //If host update the client list cuz the event is triggered before entering the lobby
-            if(NetworkManager.Instance.IsHost())
+
                 OnClientConnected();
 
             //Set the Ip where is connected to
@@ -63,7 +63,7 @@ namespace _Scripts.Networking
         protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            
+            bool ret = true;
             // Serialize
             Type objectType = this.GetType();
             writer.Write(objectType.FullName);
@@ -79,18 +79,47 @@ namespace _Scripts.Networking
                         break;
                     case LobbyAction.NONE:
                         Debug.Log("Lobby: Action None");
+                        ret = false;
                         break;
                 }
             }
             //Set the lobby action to none avoid any posible error writing corrupted data
             _lobbyAction = LobbyAction.NONE;
-            return false;
+            return ret;
         }
 
         public void OnClientConnected()
         {
+            if (!NetworkManager.Instance.IsHost()) return;
+            
             _lobbyAction = LobbyAction.UPDATE_LIST;
             SendReplicationData(ReplicationAction.UPDATE);
+            //as host just update the new list when a client is connected
+            UpdatePlayerList(NetworkManager.Instance.GetServer().GetClients());
+        }
+
+        void UpdatePlayerList(List<ClientData> newPlayerList)
+        {
+            foreach (GameObject p in playerList)
+            {
+                Destroy(p);
+            }
+
+            foreach (ClientData p in newPlayerList)
+            {
+                GameObject go = Instantiate(clientUiPrefab, listHolder);
+                //set the player name
+                go.GetComponentInChildren<TMP_Text>().text = p.userName;
+                //enable or disable the kick button
+                if (NetworkManager.Instance.IsHost())
+                {
+                    go.GetComponentInChildren<Button>().enabled = true;
+                }
+                else
+                {
+                    go.GetComponentInChildren<Button>().enabled = false;
+                }
+            }
         }
         
         public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
@@ -123,36 +152,19 @@ namespace _Scripts.Networking
             }    
         }
 
+        //client have to read the new clients names and whatever is needed then updatePlayer list
         void ReadPlayerList(BinaryReader reader, long currentPosition = 0)
         {
             int Count = reader.ReadInt32();
-            List<string> newPlayerList = new List<string>();
+            List<ClientData> newPlayerList = new List<ClientData>();
             for (int i = 0; i < Count; i++)
             {
-                string name = reader.ReadString();
-                newPlayerList.Add(name);
+                ClientData client = new ClientData();
+                client.userName= reader.ReadString();
+                newPlayerList.Add(client);
             }
+            UpdatePlayerList(newPlayerList);
 
-            foreach (GameObject p in playerList)
-            {
-                Destroy(p);
-            }
-
-            foreach (string p in newPlayerList)
-            {
-                GameObject go = Instantiate(clientUiPrefab, listHolder);
-                //set the player name
-                go.GetComponentInChildren<TMP_Text>().text = p;
-                //enable or disable the kick button
-                if (NetworkManager.Instance.IsHost())
-                {
-                    go.GetComponentInChildren<Button>().enabled = true;
-                }
-                else
-                {
-                    go.GetComponentInChildren<Button>().enabled = false;
-                }
-            }
         }
     }
 }
