@@ -1,4 +1,3 @@
-#define AUTHENTICATION_CODE
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,9 +5,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using _Scripts.Networking.Network_Behaviours;
-using Unity.VisualScripting;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace _Scripts.Networking

@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 7430432126554555480}
   - component: {fileID: 7430432126554555483}
   - component: {fileID: 7249099300773690799}
-  - component: {fileID: 1459934084883564601}
   - component: {fileID: 474254513456688477}
   m_Layer: 0
   m_Name: BasicBullet
@@ -132,18 +131,7 @@ MonoBehaviour:
     m_Bits: 448
   damage: 5
   destroyOnContactWithLayer: 1
---- !u!114 &1459934084883564601
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7430432126554555486}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8bb6e295f51da0c43816dfe59d1a8e19, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  destructionTime: 1
 --- !u!70 &474254513456688477
 CapsuleCollider2D:
   m_ObjectHideFlags: 0

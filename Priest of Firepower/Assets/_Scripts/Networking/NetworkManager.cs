@@ -219,7 +219,8 @@ namespace _Scripts.Networking
         #region Connection Initializers
         public void StartClient()
         {
-            _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            if (_client == null)
+                _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             
             if (isServerOnSameMachine)
             {
@@ -229,6 +230,7 @@ namespace _Scripts.Networking
             _client.ConnectToServer(new IPEndPoint(serverAdress, defaultServerTcpPort), new IPEndPoint(serverAdress, defaultServerUdpPort));
             _isClient = true;
         }
+        
         public void StartHost()
         {
             _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));

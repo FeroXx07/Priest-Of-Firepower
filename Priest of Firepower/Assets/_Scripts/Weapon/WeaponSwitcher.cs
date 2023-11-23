@@ -1,4 +1,5 @@
 using System;
+using _Scripts.Player;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -13,12 +14,11 @@ namespace _Scripts.Weapon
         public float switchTime;
         float _lastSwtichTime;
 
-        public static Action<Transform> OnWeaponSwitch;
-        public static Action<GameObject, int> OnWeaponChange;
+        public Action<Transform> OnWeaponSwitch;
+        public Action<PlayerShooter, GameObject, int> OnWeaponChange;
 
         [SerializeField] GameObject initialWeaponPrefab;
         [SerializeField] GameObject initialSecondaryWeaponPrefab;
-
 
         [Serializable]
         public struct WeaponSlot
@@ -121,10 +121,10 @@ namespace _Scripts.Weapon
             slots[emptySlot.index] = emptySlot;
 
             GameObject weapon = Instantiate(newWeaponPrefab,emptySlot.holder.transform);
-            weapon.GetComponent<Weapon>().SetData();
-            weapon.GetComponent<Weapon>().SetOwner(gameObject);
-
-            OnWeaponChange?.Invoke(weapon, emptySlot.index);
+            Weapon weaponComponent =  weapon.GetComponent<Weapon>();
+            weaponComponent.SetData();
+            weaponComponent.SetOwner(gameObject);
+            OnWeaponChange?.Invoke(gameObject.GetComponent<PlayerShooter>(), weapon, emptySlot.index);
 
         }
         void OnWeaponSelected()

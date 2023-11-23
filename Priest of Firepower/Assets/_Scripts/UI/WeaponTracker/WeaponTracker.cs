@@ -1,3 +1,5 @@
+using System;
+using _Scripts.Networking;
 using _Scripts.Player;
 using _Scripts.ScriptableObjects;
 using _Scripts.Weapon;
@@ -9,14 +11,23 @@ namespace _Scripts.UI.WeaponTracker
     {
         [SerializeField] WeaponUIInfo primaryWeapon;
         [SerializeField] WeaponUIInfo secodnaryWeapon;
+        private PlayerShooter lastPlayerShooter;
+        private void OnEnable()
+        {
+            WeaponSwitcher weaponSwitcher = NetworkManager.Instance.player.GetComponent<WeaponSwitcher>();
+            weaponSwitcher.OnWeaponChange += ChangeWeapon;
 
+            if (lastPlayerShooter)
+            {
+                lastPlayerShooter.OnShoot -= UpdateWeaponUI;
+                lastPlayerShooter.OnFinishedReload -= UpdateWeaponUI;
+            }
+        }
 
-    private void OnEnable()
-    {
-        WeaponSwitcher.OnWeaponChange += ChangeWeapon;
-        PlayerShooter.OnShoot += UpdateWeaponUI;
-        PlayerShooter.OnFinishedReload += UpdateWeaponUI;
-    }
+        private void OnDisable()
+        {
+            WeaponSwitcher weaponSwitcher = NetworkManager.Instance.player.GetComponent<WeaponSwitcher>();
+        }
 
         void UpdateWeaponUI()
         {
@@ -24,10 +35,14 @@ namespace _Scripts.UI.WeaponTracker
             secodnaryWeapon.UpdateUI();
         }
 
-        void ChangeWeapon(GameObject weapon, int index)
+        void ChangeWeapon(PlayerShooter shooter, GameObject weapon, int index)
         {
+            lastPlayerShooter = shooter;
+            shooter.OnShoot += UpdateWeaponUI;
+            shooter.OnFinishedReload += UpdateWeaponUI;
+            
             WeaponData data = weapon.GetComponent<Weapon.Weapon>().localData;
-
+            
             if (data == null)
             {
                 Debug.Log("Error Changing Weapon UI");

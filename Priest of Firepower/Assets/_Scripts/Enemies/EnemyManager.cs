@@ -13,15 +13,14 @@ namespace _Scripts.Enemies
         public int numToInit = 5;
 
         [SerializeField] AnimationCurve enemyCountProgression = new AnimationCurve();
+
         // [SerializeField] float spawnFrequency = 0.5f;
         [SerializeField] List<Enemy> enemiesAlive = new List<Enemy>();
 
         //current number of enemies to spanw on the current wave
         int _numberOfEnemiesToSpwan = 0;
-
-        float _spawnRate  = 0.5f;
+        float _spawnRate = 0.5f;
         float _spawnTimer;
-
         public Action<int> OnEnemyCountUpdate;
         public Action<Enemy> OnEnemySpawn;
         public Action<Enemy> OnEnemyRemove;
@@ -45,7 +44,6 @@ namespace _Scripts.Enemies
                     _spawnTimer = _spawnRate;
                     //Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
                     OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
-
                 }
             }
         }
@@ -55,14 +53,10 @@ namespace _Scripts.Enemies
             // TODO add probability
             int enemyType = UnityEngine.Random.Range(0, enemiesPrefabs.Count - 1);
             GameObject enemyPrefab = enemiesPrefabs[enemyType];
-            GameObject polledObj = PoolManager.Instance.Pull(enemyPrefab, spawnPosition);
-
-            if (polledObj.TryGetComponent(out Enemy enemy))
-                AddEnemyToList(enemy);
-
-
+            //GameObject polledObj = PoolManager.Instance.Pull(enemyPrefab, spawnPosition);
+            GameObject polledObj = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+            if (polledObj.TryGetComponent(out Enemy enemy)) AddEnemyToList(enemy);
             OnEnemySpawn?.Invoke(enemy);
-
             return polledObj;
         }
 
@@ -76,7 +70,7 @@ namespace _Scripts.Enemies
         {
             enemiesAlive.Remove(enemy);
             enemy.onDeath.RemoveListener(RemoveEnemyFromList);
-            Debug.Log("enemies alive: " + enemiesAlive.Count );
+            Debug.Log("enemies alive: " + enemiesAlive.Count);
             OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
             OnEnemyRemove?.Invoke(enemy);
         }
@@ -85,9 +79,7 @@ namespace _Scripts.Enemies
         {
             GameObject bombObject = new GameObject("NUKE");
             NuclearBomb nuke = bombObject.AddComponent<NuclearBomb>();
-
             nuke.Damage = 100000;
-
             foreach (Enemy enemy in enemiesAlive.ToArray())
             {
                 if (enemy.TryGetComponent(out HealthSystem healthSystem))
@@ -104,18 +96,27 @@ namespace _Scripts.Enemies
             //increase number of enemies 
             //TODO improve function
             // return Mathf.RoundToInt(Mathf.Sqrt(Mathf.Exp(round)));
-            return  Mathf.FloorToInt( enemyCountProgression.Evaluate(round));
+            return Mathf.FloorToInt(enemyCountProgression.Evaluate(round));
         }
 
         Transform GetRadomSpawnPoint()
         {
             return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count)];
         }
+
         public void AddSpawnpoint(Transform spawnPoint)
         {
             _spawnPoints.Add(spawnPoint);
         }
-        public int GetEnemiesAlive() { return enemiesAlive.Count; }
-        public int GetEnemiesCountLeft() { return _numberOfEnemiesToSpwan; }
+
+        public int GetEnemiesAlive()
+        {
+            return enemiesAlive.Count;
+        }
+
+        public int GetEnemiesCountLeft()
+        {
+            return _numberOfEnemiesToSpwan;
+        }
     }
 }

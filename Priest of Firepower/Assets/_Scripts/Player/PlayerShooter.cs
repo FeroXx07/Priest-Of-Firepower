@@ -1,4 +1,5 @@
 using System;
+using _Scripts.Networking;
 using _Scripts.Weapon;
 using UnityEngine;
 
@@ -10,28 +11,63 @@ namespace _Scripts.Player
         [SerializeField] LayerMask layerMask;
         Transform _weaponHolder;
         [SerializeField] float weaponOffset = .5f;
-        public static Action OnShoot;
-        public static Action OnStartingReload;
-        public static Action OnReload;
-        public static Action OnFinishedReload;
-        public static Action<bool> OnFlip;
+        
+        public Action OnShoot;
+        public Action OnStartingReload;
+        public Action OnReload;
+        public Action OnFinishedReload;
+        public Action<bool> OnFlip;
+        
         private bool _flipped;
         private float _range = 1;
+        
+        [SerializeField] private Weapon.Weapon _currentWeapon; 
+        [SerializeField] private Player _player;
+        [SerializeField] private WeaponSwitcher _weaponSwitcher;
+        [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
+
+        private void Awake()
+        {
+            _weaponSwitcher = GetComponent<WeaponSwitcher>();
+        }
+
         void Start()
         {
             shootMarker.positionCount = 2;
             _flipped = false;
+            _player = GetComponent<Player>();
         }
         private void OnEnable()
         {
-            WeaponSwitcher.OnWeaponSwitch += ChangeHolder;
+            _weaponSwitcher.OnWeaponSwitch += ChangeHolder;
         }
+
+        private void OnDisable()
+        {
+            _weaponSwitcher.OnWeaponSwitch -= ChangeHolder;
+        }
+
         void Update()
         {
+            if (myId != _player.GetPlayerId())
+                return;
+            
+            if (Input.GetMouseButton(0))
+                OnShoot?.Invoke();
+
+            if (Input.GetKeyDown(KeyCode.R))
+                OnReload?.Invoke();
+        }
+
+        private void FixedUpdate()
+        {
+            if (myId != _player.GetPlayerId())
+                return;
+            
             // Get the mouse position in world coordinates.
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = 0;
-
+            
             Vector3 shootDir = (mousePos - transform.position).normalized;
 
             RaycastHit2D hit = Physics2D.Raycast(transform.position, shootDir, _range, layerMask);
@@ -57,17 +93,10 @@ namespace _Scripts.Player
 
             // Create a Quaternion for the rotation.
             Quaternion targetRotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
-
-
+            
             _weaponHolder.transform.rotation = targetRotation;
 
             _weaponHolder.transform.position = transform.position + shootDir * weaponOffset;  
-
-            if (Input.GetMouseButton(0))
-                OnShoot?.Invoke();
-
-            if (Input.GetKeyDown(KeyCode.R))
-                OnReload?.Invoke();
         }
 
         void UpdateShootMarker(Vector3 finalPos)
@@ -98,9 +127,13 @@ namespace _Scripts.Player
         void ChangeHolder(Transform holder)
         {
             _weaponHolder = holder;
-            Weapon.Weapon wp = holder.GetComponentInChildren<Weapon.Weapon>();
-            if(wp != null)
-                _range = wp.localData.range;
+            _currentWeapon = holder.GetComponentInChildren<Weapon.Weapon>();
+            
+            if (_currentWeapon != null)
+            {
+                _range = _currentWeapon.localData.range;
+                _currentWeapon.SetPlayerShooter(this);
+            }
         }
     }
 }

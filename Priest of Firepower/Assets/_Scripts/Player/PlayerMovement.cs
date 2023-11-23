@@ -48,10 +48,13 @@ namespace _Scripts.Player
         
         void Update()
         {
-            if (Input.GetKey(KeyCode.W)) input[0] = true;
-            if (Input.GetKey(KeyCode.D)) input[1] = true;
-            if (Input.GetKey(KeyCode.S)) input[2] = true;
-            if (Input.GetKey(KeyCode.A)) input[3] = true;
+            if (myId == player.GetPlayerId())
+            {
+                if (Input.GetKey(KeyCode.W)) input[0] = true;
+                if (Input.GetKey(KeyCode.D)) input[1] = true;
+                if (Input.GetKey(KeyCode.S)) input[2] = true;
+                if (Input.GetKey(KeyCode.A)) input[3] = true;
+            }
         }
 
         public override void FixedUpdate()
@@ -68,6 +71,7 @@ namespace _Scripts.Player
                 if (input[3]) direction += Vector2.left;
                 _rb.velocity = direction * speed;
             }
+            
             for (int i = 0; i < 4; i++)
                 input[i] = false;
         }
