@@ -416,7 +416,7 @@ MonoBehaviour:
   globalObjectIdHash: 0
   tickRate: 1
   tickCounter: 0
-  showDebugInfo: 0
+  showDebugInfo: 1
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1
@@ -426,7 +426,8 @@ MonoBehaviour:
   receivedTransformList: []
   sequenceNum: 0
   lastProcessedSequenceNum: -1
-  interpolationDuration: 0.1
+  interpolationTime: 0.1
+  interpolationTimer: 0
 --- !u!114 &-4167005071263701011
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -40,6 +40,6 @@ namespace _Scripts.Networking
         public bool playerInstantiated = false;
 
         public System.Diagnostics.Stopwatch heartBeatStopwatch;
-        public float disconnectTimeout = 1500;
+        public float disconnectTimeout = 2500;
     }
 }
