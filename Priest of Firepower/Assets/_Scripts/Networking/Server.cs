@@ -419,7 +419,7 @@ namespace _Scripts.Networking
             {
                 Debug.Log($"Server {_localEndPointTcp}: Incoming connection is possible local host, authenticating possible host client");
                 ClientData hostClient = new ClientData();
-                
+                hostClient.userName = NetworkManager.Instance.PlayerName;
                 hostClient.connectionTcp = incomingConnection;
                 hostClient.endPointTcp = incomingConnection.RemoteEndPoint as IPEndPoint;
                 hostClient.endPointUdp = new IPEndPoint(IPAddress.Loopback,0000);
