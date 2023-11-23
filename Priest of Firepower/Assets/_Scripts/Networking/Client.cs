@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using Unity.VisualScripting;
-using UnityEngine;
+using UnityEngine.SceneManagement;
+using Debug = UnityEngine.Debug;
 
 namespace _Scripts.Networking
 {
@@ -97,6 +99,10 @@ namespace _Scripts.Networking
                 _serverListenerProcess.thread =
                     new Thread(() => ListenToServer(_serverListenerProcess.cancellationToken.Token));
                 _serverListenerProcess.thread.Start();
+
+                //start hearbeat stopwatch
+                _clientData.heartBeatStopwatch = new Stopwatch();
+                _clientData.heartBeatStopwatch.Start();
             }
             catch (Exception e)
             {
@@ -110,6 +116,13 @@ namespace _Scripts.Networking
             {
                 try
                 {
+                    if (NetworkManager.Instance.IsClient() && _clientData.disconnectTimeout < _clientData.heartBeatStopwatch.ElapsedMilliseconds)
+                    {
+                        Debug.Log("Client: server connection lost ...");
+                        MainThreadDispatcher.EnqueueAction(()=>NetworkManager.Instance.Reset());
+                        MainThreadDispatcher.EnqueueAction(()=>SceneManager.LoadScene("ConnectToLobby"));
+                    }
+                    
                     // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
                     ReceiveUdpSocketData(_clientData.connectionUdp);
 
@@ -270,7 +283,7 @@ namespace _Scripts.Networking
         #region Heart Beat
         public void HandleHeartBeat(BinaryReader reader)
         {
-            
+            _clientData.heartBeatStopwatch.Restart();
         }
 
         public void SendHeartBeat()

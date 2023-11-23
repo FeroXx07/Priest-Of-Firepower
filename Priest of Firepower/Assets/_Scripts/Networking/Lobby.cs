@@ -51,8 +51,7 @@ namespace _Scripts.Networking
             {
                 startGameBtn.gameObject.SetActive(false);
             }
- 
-            
+
         }
 
         private void Start()
@@ -103,8 +102,6 @@ namespace _Scripts.Networking
         {
             GameManager.Instance.StartGame(sceneToLoadOnGameStart);
         }
-
-
         public override void ListenToMessages(ulong senderId, string message, long timeStamp)
         {
             if (NetworkManager.Instance.IsClient())
@@ -146,12 +143,15 @@ namespace _Scripts.Networking
             foreach (ClientData p in newPlayerList)
             {
                 GameObject go = Instantiate(clientUiPrefab, listHolder);
+                
                 //set the player name
                 go.GetComponentInChildren<TMP_Text>().text = p.userName;
+                
                 //enable or disable the kick button
                 if (NetworkManager.Instance.IsHost())
                 {
-                    go.GetComponentInChildren<Button>().gameObject.SetActive(true);
+                    go.GetComponentInChildren<Button>().onClick.AddListener(()=>NetworkManager.Instance.RemoveClient(p));
+                    go.GetComponentInChildren<Button>().gameObject.SetActive(!p.isHost);
                 }
                 else
                 {
@@ -245,11 +245,6 @@ namespace _Scripts.Networking
             }
             UpdatePlayerList(newPlayerList);
         }
-
         #endregion
-   
-    
-
-
     }
 }
