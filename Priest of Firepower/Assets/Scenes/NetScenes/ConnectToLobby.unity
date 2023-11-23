@@ -271,8 +271,9 @@ GameObject:
   - component: {fileID: 110263732}
   - component: {fileID: 110263734}
   - component: {fileID: 110263733}
+  - component: {fileID: 110263735}
   m_Layer: 5
-  m_Name: SkinImg
+  m_Name: Flag
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -287,7 +288,7 @@ RectTransform:
   m_GameObject: {fileID: 110263731}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 10.813955, y: 10.813955, z: 10.813955}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 767198759}
@@ -295,8 +296,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 145.8, y: 28.8}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchoredPosition: {x: 144.8761, y: -38.999996}
+  m_SizeDelta: {x: 10, y: 10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &110263733
 MonoBehaviour:
@@ -318,7 +319,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 2509816a4d9221b408f021adeb29bbe8, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 213a8fe7c49deec4ea4a2129b0ee5fc7, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -336,6 +337,26 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 110263731}
   m_CullTransparentMesh: 1
+--- !u!114 &110263735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 110263731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f69d935770c3b7e44b00d088da525d46, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sprites:
+  - {fileID: 21300000, guid: 8af4ac44ee7c0024f8e3e9c1da2300e3, type: 3}
+  - {fileID: 21300000, guid: c130f292cc31327499308e8488b480e5, type: 3}
+  - {fileID: 21300000, guid: 213a8fe7c49deec4ea4a2129b0ee5fc7, type: 3}
+  - {fileID: 21300000, guid: d0e6f8e80faed4645b4c71ea2b9e6592, type: 3}
+  spritePerFrame: 64
+  loop: 1
+  destroyOnEnd: 0
 --- !u!1 &286136761
 GameObject:
   m_ObjectHideFlags: 0
@@ -2409,7 +2430,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 145.80002, y: -46.2}
+  m_AnchoredPosition: {x: 149.77612, y: 28.799997}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1883982825
