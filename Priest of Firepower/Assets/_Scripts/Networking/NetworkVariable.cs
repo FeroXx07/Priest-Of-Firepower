@@ -35,6 +35,7 @@ namespace _Scripts.Networking
         [SerializeField] Type _type;
         [SerializeField] private bool isDirty = false;
         [SerializeField] private bool isLastValueFromNetwork = false;
+        public Action<T, T> onValueChangedNetwork;
         private ChangeTracker _changeTracker = null;
         private int _trackerIndex;
         public T Value { get => value; set => SetValue(value); }
@@ -128,6 +129,8 @@ namespace _Scripts.Networking
             isDirty = false;
             isLastValueFromNetwork = true;
 
+            T oldValue = value;
+            
             if (_type == typeof(int))
                 value = (T)(object)reader.ReadInt32();
             else if (_type == typeof(bool))
@@ -146,6 +149,8 @@ namespace _Scripts.Networking
                 value = (T)(object)reader.ReadInt64();
             else
                 throw new NotSupportedException($"Deserialization of type {_type} is not supported.");
+            
+            onValueChangedNetwork?.Invoke(oldValue, value);
         }
 
         public object GetValue()

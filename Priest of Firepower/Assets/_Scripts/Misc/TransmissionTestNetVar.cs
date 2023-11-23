@@ -12,7 +12,17 @@ namespace _Scripts.Misc
             NetworkVariableList.Add(variableA);
             NetworkVariableList.Add(variableB);
         }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            variableA.onValueChangedNetwork += delegate(int i, int i1) {  };
+        }
         
+        public override void OnDisable()
+        {
+            base.OnEnable();
+        }
         public override void Awake()
         {
             base.Awake();
