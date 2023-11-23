@@ -51,10 +51,9 @@ namespace _Scripts.Networking
         #endregion
 
         #region  Actions
-        public Action<ClientData> onClientAccepted;
-        public Action<UInt64> onClientRemoved;
+
+        public Action onClientConnected;
         public Action onClientDisconnected;
-        public Action<UInt64, byte[]> onDataRecieved;
         #endregion
         
         #region Disconnections & Threads Cancellation
@@ -92,18 +91,14 @@ namespace _Scripts.Networking
         }
         public void UpdatePendingDisconnections() // executed on network manager update
         {
-            lock (_clientsList)
+            lock(_clientsToRemove)
             {
                 if (_clientsToRemove.Count > 0)
-                {
-                    lock (_clientsList)
+                { 
+                    foreach (ClientData clientToRemove in _clientsToRemove)
                     {
-                        foreach (ClientData clientToRemove in _clientsToRemove)
-                        {
-                            RemoveClient(clientToRemove);
-                        }
+                        RemoveClient(clientToRemove);
                     }
-                    Debug.Log($"Server {_localEndPointTcp}: Removed {_clientsToRemove.Count} clients");
                     _clientsToRemove.Clear();
                 }
             }
@@ -251,10 +246,11 @@ namespace _Scripts.Networking
                     }
                     
                     //check if time out has passed then add to remove client
-                    if (NetworkManager.Instance.IsHost() && clientData.heartBeatStopwatch != null &&
-                        clientData.disconnectTimeout < clientData.heartBeatStopwatch.ElapsedMilliseconds)
+                    if (NetworkManager.Instance.IsHost() && clientData.heartBeatStopwatch != null && clientData.state != ClientSate.DISCONNECTED &&
+                        clientData.disconnectTimeout < clientData.heartBeatStopwatch.ElapsedMilliseconds )
                     {
                         Debug.Log("Server: Heartbeat timeout ...");
+                        clientData.state = ClientSate.DISCONNECTED;
                         _clientsToRemove.Add(clientData);
                     }
                     
@@ -423,7 +419,7 @@ namespace _Scripts.Networking
             {
                 Debug.Log($"Server {_localEndPointTcp}: Incoming connection is possible local host, authenticating possible host client");
                 ClientData hostClient = new ClientData();
-
+                
                 hostClient.connectionTcp = incomingConnection;
                 hostClient.endPointTcp = incomingConnection.RemoteEndPoint as IPEndPoint;
                 hostClient.endPointUdp = new IPEndPoint(IPAddress.Loopback,0000);
@@ -457,20 +453,24 @@ namespace _Scripts.Networking
             lock (_clientsList)
             {
                 clientData.isHost = isHost;
-                //add a time out exeption for when the client disconnects or has lag or something
+                
                 clientData.connectionTcp.ReceiveTimeout = Timeout.Infinite;
                 clientData.connectionTcp.SendTimeout = Timeout.Infinite;
                 
+                clientData.state = ClientSate.AUTHENTICATED;
+                
+                //start heartbeat 
                 if (!clientData.isHost)
                 {
                     clientData.heartBeatStopwatch = new Stopwatch();
                     clientData.heartBeatStopwatch.Start();
                 }
-
+                
+                //add connected client to the list
                 _clientsList.Add(clientData);
                 
                 //Call event that the client is connected successfully
-                MainThreadDispatcher.EnqueueAction(NetworkManager.Instance.OnClientConnected);
+                MainThreadDispatcher.EnqueueAction(onClientConnected);
                 
                 //shutdown authentication process
                 lock (_authenticationProcesses)
@@ -513,7 +513,8 @@ namespace _Scripts.Networking
 
                     clientData.connectionTcp.Close();
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected successfully");
-                    onClientDisconnected?.Invoke();
+                    _clientsList.Remove(clientData);
+                    MainThreadDispatcher.EnqueueAction(onClientDisconnected);
                 }
             }
             catch (Exception e)

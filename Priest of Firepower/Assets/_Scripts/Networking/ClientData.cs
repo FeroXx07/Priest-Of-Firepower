@@ -6,9 +6,9 @@ namespace _Scripts.Networking
 {
     public enum ClientSate
     {
+        DISCONNECTED,
         CONNECTED,
         AUTHENTICATED,
-        IN_GAME
     }
     public class ClientData
     {
@@ -29,7 +29,7 @@ namespace _Scripts.Networking
         public string userName;
         public IPEndPoint endPointTcp;
         public IPEndPoint endPointUdp;
-        public ClientSate state;
+        public ClientSate state = ClientSate.CONNECTED;
         public Socket connectionTcp;
         public Socket connectionUdp;
 
@@ -41,6 +41,5 @@ namespace _Scripts.Networking
 
         public System.Diagnostics.Stopwatch heartBeatStopwatch;
         public float disconnectTimeout = 1500;
-
     }
 }

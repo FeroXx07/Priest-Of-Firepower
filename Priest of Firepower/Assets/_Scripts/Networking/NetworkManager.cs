@@ -225,7 +225,8 @@ namespace _Scripts.Networking
             {
                 try
                 {
-                    _server.onClientDisconnected -= OnClientDisconnected;
+                    _server.onClientConnected -= ClientConnected;
+                    _server.onClientDisconnected -= ClientDisconected;
                     _server.Shutdown();
                 }
                 catch (Exception e)
@@ -259,7 +260,8 @@ namespace _Scripts.Networking
             _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
                 new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
 
-            _server.onClientDisconnected += OnClientDisconnected;
+            _server.onClientConnected += ClientConnected;
+            _server.onClientDisconnected += ClientDisconected;
 
             _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
 
