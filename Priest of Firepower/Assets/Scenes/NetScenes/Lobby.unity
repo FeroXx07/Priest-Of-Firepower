@@ -557,6 +557,74 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 271126038}
   m_CullTransparentMesh: 1
+--- !u!1 &274391542
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 274391545}
+  - component: {fileID: 274391544}
+  - component: {fileID: 274391543}
+  m_Layer: 0
+  m_Name: EventSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &274391543
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274391542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
+  m_HorizontalAxis: Horizontal
+  m_VerticalAxis: Vertical
+  m_SubmitButton: Submit
+  m_CancelButton: Cancel
+  m_InputActionsPerSecond: 10
+  m_RepeatDelay: 0.5
+  m_ForceModuleActive: 0
+--- !u!114 &274391544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274391542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
+--- !u!4 &274391545
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 274391542}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &398171423
 GameObject:
   m_ObjectHideFlags: 0
@@ -679,7 +747,7 @@ MonoBehaviour:
   doTickUpdates: 1
   clientSendReplicationData: 0
   startGameBtn: {fileID: 10680930}
-  sceneToLoadOnGameStart: 
+  sceneToLoadOnGameStart: Game_Networking_Test
   clientUiPrefab: {fileID: 5911891818394349386, guid: f45b157ff2d91b149b631458aae8f8db, type: 3}
   listHolder: {fileID: 1595368701}
   ipAddress: {fileID: 1241243496}
@@ -702,15 +770,13 @@ MonoBehaviour:
   synchronizeTransform: 0
   sendEveryChange: 0
   sendTickChange: 0
+  clientSendReplicationData: 0
   isInterpolating: 0
   lastAction: 4
-  lastReceivedTransformData:
-    position: {x: 0, y: 0, z: 0}
-    rotation: {x: 0, y: 0, z: 0, w: 0}
-    scale: {x: 0, y: 0, z: 0}
-    timeStamp: 0
-    action: 0
+  receivedTransforms: []
   lerpValue: 0.25
+  sequenceNum: 0
+  interpolationDuration: 0.1
 --- !u!1 &405895725
 GameObject:
   m_ObjectHideFlags: 0
@@ -1035,15 +1101,13 @@ MonoBehaviour:
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1
+  clientSendReplicationData: 0
   isInterpolating: 0
   lastAction: 4
-  lastReceivedTransformData:
-    position: {x: 0, y: 0, z: 0}
-    rotation: {x: 0, y: 0, z: 0, w: 0}
-    scale: {x: 0, y: 0, z: 0}
-    timeStamp: 0
-    action: 0
+  receivedTransforms: []
   lerpValue: 0.25
+  sequenceNum: 0
+  interpolationDuration: 0.1
 --- !u!114 &591991117
 MonoBehaviour:
   m_ObjectHideFlags: 0

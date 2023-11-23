@@ -30,9 +30,6 @@ namespace _Scripts.Networking
         
         [SerializeField] private TMP_Text ipAddress;
         private List<GameObject> playerList = new List<GameObject>();
-
-        private NetworkVariable<bool> startGame = new NetworkVariable<bool>(false,0);
-
         public override void Awake()
         {
             // init network variable
@@ -43,7 +40,18 @@ namespace _Scripts.Networking
             
             NetworkManager.Instance.OnClientConnected += OnClientConnected;
             NetworkManager.Instance.OnClientDisconnected += OnClientDisconnected;
-            startGameBtn.onClick.AddListener(StartGame);
+        
+            //enable the start button if host otherwise not
+            if (NetworkManager.Instance.IsHost())
+            {
+                startGameBtn.gameObject.SetActive(true);
+                startGameBtn.onClick.AddListener(StartGame);
+            }
+            else
+            {
+                startGameBtn.gameObject.SetActive(false);
+            }
+ 
             
         }
 
@@ -67,7 +75,6 @@ namespace _Scripts.Networking
         public override void OnEnable()
         {
             base.OnEnable();
-            startGame.onValueChangedNetwork += OnStartGame;
         }
         public override void OnDisable()
         {
@@ -79,51 +86,24 @@ namespace _Scripts.Networking
 
         protected override void InitNetworkVariablesList()
         {
-            NetworkVariableList.Add(startGame);
+            
         }
-
-        protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
-        {
-            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            bool ret = true;
-            // Serialize
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
-            writer.Write((int)action);
-            writer.Write((int)_lobbyAction);
-            if (NetworkManager.Instance.IsHost())
-            {
-                switch (_lobbyAction)
-                {
-                    case LobbyAction.UPDATE_LIST:
-                        WritePlayersList(writer);
-                        break;
-                    case LobbyAction.NONE:
-                        Debug.Log("Lobby: Action None");
-                        ret = false;
-                        break;
-                }
-            }
-            //Set the lobby action to none avoid any posible error writing corrupted data
-            _lobbyAction = LobbyAction.NONE;
-            return ret;
-        }
-
         
         void StartGame()
         {
-            startGame.SetValue(true);
+       
+            if (!NetworkManager.Instance.IsHost()) return;
+            
+            _lobbyAction = LobbyAction.START_GAME;
+            SendReplicationData(ReplicationAction.UPDATE);
+            OnStartGame();
         }
 
-        void OnStartGame(bool prev, bool newV)
+        void OnStartGame()
         {
-            if ((bool)startGame.GetValue())
-            {
-                GameManager.Instance.StartGame(sceneToLoadOnGameStart);
-                Debug.Log("Starting game ...");
-            }
+            GameManager.Instance.StartGame(sceneToLoadOnGameStart);
         }
+
 
         public override void ListenToMessages(ulong senderId, string message, long timeStamp)
         {
@@ -180,22 +160,36 @@ namespace _Scripts.Networking
                 playerList.Add(go);
             }
         }
-        
-        public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
+        #region write
+        protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
-            _lobbyAction = (LobbyAction)reader.ReadInt32();
-            switch (_lobbyAction)
+            base.WriteReplicationPacket(outputMemoryStream, action);
+            
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            writer.BaseStream.Position = outputMemoryStream.Length;
+            bool ret = true;
+            
+            // write lobby actions
+            writer.Write((int)_lobbyAction);
+            if (NetworkManager.Instance.IsHost())
             {
-                case LobbyAction.UPDATE_LIST:
-                    ReadPlayerList(reader,currentPosition);
-                    break;
-                case LobbyAction.NONE:
-                    Debug.Log("Lobby: Action None");
-                    break;
+                switch (_lobbyAction)
+                {
+                    case LobbyAction.UPDATE_LIST:
+                        WritePlayersList(writer);
+                        break;
+                    case LobbyAction.START_GAME:
+                        //nothing, just send the start game action
+                        break;
+                    case LobbyAction.NONE:
+                        Debug.Log("Lobby: Action None");
+                        ret = false;
+                        break;
+                }
             }
-            //Set the lobby action to none avoid any posible error reading corrupted data
+            //Set the lobby action to none avoid any posible error writing corrupted data
             _lobbyAction = LobbyAction.NONE;
-            return false;
+            return ret;
         }
         
         void WritePlayersList(BinaryWriter writer)
@@ -211,6 +205,33 @@ namespace _Scripts.Networking
             }    
         }
 
+        #endregion
+
+        #region  read
+        public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
+        {
+            base.ReadReplicationPacket(reader, currentPosition);
+            if (NetworkManager.Instance.IsClient())
+            {
+                _lobbyAction = (LobbyAction)reader.ReadInt32();
+                switch (_lobbyAction)
+                {
+                    case LobbyAction.UPDATE_LIST:
+                        ReadPlayerList(reader,currentPosition);
+                        break;
+                    case LobbyAction.START_GAME:
+                        OnStartGame();
+                        break;
+                    case LobbyAction.NONE:
+                        Debug.Log("Lobby: Action None");
+                        break;
+                }
+            }
+
+            //Set the lobby action to none avoid any posible error reading corrupted data
+            _lobbyAction = LobbyAction.NONE;
+            return false;
+        }
         //client have to read the new clients names and whatever is needed then updatePlayer list
         void ReadPlayerList(BinaryReader reader, long currentPosition = 0)
         {
@@ -224,5 +245,11 @@ namespace _Scripts.Networking
             }
             UpdatePlayerList(newPlayerList);
         }
+
+        #endregion
+   
+    
+
+
     }
 }

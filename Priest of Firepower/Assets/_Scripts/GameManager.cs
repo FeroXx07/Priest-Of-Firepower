@@ -10,24 +10,32 @@ namespace _Scripts
         [SerializeField] EnemyManager enemySpawnManager;
 
         [SerializeField]RoundSystem roundSystem;
+        public void StartGame(string sceneToLoad)
+        {
+            SceneManager.LoadScene(sceneToLoad);
+            SceneManager.sceneLoaded += SpawnPlayers;
+        }
 
+        void SpawnPlayers(Scene arg0, LoadSceneMode loadSceneMode)
+        {
+            if (NetworkManager.Instance.IsHost())
+            {
+                NetworkManager.Instance.InstantiatePlayer();
+            }
+        }
         private void Start()
         {
-            roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
-            roundSystem.StartRound();
+            //roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
+            //roundSystem.StartRound();
         }
 
 
         private void Update()
         {
-            roundSystem.RoundFinished(enemySpawnManager);
+           // roundSystem.RoundFinished(enemySpawnManager);
         }
 
-        public void StartGame(string sceneToLoad)
-        {
-            SceneManager.LoadScene(sceneToLoad);
-            NetworkManager.Instance.InstantiatePlayer();
-        }
+
     }
 }
 
