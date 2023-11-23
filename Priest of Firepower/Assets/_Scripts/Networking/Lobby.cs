@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 
 namespace _Scripts.Networking
 {
@@ -20,19 +21,30 @@ namespace _Scripts.Networking
         }
 
         private LobbyAction _lobbyAction;
+        [Header("Host elements")]
+        [SerializeField] private Button startGameBtn;
+        [SerializeField] private string sceneToLoadOnGameStart;
+        [Header("Lobby info")]
         [SerializeField] private GameObject clientUiPrefab;
         [SerializeField] private Transform listHolder;
-        [SerializeField] private Button startGameBtn;
+        
         [SerializeField] private TMP_Text ipAddress;
         private List<GameObject> playerList = new List<GameObject>();
 
+        private NetworkVariable<bool> startGame = new NetworkVariable<bool>(false,0);
+
         public override void Awake()
         {
+            // init network variable
             base.Awake();
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
+            NetworkVariableList.ForEach(var => var.SetTracker(BITTracker));
+            
             NetworkManager.Instance.OnClientConnected += OnClientConnected;
             NetworkManager.Instance.OnClientDisconnected += OnClientDisconnected;
+            startGameBtn.onClick.AddListener(StartGame);
+            
         }
 
         private void Start()
@@ -52,15 +64,20 @@ namespace _Scripts.Networking
 
         }
 
+        private void OnEnable()
+        {
+            startGame.onValueChangedNetwork += OnStartGame;
+        }
         private void OnDisable()
         {
             NetworkManager.Instance.OnClientConnected -= OnClientConnected;
             NetworkManager.Instance.OnClientDisconnected -= OnClientDisconnected;
+            startGameBtn.onClick.RemoveListener(StartGame);
         }
 
         protected override void InitNetworkVariablesList()
         {
-          
+            NetworkVariableList.Add(startGame);
         }
 
         protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
@@ -89,6 +106,29 @@ namespace _Scripts.Networking
             //Set the lobby action to none avoid any posible error writing corrupted data
             _lobbyAction = LobbyAction.NONE;
             return ret;
+        }
+
+        
+        void StartGame()
+        {
+            startGame.SetValue(true);
+        }
+
+        void OnStartGame(bool prev, bool newV)
+        {
+            if ((bool)startGame.GetValue())
+            {
+                GameManager.Instance.StartGame(sceneToLoadOnGameStart);
+                Debug.Log("Starting game ...");
+            }
+        }
+
+        public override void ListenToMessages(ulong senderId, string message, long timeStamp)
+        {
+            if (NetworkManager.Instance.IsClient())
+            {
+                
+            }
         }
 
         public void OnClientConnected()
