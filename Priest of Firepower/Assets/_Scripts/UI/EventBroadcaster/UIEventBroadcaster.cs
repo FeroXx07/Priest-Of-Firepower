@@ -149,18 +149,16 @@ namespace _Scripts.UI.EventBroadcasting
             bg.color = bgCol;
             text.color = textCol;
 
-            text.text = "01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
-
 
             //AdjustHeight(ref tile, text, 43);
 
-            Rect r = new Rect(tile.GetComponent<RectTransform>().rect);
-            r.height = 60;
-            tile.GetComponent<RectTransform>().rect.Set(r.x, r.y, r.width, r.height);
-            tile.GetComponent<RectTransform>().ForceUpdateRectTransforms();
-            print(r);
+            //Rect r = new Rect(tile.GetComponent<RectTransform>().rect);
+            //r.height = 60;
+            //tile.GetComponent<RectTransform>().rect.Set(r.x, r.y, r.width, r.height);
+            //tile.GetComponent<RectTransform>().ForceUpdateRectTransforms();
+            //print(r);
 
-            tile.transform.parent = transform;
+            //tile.transform.parent = transform;
 
         }
 
