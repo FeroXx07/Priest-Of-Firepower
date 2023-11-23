@@ -240,7 +240,7 @@ namespace _Scripts.Networking
                     if (!clientData.connectionTcp.Connected)
                     {
                         Debug.Log($"Server {_localEndPointTcp}: Tcp is not connected client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
-                        RemoveClient(clientData);
+                        _clientsToRemove.Add(clientData);
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
@@ -494,6 +494,11 @@ namespace _Scripts.Networking
             }
         }
 
+        public void AddClientToRemove(ClientData client)
+        {
+            _clientsToRemove.Add(client);
+        }
+
         private void RemoveClient(ClientData clientData)
         {
             Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} trying to remove with Id: {clientData.id} and EP: {clientData.endPointTcp}");
@@ -604,7 +609,6 @@ namespace _Scripts.Networking
             writer.Write((int)PacketType.PING);
             writer.Write(0);
             SendUdpToAll(newStream.ToArray());
-   
         }
 
         #endregion

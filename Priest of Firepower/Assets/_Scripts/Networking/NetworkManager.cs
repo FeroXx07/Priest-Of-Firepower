@@ -180,18 +180,19 @@ namespace _Scripts.Networking
                 }
             }
         }
-
-        private void OnDisable()
+        
+        public void Reset()
         {
-            SceneManager.sceneLoaded -= ResetNetworkIds;
-            Debug.Log("Network Manager: Shutting down");
+            Debug.Log("NW reset ...");
             _receiveData.Shutdown();
             _sendData.Shutdown();
+            
             if (_client != null)
             {
                 try
                 {
                     _client.Shutdown();
+                    _client = null;
                 }
                 catch (Exception e)
                 {
@@ -206,6 +207,46 @@ namespace _Scripts.Networking
                     _server.onClientConnected -= ClientConnected;
                     _server.onClientDisconnected -= ClientDisconected;
                     _server.Shutdown();
+                    _server = null;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Network Manager: Shutting down exception {e}");
+                }
+            }
+            
+            _isHost = false;
+            _isClient = false;
+            _replicationManager = new ReplicationManager();
+            Start();
+        }
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= ResetNetworkIds;
+            Debug.Log("Network Manager: Shutting down");
+            _receiveData.Shutdown();
+            _sendData.Shutdown();
+            if (_client != null)
+            {
+                try
+                {
+                    _client.Shutdown();
+                    _client = null;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Network Manager: Shutting down exception {e}");
+                }
+            }
+
+            if (_server != null)
+            {
+                try
+                {
+                    _server.onClientConnected -= ClientConnected;
+                    _server.onClientDisconnected -= ClientDisconected;
+                    _server.Shutdown();
+                    _server = null;
                 }
                 catch (Exception e)
                 {
@@ -434,10 +475,13 @@ namespace _Scripts.Networking
                     }
 
                     //handle heart beats
-                    if (_isClient && heartBeatStopwatch.ElapsedMilliseconds >= _heartBeatRate)
+                    if (heartBeatStopwatch.ElapsedMilliseconds >= _heartBeatRate)
                     {
-                        //Debug.Log("Client: sending heartbeat");
-                        _client.SendHeartBeat();
+                        if(_isClient)
+                            _client.SendHeartBeat();
+                        if(_isHost)
+                            _server.SendHeartBeat();
+                        
                         heartBeatStopwatch.Restart();
                     }
 
@@ -697,6 +741,14 @@ namespace _Scripts.Networking
         public void ClientDisconected()
         {
             OnClientDisconnected?.Invoke();
+        }
+
+        public void RemoveClient(ClientData clientToRemove)
+        {
+            if (_isHost)
+            {
+                _server.AddClientToRemove(clientToRemove);
+            }
         }
 
         #endregion

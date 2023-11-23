@@ -25,6 +25,9 @@ namespace _Scripts.Networking
             {
                 thread.Abort();
             }
+
+            cancellationToken = null;
+            thread = null;
             
             Debug.Log("thread shutting down: " + Name);
         }
