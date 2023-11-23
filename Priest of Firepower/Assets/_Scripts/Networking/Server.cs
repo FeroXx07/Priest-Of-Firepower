@@ -100,7 +100,7 @@ namespace _Scripts.Networking
                     {
                         foreach (ClientData clientToRemove in _clientsToRemove)
                         {
-                            _clientsList.Remove(clientToRemove);
+                            RemoveClient(clientToRemove);
                         }
                     }
                     Debug.Log($"Server {_localEndPointTcp}: Removed {_clientsToRemove.Count} clients");
@@ -251,10 +251,11 @@ namespace _Scripts.Networking
                     }
                     
                     //check if time out has passed then add to remove client
-                    if (clientData.heartBeatStopwatch != null && clientData.disconnectTimeout < clientData.heartBeatStopwatch.ElapsedMilliseconds)
+                    if (NetworkManager.Instance.IsHost() && clientData.heartBeatStopwatch != null &&
+                        clientData.disconnectTimeout < clientData.heartBeatStopwatch.ElapsedMilliseconds)
                     {
                         Debug.Log("Server: Heartbeat timeout ...");
-                      //  RemoveClient(clientData);
+                        _clientsToRemove.Add(clientData);
                     }
                     
                     if (clientData.connectionTcp.Available > 0)
@@ -511,7 +512,6 @@ namespace _Scripts.Networking
                     }
 
                     clientData.connectionTcp.Close();
-                    _clientsToRemove.Add(clientData);
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected successfully");
                     onClientDisconnected?.Invoke();
                 }
