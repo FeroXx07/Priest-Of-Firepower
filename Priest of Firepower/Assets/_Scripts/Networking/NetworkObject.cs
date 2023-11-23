@@ -50,51 +50,53 @@ namespace _Scripts.Networking
         
         public List<TransformData> receivedTransformList = new List<TransformData>();
         TransformData newestTransformData;
+        TransformData previousSentTransform;
         public long sequenceNum = 0;
         public long lastProcessedSequenceNum = -1;
-        public float interpolationTime = 0.1f; // Interpolation time in seconds
+        public float interpolationTime = 0.1f; 
         [SerializeField] private float interpolationTimer = 0f;
         #endregion
         
         private void Awake()
         {
             newestTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
-            // newReceivedTransformData = new TransformData(transform.position, lastPosData.rotation, lastPosData.scale);
-            // lastPosData = new TransformData(transform.position, lastPosData.rotation, lastPosData.scale );
+            previousSentTransform = new TransformData(transform.position, transform.rotation, transform.localScale);
         }
 
         #region Network Transforms
-        public void ReadReplicationTransform(BinaryReader reader)
+        public void ReadReplicationTransform(BinaryReader reader, Int64 timeStamp)
         {
+            if (newestTransformData.timeStamp > timeStamp)
+            {
+                int offset = sizeof(Int64) + sizeof(Int32) + (sizeof(float)*3);
+                reader.BaseStream.Seek(offset, SeekOrigin.Current); 
+            }
+            
             TransformData newReceivedTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
-            newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
-            newReceivedTransformData.timeStamp = reader.ReadInt64();
             newReceivedTransformData.sequenceNumber = reader.ReadInt64();
+            
+            // if (newReceivedTransformData.sequenceNumber > newestTransformData.sequenceNumber) // Mirar para no leer uno antiguo
+            // {
+            //     lastProcessedSequenceNum = newReceivedTransformData.sequenceNumber; // Set el mas reciente
+            //     newestTransformData = newReceivedTransformData;
+            // }
+            // else
+            // {
+            //     int offset = sizeof(Int64) + sizeof(Int32) + (sizeof(float)*3);
+            //     reader.BaseStream.Seek(offset, SeekOrigin.Current); 
+            //     return;
+            // }
+            newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
+            
             // Serialize
             Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
-            Quaternion newQuat = new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(),
-                reader.ReadSingle());
+            float rotZ = reader.ReadSingle();
             
-            //Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
-            // Before starting to interpolate to the new value,
-            // If previous value hasn't been interpolated completely, finish it
-            // if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
-            // transform.position = newReceivedTransformData.position;
-            // transform.rotation = newReceivedTransformData.rotation;
-            // lastAction = TransformAction.NETWORK_SET;
-            // UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {
-            //if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
-            //     transform.position = lastReceivedTransformData.position;
-            //     transform.rotation = lastReceivedTransformData.rotation;
-            //     //transform.localScale = lastReceivedTransformData.scale;
-            //     
-            //     lastAction = TransformAction.NETWORK_SET;});
+            transform.position = newReceivedTransformData.position;
+            lastAction = TransformAction.NETWORK_SET;
             
-            // // Cache the new value
+            // Cache the new value
             newReceivedTransformData.position = newPos;
-            newReceivedTransformData.rotation = newQuat;
-            //if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
-            // //lastReceivedTransformData.scale = newScale;
             
             // Start doing interpolation if cached action says so
             lock (receivedTransformList)
@@ -105,23 +107,23 @@ namespace _Scripts.Networking
                     lastProcessedSequenceNum = newReceivedTransformData.sequenceNumber; // Set el mas reciente
                     newestTransformData = newReceivedTransformData;
                 }
-                
+                if(showDebugInfo) Debug.Log($"Received transforms size: {receivedTransformList.Count}");
                 if (newReceivedTransformData.action == TransformAction.NETWORK_SET)
                 {
-                    if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos} {newQuat.eulerAngles}");
+                    if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos}");
                     transform.position = newPos;
-                    transform.rotation = newQuat;
                     lastAction = TransformAction.NETWORK_SET;
                 }
                 else if (newReceivedTransformData.action == TransformAction.INTERPOLATE)
                 {
                     isInterpolating = true;
                 }
-                receivedTransformList.RemoveAll(t => t.sequenceNumber <= lastProcessedSequenceNum);
+                int removedTransforms = receivedTransformList.RemoveAll(t => t.sequenceNumber <= lastProcessedSequenceNum);
+                if(showDebugInfo) Debug.Log($"Removed transforms: {removedTransforms}, now has {receivedTransformList.Count}");
             }
 
             if(showDebugInfo)
-                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}, {newQuat.eulerAngles}");
+                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
         }
 
         public void WriteReplicationTransform(TransformAction transformAction)
@@ -144,33 +146,26 @@ namespace _Scripts.Networking
             _writer.Write(objectType.FullName);
             _writer.Write(globalObjectIdHash);
             _writer.Write((int)ReplicationAction.TRANSFORM);
-            _writer.Write((int)transformAction);
-            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            _writer.Write(milliseconds);
             _writer.Write(sequenceNum);
+            _writer.Write((int)transformAction);
+            
             _writer.Write((float)transform.position.x);
             _writer.Write((float)transform.position.y);
-            //_writer.Write((float)transform.position.z);
-            _writer.Write((float)transform.rotation.x);
-            _writer.Write((float)transform.rotation.y);
-            _writer.Write((float)transform.rotation.z);
-            _writer.Write((float)transform.rotation.w);
-            //_writer.Write((float)transform.localScale.x);
-            //_writer.Write((float)transform.localScale.y);
-            //_writer.Write((float)transform.localScale.z);
+            _writer.Write(transform.rotation.eulerAngles.z);
             sequenceNum++;
             
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {_stream.ToArray().Length}");
             
             // Enqueue to the output object sate stream buffer.
+            previousSentTransform.position = transform.position;
             NetworkManager.Instance.AddStateStreamQueue(_stream);
             lastAction = TransformAction.NETWORK_SEND;
         }
 
         #endregion
 
-        public void HandleNetworkBehaviour(Type type, BinaryReader reader)
+        public void HandleNetworkBehaviour(Type type, BinaryReader reader, Int64 timeStamp)
         {
             long currentPosition = reader.BaseStream.Position;
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
@@ -232,7 +227,7 @@ namespace _Scripts.Networking
                 transform.hasChanged = false;
             }
             
-            if (transform.hasChanged && sendEveryChange)
+            if (transform.hasChanged && sendEveryChange && previousSentTransform.position != transform.position)
             {
                 WriteReplicationTransform(TransformAction.INTERPOLATE);
                 lastAction = TransformAction.NETWORK_SEND;

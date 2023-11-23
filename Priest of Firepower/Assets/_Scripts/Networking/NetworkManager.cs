@@ -624,7 +624,7 @@ namespace _Scripts.Networking
                             $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(reader));
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(reader, packetTimeStamp));
                     // Maybe this reading of packets in actions is a problem for tranforms
                 }
                     break;
@@ -662,7 +662,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void HandleObjectState(BinaryReader reader)
+        void HandleObjectState(BinaryReader reader, Int64 timeStamp)
         {
             try
             {
@@ -675,7 +675,7 @@ namespace _Scripts.Networking
                     UInt64 id = reader.ReadUInt64();
                     ReplicationAction replicationAction = (ReplicationAction)reader.ReadInt32();
                     //read rest of the stream
-                    _replicationManager.HandleReplication(id, replicationAction, Type.GetType(objClass), reader);
+                    _replicationManager.HandleReplication(id, replicationAction, Type.GetType(objClass), reader, timeStamp);
                 }
             }
             catch (EndOfStreamException ex)
@@ -813,7 +813,7 @@ namespace _Scripts.Networking
             AddStateStreamQueue(outputMemoryStream);
         }
 
-        public void Client_ObjectCreationRegistryRead(UInt64 serverAssignedNetObjId, BinaryReader reader)
+        public void Client_ObjectCreationRegistryRead(UInt64 serverAssignedNetObjId, BinaryReader reader, Int64 timeStamp)
         {
             string prefabName = reader.ReadString();
             string clientName = reader.ReadString();
@@ -870,25 +870,25 @@ namespace _Scripts.Networking
             return id_;
         }
 
-        public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
+        public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader, Int64 timeStamp)
         {
             //Debug.Log( $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
                 case ReplicationAction.CREATE:
                 {
-                    NetworkManager.Instance.Client_ObjectCreationRegistryRead(id, reader);
+                    NetworkManager.Instance.Client_ObjectCreationRegistryRead(id, reader, timeStamp);
                 }
                     break;
                 case ReplicationAction.UPDATE:
-                    networkObjectMap[id].HandleNetworkBehaviour(type, reader);
+                    networkObjectMap[id].HandleNetworkBehaviour(type, reader, timeStamp);
                     break;
                 case ReplicationAction.DESTROY:
                     break;
                 case ReplicationAction.TRANSFORM:
                 {
                     if (networkObjectMap[id].synchronizeTransform)
-                        networkObjectMap[id].ReadReplicationTransform(reader);
+                        networkObjectMap[id].ReadReplicationTransform(reader, timeStamp);
                 }
                     break;
                 default:
