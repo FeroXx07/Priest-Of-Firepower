@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Random = System.Random;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -17,7 +17,7 @@ namespace _Scripts.Networking
         OBJECT_STATE,
         INPUT,
         AUTHENTICATION,
-        HEART_BEAT
+        GAME_EVENT
     }
 
 //this class will work as a client or server or both at the same time
@@ -33,27 +33,12 @@ namespace _Scripts.Networking
 
         #endregion
 
-        // #region Name Generator Fields
-        // static readonly string[] firstNames = {"John","Paul","Ringo","George"};
-        // private static readonly string[] lastNames = {"Lennon","McCartney","Starr","Harrison"};
-        // public static string GenerateName()
-        // {
-        //     var random = new Random();
-        //     string firstName = firstNames[random.Next(0, firstNames.Length)];
-        //     string lastName = lastNames[random.Next(0, firstNames.Length)];
-        //
-        //     return $"{firstName}_{lastName}";
-        // }
-        // #endregion
-
         #region Server/Client Fields
 
         private Client _client;
         private Server _server;
-
         private bool _isHost = false;
         private bool _isClient = false;
-
         public static readonly UInt64 UNKNOWN_ID = 69;
         public UInt64 getId => IsClient() ? _client.GetId() : 0;
         public string PlayerName = "testeo";
@@ -91,6 +76,12 @@ namespace _Scripts.Networking
 
         #region Utility
 
+        public bool debugShowPingPackets = false;
+        public bool debugShowObjectStatePackets = false;
+        public bool debugShowInputPackets = false;
+        public bool debugShowAuthenticationPackets = false;
+        public bool debugShowMessagePackets = false;
+
         public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
         {
             try
@@ -111,7 +102,6 @@ namespace _Scripts.Networking
                 Socket loopbackSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 loopbackSocket.Connect(loopback, serverPort);
                 loopbackSocket.Close();
-
                 return true; // Loopback connection successful, server is on the same machine
             }
             catch (Exception ex)
@@ -124,12 +114,10 @@ namespace _Scripts.Networking
         IPEndPoint ParseNetworkEndpoint(string address, ushort port) => new IPEndPoint(IPAddress.Parse(address), port);
         public bool isServerOnSameMachine => IsServerOnSameMachine(serverAdress.ToString(), defaultServerTcpPort);
 
-
         #endregion
 
         public GameObject player { get; set; }
         public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
-
         public ReplicationManager _replicationManager = new ReplicationManager();
 
         #region Actions
@@ -139,20 +127,15 @@ namespace _Scripts.Networking
 
         //  Invoken when a client is disconnected
         public Action OnClientDisconnected;
-
-        // Invoken when client recieves server data
-        public Action<byte[]> OnRecivedServerData;
-
-        // Invoken when server recives data from clients
-        public Action<byte[]> OnRecivedClientData;
-
         public Action<int> OnHostCreated;
         public Action<GameObject> OnHostPlayerCreated;
 
-        #endregion
+        // Message sendId, message string, message timestamp
+        public Action<UInt64, string, long> OnGameEventMessageReceived;
 
         #endregion
 
+        #endregion
 
         #region Enable/Disable
 
@@ -179,21 +162,16 @@ namespace _Scripts.Networking
 
         public void InstantiatePlayer()
         {
-
             if (SceneManager.GetActiveScene().name == "Game_Networking_Test")
             {
                 if (_isHost)
                 {
                     var prefab = instantiatablesPrefabs.Find(p => p.name == "PlayerPrefab");
-
                     foreach (ClientData clientData in _server.GetClients())
                     {
-                        if (clientData.playerInstantiated)
-                            continue;
-
+                        if (clientData.playerInstantiated) continue;
                         GameObject go = Server_InstantiateNetworkObject(prefab, clientData);
                         go.gameObject.name = clientData.userName;
-
                         Player.Player player = go.GetComponent<Player.Player>();
                         player.SetName(clientData.userName);
                         player.SetPlayerId(clientData.id);
@@ -242,9 +220,7 @@ namespace _Scripts.Networking
 
         public void StartClient()
         {
-            if (_client == null)
-                _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
-
+            if (_client == null) _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             if (isServerOnSameMachine)
             {
                 serverAdress = IPAddress.Parse("127.0.0.1");
@@ -259,14 +235,10 @@ namespace _Scripts.Networking
         {
             _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
                 new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
-
             _server.onClientConnected += ClientConnected;
             _server.onClientDisconnected += ClientDisconected;
-
             _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
-
             _isHost = true;
-
             if (_server.isServerInitialized)
             {
                 // Localhost client!
@@ -281,8 +253,7 @@ namespace _Scripts.Networking
 
         private void Update()
         {
-            if (_isHost)
-                _server.UpdatePendingDisconnections();
+            if (_isHost) _server.UpdatePendingDisconnections();
         }
 
         #endregion
@@ -313,6 +284,22 @@ namespace _Scripts.Networking
             }
         }
 
+        public void SendGameEventMessage(MemoryStream stream)
+        {
+            UInt64 senderid = IsClient() ? _client.GetId() : 0;
+            byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.GAME_EVENT, stream);
+            if (_isClient)
+            {
+                Debug.Log($"Network Manager: Sending message as client, buffer size {buffer.Length}");
+                _client.SendUdpPacket(buffer);
+            }
+            else if (_isHost)
+            {
+                Debug.Log($"Network Manager: Sending message as host, buffer size {buffer.Length}");
+                _server.SendUdpToAll(buffer);
+            }
+        }
+
         private void SendDataThread(CancellationToken token)
         {
             try
@@ -326,7 +313,6 @@ namespace _Scripts.Networking
                 stateStopwatch.Start();
                 inputStopwatch.Start();
                 heartBeatStopwatch.Start();
-
                 while (!token.IsCancellationRequested)
                 {
                     UInt64 senderid = IsClient() ? _client.GetId() : 0;
@@ -353,7 +339,6 @@ namespace _Scripts.Networking
                                 // Adjust timeout based on elapsed time
                                 stateTimeout -= stateStopwatch.ElapsedMilliseconds;
                                 stateStopwatch.Restart();
-
                                 Debug.Log($"Network Manager: Timeout state stream buffer {stateTimeout}");
                                 if (totalSize > 0 && (totalSize <= _mtu || stateTimeout <= 0.0f))
                                 {
@@ -402,7 +387,6 @@ namespace _Scripts.Networking
                                 // Adjust timeout based on elapsed time
                                 inputTimeout -= inputStopwatch.ElapsedMilliseconds;
                                 inputStopwatch.Restart();
-
                                 Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
                                 if (totalSize > 0 && (totalSize <= _mtu || inputTimeout <= 0.0f))
                                 {
@@ -455,14 +439,13 @@ namespace _Scripts.Networking
                     //handle heart beats
                     if (_isClient && heartBeatStopwatch.ElapsedMilliseconds >= _heartBeatRate)
                     {
-                        Debug.Log("Client: sending heartbeat");
+                        //Debug.Log("Client: sending heartbeat");
                         _client.SendHeartBeat();
                         heartBeatStopwatch.Restart();
                     }
 
                     if (inputTimeout < 0) inputTimeout = _inputBufferTimeout;
                     if (stateTimeout < 0) stateTimeout = _stateBufferTimeout;
-
                     Thread.Sleep(1);
                 }
             }
@@ -509,7 +492,6 @@ namespace _Scripts.Networking
         }
 
         #endregion
-
 
         #region Input Streams
 
@@ -568,17 +550,15 @@ namespace _Scripts.Networking
             }
 
             PacketType type = (PacketType)reader.ReadInt32();
-
-
-            Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
             switch (type)
             {
                 case PacketType.PING:
-                    Debug.Log("Network Manager: PING message received");
+                    if (debugShowPingPackets)
+                        Debug.Log(
+                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     if (_isHost)
                     {
                         _server.HandleHeartBeat(reader);
-
                     }
                     else if (_isClient)
                     {
@@ -588,7 +568,9 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.INPUT:
                 {
-                    Debug.Log("Network Manager: INPUT message received");
+                    if (debugShowInputPackets)
+                        Debug.Log(
+                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
                     MainThreadDispatcher.EnqueueAction(() => HandleInput(reader));
@@ -596,7 +578,9 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.OBJECT_STATE:
                 {
-                    Debug.Log("Network Manager: OBJECT_STATE message received");
+                    if (debugShowObjectStatePackets)
+                        Debug.Log(
+                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
                     MainThreadDispatcher.EnqueueAction(() => HandleObjectState(reader));
@@ -604,6 +588,9 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.AUTHENTICATION:
                 {
+                    if (debugShowAuthenticationPackets)
+                        Debug.Log(
+                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     if (_isClient)
                     {
                         Debug.Log("Network Manager: Client auth message received");
@@ -614,6 +601,17 @@ namespace _Scripts.Networking
                         Debug.Log("Network Manager: Host auth message received");
                         _server.HandleAuthentication(reader);
                     }
+                }
+                    break;
+                case PacketType.GAME_EVENT:
+                {
+                    if (debugShowMessagePackets)
+                        Debug.Log(
+                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    UInt64 packetSenderId = reader.ReadUInt64();
+                    long packetTimeStamp = reader.ReadInt64();
+                    string message = reader.ReadString();
+                    OnGameEventMessageReceived?.Invoke(packetSenderId, message, packetTimeStamp);
                 }
                     break;
                 default:
@@ -663,12 +661,10 @@ namespace _Scripts.Networking
 
         #endregion
 
-
         private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streamsList)
         {
             MemoryStream output = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(output);
-
             writer.Write((int)type);
             writer.Write(senderId);
             writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
@@ -678,6 +674,18 @@ namespace _Scripts.Networking
                 stream.CopyTo(output);
             }
 
+            return output.ToArray();
+        }
+
+        private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, MemoryStream stream)
+        {
+            MemoryStream output = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(output);
+            writer.Write((int)type);
+            writer.Write(senderId);
+            writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            stream.Position = 0;
+            stream.CopyTo(output);
             return output.ToArray();
         }
 
@@ -763,85 +771,80 @@ namespace _Scripts.Networking
             var prefab = instantiatablesPrefabs.First(p => p.name == prefabName);
             NetworkObject newGo = Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
             _replicationManager.RegisterObjectFromServer(serverAssignedNetObjId, newGo);
-
             if (prefabName.Equals("PlayerPrefab"))
             {
                 Player.Player player = newGo.GetComponent<Player.Player>();
                 player.SetName(clientName);
                 player.SetPlayerId(clientId);
+                newGo.gameObject.name = clientName;
                 _client._clientData.playerInstantiated = true;
             }
         }
     }
-        public enum ReplicationAction
-        {
-            CREATE,
-            UPDATE,
-            DESTROY,
-            TRANSFORM,
-            EVENT
-        }
-    
+
+    public enum ReplicationAction
+    {
+        CREATE,
+        UPDATE,
+        DESTROY,
+        TRANSFORM
+    }
 
     public class ReplicationManager
+    {
+        public GameObject gameObject;
+        public UInt64 id { get; private set; }
+        public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
+
+        public void InitManager(List<NetworkObject> listNetObj)
         {
-            public GameObject gameObject;
-            public UInt64 id { get; private set; }
-            public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
-
-            public void InitManager(List<NetworkObject> listNetObj)
+            networkObjectMap.Clear();
+            foreach (var networkObject in listNetObj)
             {
-                networkObjectMap.Clear();
-                foreach (var networkObject in listNetObj)
-                {
-                    RegisterObjectLocally(networkObject);
-                }
-            }
-
-            public UInt64 RegisterObjectLocally(NetworkObject obj)
-            {
-                obj.SetNetworkId(id);
-                networkObjectMap.Add(id, obj);
-                id++;
-                return obj.GetNetworkId();
-            }
-
-            public UInt64 RegisterObjectFromServer(UInt64 id_, NetworkObject obj)
-            {
-                obj.SetNetworkId(id_);
-                networkObjectMap.Add(id_, obj);
-                return id_;
-            }
-
-            public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
-            {
-                Debug.Log(
-                    $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
-                switch (action)
-                {
-                    case ReplicationAction.CREATE:
-                    {
-                        NetworkManager.Instance.Client_ObjectCreationRegistryRead(id, reader);
-                    }
-                        break;
-                    case ReplicationAction.UPDATE:
-                        networkObjectMap[id].HandleNetworkBehaviour(type, reader);
-                        break;
-                    case ReplicationAction.DESTROY:
-                        break;
-                    case ReplicationAction.EVENT:
-                        break;
-                    case ReplicationAction.TRANSFORM:
-                    {
-                        if (networkObjectMap[id].synchronizeTransform)
-                            networkObjectMap[id].ReadReplicationTransform(reader);
-                    }
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(action), action, null);
-                }
+                RegisterObjectLocally(networkObject);
             }
         }
-    
-}
 
+        public UInt64 RegisterObjectLocally(NetworkObject obj)
+        {
+            obj.SetNetworkId(id);
+            networkObjectMap.Add(id, obj);
+            id++;
+            return obj.GetNetworkId();
+        }
+
+        public UInt64 RegisterObjectFromServer(UInt64 id_, NetworkObject obj)
+        {
+            obj.SetNetworkId(id_);
+            networkObjectMap.Add(id_, obj);
+            return id_;
+        }
+
+        public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
+        {
+            Debug.Log(
+                $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
+            switch (action)
+            {
+                case ReplicationAction.CREATE:
+                {
+                    NetworkManager.Instance.Client_ObjectCreationRegistryRead(id, reader);
+                }
+                    break;
+                case ReplicationAction.UPDATE:
+                    networkObjectMap[id].HandleNetworkBehaviour(type, reader);
+                    break;
+                case ReplicationAction.DESTROY:
+                    break;
+                case ReplicationAction.TRANSFORM:
+                {
+                    if (networkObjectMap[id].synchronizeTransform)
+                        networkObjectMap[id].ReadReplicationTransform(reader);
+                }
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(action), action, null);
+            }
+        }
+    }
+}

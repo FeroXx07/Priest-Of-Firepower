@@ -161,7 +161,7 @@ namespace _Scripts.Networking
             if (behaviour != null)
                 behaviour.ReadReplicationPacket(reader, currentPosition);
             else
-                Debug.LogError("Cast failed " + type);
+                Debug.LogError($"NetworkBehaviour cast failed {type}");
         }
         
         public void HandleNetworkInput(Type type, BinaryReader reader)
@@ -170,11 +170,9 @@ namespace _Scripts.Networking
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
 
             if (behaviour != null)
-            {
-                if (behaviour is INetworkInput input) input.ReceiveInputFromClient(reader);
-            }
+                behaviour.ReceiveInputFromClient(reader);
             else
-                Debug.LogError("Cast failed " + type);
+                Debug.LogError($"NetworkBehaviour cast failed {type}");
         }
 
         private void FixedUpdate()

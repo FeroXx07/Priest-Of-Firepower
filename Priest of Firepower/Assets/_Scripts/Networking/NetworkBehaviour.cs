@@ -14,6 +14,7 @@ namespace _Scripts.Networking
         public float tickRate = 10.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         public bool doTickUpdates = true;
+        public bool clientSendReplicationData = false;
         #endregion
         
         #region TrackingInfo
@@ -26,7 +27,14 @@ namespace _Scripts.Networking
             return NetworkVariableList;
         }
         #endregion
-        
+        public virtual void OnEnable()
+        {
+            NetworkManager.Instance.OnGameEventMessageReceived += ListenToMessages;
+        }
+        public virtual void OnDisable()
+        {
+            NetworkManager.Instance.OnGameEventMessageReceived -= ListenToMessages;
+        }
         #region Serialization
         /// <summary>
         /// Return true if stream has been filled with data, false if not.
@@ -153,7 +161,7 @@ namespace _Scripts.Networking
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }
             
-            if (NetworkManager.Instance.IsClient())
+            if (NetworkManager.Instance.IsClient() && clientSendReplicationData == false)
                 return;
             
             MemoryStream stream = new MemoryStream();
@@ -180,8 +188,6 @@ namespace _Scripts.Networking
                     writer.Write((int)ReplicationAction.DESTROY);
                 }
                     break;
-                case ReplicationAction.EVENT:
-                    break;
                 default:
                     if(WriteReplicationPacket(stream, ReplicationAction.UPDATE) == false)
                         return;
@@ -205,5 +211,26 @@ namespace _Scripts.Networking
             }
             _tickCounter += Time.deltaTime;
         }
+
+        public virtual void SendInputToServer(){}
+        public virtual void ReceiveInputFromClient(BinaryReader reader){}
+
+        public virtual void SendStringMessage(string message)
+        {
+            if (NetworkManager.Instance.IsHost())
+                return;
+            
+            Debug.Log($"Sending message: {message}");
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            Type objectType = this.GetType();
+            writer.Write(objectType.FullName);
+            writer.Write(NetworkObject.GetNetworkId());
+            writer.Write(message);
+            NetworkManager.Instance.SendGameEventMessage(stream);
+        }
+
+        public virtual void ListenToMessages(UInt64 senderId, string message, long timeStamp){}
+        
     }
 }

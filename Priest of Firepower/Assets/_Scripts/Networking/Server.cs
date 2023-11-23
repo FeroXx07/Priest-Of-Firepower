@@ -236,7 +236,7 @@ namespace _Scripts.Networking
             {
                 while (!clientData.listenProcess.cancellationToken.Token.IsCancellationRequested)
                 {
-                    Debug.Log(".");
+                    //Debug.Log(".");
                     if (!clientData.connectionTcp.Connected)
                     {
                         Debug.Log($"Server {_localEndPointTcp}: Tcp is not connected client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
@@ -590,7 +590,7 @@ namespace _Scripts.Networking
             {
                 if (clientData.id == id)
                 {
-                    Debug.Log("Server: Received hearbeat client:" + id);
+                    if (NetworkManager.Instance.debugShowPingPackets) Debug.Log("Server: Received heartbeat client:" + id);
                     if(clientData.heartBeatStopwatch != null) 
                         clientData.heartBeatStopwatch.Restart();
                 }

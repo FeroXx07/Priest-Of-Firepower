@@ -186,7 +186,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Sending Udp packet from {_clientData.connectionUdp.LocalEndPoint}to {_clientData.connectionUdp.RemoteEndPoint} - Length: {data.Length}");
+                //Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Sending Udp packet from {_clientData.connectionUdp.LocalEndPoint}to {_clientData.connectionUdp.RemoteEndPoint} - Length: {data.Length}");
                 _clientData.connectionUdp.Send(data);
             }
             catch (ArgumentNullException ane)
