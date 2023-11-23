@@ -48,8 +48,8 @@ namespace _Scripts.Networking
         #region Buffers
 
         uint _mtu = 1400;
-        int _stateBufferTimeout = 200; // time with no activity to send not fulled packets
-        int _inputBufferTimeout = 100; // time with no activity to send not fulled packets
+        int _stateBufferTimeout = 100; // time with no activity to send not fulled packets
+        int _inputBufferTimeout = 30; // time with no activity to send not fulled packets
         int _heartBeatRate = 1000; // beat rate to send to the server 
 
         // store all state streams to send

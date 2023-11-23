@@ -423,13 +423,10 @@ MonoBehaviour:
   clientSendReplicationData: 0
   isInterpolating: 0
   lastAction: 4
-  lastReceivedTransformData:
-    position: {x: 0, y: 0, z: 0}
-    rotation: {x: 0, y: 0, z: 0, w: 0}
-    scale: {x: 0, y: 0, z: 0}
-    timeStamp: 0
-    action: 0
-  lerpValue: 0.25
+  receivedTransformList: []
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationDuration: 0.1
 --- !u!114 &-4167005071263701011
 MonoBehaviour:
   m_ObjectHideFlags: 0

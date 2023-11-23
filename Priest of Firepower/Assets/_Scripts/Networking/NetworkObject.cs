@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
 using Unity.Mathematics;
@@ -44,18 +45,20 @@ namespace _Scripts.Networking
         public bool sendTickChange = true;
         public bool clientSendReplicationData = false;
         [SerializeField] private bool isInterpolating = false;
+        
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
-        public List<TransformData> receivedTransforms = new List<TransformData>();
-        public float lerpValue = 0.25f;
+        
+        public List<TransformData> receivedTransformList = new List<TransformData>();
+        TransformData newestTransformData;
         public long sequenceNum = 0;
-        public float interpolationDuration = 0.1f;
+        public long lastProcessedSequenceNum = -1;
+        public float interpolationTime = 0.1f; // Interpolation time in seconds
+        [SerializeField] private float interpolationTimer = 0f;
         #endregion
-
-        //private Queue<Action> _actionsToDo = new Queue<Action>();
         
         private void Awake()
         {
-            // previousTransform = new TransformData(Vector3.zero, quaternion.identity, Vector3.one );
+            newestTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
             // newReceivedTransformData = new TransformData(transform.position, lastPosData.rotation, lastPosData.scale);
             // lastPosData = new TransformData(transform.position, lastPosData.rotation, lastPosData.scale );
         }
@@ -63,17 +66,16 @@ namespace _Scripts.Networking
         #region Network Transforms
         public void ReadReplicationTransform(BinaryReader reader)
         {
-            TransformData newReceivedTransformData = new TransformData(Vector3.zero, quaternion.identity, Vector3.one);
+            TransformData newReceivedTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
             newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
             newReceivedTransformData.timeStamp = reader.ReadInt64();
             newReceivedTransformData.sequenceNumber = reader.ReadInt64();
-            
             // Serialize
             Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
             Quaternion newQuat = new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(),
                 reader.ReadSingle());
-            //Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             
+            //Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             // Before starting to interpolate to the new value,
             // If previous value hasn't been interpolated completely, finish it
             // if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
@@ -81,7 +83,7 @@ namespace _Scripts.Networking
             // transform.rotation = newReceivedTransformData.rotation;
             // lastAction = TransformAction.NETWORK_SET;
             // UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {
-            //     if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {lastReceivedTransformData.position} {lastReceivedTransformData.rotation.eulerAngles}");
+            //if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
             //     transform.position = lastReceivedTransformData.position;
             //     transform.rotation = lastReceivedTransformData.rotation;
             //     //transform.localScale = lastReceivedTransformData.scale;
@@ -91,30 +93,33 @@ namespace _Scripts.Networking
             // // Cache the new value
             newReceivedTransformData.position = newPos;
             newReceivedTransformData.rotation = newQuat;
+            //if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
             // //lastReceivedTransformData.scale = newScale;
-            //
-            // // Start doing interpolation if cached action says so
-            // if (newReceivedTransformData.action == TransformAction.INTERPOLATE)
-            // {
-            //     isInterpolating = true;
-            // }
-            // else if (newReceivedTransformData.action == TransformAction.NETWORK_SET)
-            // {
-            //     if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos} {newQuat.eulerAngles}");
-            //     transform.position = newPos;
-            //     transform.rotation = newQuat;
-            //     lastAction = TransformAction.NETWORK_SET;
-            //     // UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
-            //     // {
-            //     //     if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos} {newQuat.eulerAngles}");
-            //     //     transform.position = newPos;
-            //     //     transform.rotation = newQuat;
-            //     //     //transform.localScale = newScale;
-            //     //
-            //     //     lastAction = TransformAction.NETWORK_SET;
-            //     // });
-            // }
             
+            // Start doing interpolation if cached action says so
+            lock (receivedTransformList)
+            {
+                receivedTransformList.Add(newReceivedTransformData);
+                if (newReceivedTransformData.sequenceNumber > lastProcessedSequenceNum) // Mirar para no leer uno antiguo
+                {
+                    lastProcessedSequenceNum = newReceivedTransformData.sequenceNumber; // Set el mas reciente
+                    newestTransformData = newReceivedTransformData;
+                }
+                
+                if (newReceivedTransformData.action == TransformAction.NETWORK_SET)
+                {
+                    if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos} {newQuat.eulerAngles}");
+                    transform.position = newPos;
+                    transform.rotation = newQuat;
+                    lastAction = TransformAction.NETWORK_SET;
+                }
+                else if (newReceivedTransformData.action == TransformAction.INTERPOLATE)
+                {
+                    isInterpolating = true;
+                }
+                receivedTransformList.RemoveAll(t => t.sequenceNumber <= lastProcessedSequenceNum);
+            }
+
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}, {newQuat.eulerAngles}");
         }
@@ -187,6 +192,32 @@ namespace _Scripts.Networking
                 Debug.LogError($"NetworkBehaviour cast failed {type}");
         }
 
+        private void Update()
+        {
+            lock (receivedTransformList)
+            {
+                if (newestTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
+                {
+                    lastAction = TransformAction.INTERPOLATE;
+                    long ellapsedTime = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - newestTransformData.timeStamp;
+                
+                    interpolationTimer += Time.deltaTime;
+                    float t = Mathf.Clamp01(interpolationTimer / interpolationTime);
+
+                    // Perform interpolation towards the new target position
+                    if(showDebugInfo) Debug.Log($"Interpolating from {transform.position} to next position {newestTransformData.position}");
+                    transform.position = Vector3.Lerp(transform.position, newestTransformData.position, t);
+
+                    if (t >= 1.0f)
+                    {
+                        interpolationTimer = 0;
+                        if(showDebugInfo) Debug.Log("Interpolation finished!");
+                        isInterpolating = false;
+                    }
+                }
+            }
+        }
+
         private void FixedUpdate()
         {
             if (Time.frameCount <= 300) return;
@@ -207,37 +238,6 @@ namespace _Scripts.Networking
                 lastAction = TransformAction.NETWORK_SEND;
                 transform.hasChanged = false;
             }
-            
-            // Ensure at least two transforms are received
-            if (receivedTransforms.Count < 2)
-                return;
-
-            // Sort received transforms based on sequence numbers
-            receivedTransforms.Sort((a, b) => a.sequenceNumber.CompareTo(b.sequenceNumber));
-
-            TransformData currentTransform = receivedTransforms[(int)sequenceNum];
-            TransformData nextTransform = receivedTransforms[(int)sequenceNum + 1];
-
-            float timeSinceLastTransform = Time.time - currentTransform.timeStamp;
-            float interpolationFactor = Mathf.Clamp01(timeSinceLastTransform / interpolationDuration);
-
-            // Interpolate position and rotation
-            transform.position = Vector3.Lerp(currentTransform.position, nextTransform.position, interpolationFactor);
-            transform.rotation = Quaternion.Slerp(currentTransform.rotation, nextTransform.rotation, interpolationFactor);
-
-            // Check if interpolation is complete
-            if (interpolationFactor >= 1.0f)
-            {
-                sequenceNum++;
-                if (sequenceNum >= receivedTransforms.Count - 1)
-                {
-                    sequenceNum = 0;
-                }
-            }
-
-            // Remove older packets based on sequence number
-            long currentSequenceNumber = currentTransform.sequenceNumber;
-            receivedTransforms.RemoveAll(t => t.sequenceNumber <= currentSequenceNumber);
             
             // // Check if interpolation is needed and apply it
             // if (newReceivedTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
