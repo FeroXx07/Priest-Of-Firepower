@@ -37,8 +37,9 @@ namespace _Scripts.Player
         public float speed;
         private bool[] input = new bool[4];
         public Rigidbody2D _rb;
-        void Update()
+        public override void Update()
         {
+            base.Update();
             // Only the owner of the player will control it
             if (myId == player.GetPlayerId())
             {
@@ -48,17 +49,20 @@ namespace _Scripts.Player
                 if (Input.GetKey(KeyCode.A)) input[3] = true;
             }
         }
-        public override void FixedUpdate()
+        public void FixedUpdate()
         {
-            base.FixedUpdate();
             SendInputToServer();
             
-            Vector2 direction = Vector2.zero;
-            if (input[0]) direction += Vector2.up;
-            if (input[1]) direction += Vector2.right;
-            if (input[2]) direction += Vector2.down;
-            if (input[3]) direction += Vector2.left;
-            _rb.velocity = direction * speed;
+            // Only the host machine will move all the players
+            if (NetworkManager.Instance.IsHost())
+            {
+                Vector2 direction = Vector2.zero;
+                if (input[0]) direction += Vector2.up;
+                if (input[1]) direction += Vector2.right;
+                if (input[2]) direction += Vector2.down;
+                if (input[3]) direction += Vector2.left;
+                _rb.velocity = direction * speed;
+            }
             
             for (int i = 0; i < 4; i++)
                 input[i] = false;
@@ -67,10 +71,10 @@ namespace _Scripts.Player
         public override void SendInputToServer()
         {
             // Send inputs of the player movement to the server, the host shouldn't send inputs to self.
-            if (isHost)
+            if (isHost || myId != player.GetPlayerId())
                 return;
             
-            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs to server: {input}");
+            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs to server: {input}");
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             Type objectType = this.GetType();
@@ -84,7 +88,7 @@ namespace _Scripts.Player
         {
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
-            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving inputs from clients: {input}");
+            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving inputs from clients: {input}");
         }
     }
 }

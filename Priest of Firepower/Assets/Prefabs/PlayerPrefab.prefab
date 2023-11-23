@@ -305,6 +305,7 @@ MonoBehaviour:
   showDebugInfo: 1
   tickRate: 10
   doTickUpdates: 1
+  clientSendReplicationData: 0
   player: {fileID: 0}
   speed: 7
   _rb: {fileID: 0}
@@ -415,10 +416,11 @@ MonoBehaviour:
   globalObjectIdHash: 0
   tickRate: 1
   tickCounter: 0
-  showDebugInfo: 1
+  showDebugInfo: 0
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1
+  clientSendReplicationData: 0
   isInterpolating: 0
   lastAction: 4
   lastReceivedTransformData:

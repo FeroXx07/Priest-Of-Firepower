@@ -5,6 +5,7 @@ using _Scripts.Interfaces;
 using _Scripts.Networking;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -41,81 +42,91 @@ namespace _Scripts.Networking
         public bool synchronizeTransform = true;
         public bool sendEveryChange = false;
         public bool sendTickChange = true;
+        public bool clientSendReplicationData = false;
         [SerializeField] private bool isInterpolating = false;
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
-        public TransformData lastReceivedTransformData;
+        public List<TransformData> receivedTransforms = new List<TransformData>();
         public float lerpValue = 0.25f;
+        public long sequenceNum = 0;
+        public float interpolationDuration = 0.1f;
         #endregion
 
-        private Queue<Action> _actionsToDo = new Queue<Action>();
+        //private Queue<Action> _actionsToDo = new Queue<Action>();
         
         private void Awake()
         {
             // previousTransform = new TransformData(Vector3.zero, quaternion.identity, Vector3.one );
-            lastReceivedTransformData = new TransformData(Vector3.zero, quaternion.identity, Vector3.one );
+            // newReceivedTransformData = new TransformData(transform.position, lastPosData.rotation, lastPosData.scale);
+            // lastPosData = new TransformData(transform.position, lastPosData.rotation, lastPosData.scale );
         }
 
         #region Network Transforms
         public void ReadReplicationTransform(BinaryReader reader)
         {
-            lastReceivedTransformData.action = (TransformAction)reader.ReadInt32();
-            lastReceivedTransformData.timeStamp = reader.ReadInt64();
+            TransformData newReceivedTransformData = new TransformData(Vector3.zero, quaternion.identity, Vector3.one);
+            newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
+            newReceivedTransformData.timeStamp = reader.ReadInt64();
+            newReceivedTransformData.sequenceNumber = reader.ReadInt64();
             
             // Serialize
-            Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+            Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
             Quaternion newQuat = new Quaternion(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle(),
                 reader.ReadSingle());
-            Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+            //Vector3 newScale = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
             
             // Before starting to interpolate to the new value,
             // If previous value hasn't been interpolated completely, finish it
-           
-            _actionsToDo.Clear();
-            _actionsToDo.Enqueue(() => {Debug.Log("New Interpolation NETWORK_SET");
+            // if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {newReceivedTransformData.position} {newReceivedTransformData.rotation.eulerAngles}");
+            // transform.position = newReceivedTransformData.position;
+            // transform.rotation = newReceivedTransformData.rotation;
+            // lastAction = TransformAction.NETWORK_SET;
+            // UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {
+            //     if(showDebugInfo) Debug.Log($"Finish interpolation NETWORK_SET: position {lastReceivedTransformData.position} {lastReceivedTransformData.rotation.eulerAngles}");
+            //     transform.position = lastReceivedTransformData.position;
+            //     transform.rotation = lastReceivedTransformData.rotation;
+            //     //transform.localScale = lastReceivedTransformData.scale;
+            //     
+            //     lastAction = TransformAction.NETWORK_SET;});
             
-                transform.position = lastReceivedTransformData.position;
-                transform.rotation = lastReceivedTransformData.rotation;
-                transform.localScale = lastReceivedTransformData.scale;
-                
-                lastAction = TransformAction.NETWORK_SET;});
-            
-            
-            // Cache the new value
-            lastReceivedTransformData.position = newPos;
-            lastReceivedTransformData.rotation = newQuat;
-            lastReceivedTransformData.scale = newScale;
-            
-            // Start doing interpolation if cached action says so
-            if (lastReceivedTransformData.action == TransformAction.INTERPOLATE)
-            {
-                isInterpolating = true;
-            }
-            else if (lastReceivedTransformData.action == TransformAction.NETWORK_SET)
-            {
-                _actionsToDo.Clear();                
-                _actionsToDo.Enqueue(() =>
-                {
-                    Debug.Log("Direct NETWORK_SET");
-                    transform.position = newPos;
-                    transform.rotation = newQuat;
-                    transform.localScale = newScale;
-
-                    lastAction = TransformAction.NETWORK_SET;
-                });
-                
-                // UnityMainThreadDispatcher.Dispatcher.RemoveLastEnqueuedAction();
-                // UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
-                // {
-                //    
-                // });
-            }
+            // // Cache the new value
+            newReceivedTransformData.position = newPos;
+            newReceivedTransformData.rotation = newQuat;
+            // //lastReceivedTransformData.scale = newScale;
+            //
+            // // Start doing interpolation if cached action says so
+            // if (newReceivedTransformData.action == TransformAction.INTERPOLATE)
+            // {
+            //     isInterpolating = true;
+            // }
+            // else if (newReceivedTransformData.action == TransformAction.NETWORK_SET)
+            // {
+            //     if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos} {newQuat.eulerAngles}");
+            //     transform.position = newPos;
+            //     transform.rotation = newQuat;
+            //     lastAction = TransformAction.NETWORK_SET;
+            //     // UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
+            //     // {
+            //     //     if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos} {newQuat.eulerAngles}");
+            //     //     transform.position = newPos;
+            //     //     transform.rotation = newQuat;
+            //     //     //transform.localScale = newScale;
+            //     //
+            //     //     lastAction = TransformAction.NETWORK_SET;
+            //     // });
+            // }
             
             if(showDebugInfo)
-                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}, {newQuat.eulerAngles}, {newScale}");
+                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}, {newQuat.eulerAngles}");
         }
 
-        public MemoryStream WriteReplicationTransform(TransformAction transformAction)
+        public void WriteReplicationTransform(TransformAction transformAction)
         {
+            if (NetworkManager.Instance.IsClient())
+            {
+                if (clientSendReplicationData == false)
+                    return;
+            }
+            
             // DeSerialize
             MemoryStream _stream = new MemoryStream();
             BinaryWriter _writer = new BinaryWriter(_stream);
@@ -131,16 +142,18 @@ namespace _Scripts.Networking
             _writer.Write((int)transformAction);
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             _writer.Write(milliseconds);
+            _writer.Write(sequenceNum);
             _writer.Write((float)transform.position.x);
             _writer.Write((float)transform.position.y);
-            _writer.Write((float)transform.position.z);
+            //_writer.Write((float)transform.position.z);
             _writer.Write((float)transform.rotation.x);
             _writer.Write((float)transform.rotation.y);
             _writer.Write((float)transform.rotation.z);
             _writer.Write((float)transform.rotation.w);
-            _writer.Write((float)transform.localScale.x);
-            _writer.Write((float)transform.localScale.y);
-            _writer.Write((float)transform.localScale.z);
+            //_writer.Write((float)transform.localScale.x);
+            //_writer.Write((float)transform.localScale.y);
+            //_writer.Write((float)transform.localScale.z);
+            sequenceNum++;
             
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {_stream.ToArray().Length}");
@@ -148,7 +161,6 @@ namespace _Scripts.Networking
             // Enqueue to the output object sate stream buffer.
             NetworkManager.Instance.AddStateStreamQueue(_stream);
             lastAction = TransformAction.NETWORK_SEND;
-            return _stream;
         }
 
         #endregion
@@ -196,27 +208,53 @@ namespace _Scripts.Networking
                 transform.hasChanged = false;
             }
             
-            while (_actionsToDo.TryDequeue(out var action))
-            {
-                action?.Invoke();
-            }
-            
-            // Check if interpolation is needed and apply it
-            if (lastReceivedTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
-            {
-                lastAction = TransformAction.INTERPOLATE;
-                Debug.Log($"Interpolating to position: {lastReceivedTransformData.position}, rotation: {lastReceivedTransformData.rotation}, scale_ {lastReceivedTransformData.scale}");
-                long currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-                float lerpFactor = Mathf.Clamp01((currentTime - lastReceivedTransformData.timeStamp) / lerpValue); // 0.5f is an example time to interpolate
-                transform.position = Vector3.Lerp(transform.position, lastReceivedTransformData.position, lerpFactor);
-                transform.rotation = Quaternion.Slerp(transform.rotation, lastReceivedTransformData.rotation, lerpFactor);
-                transform.localScale = Vector3.Slerp(transform.localScale, lastReceivedTransformData.scale, lerpFactor);
+            // Ensure at least two transforms are received
+            if (receivedTransforms.Count < 2)
+                return;
 
-                if (lerpFactor >= 1.0f)
+            // Sort received transforms based on sequence numbers
+            receivedTransforms.Sort((a, b) => a.sequenceNumber.CompareTo(b.sequenceNumber));
+
+            TransformData currentTransform = receivedTransforms[(int)sequenceNum];
+            TransformData nextTransform = receivedTransforms[(int)sequenceNum + 1];
+
+            float timeSinceLastTransform = Time.time - currentTransform.timeStamp;
+            float interpolationFactor = Mathf.Clamp01(timeSinceLastTransform / interpolationDuration);
+
+            // Interpolate position and rotation
+            transform.position = Vector3.Lerp(currentTransform.position, nextTransform.position, interpolationFactor);
+            transform.rotation = Quaternion.Slerp(currentTransform.rotation, nextTransform.rotation, interpolationFactor);
+
+            // Check if interpolation is complete
+            if (interpolationFactor >= 1.0f)
+            {
+                sequenceNum++;
+                if (sequenceNum >= receivedTransforms.Count - 1)
                 {
-                    isInterpolating = false;
+                    sequenceNum = 0;
                 }
             }
+
+            // Remove older packets based on sequence number
+            long currentSequenceNumber = currentTransform.sequenceNumber;
+            receivedTransforms.RemoveAll(t => t.sequenceNumber <= currentSequenceNumber);
+            
+            // // Check if interpolation is needed and apply it
+            // if (newReceivedTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
+            // {
+            //     lastAction = TransformAction.INTERPOLATE;
+            //     if(showDebugInfo) Debug.Log($"Interpolating from {transform.position} to position: {newReceivedTransformData.position}");
+            //     long currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            //     float lerpFactor = Mathf.Clamp01((currentTime - newReceivedTransformData.timeStamp) / lerpValue); // 0.5f is an example time to interpolate
+            //     transform.position = Vector3.Lerp(transform.position, newReceivedTransformData.position, lerpFactor);
+            //     transform.rotation = Quaternion.Slerp(transform.rotation, newReceivedTransformData.rotation, lerpFactor);
+            //     //transform.localScale = Vector3.Slerp(transform.localScale, lastReceivedTransformData.scale, lerpFactor);
+            //
+            //     if (lerpFactor >= 1.0f)
+            //     {
+            //         isInterpolating = false;
+            //     }
+            // }
             
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
@@ -225,7 +263,7 @@ namespace _Scripts.Networking
                 tickCounter = 0.0f;
                 
                 if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
-                    WriteReplicationTransform(TransformAction.NETWORK_SET);
+                    WriteReplicationTransform(TransformAction.INTERPOLATE);
             }
 
             tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
@@ -243,6 +281,7 @@ public struct TransformData
     public Vector3 scale;
     public long timeStamp;
     public TransformAction action;
+    public long sequenceNumber;
     public TransformData(Vector3 pos, Quaternion rot, Vector3 s)
     {
         position = new Vector3(pos.x, pos.y, pos.z);
@@ -250,5 +289,6 @@ public struct TransformData
         scale = new Vector3(s.x, s.y, s.z);
         action = TransformAction.INTERPOLATE;
         timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+        sequenceNumber = 0;
     }
 }

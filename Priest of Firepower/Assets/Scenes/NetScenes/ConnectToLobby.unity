@@ -1168,7 +1168,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78aaeb2a4b50ae44b863befebba47d54, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextSceneToLoad: Lobby
+  nextSceneToLoad: Game_Networking_Test
   hostBtn: {fileID: 645362915}
   ipInputField: {fileID: 1873951899}
   ipTextfield: {fileID: 467886150}

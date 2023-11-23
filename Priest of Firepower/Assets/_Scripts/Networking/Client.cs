@@ -237,7 +237,7 @@ namespace _Scripts.Networking
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
-                        Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Has received Udp Data from {socket.RemoteEndPoint}");
+                        //Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Has received Udp Data from {socket.RemoteEndPoint}");
                         byte[] buffer = new byte[1500];
                         int size = socket.Receive(buffer);
                         MemoryStream stream = new MemoryStream(buffer, 0, size);
@@ -251,12 +251,12 @@ namespace _Scripts.Networking
             catch (SocketException se)
             {
                 // Handle other socket exceptions
-                MainThreadDispatcher.EnqueueAction(() =>  Debug.LogError($"Client {_clientData.userName}_{_clientData.id}: SocketException: {se.SocketErrorCode}, {se.Message}"));
+                UnityMainThreadDispatcher.Dispatcher.Enqueue(() => Debug.LogError($"Client {_clientData.userName}_{_clientData.id}: SocketException: {se.SocketErrorCode}, {se.Message}"));
             }
             catch (Exception e)
             {
                 // Handle other exceptions
-                MainThreadDispatcher.EnqueueAction(() => Debug.LogError($"Client {_clientData.userName}_{_clientData.id}: Exception: {e.Message}"));
+                UnityMainThreadDispatcher.Dispatcher.Enqueue(() => Debug.LogError($"Client {_clientData.userName}_{_clientData.id}: Exception: {e.Message}"));
             }
         }
         #endregion

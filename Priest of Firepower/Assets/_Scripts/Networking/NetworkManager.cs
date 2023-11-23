@@ -48,7 +48,7 @@ namespace _Scripts.Networking
         #region Buffers
 
         uint _mtu = 1400;
-        int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
+        int _stateBufferTimeout = 200; // time with no activity to send not fulled packets
         int _inputBufferTimeout = 100; // time with no activity to send not fulled packets
         int _heartBeatRate = 1000; // beat rate to send to the server 
 
@@ -316,13 +316,56 @@ namespace _Scripts.Networking
                 while (!token.IsCancellationRequested)
                 {
                     UInt64 senderid = IsClient() ? _client.GetId() : 0;
+                    
+                     lock (_inputQueueLock)
+                    {
+                        //Input buffer
+                        if (_inputStreamBuffer.Count > 0)
+                        {
+                            //Debug.Log("Network Manager: Preparing input stream buffer");
+                            int totalSize = 0;
+                            List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
+                            //check if the totalsize + the next stream total size is less than the specified size
+                            while (_inputStreamBuffer.Count > 0 &&
+                                   totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu)
+                            {
+                                //inputTimeout -= stopwatch.ElapsedMilliseconds;
+                                MemoryStream nextStream = _inputStreamBuffer.Dequeue();
+                                totalSize += (int)nextStream.Length;
+                                streamsToSend.Add(nextStream);
+
+                                // Adjust timeout based on elapsed time
+                                inputTimeout -= inputStopwatch.ElapsedMilliseconds;
+                                inputStopwatch.Restart();
+                                //Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
+                                if (totalSize > 0 && (totalSize <= _mtu || inputTimeout <= 0.0f))
+                                {
+                                    inputTimeout = _inputBufferTimeout;
+                                    byte[] buffer =
+                                        InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                                    if (_isClient)
+                                    {
+                                        //Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        _client.SendUdpPacket(buffer);
+                                    }
+                                    else if (_isHost)
+                                    {
+                                        Debug.Log(
+                                            $"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        _server.SendUdpToAll(buffer);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
                     //State buffer
                     lock (_stateQueueLock)
                     {
                         if (_stateStreamBuffer.Count > 0)
                         {
-                            Debug.Log("Network Manager: Preparing state stream buffer");
+                            //Debug.Log("Network Manager: Preparing state stream buffer");
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
@@ -339,7 +382,7 @@ namespace _Scripts.Networking
                                 // Adjust timeout based on elapsed time
                                 stateTimeout -= stateStopwatch.ElapsedMilliseconds;
                                 stateStopwatch.Restart();
-                                Debug.Log($"Network Manager: Timeout state stream buffer {stateTimeout}");
+                                //Debug.Log($"Network Manager: Timeout state stream buffer {stateTimeout}");
                                 if (totalSize > 0 && (totalSize <= _mtu || stateTimeout <= 0.0f))
                                 {
                                     stateTimeout = _stateBufferTimeout;
@@ -347,64 +390,18 @@ namespace _Scripts.Networking
                                         streamsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log(
-                                            $"Network Manager: Sending state stream buffer as client, buffer size {buffer.Length} and timeout {stateTimeout}");
+                                        //Debug.Log( $"Network Manager: Sending state stream buffer as client, buffer size {buffer.Length} and timeout {stateTimeout}");
                                         _client.SendUdpPacket(buffer);
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log(
-                                            $"Network Manager: Sending state stream buffer as host, buffer size {buffer.Length} and timeout {stateTimeout}");
+                                        //Debug.Log($"Network Manager: Sending state stream buffer as host, buffer size {buffer.Length} and timeout {stateTimeout}");
                                         _server.SendUdpToAll(buffer);
                                     }
 
                                     // Clear the streams to send for the next iteration
                                     streamsToSend.Clear();
                                     totalSize = 0;
-                                }
-                            }
-                        }
-                    }
-
-                    lock (_inputQueueLock)
-                    {
-                        //Input buffer
-                        if (_inputStreamBuffer.Count > 0)
-                        {
-                            Debug.Log("Network Manager: Preparing input stream buffer");
-                            int totalSize = 0;
-                            List<MemoryStream> streamsToSend = new List<MemoryStream>();
-
-                            //check if the totalsize + the next stream total size is less than the specified size
-                            while (_inputStreamBuffer.Count > 0 &&
-                                   totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu)
-                            {
-                                //inputTimeout -= stopwatch.ElapsedMilliseconds;
-                                MemoryStream nextStream = _inputStreamBuffer.Dequeue();
-                                totalSize += (int)nextStream.Length;
-                                streamsToSend.Add(nextStream);
-
-                                // Adjust timeout based on elapsed time
-                                inputTimeout -= inputStopwatch.ElapsedMilliseconds;
-                                inputStopwatch.Restart();
-                                Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
-                                if (totalSize > 0 && (totalSize <= _mtu || inputTimeout <= 0.0f))
-                                {
-                                    inputTimeout = _inputBufferTimeout;
-                                    byte[] buffer =
-                                        InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
-                                    if (_isClient)
-                                    {
-                                        Debug.Log(
-                                            $"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
-                                        _client.SendUdpPacket(buffer);
-                                    }
-                                    else if (_isHost)
-                                    {
-                                        Debug.Log(
-                                            $"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
-                                        _server.SendUdpToAll(buffer);
-                                    }
                                 }
                             }
                         }
@@ -573,7 +570,7 @@ namespace _Scripts.Networking
                             $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    MainThreadDispatcher.EnqueueAction(() => HandleInput(reader));
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(reader));
                 }
                     break;
                 case PacketType.OBJECT_STATE:
@@ -583,7 +580,8 @@ namespace _Scripts.Networking
                             $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    MainThreadDispatcher.EnqueueAction(() => HandleObjectState(reader));
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(reader));
+                    // Maybe this reading of packets in actions is a problem for tranforms
                 }
                     break;
                 case PacketType.AUTHENTICATION:
@@ -822,8 +820,7 @@ namespace _Scripts.Networking
 
         public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader)
         {
-            Debug.Log(
-                $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
+            //Debug.Log( $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
             {
                 case ReplicationAction.CREATE:

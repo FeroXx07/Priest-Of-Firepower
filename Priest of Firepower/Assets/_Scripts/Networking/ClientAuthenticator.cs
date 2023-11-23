@@ -82,7 +82,7 @@ namespace _Scripts.Networking
                     authWriter.Write(AcknowledgmentOne);
                     _clientData.connectionTcp.Send(authStream.ToArray());
                     //NetworkManager.Instance.AddReliableStreamQueue(authStream);
-                    MainThreadDispatcher.EnqueueAction(onAuthenticationSuccessful);
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(onAuthenticationSuccessful);
                     Debug.Log($"Client Authenticator {localEndPointTcp}: Responding authentication confirmation");
                 }
                     break;

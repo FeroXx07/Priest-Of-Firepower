@@ -64,12 +64,14 @@ namespace _Scripts.Networking
 
         }
 
-        private void OnEnable()
+        public override void OnEnable()
         {
+            base.OnEnable();
             startGame.onValueChangedNetwork += OnStartGame;
         }
-        private void OnDisable()
+        public override void OnDisable()
         {
+            base.OnDisable();
             NetworkManager.Instance.OnClientConnected -= OnClientConnected;
             NetworkManager.Instance.OnClientDisconnected -= OnClientDisconnected;
             startGameBtn.onClick.RemoveListener(StartGame);

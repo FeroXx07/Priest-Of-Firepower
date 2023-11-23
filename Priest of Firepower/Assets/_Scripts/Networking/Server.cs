@@ -150,13 +150,13 @@ namespace _Scripts.Networking
         #region Data Transmission
          public void SendUdpToAll(byte[] data)
         {
-            Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to all...");
+            //Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to all...");
             foreach (ClientData client in _clientsList)
             { 
                 if (client.id != 0)
                 {
                     // For UDP SendTo() is obligatory, or just use Connect() before if not using SendTo.
-                    Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to client {client.userName} with Id: {client.id} and EP: {client.endPointUdp}:");
+                    //Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to client {client.userName} with Id: {client.id} and EP: {client.endPointUdp}:");
                     try
                     {
                         _serverUdp.SendTo(data, data.Length, SocketFlags.None, client.endPointUdp);
@@ -322,7 +322,7 @@ namespace _Scripts.Networking
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
-                        Debug.Log($"Server {_localEndPointTcp}: Has received Tcp Data from {clientData.endPointUdp}");
+                        //Debug.Log($"Server {_localEndPointTcp}: Has received Tcp Data from {clientData.endPointUdp}");
                         byte[] buffer = new byte[1500];
                         EndPoint senderEndPoint = clientData.endPointUdp;
                         int size = socket.ReceiveFrom(buffer, ref senderEndPoint);
@@ -470,7 +470,7 @@ namespace _Scripts.Networking
                 _clientsList.Add(clientData);
                 
                 //Call event that the client is connected successfully
-                MainThreadDispatcher.EnqueueAction(onClientConnected);
+                UnityMainThreadDispatcher.Dispatcher.Enqueue(onClientConnected);
                 
                 //shutdown authentication process
                 lock (_authenticationProcesses)
@@ -486,7 +486,7 @@ namespace _Scripts.Networking
                     }
                     
                     if(toRemove != null)
-                        MainThreadDispatcher.EnqueueAction(()=>_authenticationProcesses.Remove(toRemove) );
+                        UnityMainThreadDispatcher.Dispatcher.Enqueue(()=>_authenticationProcesses.Remove(toRemove) );
                 }
                 
                 Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
@@ -514,7 +514,7 @@ namespace _Scripts.Networking
                     clientData.connectionTcp.Close();
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected successfully");
                     _clientsList.Remove(clientData);
-                    MainThreadDispatcher.EnqueueAction(onClientDisconnected);
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(onClientDisconnected);
                 }
             }
             catch (Exception e)

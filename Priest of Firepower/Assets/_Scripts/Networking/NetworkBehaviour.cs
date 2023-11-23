@@ -160,9 +160,12 @@ namespace _Scripts.Networking
             {
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }
-            
-            if (NetworkManager.Instance.IsClient() && clientSendReplicationData == false)
-                return;
+
+            if (NetworkManager.Instance.IsClient())
+            {
+                if (clientSendReplicationData == false)
+                    return;
+            }
             
             MemoryStream stream = new MemoryStream();
             switch (action)
@@ -197,7 +200,7 @@ namespace _Scripts.Networking
             if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
             NetworkManager.Instance.AddStateStreamQueue(stream);
         }
-        public virtual void FixedUpdate()
+        public virtual void Update()
         {
             if (!doTickUpdates)
                 return;
