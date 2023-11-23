@@ -38,5 +38,9 @@ namespace _Scripts.Networking
 
         public bool isHost = false;
         public bool playerInstantiated = false;
+
+        public System.Diagnostics.Stopwatch heartBeatStopwatch;
+        public float disconnectTimeout = 1500;
+
     }
 }

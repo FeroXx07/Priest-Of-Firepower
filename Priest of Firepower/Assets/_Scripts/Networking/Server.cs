@@ -1,11 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using _Scripts.Networking.Network_Behaviours;
+using Unity.VisualScripting;
+using UnityEditor.PackageManager;
+using Debug = UnityEngine.Debug;
+
 
 namespace _Scripts.Networking
 {
@@ -27,7 +33,7 @@ namespace _Scripts.Networking
         private Socket _serverUdp;
         public bool isServerInitialized { get; private set; } = false;
         private UInt64 _nextClientId = 0;
-        
+       
         private List<ClientData> _clientsList = new List<ClientData>();
         private List<ClientData> _clientsToRemove = new List<ClientData>();
         
@@ -47,7 +53,7 @@ namespace _Scripts.Networking
         #region  Actions
         public Action<ClientData> onClientAccepted;
         public Action<UInt64> onClientRemoved;
-        public Action<UInt64> onClientDisconnected;
+        public Action onClientDisconnected;
         public Action<UInt64, byte[]> onDataRecieved;
         #endregion
         
@@ -84,7 +90,7 @@ namespace _Scripts.Networking
                 }
             }
         }
-        private void UpdatePendingDisconnections()
+        public void UpdatePendingDisconnections() // executed on network manager update
         {
             lock (_clientsList)
             {
@@ -94,7 +100,6 @@ namespace _Scripts.Networking
                     {
                         foreach (ClientData clientToRemove in _clientsToRemove)
                         {
-                            //Debug.Log($"Server {_localEndPoint}: Removing {clientToRemove.metaData.endPoint}");
                             _clientsList.Remove(clientToRemove);
                         }
                     }
@@ -190,10 +195,6 @@ namespace _Scripts.Networking
                     }
                 }
             }
-            // foreach (ClientData client in _clientList)
-            // {
-            //     if (client.ID != 0) client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
-            // }
         }
 
         public void SendTcp(UInt64 id, byte[] data)
@@ -208,24 +209,7 @@ namespace _Scripts.Networking
             {
                 Debug.LogError($"Server {_localEndPointTcp}: Error sending critical Tcp data to client {client.userName} with Id: {client.id} and EP: {client.endPointTcp}: {e}");
             }
-                // foreach (ClientData client in _clientList)
-                // { 
-                //     if (client.id == id)
-                //     {
-                //         
-                //         client.connectionTcp.Send(data); // For TCP SendTo isn't necessary since connection is established already.
-                //     }
-                // }
         }
-        
-            // foreach (ClientData client in _clientList)
-            // {
-            //     if (client.ID == Id)
-            //     {
-            //         client.ConnectionTcp.SendTo(data, data.Length, SocketFlags.None, client.ConnectionTcp.RemoteEndPoint);
-            //         return;
-            //     }
-            // }
 
         public void SendUdp(UInt64 clientId, byte[] data)
         {
@@ -248,20 +232,31 @@ namespace _Scripts.Networking
                 }
             }
         }
+
         private void ListenDataFromClient(ClientData clientData)
         {
+
             Debug.Log($"Server {_localEndPointTcp}: Starting client thread {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
             try
             {
                 while (!clientData.listenProcess.cancellationToken.Token.IsCancellationRequested)
                 {
+                    Debug.Log(".");
                     if (!clientData.connectionTcp.Connected)
                     {
                         Debug.Log($"Server {_localEndPointTcp}: Tcp is not connected client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp}");
+                        RemoveClient(clientData);
                         // Handle the case where TCP is not connected if needed
                         break; // Exit the loop if TCP is not connected
                     }
-
+                    
+                    //check if time out has passed then add to remove client
+                    if (clientData.heartBeatStopwatch != null && clientData.disconnectTimeout < clientData.heartBeatStopwatch.ElapsedMilliseconds)
+                    {
+                        Debug.Log("Server: Heartbeat timeout ...");
+                      //  RemoveClient(clientData);
+                    }
+                    
                     if (clientData.connectionTcp.Available > 0)
                     {
                         ReceiveTcpSocketData(clientData.connectionTcp);
@@ -426,7 +421,6 @@ namespace _Scripts.Networking
             if (_clientsList.Count == 0 && ipEndPoint.Address.Equals(IPAddress.Loopback)) // Host client
             {
                 Debug.Log($"Server {_localEndPointTcp}: Incoming connection is possible local host, authenticating possible host client");
-                //serverAuthenticator = new ServerAuthenticator(incomingConnection, newClientData => StoreAuthenticatedClient(newClientData, true), null);
                 ClientData hostClient = new ClientData();
 
                 hostClient.connectionTcp = incomingConnection;
@@ -465,6 +459,13 @@ namespace _Scripts.Networking
                 //add a time out exeption for when the client disconnects or has lag or something
                 clientData.connectionTcp.ReceiveTimeout = Timeout.Infinite;
                 clientData.connectionTcp.SendTimeout = Timeout.Infinite;
+                
+                if (!clientData.isHost)
+                {
+                    clientData.heartBeatStopwatch = new Stopwatch();
+                    clientData.heartBeatStopwatch.Start();
+                }
+
                 _clientsList.Add(clientData);
                 
                 //Call event that the client is connected successfully
@@ -512,6 +513,7 @@ namespace _Scripts.Networking
                     clientData.connectionTcp.Close();
                     _clientsToRemove.Add(clientData);
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected successfully");
+                    onClientDisconnected?.Invoke();
                 }
             }
             catch (Exception e)
@@ -576,6 +578,34 @@ namespace _Scripts.Networking
             }
 
         }
+        #endregion
+
+        #region Heart Beat
+        public void HandleHeartBeat(BinaryReader reader)
+        {
+            UInt64 id = reader.ReadUInt64();
+
+            foreach (ClientData clientData in _clientsList)
+            {
+                if (clientData.id == id)
+                {
+                    Debug.Log("Server: Received hearbeat client:" + id);
+                    if(clientData.heartBeatStopwatch != null) 
+                        clientData.heartBeatStopwatch.Restart();
+                }
+            }
+        }
+
+        public  void SendHeartBeat()
+        {
+            MemoryStream newStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(newStream);
+            writer.Write((int)PacketType.PING);
+            writer.Write(0);
+            SendUdpToAll(newStream.ToArray());
+   
+        }
+
         #endregion
     }
 }

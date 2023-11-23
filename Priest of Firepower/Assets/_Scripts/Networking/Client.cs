@@ -267,5 +267,23 @@ namespace _Scripts.Networking
             return _clientData.id;
         }
         #endregion
+        #region Heart Beat
+        public void HandleHeartBeat(BinaryReader reader)
+        {
+            
         }
+
+        public void SendHeartBeat()
+        {
+            MemoryStream newStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(newStream);
+            
+            writer.Write((int)PacketType.PING);
+            writer.Write(_clientData.id);
+            writer.Write(0);
+            SendUdpPacket(newStream.ToArray());
+        }
+
+        #endregion
+    }
 }

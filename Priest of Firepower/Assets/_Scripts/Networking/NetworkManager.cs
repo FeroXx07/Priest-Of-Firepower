@@ -17,6 +17,7 @@ namespace _Scripts.Networking
         OBJECT_STATE,
         INPUT,
         AUTHENTICATION,
+        HEART_BEAT
     }
 
 //this class will work as a client or server or both at the same time
@@ -59,6 +60,7 @@ namespace _Scripts.Networking
         uint _mtu = 1400;
         int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
         int _inputBufferTimeout = 100; // time with no activity to send not fulled packets
+        int _heartBeatRate = 1000; // beat rate to send to the server 
 
         // store all state streams to send
         private Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
@@ -206,6 +208,7 @@ namespace _Scripts.Networking
             {
                 try
                 {
+                    _server.onClientDisconnected -= OnClientDisconnected;
                     _server.Shutdown();
                 }
                 catch (Exception e)
@@ -234,7 +237,11 @@ namespace _Scripts.Networking
         public void StartHost()
         {
             _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort), new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
-            _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+
+            _server.onClientDisconnected += OnClientDisconnected;
+            
+            _client = new Client(clientName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+
             _isHost = true;
             
             if (_server.isServerInitialized)
@@ -247,6 +254,13 @@ namespace _Scripts.Networking
             Debug.Log("Network Manager: OnEnable -> _client: " + _client);
             Debug.Log("Network Manager: OnEnable -> _server: " + _server);
         }
+
+        private void Update()
+        {
+            if (_isHost)
+                _server.UpdatePendingDisconnections();
+        }
+
         #endregion
         
         #region Output Streams 
@@ -283,8 +297,11 @@ namespace _Scripts.Networking
                 float inputTimeout = _inputBufferTimeout;
                 System.Diagnostics.Stopwatch stateStopwatch = new System.Diagnostics.Stopwatch();
                 System.Diagnostics.Stopwatch inputStopwatch = new System.Diagnostics.Stopwatch();
+                System.Diagnostics.Stopwatch heartBeatStopwatch = new System.Diagnostics.Stopwatch();
                 stateStopwatch.Start();
                 inputStopwatch.Start();
+                heartBeatStopwatch.Start();
+                
                 while (!token.IsCancellationRequested)
                 {
                     UInt64 senderid = IsClient() ? _client.GetId() : 0;
@@ -403,9 +420,18 @@ namespace _Scripts.Networking
                             }
                         }
                     }
-
+                    
+                    //handle heart beats
+                    if (_isClient && heartBeatStopwatch.ElapsedMilliseconds >= _heartBeatRate)
+                    {
+                        Debug.Log("Client: sending heartbeat");
+                        _client.SendHeartBeat();
+                        heartBeatStopwatch.Restart();
+                    }
+                    
                     if (inputTimeout < 0) inputTimeout = _inputBufferTimeout;
                     if (stateTimeout < 0) stateTimeout = _stateBufferTimeout;
+                   
                     Thread.Sleep(1);
                 }
             }
@@ -458,7 +484,7 @@ namespace _Scripts.Networking
         {
             _incomingStreamBuffer.Enqueue(stream);
         }
-         private void ReceiveDataThread(CancellationToken token)
+        private void ReceiveDataThread(CancellationToken token)
         {
             try
             {
@@ -514,6 +540,15 @@ namespace _Scripts.Networking
             {
                 case PacketType.PING:
                     Debug.Log("Network Manager: PING message received");
+                    if (_isHost)
+                    {
+                        _server.HandleHeartBeat(reader);
+                        
+                    }else if (_isClient)
+                    {
+                        _client.HandleHeartBeat(reader);
+                    }
+                    
                     break;
                 case PacketType.INPUT:
                 {
@@ -692,7 +727,6 @@ namespace _Scripts.Networking
                 _client._clientData.playerInstantiated = true;
             }
         }
-    }
 
     public enum ReplicationAction
     {

@@ -32,6 +32,7 @@ namespace _Scripts.Networking
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
             NetworkManager.Instance.OnClientConnected += OnClientConnected;
+            NetworkManager.Instance.OnClientDisconnected += OnClientDisconnected;
         }
 
         private void Start()
@@ -54,6 +55,7 @@ namespace _Scripts.Networking
         private void OnDisable()
         {
             NetworkManager.Instance.OnClientConnected -= OnClientConnected;
+            NetworkManager.Instance.OnClientDisconnected -= OnClientDisconnected;
         }
 
         protected override void InitNetworkVariablesList()
@@ -90,6 +92,16 @@ namespace _Scripts.Networking
         }
 
         public void OnClientConnected()
+        {
+            if (!NetworkManager.Instance.IsHost()) return;
+            
+            _lobbyAction = LobbyAction.UPDATE_LIST;
+            SendReplicationData(ReplicationAction.UPDATE);
+            //as host just update the new list when a client is connected
+            UpdatePlayerList(NetworkManager.Instance.GetServer().GetClients());
+        }
+
+        public void OnClientDisconnected()
         {
             if (!NetworkManager.Instance.IsHost()) return;
             
