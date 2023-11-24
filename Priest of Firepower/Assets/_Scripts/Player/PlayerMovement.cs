@@ -93,7 +93,7 @@ namespace _Scripts.Player
                 if (input[1]) direction += Vector2.right;
                 if (input[2]) direction += Vector2.down;
                 if (input[3]) direction += Vector2.left;
-                _rb.velocity = direction * speed;
+                _rb.velocity = direction.normalized * speed;
             }
             
             for (int i = 0; i < 4; i++)
