@@ -24,7 +24,7 @@ namespace _Scripts
         {
             if (NetworkManager.Instance.IsHost())
             {
-                NetworkManager.Instance.InstantiatePlayer();
+                NetworkManager.Instance.SpawnPlayers();
             }
         }
         private void Start()

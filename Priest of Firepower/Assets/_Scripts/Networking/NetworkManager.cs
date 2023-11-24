@@ -7,7 +7,6 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -42,7 +41,10 @@ namespace _Scripts.Networking
         public static readonly UInt64 UNKNOWN_ID = 69;
         public UInt64 getId => IsClient() ? _client.GetId() : 0;
         public string PlayerName = "testeo";
-
+        
+        public GameObject player { get; set; }
+        public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
+        private ReplicationManager _replicationManager = new ReplicationManager();
         #endregion
 
         #region Buffers
@@ -54,9 +56,13 @@ namespace _Scripts.Networking
 
         // store all state streams to send
         private Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
+        [SerializeField] private UInt64 sequenceNumberState = 0;
+        [SerializeField] private UInt64 receivedSequenceNumberState = 0;
 
         // store all input streams to send
         private Queue<MemoryStream> _inputStreamBuffer = new Queue<MemoryStream>();
+        [SerializeField] private UInt64 sequenceNumberInput= 0;
+        [SerializeField] private UInt64 receivedSequenceNumberInput = 0;
 
         // store all critical data streams to send (TCP)
         private Queue<MemoryStream> _reliableStreamBuffer = new Queue<MemoryStream>();
@@ -71,17 +77,15 @@ namespace _Scripts.Networking
         public readonly object IncomingStreamLock = new object();
         private Process _receiveData;
         private Process _sendData;
-
         #endregion
 
         #region Utility
-
+        // Debug log packets
         public bool debugShowPingPackets = false;
         public bool debugShowObjectStatePackets = false;
         public bool debugShowInputPackets = false;
         public bool debugShowAuthenticationPackets = false;
         public bool debugShowMessagePackets = false;
-
         public static bool IsServerOnSameMachine(string serverIpAddress, int serverPort)
         {
             try
@@ -110,21 +114,16 @@ namespace _Scripts.Networking
                 return false; // Error occurred or connection failed, server might not be on the same machine
             }
         }
-
         IPEndPoint ParseNetworkEndpoint(string address, ushort port) => new IPEndPoint(IPAddress.Parse(address), port);
         public bool isServerOnSameMachine => IsServerOnSameMachine(serverAdress.ToString(), defaultServerTcpPort);
 
         #endregion
 
-        public GameObject player { get; set; }
-        public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
-        public ReplicationManager _replicationManager = new ReplicationManager();
-
         #region Actions
 
         //  Invoked when a new client is connected
         public Action OnClientConnected;
-
+        
         //  Invoken when a client is disconnected
         public Action OnClientDisconnected;
         public Action<int> OnHostCreated;
@@ -134,7 +133,6 @@ namespace _Scripts.Networking
         public Action<UInt64, string, long> OnGameEventMessageReceived;
 
         #endregion
-
         #endregion
 
         #region Enable/Disable
@@ -158,13 +156,13 @@ namespace _Scripts.Networking
 
         private void OnEnable()
         {
-            Debug.developerConsoleEnabled = true;
-            Debug.developerConsoleVisible = true;
-            Debug.LogError("Network Manager: Console Enabled");
+            // Debug.developerConsoleEnabled = true;
+            // Debug.developerConsoleVisible = true;
+            // Debug.LogError("Network Manager: Console Enabled");
             SceneManager.sceneLoaded += ResetNetworkIds;
         }
-
-        public void InstantiatePlayer()
+        
+        public void SpawnPlayers()
         {
             if (SceneManager.GetActiveScene().name == "Game_Networking_Test")
             {
@@ -174,7 +172,7 @@ namespace _Scripts.Networking
                     foreach (ClientData clientData in _server.GetClients())
                     {
                         if (clientData.playerInstantiated) continue;
-                        GameObject go = Server_InstantiateNetworkObject(prefab, clientData);
+                        GameObject go = _replicationManager.Server_InstantiateNetworkObject(prefab, clientData);
                         go.gameObject.name = clientData.userName;
                         Player.Player player = go.GetComponent<Player.Player>();
                         player.SetName(clientData.userName);
@@ -391,14 +389,17 @@ namespace _Scripts.Networking
                                         InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sequenceNumberInput}");
                                         _client.SendUdpPacket(buffer);
+                                        sequenceNumberInput++;
+                                        if (sequenceNumberInput == ulong.MaxValue - 1) sequenceNumberInput = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log(
-                                            $"Network Manager: Sending input stream buffer as server, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sequenceNumberInput}");
                                         _server.SendUdpToAll(buffer);
+                                        sequenceNumberInput++;
+                                        if (sequenceNumberInput == ulong.MaxValue - 1) sequenceNumberInput = 0;
                                     }
                                 }
                             }
@@ -435,13 +436,17 @@ namespace _Scripts.Networking
                                         streamsToSend);
                                     if (_isClient)
                                     {
-                                        //Debug.Log( $"Network Manager: Sending state stream buffer as client, buffer size {buffer.Length} and timeout {stateTimeout}");
+                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
                                         _client.SendUdpPacket(buffer);
+                                        sequenceNumberState++;
+                                        if (sequenceNumberState == ulong.MaxValue - 1) sequenceNumberState = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        //Debug.Log($"Network Manager: Sending state stream buffer as host, buffer size {buffer.Length} and timeout {stateTimeout}");
+                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
                                         _server.SendUdpToAll(buffer);
+                                        sequenceNumberState++;
+                                        if (sequenceNumberState == ulong.MaxValue - 1) sequenceNumberState = 0;
                                     }
 
                                     // Clear the streams to send for the next iteration
@@ -585,65 +590,57 @@ namespace _Scripts.Networking
 
         public void ProcessIncomingPacket(MemoryStream stream)
         {
+            // Reset stream position incase
             stream.Position = 0;
             BinaryReader reader = new BinaryReader(stream);
+            
+            // Check if packet is higher than 1500 bytes, it shouldn't be!
             if (stream.Length > 1500)
             {
                 Debug.LogWarning(
                     "Network Manager: Received packet with size exceeding the maximum (1500 bytes). Discarding...");
                 return;
             }
-
+            
+            // Check for packet type
             PacketType type = (PacketType)reader.ReadInt32();
+            
             switch (type)
             {
                 case PacketType.PING:
-                    if (debugShowPingPackets)
-                        Debug.Log(
-                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-                    if (_isHost)
-                    {
-                        _server.HandleHeartBeat(reader);
-                    }
-                    else if (_isClient)
-                    {
-                        _client.HandleHeartBeat(reader);
-                    }
-
+                {
+                    if (debugShowPingPackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    if (_isHost) _server.HandleHeartBeat(reader);
+                    else if (_isClient) _client.HandleHeartBeat(reader);
+                }
                     break;
                 case PacketType.INPUT:
                 {
-                    if (debugShowInputPackets)
-                        Debug.Log(
-                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    if (debugShowInputPackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    receivedSequenceNumberInput = reader.ReadUInt64();
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(reader, packetSenderId));
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(reader, packetSenderId, packetTimeStamp, receivedSequenceNumberInput));
                 }
                     break;
                 case PacketType.OBJECT_STATE:
                 {
-                    if (debugShowObjectStatePackets)
-                        Debug.Log(
-                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    if (debugShowObjectStatePackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    receivedSequenceNumberState = reader.ReadUInt64();
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(reader, packetTimeStamp));
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(reader, packetSenderId, packetTimeStamp, receivedSequenceNumberState));
                     // Maybe this reading of packets in actions is a problem for tranforms
                 }
                     break;
                 case PacketType.AUTHENTICATION:
                 {
-                    if (debugShowAuthenticationPackets)
-                        Debug.Log(
-                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-                    if (_isClient)
-                    {
+                    if (debugShowAuthenticationPackets)Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    if (_isClient) {
                         Debug.Log("Network Manager: Client auth message received");
                         _client.authenticator.HandleAuthentication(reader);
                     }
-                    else if (_isHost)
-                    {
+                    else if (_isHost) {
                         Debug.Log("Network Manager: Host auth message received");
                         _server.HandleAuthentication(reader);
                     }
@@ -651,9 +648,7 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.GAME_EVENT:
                 {
-                    if (debugShowMessagePackets)
-                        Debug.Log(
-                            $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
+                    if (debugShowMessagePackets)  Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
                     string message = reader.ReadString();
@@ -666,7 +661,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void HandleObjectState(BinaryReader reader, Int64 timeStamp)
+        void HandleObjectState(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)
         {
             try
             {
@@ -679,7 +674,7 @@ namespace _Scripts.Networking
                     UInt64 id = reader.ReadUInt64();
                     ReplicationAction replicationAction = (ReplicationAction)reader.ReadInt32();
                     //read rest of the stream
-                    _replicationManager.HandleReplication(id, replicationAction, Type.GetType(objClass), reader, timeStamp);
+                    _replicationManager.HandleReplication(reader, id, timeStamp, sequenceNumInput, replicationAction, Type.GetType(objClass));
                 }
             }
             catch (EndOfStreamException ex)
@@ -688,7 +683,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void HandleInput(BinaryReader reader, UInt64 packetSender)
+        void HandleInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)
         {
             try
             {
@@ -696,7 +691,7 @@ namespace _Scripts.Networking
                 {
                     string objClass = reader.ReadString();
                     UInt64 netObjId = reader.ReadUInt64();
-                    _replicationManager.networkObjectMap[netObjId].HandleNetworkInput(Type.GetType(objClass), reader, packetSender);
+                    _replicationManager.networkObjectMap[netObjId].HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, Type.GetType(objClass));
                 }
             }
             catch (EndOfStreamException ex)
@@ -711,15 +706,33 @@ namespace _Scripts.Networking
         {
             MemoryStream output = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(output);
+            
+            // Packet type
             writer.Write((int)type);
+            
+            // Packet sequence number
+            if (type == PacketType.OBJECT_STATE)
+            {
+                writer.Write(sequenceNumberState);
+            }
+            else if (type == PacketType.INPUT)
+            {
+                writer.Write(sequenceNumberInput);
+            }
+            
+            // Packet sender id
             writer.Write(senderId);
+            
+            // Packet timestamp
             writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            
+            // Packet contents
             foreach (MemoryStream stream in streamsList)
             {
                 stream.Position = 0;
                 stream.CopyTo(output);
             }
-
+            
             return output.ToArray();
         }
 
@@ -727,9 +740,27 @@ namespace _Scripts.Networking
         {
             MemoryStream output = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(output);
+            
+            // Packet type
             writer.Write((int)type);
+            
+            // Packet sequence number
+            if (type == PacketType.OBJECT_STATE)
+            {
+                writer.Write(sequenceNumberState);
+            }
+            else if (type == PacketType.INPUT)
+            {
+                writer.Write(sequenceNumberInput);
+            }
+            
+            // Packet sender id
             writer.Write(senderId);
+            
+            // Packet timestamp
             writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            
+            // Packet contents
             stream.Position = 0;
             stream.CopyTo(output);
             return output.ToArray();
@@ -793,111 +824,5 @@ namespace _Scripts.Networking
         }
 
         #endregion
-
-        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ClientData clientData)
-        {
-            NetworkObject newGo = Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
-            UInt64 newId = _replicationManager.RegisterObjectLocally(newGo);
-            Server_ObjectCreationRegistrySend(newId, prefab, clientData);
-            return newGo.gameObject;
-        }
-
-        public void Server_ObjectCreationRegistrySend(UInt64 newNetObjId, GameObject prefab, ClientData clientData)
-        {
-            // Send replication packet to clients to create this prefab
-            MemoryStream outputMemoryStream = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(newNetObjId);
-            writer.Write((int)ReplicationAction.CREATE);
-            writer.Write(prefab.name);
-            writer.Write(clientData.userName);
-            writer.Write(clientData.id);
-            AddStateStreamQueue(outputMemoryStream);
-        }
-
-        public void Client_ObjectCreationRegistryRead(UInt64 serverAssignedNetObjId, BinaryReader reader, Int64 timeStamp)
-        {
-            string prefabName = reader.ReadString();
-            string clientName = reader.ReadString();
-            UInt64 clientId = reader.ReadUInt64();
-            var prefab = instantiatablesPrefabs.First(p => p.name == prefabName);
-            NetworkObject newGo = Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
-            _replicationManager.RegisterObjectFromServer(serverAssignedNetObjId, newGo);
-            if (prefabName.Equals("PlayerPrefab"))
-            {
-                Player.Player player = newGo.GetComponent<Player.Player>();
-                player.SetName(clientName);
-                player.SetPlayerId(clientId);
-                newGo.gameObject.name = clientName;
-                _client._clientData.playerInstantiated = true;
-            }
-        }
-    }
-
-    public enum ReplicationAction
-    {
-        CREATE,
-        UPDATE,
-        DESTROY,
-        TRANSFORM
-    }
-
-    public class ReplicationManager
-    {
-        public GameObject gameObject;
-        public UInt64 id { get; private set; }
-        public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
-
-        public void InitManager(List<NetworkObject> listNetObj)
-        {
-            networkObjectMap.Clear();
-            foreach (var networkObject in listNetObj)
-            {
-                RegisterObjectLocally(networkObject);
-            }
-        }
-
-        public UInt64 RegisterObjectLocally(NetworkObject obj)
-        {
-            obj.SetNetworkId(id);
-            networkObjectMap.Add(id, obj);
-            id++;
-            return obj.GetNetworkId();
-        }
-
-        public UInt64 RegisterObjectFromServer(UInt64 id_, NetworkObject obj)
-        {
-            obj.SetNetworkId(id_);
-            networkObjectMap.Add(id_, obj);
-            return id_;
-        }
-
-        public void HandleReplication(UInt64 id, ReplicationAction action, Type type, BinaryReader reader, Int64 timeStamp)
-        {
-            //Debug.Log( $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
-            switch (action)
-            {
-                case ReplicationAction.CREATE:
-                {
-                    NetworkManager.Instance.Client_ObjectCreationRegistryRead(id, reader, timeStamp);
-                }
-                    break;
-                case ReplicationAction.UPDATE:
-                    networkObjectMap[id].HandleNetworkBehaviour(type, reader, timeStamp);
-                    break;
-                case ReplicationAction.DESTROY:
-                    break;
-                case ReplicationAction.TRANSFORM:
-                {
-                    if (networkObjectMap[id].synchronizeTransform)
-                        networkObjectMap[id].ReadReplicationTransform(reader, timeStamp);
-                }
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(action), action, null);
-            }
-        }
     }
 }

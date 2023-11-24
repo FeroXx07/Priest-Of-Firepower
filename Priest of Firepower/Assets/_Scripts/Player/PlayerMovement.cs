@@ -18,6 +18,8 @@ namespace _Scripts.Player
         [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
         [SerializeField] private Player player;
         bool hasChanged = false;
+        public float tickRate = 10.0f; // Network writes inside a second.
+        [SerializeField] private float tickCounter = 0.0f;
         protected override void InitNetworkVariablesList()
         {
             //throw new NotImplementedException();
@@ -69,32 +71,36 @@ namespace _Scripts.Player
                     hasChanged = true;
                 }
             }
-        }
-        public void FixedUpdate()
-        {
+            
             if (hasChanged)
             {
                 hasChanged = false;
                 if (NetworkManager.Instance.IsClient())
                 {
-                    SendInputToServer();
+                    float finalRate = 1.0f / tickRate;
+                    if (tickCounter >= finalRate)
+                    {
+                        tickCounter = 0.0f;
+                        SendInputToServer();
+                    }
+                    tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
+                    tickCounter += Time.deltaTime;
                 }
                 else if (NetworkManager.Instance.IsHost())
                 {
                     //SendInputToClients();
                 }
             }
-            
+        }
+        public void FixedUpdate()
+        {
             // Only the host machine will move all the players
-            if (NetworkManager.Instance.IsHost())
-            {
-                Vector2 direction = Vector2.zero;
-                if (input[0]) direction += Vector2.up;
-                if (input[1]) direction += Vector2.right;
-                if (input[2]) direction += Vector2.down;
-                if (input[3]) direction += Vector2.left;
-                _rb.velocity = direction.normalized * speed;
-            }
+            Vector2 direction = Vector2.zero;
+            if (input[0]) direction += Vector2.up;
+            if (input[1]) direction += Vector2.right;
+            if (input[2]) direction += Vector2.down;
+            if (input[3]) direction += Vector2.left;
+            _rb.velocity = direction.normalized * speed;
             
             for (int i = 0; i < 4; i++)
                 input[i] = false;

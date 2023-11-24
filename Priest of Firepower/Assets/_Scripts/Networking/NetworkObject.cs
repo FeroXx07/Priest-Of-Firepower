@@ -116,7 +116,7 @@ namespace _Scripts.Networking
                     return;
             }
             
-            // DeSerialize
+            // Serialize
             MemoryStream _stream = new MemoryStream();
             BinaryWriter _writer = new BinaryWriter(_stream);
             if (NetworkManager.Instance == false)
@@ -146,7 +146,7 @@ namespace _Scripts.Networking
 
         #endregion
 
-        public void HandleNetworkBehaviour(Type type, BinaryReader reader, Int64 timeStamp)
+        public void HandleNetworkBehaviour(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberState, Type type)
         {
             long currentPosition = reader.BaseStream.Position;
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
@@ -157,7 +157,7 @@ namespace _Scripts.Networking
                 Debug.LogError($"NetworkBehaviour cast failed {type}");
         }
         
-        public void HandleNetworkInput(Type type, BinaryReader reader, UInt64 packetSender)
+        public void HandleNetworkInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberInput, Type type)
         {
             long currentPosition = reader.BaseStream.Position;
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;

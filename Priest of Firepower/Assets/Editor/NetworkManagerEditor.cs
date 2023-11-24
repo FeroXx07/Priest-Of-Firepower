@@ -22,7 +22,7 @@ namespace Editor
             });
             root.Add(defaultInspector);
             NetworkManager obj = (NetworkManager)target;
-            Button customButton = new Button(() => obj.InstantiatePlayer());
+            Button customButton = new Button(() => obj.SpawnPlayers());
             customButton.text = "CreatePlayer";
             root.Add(customButton);
             return root;
