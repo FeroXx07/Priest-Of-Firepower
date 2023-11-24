@@ -65,7 +65,7 @@ namespace _Scripts.Networking
 
         #region Network Transforms
 
-        public void ReadReplicationTransform(BinaryReader reader, Int64 timeStamp)
+        public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
         {
             // init transform data
             TransformData newReceivedTransformData =
