@@ -49,8 +49,9 @@ namespace _Scripts.Networking
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         
         public List<TransformData> receivedTransformList = new List<TransformData>();
-        TransformData newestTransformData;
-        TransformData previousSentTransform;
+        TransformData newTransformData;
+        private object _lockCurrentTransform = new object();
+
         public long sequenceNum = 0;
         public long lastProcessedSequenceNum = -1;
         public float interpolationTime = 0.1f; 
@@ -59,73 +60,52 @@ namespace _Scripts.Networking
         
         private void Awake()
         {
-            newestTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
-            previousSentTransform = new TransformData(transform.position, transform.rotation, transform.localScale);
+            newTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
         }
 
         #region Network Transforms
+
         public void ReadReplicationTransform(BinaryReader reader, Int64 timeStamp)
         {
-            // if (newestTransformData.timeStamp > timeStamp)
-            // {
-            //     int offset = sizeof(Int64) + sizeof(Int32) + (sizeof(float)*3);
-            //     reader.BaseStream.Seek(offset, SeekOrigin.Current); 
-            //     Debug.LogWarning("NOT READING ENTIRE TRANSFORM");
-            //     return;
-            // }
-            
-            TransformData newReceivedTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
+            // init transform data
+            TransformData newReceivedTransformData =
+                new TransformData(transform.position, transform.rotation, transform.localScale);
             newReceivedTransformData.sequenceNumber = reader.ReadInt64();
-            
-            // if (newReceivedTransformData.sequenceNumber > newestTransformData.sequenceNumber) // Mirar para no leer uno antiguo
-            // {
-            //     lastProcessedSequenceNum = newReceivedTransformData.sequenceNumber; // Set el mas reciente
-            //     newestTransformData = newReceivedTransformData;
-            // }
-            // else
-            // {
-            //     int offset = sizeof(Int64) + sizeof(Int32) + (sizeof(float)*3);
-            //     reader.BaseStream.Seek(offset, SeekOrigin.Current); 
-            //     return;
-            // }
             newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
-            
-            // Serialize
-            Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
-            float rotZ = reader.ReadSingle();
-            
-            transform.position = newReceivedTransformData.position;
-            lastAction = TransformAction.NETWORK_SET;
-            
-            // Cache the new value
-            newReceivedTransformData.position = newPos;
-            
-            // Start doing interpolation if cached action says so
-            lock (receivedTransformList)
+            lock (_lockCurrentTransform)
             {
-                receivedTransformList.Add(newReceivedTransformData);
-                if (newReceivedTransformData.sequenceNumber > lastProcessedSequenceNum) // Mirar para no leer uno antiguo
+                if(showDebugInfo)
+                    Debug.Log("new: "+newReceivedTransformData.sequenceNumber+" current: " +newTransformData.sequenceNumber);
+                
+                // Check if the packet is outdated
+                if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
                 {
-                    lastProcessedSequenceNum = newReceivedTransformData.sequenceNumber; // Set el mas reciente
-                    newestTransformData = newReceivedTransformData;
+                    // Discard the packet and skip the remaining bytes
+                    int remainingBytes = (sizeof(float) * 3);
+                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                    return;
                 }
-                if(showDebugInfo) Debug.Log($"Received transforms size: {receivedTransformList.Count}");
-                if (newReceivedTransformData.action == TransformAction.NETWORK_SET)
-                {
-                    if(showDebugInfo) Debug.Log($"New NETWORK_SET: position {newPos}");
-                    transform.position = newPos;
-                    lastAction = TransformAction.NETWORK_SET;
-                }
-                else if (newReceivedTransformData.action == TransformAction.INTERPOLATE)
-                {
-                    isInterpolating = true;
-                }
-                int removedTransforms = receivedTransformList.RemoveAll(t => t.sequenceNumber <= lastProcessedSequenceNum);
-                if(showDebugInfo) Debug.Log($"Removed transforms: {removedTransforms}, now has {receivedTransformList.Count}");
-            }
 
-            if(showDebugInfo)
-                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
+                // Serialize
+                Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
+                float rotZ = reader.ReadSingle();
+                
+                lastAction = TransformAction.NETWORK_SET;
+
+                isInterpolating = true;
+
+                // Cache the new value
+                newReceivedTransformData.position = newPos;
+                newReceivedTransformData.rotation.z = rotZ;
+                newTransformData.action = TransformAction.INTERPOLATE;
+                //store new pos
+                newTransformData = newReceivedTransformData;
+            
+
+                if(showDebugInfo)
+                    Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
+            
+            }
         }
 
         public void WriteReplicationTransform(TransformAction transformAction)
@@ -160,7 +140,6 @@ namespace _Scripts.Networking
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {_stream.ToArray().Length}");
             
             // Enqueue to the output object sate stream buffer.
-            previousSentTransform.position = transform.position;
             NetworkManager.Instance.AddStateStreamQueue(_stream);
             lastAction = TransformAction.NETWORK_SEND;
         }
@@ -219,49 +198,9 @@ namespace _Scripts.Networking
                 transform.hasChanged = false;
             }
             
-            lock (receivedTransformList)
-            {
-                if (newestTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
-                {
-                    lastAction = TransformAction.INTERPOLATE;
-                    long ellapsedTime = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - newestTransformData.timeStamp;
-                
-                    interpolationTimer += Time.deltaTime;
-                    float t = Mathf.Clamp01(interpolationTimer / interpolationTime);
-
-                    // Perform interpolation towards the new target position
-                    if(showDebugInfo) Debug.Log($"Interpolating from {transform.position} to next position {newestTransformData.position}");
-                    transform.position = Vector3.Lerp(transform.position, newestTransformData.position, t);
-
-                    if (t >= 1.0f)
-                    {
-                        interpolationTimer = 0;
-                        if(showDebugInfo) Debug.Log("Interpolation finished!");
-                        isInterpolating = false;
-                    }
-                }
-            }
-            
-            // // Check if interpolation is needed and apply it
-            // if (newReceivedTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
-            // {
-            //     lastAction = TransformAction.INTERPOLATE;
-            //     if(showDebugInfo) Debug.Log($"Interpolating from {transform.position} to position: {newReceivedTransformData.position}");
-            //     long currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            //     float lerpFactor = Mathf.Clamp01((currentTime - newReceivedTransformData.timeStamp) / lerpValue); // 0.5f is an example time to interpolate
-            //     transform.position = Vector3.Lerp(transform.position, newReceivedTransformData.position, lerpFactor);
-            //     transform.rotation = Quaternion.Slerp(transform.rotation, newReceivedTransformData.rotation, lerpFactor);
-            //     //transform.localScale = Vector3.Slerp(transform.localScale, lastReceivedTransformData.scale, lerpFactor);
-            //
-            //     if (lerpFactor >= 1.0f)
-            //     {
-            //         isInterpolating = false;
-            //     }
-            // }
-            
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
-            if (tickCounter >= finalRate)
+            if (tickCounter >= finalRate && transform.hasChanged)
             {
                 tickCounter = 0.0f;
                 
@@ -272,6 +211,40 @@ namespace _Scripts.Networking
             tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
             
             tickCounter += Time.deltaTime;
+        }
+
+        private void FixedUpdate()
+        {
+            Interpolate();
+        }
+
+        void Interpolate()
+        {
+            lock (_lockCurrentTransform)
+            {
+                if (newTransformData.action == TransformAction.INTERPOLATE && isInterpolating )
+                {
+                    lastAction = TransformAction.INTERPOLATE;
+                    
+                    Vector3 pointA = transform.position; // Current position
+                    Vector3 pointB = newTransformData.position; // New position
+                    float speed = 7.0f; // Speed of the player
+                    // Calculate the distance between pointA and pointB
+                    float distance = Vector3.Distance(pointA, pointB);
+                    // Calculate the time needed to travel the distance at the given speed
+                    float travelTime = distance / speed;
+                    // Calculate the interpolation factor based on the elapsed time
+                    float t = Mathf.Clamp01(Time.deltaTime / travelTime);
+                    // Perform interpolation towards the new target position
+                    if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
+                    transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
+
+                    if (t >= 1.0f)
+                    {
+                        isInterpolating = false;
+                    }
+                }
+            }
         }
     }
 }
