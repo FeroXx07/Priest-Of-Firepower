@@ -414,7 +414,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalObjectIdHash: 0
-  tickRate: 1
+  tickRate: 3
   tickCounter: 0
   showDebugInfo: 0
   synchronizeTransform: 1

@@ -81,19 +81,20 @@ namespace _Scripts.Player
                 }
                 else if (NetworkManager.Instance.IsHost())
                 {
-                    SendInputToClients();
+                    //SendInputToClients();
                 }
             }
+            
             // Only the host machine will move all the players
-            //if (NetworkManager.Instance.IsHost())
-            //{
+            if (NetworkManager.Instance.IsHost())
+            {
                 Vector2 direction = Vector2.zero;
                 if (input[0]) direction += Vector2.up;
                 if (input[1]) direction += Vector2.right;
                 if (input[2]) direction += Vector2.down;
                 if (input[3]) direction += Vector2.left;
                 _rb.velocity = direction * speed;
-            //}
+            }
             
             for (int i = 0; i < 4; i++)
                 input[i] = false;
