@@ -15,6 +15,10 @@ namespace _Scripts
             SceneManager.LoadScene(sceneToLoad);
             SceneManager.sceneLoaded += SpawnPlayers;
         }
+        public void ReturnToMainMenu()
+        {
+            SceneManager.LoadScene("MainMenu");
+        }
 
         void SpawnPlayers(Scene arg0, LoadSceneMode loadSceneMode)
         {
@@ -34,6 +38,7 @@ namespace _Scripts
         {
            // roundSystem.RoundFinished(enemySpawnManager);
         }
+
 
 
     }

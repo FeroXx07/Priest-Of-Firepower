@@ -12,6 +12,8 @@ namespace _Scripts.Networking
     {
         [SerializeField] private string nextSceneToLoad = "Game_Networking_Test";
         [SerializeField] private Button hostBtn;
+        [SerializeField] private Button returnBtn;
+
         [Header("Join Game")]
         [SerializeField] private TMP_InputField ipInputField;
         [SerializeField] private TMP_Text ipTextfield;
@@ -23,17 +25,26 @@ namespace _Scripts.Networking
         private bool isNameSet = false;
         private void OnEnable()
         {
-            hostBtn.onClick.AddListener(HostGame);
+            isNameSet = false;
+
             NetworkManager.Instance.OnClientConnected += Lobby;
+
+            hostBtn.onClick.AddListener(HostGame);
+            returnBtn.onClick.AddListener(GameManager.Instance.ReturnToMainMenu);
+
             ipInputField.onEndEdit.AddListener(ConnectToServer);
             userNameInputField.onEndEdit.AddListener(SetPriestName);
-            isNameSet = false;
+
+            Debug.Log("hello");
         }
 
         private void OnDisable()
         {
-            hostBtn.onClick.RemoveListener(HostGame);
             NetworkManager.Instance.OnClientConnected -= Lobby;
+
+            hostBtn.onClick.RemoveListener(HostGame);
+            returnBtn.onClick.RemoveListener(GameManager.Instance.ReturnToMainMenu);
+           
             ipInputField.onEndEdit.RemoveListener(ConnectToServer);
             userNameInputField.onEndEdit.RemoveListener(SetPriestName);
         }

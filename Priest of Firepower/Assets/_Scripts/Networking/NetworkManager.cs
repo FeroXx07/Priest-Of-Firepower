@@ -138,7 +138,11 @@ namespace _Scripts.Networking
         #endregion
 
         #region Enable/Disable
-
+        private void Awake()
+        {
+            base.Awake();
+            Debug.Log("nw hello");
+        }
         private void Start()
         {
             Debug.Log("Network Manager: Starting");
