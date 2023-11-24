@@ -66,11 +66,13 @@ namespace _Scripts.Networking
         #region Network Transforms
         public void ReadReplicationTransform(BinaryReader reader, Int64 timeStamp)
         {
-            if (newestTransformData.timeStamp > timeStamp)
-            {
-                int offset = sizeof(Int64) + sizeof(Int32) + (sizeof(float)*3);
-                reader.BaseStream.Seek(offset, SeekOrigin.Current); 
-            }
+            // if (newestTransformData.timeStamp > timeStamp)
+            // {
+            //     int offset = sizeof(Int64) + sizeof(Int32) + (sizeof(float)*3);
+            //     reader.BaseStream.Seek(offset, SeekOrigin.Current); 
+            //     Debug.LogWarning("NOT READING ENTIRE TRANSFORM");
+            //     return;
+            // }
             
             TransformData newReceivedTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
             newReceivedTransformData.sequenceNumber = reader.ReadInt64();
@@ -176,19 +178,47 @@ namespace _Scripts.Networking
                 Debug.LogError($"NetworkBehaviour cast failed {type}");
         }
         
-        public void HandleNetworkInput(Type type, BinaryReader reader)
+        public void HandleNetworkInput(Type type, BinaryReader reader, UInt64 packetSender)
         {
             long currentPosition = reader.BaseStream.Position;
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
 
             if (behaviour != null)
-                behaviour.ReceiveInputFromClient(reader);
+            {
+                if (NetworkManager.Instance.IsClient())
+                {
+                    behaviour.ReceiveInputFromServer(reader);
+                }
+                else if (NetworkManager.Instance.IsHost())
+                {
+                    behaviour.ReceiveInputFromClient(reader);
+                }
+            }
             else
                 Debug.LogError($"NetworkBehaviour cast failed {type}");
         }
 
         private void Update()
         {
+            if (Time.frameCount <= 300) return;
+
+            if (transform.hasChanged && isInterpolating)
+            {
+                transform.hasChanged = false;
+            }
+
+            if (transform.hasChanged && lastAction == TransformAction.NETWORK_SET)
+            {
+                transform.hasChanged = false;
+            }
+            
+            if (transform.hasChanged && sendEveryChange)
+            {
+                WriteReplicationTransform(TransformAction.INTERPOLATE);
+                lastAction = TransformAction.NETWORK_SEND;
+                transform.hasChanged = false;
+            }
+            
             lock (receivedTransformList)
             {
                 if (newestTransformData.action == TransformAction.INTERPOLATE && isInterpolating)
@@ -210,28 +240,6 @@ namespace _Scripts.Networking
                         isInterpolating = false;
                     }
                 }
-            }
-        }
-
-        private void FixedUpdate()
-        {
-            if (Time.frameCount <= 300) return;
-
-            if (transform.hasChanged && isInterpolating)
-            {
-                transform.hasChanged = false;
-            }
-
-            if (transform.hasChanged && lastAction == TransformAction.NETWORK_SET)
-            {
-                transform.hasChanged = false;
-            }
-            
-            if (transform.hasChanged && sendEveryChange && previousSentTransform.position != transform.position)
-            {
-                WriteReplicationTransform(TransformAction.INTERPOLATE);
-                lastAction = TransformAction.NETWORK_SEND;
-                transform.hasChanged = false;
             }
             
             // // Check if interpolation is needed and apply it

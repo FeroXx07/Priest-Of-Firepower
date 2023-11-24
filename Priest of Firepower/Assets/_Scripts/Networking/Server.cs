@@ -148,7 +148,7 @@ namespace _Scripts.Networking
         #endregion
 
         #region Data Transmission
-         public void SendUdpToAll(byte[] data)
+        public void SendUdpToAll(byte[] data)
         {
             //Debug.Log($"Server {_localEndPointTcp}: Sending Udp data to all...");
             foreach (ClientData client in _clientsList)

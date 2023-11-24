@@ -17,6 +17,7 @@ namespace _Scripts.Player
         [SerializeField] private bool isHost => NetworkManager.Instance.IsHost();
         [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
         [SerializeField] private Player player;
+        bool hasChanged = false;
         protected override void InitNetworkVariablesList()
         {
             //throw new NotImplementedException();
@@ -43,26 +44,56 @@ namespace _Scripts.Player
             // Only the owner of the player will control it
             if (myId == player.GetPlayerId())
             {
-                if (Input.GetKey(KeyCode.W)) input[0] = true;
-                if (Input.GetKey(KeyCode.D)) input[1] = true;
-                if (Input.GetKey(KeyCode.S)) input[2] = true;
-                if (Input.GetKey(KeyCode.A)) input[3] = true;
+
+                if (Input.GetKey(KeyCode.W))
+                {
+                    input[0] = true;
+                    hasChanged = true;
+                }
+
+                if (Input.GetKey(KeyCode.D))
+                {
+                    input[1] = true;
+                    hasChanged = true;
+                }
+
+                if (Input.GetKey(KeyCode.S))
+                {
+                    input[2] = true;
+                    hasChanged = true;
+                }
+
+                if (Input.GetKey(KeyCode.A))
+                {
+                    input[3] = true;
+                    hasChanged = true;
+                }
             }
         }
         public void FixedUpdate()
         {
-            SendInputToServer();
-            
-            // Only the host machine will move all the players
-            if (NetworkManager.Instance.IsHost())
+            if (hasChanged)
             {
+                hasChanged = false;
+                if (NetworkManager.Instance.IsClient())
+                {
+                    SendInputToServer();
+                }
+                else if (NetworkManager.Instance.IsHost())
+                {
+                    SendInputToClients();
+                }
+            }
+            // Only the host machine will move all the players
+            //if (NetworkManager.Instance.IsHost())
+            //{
                 Vector2 direction = Vector2.zero;
                 if (input[0]) direction += Vector2.up;
                 if (input[1]) direction += Vector2.right;
                 if (input[2]) direction += Vector2.down;
                 if (input[3]) direction += Vector2.left;
                 _rb.velocity = direction * speed;
-            }
+            //}
             
             for (int i = 0; i < 4; i++)
                 input[i] = false;
@@ -70,25 +101,62 @@ namespace _Scripts.Player
         public string nameIdentifier => "PlayerMovement";
         public override void SendInputToServer()
         {
-            // Send inputs of the player movement to the server, the host shouldn't send inputs to self.
-            if (isHost || myId != player.GetPlayerId())
+            if (myId != player.GetPlayerId())
                 return;
             
-            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs to server: {input}");
+            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs TO server: {input}");
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             Type objectType = this.GetType();
             writer.Write(objectType.FullName);
             writer.Write(NetworkObject.GetNetworkId());
+            
+            writer.Write(player.GetPlayerId());
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
+            
             NetworkManager.Instance.AddInputStreamQueue(stream);
         }
         public override void ReceiveInputFromClient(BinaryReader reader)
         {
+            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM client: {input}");
+            UInt64 id = reader.ReadUInt64();
+            
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
-            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving inputs from clients: {input}");
+
+            //SendInputToClients();
+        }
+
+        public override void SendInputToClients()
+        {
+            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs TO clients: {input}");
+            // Redirect input to other clients
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            Type objectType = this.GetType();
+            writer.Write(objectType.FullName);
+            writer.Write(NetworkObject.GetNetworkId());
+            writer.Write(player.GetPlayerId());
+            
+            for (int i = 0; i < 4; i++)
+                writer.Write(input[i]);
+            
+            NetworkManager.Instance.AddInputStreamQueue(stream);
+        }
+
+        public override void ReceiveInputFromServer(BinaryReader reader)
+        {
+            UInt64 id = reader.ReadUInt64();
+            if (id != player.GetPlayerId())
+            {
+                int offset = (sizeof(bool)*4);
+                reader.BaseStream.Seek(offset, SeekOrigin.Current); 
+                return;
+            }
+            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM server: {input}");
+            for (int i = 0; i < 4; i++)
+                input[i] = reader.ReadBoolean();
         }
     }
 }

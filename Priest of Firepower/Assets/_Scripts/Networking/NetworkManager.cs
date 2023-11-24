@@ -48,8 +48,8 @@ namespace _Scripts.Networking
         #region Buffers
 
         uint _mtu = 1400;
-        int _stateBufferTimeout = 100; // time with no activity to send not fulled packets
-        int _inputBufferTimeout = 30; // time with no activity to send not fulled packets
+        int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
+        int _inputBufferTimeout = 50; // time with no activity to send not fulled packets
         int _heartBeatRate = 1000; // beat rate to send to the server 
 
         // store all state streams to send
@@ -387,13 +387,13 @@ namespace _Scripts.Networking
                                         InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
                                     if (_isClient)
                                     {
-                                        //Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                        Debug.Log($"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
                                         _client.SendUdpPacket(buffer);
                                     }
                                     else if (_isHost)
                                     {
                                         Debug.Log(
-                                            $"Network Manager: Sending input stream buffer as client, buffer size {buffer.Length} and timeout {inputTimeout}");
+                                            $"Network Manager: Sending input stream buffer as server, buffer size {buffer.Length} and timeout {inputTimeout}");
                                         _server.SendUdpToAll(buffer);
                                     }
                                 }
@@ -614,7 +614,7 @@ namespace _Scripts.Networking
                             $"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(reader));
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(reader, packetSenderId));
                 }
                     break;
                 case PacketType.OBJECT_STATE:
@@ -684,7 +684,7 @@ namespace _Scripts.Networking
             }
         }
 
-        void HandleInput(BinaryReader reader)
+        void HandleInput(BinaryReader reader, UInt64 packetSender)
         {
             try
             {
@@ -692,7 +692,7 @@ namespace _Scripts.Networking
                 {
                     string objClass = reader.ReadString();
                     UInt64 netObjId = reader.ReadUInt64();
-                    _replicationManager.networkObjectMap[netObjId].HandleNetworkInput(Type.GetType(objClass), reader);
+                    _replicationManager.networkObjectMap[netObjId].HandleNetworkInput(Type.GetType(objClass), reader, packetSender);
                 }
             }
             catch (EndOfStreamException ex)

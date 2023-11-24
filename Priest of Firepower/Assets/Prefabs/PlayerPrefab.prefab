@@ -416,7 +416,7 @@ MonoBehaviour:
   globalObjectIdHash: 0
   tickRate: 1
   tickCounter: 0
-  showDebugInfo: 1
+  showDebugInfo: 0
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1

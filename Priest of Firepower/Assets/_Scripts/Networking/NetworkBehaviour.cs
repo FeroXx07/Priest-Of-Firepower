@@ -217,7 +217,8 @@ namespace _Scripts.Networking
 
         public virtual void SendInputToServer(){}
         public virtual void ReceiveInputFromClient(BinaryReader reader){}
-
+        public virtual void SendInputToClients(){}
+        public virtual void ReceiveInputFromServer(BinaryReader reader){}
         public virtual void SendStringMessage(string message)
         {
             if (NetworkManager.Instance.IsHost())
@@ -234,6 +235,5 @@ namespace _Scripts.Networking
         }
 
         public virtual void ListenToMessages(UInt64 senderId, string message, long timeStamp){}
-        
     }
 }
