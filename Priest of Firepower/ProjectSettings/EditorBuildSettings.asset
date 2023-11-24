@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/MainMenu.unity
+    guid: e66ffb03271b876439ce7276b3d1ec20
+  - enabled: 1
     path: Assets/Scenes/NetScenes/ConnectToLobby.unity
     guid: 76082f59d63e9da45b5754756053ee46
   - enabled: 1
@@ -13,5 +16,5 @@ EditorBuildSettings:
     guid: d407cd9e57de4a4498b8e9da61cfc45a
   - enabled: 1
     path: Assets/Scenes/NetScenes/Game_Networking_Test.unity
-    guid: b1ebd8933885bf4469b13d7a25e92c54
+    guid: 8ada20cea52be0743b5191af80333499
   m_configObjects: {}
