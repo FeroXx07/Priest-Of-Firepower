@@ -52,7 +52,6 @@ namespace _Scripts.Networking
         TransformData newTransformData;
         private object _lockCurrentTransform = new object();
 
-        public long sequenceNum = 0;
         public long lastProcessedSequenceNum = -1;
         public float interpolationTime = 0.1f; 
         [SerializeField] private float interpolationTimer = 0f;
@@ -117,30 +116,25 @@ namespace _Scripts.Networking
             }
             
             // Serialize
-            MemoryStream _stream = new MemoryStream();
-            BinaryWriter _writer = new BinaryWriter(_stream);
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
             if (NetworkManager.Instance == false)
             {
                 Debug.LogWarning("No NetworkManager or NetworkObject");
             }
+            
+            writer.Write((int)transformAction);
+            writer.Write((float)transform.position.x);
+            writer.Write((float)transform.position.y);
+            writer.Write(transform.rotation.eulerAngles.z);
 
-            Type objectType = this.GetType();
-            _writer.Write(objectType.FullName);
-            _writer.Write(globalObjectIdHash);
-            _writer.Write((int)ReplicationAction.TRANSFORM);
-            _writer.Write(sequenceNum);
-            _writer.Write((int)transformAction);
-            
-            _writer.Write((float)transform.position.x);
-            _writer.Write((float)transform.position.y);
-            _writer.Write(transform.rotation.eulerAngles.z);
-            sequenceNum++;
-            
+            int size = stream.ToArray().Length;
             if(showDebugInfo)
-                Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {_stream.ToArray().Length}");
+                Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {size}");
             
             // Enqueue to the output object sate stream buffer.
-            NetworkManager.Instance.AddStateStreamQueue(_stream);
+            ReplicationHeader replicationHeader = new ReplicationHeader(globalObjectIdHash, this.GetType().FullName, ReplicationAction.TRANSFORM, size);
+            NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
             lastAction = TransformAction.NETWORK_SEND;
         }
 

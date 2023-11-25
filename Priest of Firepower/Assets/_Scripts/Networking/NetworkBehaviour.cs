@@ -36,22 +36,19 @@ namespace _Scripts.Networking
             NetworkManager.Instance.OnGameEventMessageReceived -= ListenToMessages;
         }
         #region Serialization
+
         /// <summary>
         /// Return true if stream has been filled with data, false if not.
         /// </summary>
         /// <param name="outputMemoryStream">Stream to fill with serialization data</param>
         /// <param name="action">The network action header to include</param>
         /// <returns>True: stream has been filled. False: stream has not been filled</returns>
-        protected virtual bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        protected virtual ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             // [Object State] -- We are here! -- [Object Class][Object ID][NetworkAction][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][NetworkAction][Bitfield Lenght]...
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             
             // Serialize
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
-            writer.Write((int)action);
             
             BitArray bitfield = BITTracker.GetBitfield();
             for (int i = 0; i < bitfield.Length; i++)
@@ -76,15 +73,17 @@ namespace _Scripts.Networking
             // If no fields have changed don't send the stream.
             if (count == 0)
             {
-                return false;
+                return null;
             }
             
             if (showDebugInfo)
                 Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Trying to send {count} variables from network behavior: {name}");
             
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+
             // Detrack all variables and return stream to the 
             BITTracker.SetAll(false);
-            return true;
+            return replicationHeader;
         }
 
         private int SerializeFieldsData(BitArray bitfield, int count, BinaryWriter writer)
@@ -168,37 +167,35 @@ namespace _Scripts.Networking
             }
             
             MemoryStream stream = new MemoryStream();
+            ReplicationHeader replicationHeader = null;
             switch (action)
             {
                 case ReplicationAction.CREATE:
                 {
                     BITTracker.SetAll(true);
-                    WriteReplicationPacket(stream, ReplicationAction.CREATE);
+                    replicationHeader = WriteReplicationPacket(stream, ReplicationAction.CREATE);
                 }
                     break;
                 case ReplicationAction.UPDATE:
                 {
-                    if(WriteReplicationPacket(stream, ReplicationAction.UPDATE) == false)
-                        return;
+                    replicationHeader = WriteReplicationPacket(stream, ReplicationAction.UPDATE);
                 }
                     break;
                 case ReplicationAction.DESTROY:
                 {
-                    BinaryWriter writer = new BinaryWriter(stream);
-                    Type objectType = this.GetType();
-                    writer.Write(objectType.FullName);
-                    writer.Write(NetworkObject.GetNetworkId());
-                    writer.Write((int)ReplicationAction.DESTROY);
+                    replicationHeader = WriteReplicationPacket(stream, ReplicationAction.DESTROY);
                 }
                     break;
                 default:
-                    if(WriteReplicationPacket(stream, ReplicationAction.UPDATE) == false)
-                        return;
+                {
+                    replicationHeader = WriteReplicationPacket(stream, ReplicationAction.UPDATE);
+                }
                     break;
             }
-
+            
+            if (replicationHeader == null) return;
             if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
-            NetworkManager.Instance.AddStateStreamQueue(stream);
+            NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
         }
         public virtual void Update()
         {
@@ -219,7 +216,7 @@ namespace _Scripts.Networking
         public virtual void ReceiveInputFromClient(BinaryReader reader){}
         public virtual void SendInputToClients(){}
         public virtual void ReceiveInputFromServer(BinaryReader reader){}
-        public virtual void SendStringMessage(string message)
+        public virtual void SendStringMessage(string message, bool isImportant = true)
         {
             if (NetworkManager.Instance.IsHost())
                 return;
@@ -227,11 +224,13 @@ namespace _Scripts.Networking
             Debug.Log($"Sending message: {message}");
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
+
+            ReplicationAction action = isImportant ? ReplicationAction.IMPORTANT_EVENT : ReplicationAction.EVENT;
+            writer.Write(NetworkManager.Instance.getId);
             writer.Write(message);
-            NetworkManager.Instance.SendGameEventMessage(stream);
+            
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, stream.ToArray().Length);
+            NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
         }
 
         public virtual void ListenToMessages(UInt64 senderId, string message, long timeStamp){}

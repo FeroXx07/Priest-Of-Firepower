@@ -220,7 +220,7 @@ namespace _Scripts.Networking
             try
             {
                 Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Has received Tcp Data");
-                lock (NetworkManager.Instance.IncomingStreamLock)
+                lock (NetworkManager.Instance.incomingStreamLock)
                 {
                     byte[] buffer = new byte[1500];
 
@@ -246,7 +246,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                lock (NetworkManager.Instance.IncomingStreamLock)
+                lock (NetworkManager.Instance.incomingStreamLock)
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {

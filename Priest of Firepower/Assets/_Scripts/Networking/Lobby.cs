@@ -161,7 +161,8 @@ namespace _Scripts.Networking
             }
         }
         #region write
-        protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream,
+            ReplicationAction action)
         {
             base.WriteReplicationPacket(outputMemoryStream, action);
             
@@ -189,7 +190,8 @@ namespace _Scripts.Networking
             }
             //Set the lobby action to none avoid any posible error writing corrupted data
             _lobbyAction = LobbyAction.NONE;
-            return ret;
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            return replicationHeader;
         }
         
         void WritePlayersList(BinaryWriter writer)

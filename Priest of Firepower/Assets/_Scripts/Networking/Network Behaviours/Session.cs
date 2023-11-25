@@ -43,15 +43,13 @@ namespace _Scripts.Networking.Network_Behaviours
         
         }
 
-        protected override bool WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream,
+            ReplicationAction action)
         {
             MemoryStream tempStream = new MemoryStream();
             BinaryWriter tempWriter = new BinaryWriter(tempStream);
 
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
 
             BitArray bitfield = BITTracker.GetBitfield();
 
@@ -75,8 +73,9 @@ namespace _Scripts.Networking.Network_Behaviours
 
             tempStream.Position = 0;
             tempStream.CopyTo(outputMemoryStream);
-
-            return true;
+            
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            return replicationHeader;
         }
     }
 }

@@ -11,7 +11,60 @@ namespace _Scripts.Networking
         CREATE,
         UPDATE,
         DESTROY,
-        TRANSFORM
+        TRANSFORM,
+        EVENT,
+        IMPORTANT_EVENT
+    }
+    public class ReplicationHeader
+    {
+        public ReplicationHeader(UInt64 id, string objectFullName, ReplicationAction replicationAction, int memoryStreamSize)
+        {
+            this.id = id;
+            this.objectFullName = objectFullName;
+            this.replicationAction = replicationAction;
+            this.memoryStreamSize = memoryStreamSize;
+        }
+        public UInt64 id { get; private set; }
+        public string objectFullName { get; private set; }
+        public ReplicationAction replicationAction { get; private set; }
+        
+        public int memoryStreamSize { get; private set; }
+
+        public MemoryStream GetSerializedHeader()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            writer.Write(id);
+            writer.Write(objectFullName);
+            writer.Write((int)replicationAction);
+            writer.Write(memoryStreamSize);
+            return stream;
+        }
+        public static ReplicationHeader DeSerializeHeader(BinaryReader reader)
+        {
+            return new ReplicationHeader(reader.ReadUInt64(), reader.ReadString(), (ReplicationAction)reader.ReadInt32(), reader.ReadInt32());
+        }
+
+        public static List<ReplicationHeader> DeSerializeHeadersList(BinaryReader reader, int count)
+        {
+            List<ReplicationHeader> list = new List<ReplicationHeader>(count);
+            for (int i = 0; i < count; i++)
+            {
+                list[i] = DeSerializeHeader(reader);
+            }
+            return list;
+        }
+    }
+    public class ReplicationItem
+    {
+        public ReplicationItem(ReplicationHeader header, MemoryStream memoryStream)
+        {
+            this.header = header;
+            this.memoryStream = memoryStream;
+        }
+        public ReplicationHeader header { get; private set; }
+        public MemoryStream memoryStream { get; private set; }
+        public void ReplaceMemoryStream(MemoryStream newStream) => memoryStream = newStream;
     }
     public class ReplicationManager
     {
@@ -66,12 +119,26 @@ namespace _Scripts.Networking
                         networkObjectMap[id].ReadReplicationTransform(reader, id, timeStamp, sequenceNumState);
                 }
                     break;
+                case ReplicationAction.EVENT:
+                {
+                    UInt64 messageSenderId = reader.ReadUInt64();
+                    string message = reader.ReadString();
+                    NetworkManager.Instance.OnGameEventMessageReceived?.Invoke(messageSenderId, message, timeStamp);
+                }
+                    break;
+                case ReplicationAction.IMPORTANT_EVENT:
+                {
+                    UInt64 messageSenderId = reader.ReadUInt64();
+                    string message = reader.ReadString();
+                    NetworkManager.Instance.OnGameEventMessageReceived?.Invoke(messageSenderId, message, timeStamp);
+                }
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, null);
             }
         }
         
-          public GameObject Server_InstantiateNetworkObject(GameObject prefab, ClientData clientData)
+        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ClientData clientData)
         {
             NetworkObject newGo = GameObject.Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
             UInt64 newId = RegisterObjectLocally(newGo);
@@ -84,14 +151,13 @@ namespace _Scripts.Networking
             // Send replication packet to clients to create this prefab
             MemoryStream outputMemoryStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(newNetObjId);
-            writer.Write((int)ReplicationAction.CREATE);
+            
             writer.Write(prefab.name);
             writer.Write(clientData.userName);
             writer.Write(clientData.id);
-            NetworkManager.Instance.AddStateStreamQueue(outputMemoryStream);
+            
+            ReplicationHeader replicationHeader = new ReplicationHeader(newNetObjId, this.GetType().FullName, ReplicationAction.CREATE, outputMemoryStream.ToArray().Length);
+            NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
         }
 
         public void Client_ObjectCreationRegistryRead(UInt64 serverAssignedNetObjId, BinaryReader reader, Int64 timeStamp)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,8 +16,7 @@ namespace _Scripts.Networking
         PING,
         OBJECT_STATE,
         INPUT,
-        AUTHENTICATION,
-        GAME_EVENT
+        AUTHENTICATION
     }
 
 //this class will work as a client or server or both at the same time
@@ -55,26 +55,26 @@ namespace _Scripts.Networking
         int _heartBeatRate = 1000; // beat rate to send to the server 
 
         // store all state streams to send
-        private Queue<MemoryStream> _stateStreamBuffer = new Queue<MemoryStream>();
+        private ConcurrentQueue<ReplicationItem> _stateStreamBuffer = new ConcurrentQueue<ReplicationItem>();
         [SerializeField] private UInt64 sequenceNumberState = 0;
         [SerializeField] private UInt64 receivedSequenceNumberState = 0;
 
         // store all input streams to send
-        private Queue<MemoryStream> _inputStreamBuffer = new Queue<MemoryStream>();
+        private ConcurrentQueue<MemoryStream> _inputStreamBuffer = new ConcurrentQueue<MemoryStream>();
         [SerializeField] private UInt64 sequenceNumberInput= 0;
         [SerializeField] private UInt64 receivedSequenceNumberInput = 0;
 
         // store all critical data streams to send (TCP)
-        private Queue<MemoryStream> _reliableStreamBuffer = new Queue<MemoryStream>();
+        private ConcurrentQueue<MemoryStream> _reliableStreamBuffer = new ConcurrentQueue<MemoryStream>();
 
         // Mutex for thread safety
         private readonly object _stateQueueLock = new object();
         private readonly object _inputQueueLock = new object();
-        private readonly object _realiableQueueLock = new object();
+        private readonly object _reliableQueueLock = new object();
 
         // store all data in streams received
-        private Queue<MemoryStream> _incomingStreamBuffer = new Queue<MemoryStream>();
-        public readonly object IncomingStreamLock = new object();
+        private ConcurrentQueue<MemoryStream> _incomingStreamBuffer = new ConcurrentQueue<MemoryStream>();
+        public readonly object incomingStreamLock = new object();
         private Process _receiveData;
         private Process _sendData;
         #endregion
@@ -303,11 +303,22 @@ namespace _Scripts.Networking
 
         #region Output Streams
 
-        public void AddStateStreamQueue(MemoryStream stream)
+        public void AddStateStreamQueue(ReplicationHeader replicationHeader, MemoryStream stream)
         {
             lock (_stateQueueLock)
             {
-                _stateStreamBuffer.Enqueue(stream);
+                // Check if replication header contains already contains an exact replication header id, obj, an action, if true then replace with the most recent.
+                bool headerExistsAndIsReplaced = false;
+                ReplicationItem alreadyExistingItem = _stateStreamBuffer.First(item => item.header.id == replicationHeader.id &&
+                                                 item.header.objectFullName == replicationHeader.objectFullName &&
+                                                 item.header.replicationAction == replicationHeader.replicationAction);
+                
+                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
+                if (alreadyExistingItem != null)
+                    alreadyExistingItem.ReplaceMemoryStream(stream);
+                else
+                    // ReSharper disable once HeuristicUnreachableCode
+                    _stateStreamBuffer.Enqueue(new ReplicationItem(replicationHeader, stream));
             }
         }
 
@@ -321,27 +332,27 @@ namespace _Scripts.Networking
 
         public void AddReliableStreamQueue(MemoryStream stream)
         {
-            lock (_realiableQueueLock)
+            lock (_reliableQueueLock)
             {
                 _reliableStreamBuffer.Enqueue(stream);
             }
         }
 
-        public void SendGameEventMessage(MemoryStream stream)
-        {
-            UInt64 senderid = IsClient() ? _client.GetId() : 0;
-            byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.GAME_EVENT, stream);
-            if (_isClient)
-            {
-                Debug.Log($"Network Manager: Sending message as client, buffer size {buffer.Length}");
-                _client.SendUdpPacket(buffer);
-            }
-            else if (_isHost)
-            {
-                Debug.Log($"Network Manager: Sending message as host, buffer size {buffer.Length}");
-                _server.SendUdpToAll(buffer);
-            }
-        }
+        // public void SendGameEventMessage(MemoryStream stream)
+        // {
+        //     UInt64 senderid = IsClient() ? _client.GetId() : 0;
+        //     byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.GAME_EVENT, stream);
+        //     if (_isClient)
+        //     {
+        //         Debug.Log($"Network Manager: Sending message as client, buffer size {buffer.Length}");
+        //         _client.SendUdpPacket(buffer);
+        //     }
+        //     else if (_isHost)
+        //     {
+        //         Debug.Log($"Network Manager: Sending message as host, buffer size {buffer.Length}");
+        //         _server.SendUdpToAll(buffer);
+        //     }
+        // }
 
         private void SendDataThread(CancellationToken token)
         {
@@ -370,11 +381,12 @@ namespace _Scripts.Networking
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
-                            while (_inputStreamBuffer.Count > 0 &&
-                                   totalSize + (int)_inputStreamBuffer.Peek().Length <= _mtu)
+                            while (_inputStreamBuffer.Count > 0)
                             {
-                                //inputTimeout -= stopwatch.ElapsedMilliseconds;
-                                MemoryStream nextStream = _inputStreamBuffer.Dequeue();
+                                if (_inputStreamBuffer.TryPeek(out MemoryStream memoryStream) == false) break;
+                                if (totalSize + (int)memoryStream.Length >= _mtu) break;
+                                
+                                if (_inputStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
 
@@ -413,17 +425,23 @@ namespace _Scripts.Networking
                         {
                             //Debug.Log("Network Manager: Preparing state stream buffer");
                             int totalSize = 0;
-                            List<MemoryStream> streamsToSend = new List<MemoryStream>();
+                            List<ReplicationItem> replicationItemsToSend = new List<ReplicationItem>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
                             //while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
                             // Accumulate data packets until exceeding the MTU or the buffer is empty
-                            while (_stateStreamBuffer.Count > 0 &&
-                                   totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu)
+                            while (_stateStreamBuffer.Count > 0)
                             {
-                                MemoryStream nextStream = _stateStreamBuffer.Dequeue();
-                                totalSize += (int)nextStream.Length;
-                                streamsToSend.Add(nextStream);
+                                if (_stateStreamBuffer.TryPeek(out ReplicationItem item) == false) break;
+                                MemoryStream currentItemHeaderStream = item.header.GetSerializedHeader();
+                                
+                                if (totalSize + (int)item.memoryStream.Length + (int)currentItemHeaderStream.Length >= _mtu) break;
+                                if (_stateStreamBuffer.TryDequeue(out ReplicationItem replicationItem) == false) break;
+                                currentItemHeaderStream = item.header.GetSerializedHeader();
+                                
+                                MemoryStream nextStream = replicationItem.memoryStream;
+                                totalSize += (int)nextStream.Length + (int)currentItemHeaderStream.Length;
+                                replicationItemsToSend.Add(replicationItem);
 
                                 // Adjust timeout based on elapsed time
                                 stateTimeout -= stateStopwatch.ElapsedMilliseconds;
@@ -433,7 +451,7 @@ namespace _Scripts.Networking
                                 {
                                     stateTimeout = _stateBufferTimeout;
                                     byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.OBJECT_STATE,
-                                        streamsToSend);
+                                        replicationItemsToSend);
                                     if (_isClient)
                                     {
                                         Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
@@ -450,14 +468,14 @@ namespace _Scripts.Networking
                                     }
 
                                     // Clear the streams to send for the next iteration
-                                    streamsToSend.Clear();
+                                    replicationItemsToSend.Clear();
                                     totalSize = 0;
                                 }
                             }
                         }
                     }
 
-                    lock (_realiableQueueLock)
+                    lock (_reliableQueueLock)
                     {
                         // reliable buffer
                         if (_reliableStreamBuffer.Count > 0)
@@ -465,7 +483,7 @@ namespace _Scripts.Networking
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
                             while (_reliableStreamBuffer.Count > 0)
                             {
-                                MemoryStream nextStream = _reliableStreamBuffer.Dequeue();
+                                if (_reliableStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
                                 MemoryStream newStream = new MemoryStream();
                                 BinaryWriter writer = new BinaryWriter(newStream);
                                 ///writer.Write((UInt64)senderid);
@@ -509,9 +527,9 @@ namespace _Scripts.Networking
                 lock (_stateQueueLock)
                 {
                     Debug.Log($"Network Manager: Disposing state stream buffer");
-                    foreach (MemoryStream incomingStream in _stateStreamBuffer)
+                    foreach (ReplicationItem replicationItem in _stateStreamBuffer)
                     {
-                        incomingStream.Dispose();
+                        replicationItem.memoryStream.Dispose();
                     }
 
                     _stateStreamBuffer.Clear(); // Clear the queue
@@ -559,11 +577,12 @@ namespace _Scripts.Networking
                 {
                     if (_incomingStreamBuffer.Count > 0)
                     {
-                        lock (IncomingStreamLock)
+                        lock (incomingStreamLock)
                         {
                             while (_incomingStreamBuffer.Count > 0)
                             {
-                                ProcessIncomingPacket(_incomingStreamBuffer.Dequeue());
+                                if (_incomingStreamBuffer.TryDequeue(out MemoryStream memoryStream) == false) break;
+                                ProcessIncomingPacket(memoryStream);
                             }
                         }
                     }
@@ -576,7 +595,7 @@ namespace _Scripts.Networking
             finally
             {
                 // Clean up resources
-                lock (IncomingStreamLock)
+                lock (incomingStreamLock)
                 {
                     foreach (MemoryStream incomingStream in _incomingStreamBuffer)
                     {
@@ -629,7 +648,9 @@ namespace _Scripts.Networking
                     receivedSequenceNumberState = reader.ReadUInt64();
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(reader, packetSenderId, packetTimeStamp, receivedSequenceNumberState));
+                    int replicationItemsCount = reader.ReadInt32();
+                    
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(stream, stream.Position, packetSenderId, packetTimeStamp, receivedSequenceNumberState, replicationItemsCount));
                     // Maybe this reading of packets in actions is a problem for tranforms
                 }
                     break;
@@ -646,36 +667,28 @@ namespace _Scripts.Networking
                     }
                 }
                     break;
-                case PacketType.GAME_EVENT:
-                {
-                    if (debugShowMessagePackets)  Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-                    UInt64 packetSenderId = reader.ReadUInt64();
-                    long packetTimeStamp = reader.ReadInt64();
-                    string message = reader.ReadString();
-                    OnGameEventMessageReceived?.Invoke(packetSenderId, message, packetTimeStamp);
-                }
-                    break;
                 default:
                     Debug.LogError("Network Manager: Unknown packet type!");
                     break;
             }
         }
 
-        void HandleObjectState(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)
+        void HandleObjectState(MemoryStream stream, Int64 streamPosition, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput, int replicationItemsCount)
         {
             try
             {
-                //Debug.Log("base stream: " + reader.BaseStream.Length);
-                //Debug.Log("Reader position:" + reader.BaseStream.Position);
-                while (reader.BaseStream.Position < reader.BaseStream.Length)
-                {
-                    // [Object Class][Object ID]
-                    string objClass = reader.ReadString();
-                    UInt64 id = reader.ReadUInt64();
-                    ReplicationAction replicationAction = (ReplicationAction)reader.ReadInt32();
-                    //read rest of the stream
-                    _replicationManager.HandleReplication(reader, id, timeStamp, sequenceNumInput, replicationAction, Type.GetType(objClass));
-                }
+                BinaryReader reader = new BinaryReader(stream);
+                List<ReplicationHeader> replicationHeaders =
+                    ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
+                // while (reader.BaseStream.Position < reader.BaseStream.Length)
+                // {
+                //     // [Object Class][Object ID]
+                //     string objClass = reader.ReadString();
+                //     UInt64 id = reader.ReadUInt64();
+                //     ReplicationAction replicationAction = (ReplicationAction)reader.ReadInt32();
+                //     //read rest of the stream
+                //     _replicationManager.HandleReplication(reader, id, timeStamp, sequenceNumInput, replicationAction, Type.GetType(objClass));
+                // }
             }
             catch (EndOfStreamException ex)
             {
@@ -701,7 +714,51 @@ namespace _Scripts.Networking
         }
 
         #endregion
-
+        private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, List<ReplicationItem> streamsList)
+        {
+            MemoryStream output = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(output);
+            
+            // Packet type
+            writer.Write((int)type);
+            
+            // Packet sequence number
+            if (type == PacketType.OBJECT_STATE)
+            {
+                writer.Write(sequenceNumberState);
+            }
+            else if (type == PacketType.INPUT)
+            {
+                writer.Write(sequenceNumberInput);
+            }
+            
+            // Packet sender id
+            writer.Write(senderId);
+            
+            // Packet timestamp
+            writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            
+            // Count of total replication items in this packet
+            writer.Write(streamsList.Count);
+            
+            // Packet header contents
+            foreach (ReplicationItem item in streamsList)
+            {
+                MemoryStream headerStream = item.header.GetSerializedHeader();
+                headerStream.Position = 0;
+                headerStream.CopyTo(output);
+            }
+            
+            // Packet fields data contents
+            foreach (ReplicationItem item in streamsList)
+            {
+                item.memoryStream.Position = 0;
+                item.memoryStream.CopyTo(output);
+            }
+            
+            return output.ToArray();
+        }
+        
         private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, List<MemoryStream> streamsList)
         {
             MemoryStream output = new MemoryStream();

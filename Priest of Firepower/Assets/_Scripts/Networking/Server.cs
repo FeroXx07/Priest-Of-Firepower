@@ -287,7 +287,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                lock (NetworkManager.Instance.IncomingStreamLock)
+                lock (NetworkManager.Instance.incomingStreamLock)
                 {
                     Debug.Log($"Server {_localEndPointTcp}: Has received Tcp Data from {socket.RemoteEndPoint}");
                     byte[] buffer = new byte[1500];
@@ -314,7 +314,7 @@ namespace _Scripts.Networking
         {
             try
             {
-                lock (NetworkManager.Instance.IncomingStreamLock)
+                lock (NetworkManager.Instance.incomingStreamLock)
                 {
                     if (socket.Poll(1000, SelectMode.SelectRead)) // Wait up to 1 seconds for data to arrive
                     {
