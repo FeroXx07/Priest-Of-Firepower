@@ -47,19 +47,15 @@ namespace _Scripts.Networking
         [SerializeField] private bool isInterpolating = false;
         
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
-        
-        public List<TransformData> receivedTransformList = new List<TransformData>();
         TransformData newTransformData;
+        TransformData lastTransformSentData;
         private object _lockCurrentTransform = new object();
-
-        public long lastProcessedSequenceNum = -1;
-        public float interpolationTime = 0.1f; 
-        [SerializeField] private float interpolationTimer = 0f;
         #endregion
         
         private void Awake()
         {
             newTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
+            lastTransformSentData = new TransformData(transform.position, transform.rotation, transform.localScale);
         }
 
         #region Network Transforms
@@ -123,6 +119,7 @@ namespace _Scripts.Networking
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {size}");
             
             // Enqueue to the output object sate stream buffer.
+            lastTransformSentData.position = transform.position;
             ReplicationHeader replicationHeader = new ReplicationHeader(globalObjectIdHash, this.GetType().FullName, ReplicationAction.TRANSFORM, size);
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
             lastAction = TransformAction.NETWORK_SEND;
@@ -188,7 +185,7 @@ namespace _Scripts.Networking
             {
                 tickCounter = 0.0f;
                 
-                if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
+                if (!isInterpolating && sendTickChange && transform.position != lastTransformSentData.position) // Only server should be able to these send sanity snapshots!
                     WriteReplicationTransform(TransformAction.INTERPOLATE);
             }
 
