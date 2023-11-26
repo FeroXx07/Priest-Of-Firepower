@@ -77,6 +77,9 @@ namespace _Scripts.Networking
         public readonly object incomingStreamLock = new object();
         private Process _receiveData;
         private Process _sendData;
+
+        private int thresholdToStartDiscardingPackets = 3;
+        private bool isBehindThreshold = false;
         #endregion
 
         #region Utility
@@ -680,15 +683,19 @@ namespace _Scripts.Networking
                 BinaryReader reader = new BinaryReader(stream);
                 List<ReplicationHeader> replicationHeaders =
                     ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
-                // while (reader.BaseStream.Position < reader.BaseStream.Length)
-                // {
-                //     // [Object Class][Object ID]
-                //     string objClass = reader.ReadString();
-                //     UInt64 id = reader.ReadUInt64();
-                //     ReplicationAction replicationAction = (ReplicationAction)reader.ReadInt32();
-                //     //read rest of the stream
-                //     _replicationManager.HandleReplication(reader, id, timeStamp, sequenceNumInput, replicationAction, Type.GetType(objClass));
-                // }
+                
+                // TODO: If influx of packets is high, start discarding data and only read creates, destroy, updates, important events.
+
+                foreach (ReplicationHeader header in replicationHeaders)
+                {
+                    if (isBehindThreshold && header.replicationAction == ReplicationAction.TRANSFORM || header.replicationAction == ReplicationAction.EVENT)
+                    {
+                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
+                        continue;
+                    }
+                    
+                    _replicationManager.HandleReplication(reader, header.id, timeStamp, sequenceNumInput, header.replicationAction, Type.GetType(header.objectFullName));
+                }
             }
             catch (EndOfStreamException ex)
             {
