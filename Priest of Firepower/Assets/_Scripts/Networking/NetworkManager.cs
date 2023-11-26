@@ -50,11 +50,14 @@ namespace _Scripts.Networking
 
         #region Buffers
 
-        uint _mtu = 1400;
-        int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
-        int _inputBufferTimeout = 50; // time with no activity to send not fulled packets
-        int _heartBeatRate = 1000; // beat rate to send to the server 
-
+        private uint _mtu = 1400;
+        private int _stateBufferTimeout = 1000; // time with no activity to send not fulled packets
+        private int _inputBufferTimeout = 50; // time with no activity to send not fulled packets
+        private int _heartBeatRate = 1000; // beat rate to send to the server 
+        private System.Diagnostics.Stopwatch _inputStopwatch = new System.Diagnostics.Stopwatch();
+        private  System.Diagnostics.Stopwatch _heartBeatStopwatch = new System.Diagnostics.Stopwatch();
+        private  System.Diagnostics.Stopwatch _stateStopwatch = new System.Diagnostics.Stopwatch();
+        
         // store all state streams to send
         private ConcurrentQueue<ReplicationItem> _stateStreamBuffer = new ConcurrentQueue<ReplicationItem>();
         [SerializeField] private UInt64 sendingSequenceNumberState = 0;
@@ -373,11 +376,7 @@ namespace _Scripts.Networking
                 Debug.Log("Network Manager: Send data thread started");
                 float stateTimeout = _stateBufferTimeout;
                 float inputTimeout = _inputBufferTimeout;
-                System.Diagnostics.Stopwatch stateStopwatch = new System.Diagnostics.Stopwatch();
-                System.Diagnostics.Stopwatch inputStopwatch = new System.Diagnostics.Stopwatch();
-                System.Diagnostics.Stopwatch heartBeatStopwatch = new System.Diagnostics.Stopwatch();
-                inputStopwatch.Start();
-                heartBeatStopwatch.Start();
+
                 while (!token.IsCancellationRequested)
                 {
                     UInt64 senderid = IsClient() ? _client.GetId() : 0;
@@ -402,8 +401,8 @@ namespace _Scripts.Networking
                                 streamsToSend.Add(nextStream);
 
                                 // Adjust timeout based on elapsed time
-                                inputTimeout -= inputStopwatch.ElapsedMilliseconds;
-                                inputStopwatch.Restart();
+                                inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
+                                _inputStopwatch.Restart();
                                 //Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
                                 if (totalSize > 0 && (totalSize <= _mtu || inputTimeout <= 0.0f))
                                 {
@@ -434,53 +433,61 @@ namespace _Scripts.Networking
                     {
                         if (_stateStreamBuffer.Count > 0)
                         {
-                            stateStopwatch.Restart();
-                            //Debug.Log("Network Manager: Preparing state stream buffer");
-                            int totalSize = 0;
                             List<ReplicationItem> replicationItemsToSend = new List<ReplicationItem>();
-
-                            //check if the totalsize + the next stream total size is less than the specified size
-                            //while (_stateStreamBuffer.Count > 0 && totalSize + (int)_stateStreamBuffer.Peek().Length <= _mtu && _stateBufferTimeout > 0)
-                            // Accumulate data packets until exceeding the MTU or the buffer is empty
-                            while (_stateStreamBuffer.Count > 0)
+                            int totalSize = 0;
+                            bool mtuFull = false;
+                            
+                            _stateStopwatch.Stop();
+                            _stateStopwatch.Reset();
+                            _stateStopwatch.Start();
+                            Debug.Log( $"Network Manager: Starting STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                            while (_stateStreamBuffer.Count > 0 && mtuFull == false && _stateStopwatch.ElapsedMilliseconds < stateTimeout)
                             {
-                                if (_stateStreamBuffer.TryPeek(out ReplicationItem item) == false) break;
-                                MemoryStream currentItemHeaderStream = item.header.GetSerializedHeader();
-                                
-                                if (totalSize + (int)item.memoryStream.Length + (int)currentItemHeaderStream.Length >= _mtu) break;
-                                if (_stateStreamBuffer.TryDequeue(out ReplicationItem replicationItem) == false) break;
-                                currentItemHeaderStream = item.header.GetSerializedHeader();
-                                
-                                MemoryStream nextStream = replicationItem.memoryStream;
-                                totalSize += (int)nextStream.Length + (int)currentItemHeaderStream.Length;
-                                replicationItemsToSend.Add(replicationItem);
-
-                                // Adjust timeout based on elapsed time
-                                stateStopwatch.Stop();
-                                stateTimeout -= stateStopwatch.ElapsedMilliseconds;
-                                stateStopwatch.Restart();
-                                //Debug.Log($"Network Manager: Timeout state stream buffer {stateTimeout}");
-                                if (totalSize > 0 && (totalSize <= _mtu || stateTimeout <= 0.0f))
+                                if (_stateStreamBuffer.TryPeek(out ReplicationItem nextItem))
                                 {
-                                    stateTimeout = _stateBufferTimeout;
+                                    // Able to peek
+                                    MemoryStream currentItemHeaderStream = nextItem.header.GetSerializedHeader();
+
+                                    if (totalSize + (int)nextItem.memoryStream.Length +
+                                        (int)currentItemHeaderStream.Length <= _mtu)
+                                    {
+                                        // Able to insert next header into mtu
+                                        if (_stateStreamBuffer.TryDequeue(out ReplicationItem replicationItem))
+                                        {
+                                            currentItemHeaderStream = nextItem.header.GetSerializedHeader();
+
+                                            MemoryStream nextStream = replicationItem.memoryStream;
+                                            totalSize += (int)nextStream.Length + (int)currentItemHeaderStream.Length;
+                                            replicationItemsToSend.Add(replicationItem);
+                                            Debug.Log( $"Network Manager: Inserting item into STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Unable to insert next header into mtu because it's full
+                                        mtuFull = true;
+                                        Debug.Log( $"Network Manager: MTU is full! STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                                    }
+                                }
+                                
+                                if (totalSize > 0)
+                                {
                                     byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.OBJECT_STATE,
                                         replicationItemsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendingSequenceNumberState}");
+                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}, and SEQ STATE: {sendingSequenceNumberState}");
                                         _client.SendUdpPacket(buffer);
                                         sendingSequenceNumberState++;
                                         if (sendingSequenceNumberState == ulong.MaxValue - 1) sendingSequenceNumberState = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendingSequenceNumberState}");
+                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}, and SEQ STATE: {sendingSequenceNumberState}");
                                         _server.SendUdpToAll(buffer);
                                         sendingSequenceNumberState++;
                                         if (sendingSequenceNumberState == ulong.MaxValue - 1) sendingSequenceNumberState = 0;
                                     }
-
-                                    // Clear the streams to send for the next iteration
                                     replicationItemsToSend.Clear();
                                     totalSize = 0;
                                 }
@@ -515,14 +522,14 @@ namespace _Scripts.Networking
                     }
 
                     //handle heart beats
-                    if (heartBeatStopwatch.ElapsedMilliseconds >= _heartBeatRate)
+                    if (_heartBeatStopwatch.ElapsedMilliseconds >= _heartBeatRate)
                     {
                         if(_isClient)
                             _client.SendHeartBeat();
                         if(_isHost)
                             _server.SendHeartBeat();
                         
-                        heartBeatStopwatch.Restart();
+                        _heartBeatStopwatch.Restart();
                     }
 
                     if (inputTimeout < 0) inputTimeout = _inputBufferTimeout;

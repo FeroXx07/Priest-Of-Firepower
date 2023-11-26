@@ -49,3 +49,13 @@ MonoBehaviour:
   PlayerName: Hostttttttttt
   instantiatablesPrefabs:
   - {fileID: 1747872900250147753, guid: d8a41d9ffc3dad24eb4139bdec85de48, type: 3}
+  - {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  sendingSequenceNumberState: 0
+  receivedSequenceNumberState: 0
+  sendingSequenceNumberInput: 0
+  receivedSequenceNumberInput: 0
+  debugShowPingPackets: 1
+  debugShowObjectStatePackets: 0
+  debugShowInputPackets: 0
+  debugShowAuthenticationPackets: 0
+  debugShowMessagePackets: 0
