@@ -50,7 +50,7 @@ namespace _Scripts.Networking
             List<ReplicationHeader> list = new List<ReplicationHeader>(count);
             for (int i = 0; i < count; i++)
             {
-                list[i] = DeSerializeHeader(reader);
+                list.Add(DeSerializeHeader(reader));
             }
             return list;
         }

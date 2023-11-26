@@ -69,22 +69,12 @@ namespace _Scripts.Networking
             // init transform data
             TransformData newReceivedTransformData =
                 new TransformData(transform.position, transform.rotation, transform.localScale);
-            newReceivedTransformData.sequenceNumber = reader.ReadInt64();
             newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
             lock (_lockCurrentTransform)
             {
                 if(showDebugInfo)
-                    Debug.Log("new: "+newReceivedTransformData.sequenceNumber+" current: " +newTransformData.sequenceNumber);
+                    Debug.Log($"new transform: {sequenceState}");
                 
-                // Check if the packet is outdated
-                if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
-                {
-                    // Discard the packet and skip the remaining bytes
-                    int remainingBytes = (sizeof(float) * 3);
-                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
-                    return;
-                }
-
                 // Serialize
                 Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
                 float rotZ = reader.ReadSingle();
@@ -251,7 +241,6 @@ public struct TransformData
     public Vector3 scale;
     public long timeStamp;
     public TransformAction action;
-    public long sequenceNumber;
     public TransformData(Vector3 pos, Quaternion rot, Vector3 s)
     {
         position = new Vector3(pos.x, pos.y, pos.z);
@@ -259,6 +248,5 @@ public struct TransformData
         scale = new Vector3(s.x, s.y, s.z);
         action = TransformAction.INTERPOLATE;
         timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-        sequenceNumber = 0;
     }
 }

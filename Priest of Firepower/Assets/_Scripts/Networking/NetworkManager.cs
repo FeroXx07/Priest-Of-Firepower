@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {
@@ -56,12 +57,13 @@ namespace _Scripts.Networking
 
         // store all state streams to send
         private ConcurrentQueue<ReplicationItem> _stateStreamBuffer = new ConcurrentQueue<ReplicationItem>();
-        [SerializeField] private UInt64 sequenceNumberState = 0;
+        [SerializeField] private UInt64 sendingSequenceNumberState = 0;
         [SerializeField] private UInt64 receivedSequenceNumberState = 0;
+        public UInt64 currentSequenceNumberStateRead { get; private set; } = 0;
 
         // store all input streams to send
         private ConcurrentQueue<MemoryStream> _inputStreamBuffer = new ConcurrentQueue<MemoryStream>();
-        [SerializeField] private UInt64 sequenceNumberInput= 0;
+        [SerializeField] private UInt64 sendingSequenceNumberInput= 0;
         [SerializeField] private UInt64 receivedSequenceNumberInput = 0;
 
         // store all critical data streams to send (TCP)
@@ -312,10 +314,17 @@ namespace _Scripts.Networking
             {
                 // Check if replication header contains already contains an exact replication header id, obj, an action, if true then replace with the most recent.
                 bool headerExistsAndIsReplaced = false;
-                ReplicationItem alreadyExistingItem = _stateStreamBuffer.First(item => item.header.id == replicationHeader.id &&
-                                                 item.header.objectFullName == replicationHeader.objectFullName &&
-                                                 item.header.replicationAction == replicationHeader.replicationAction);
-                
+
+                ReplicationItem alreadyExistingItem = null;
+                foreach (var item in _stateStreamBuffer)
+                {
+                    if (item.header.id == replicationHeader.id &&
+                        item.header.objectFullName == replicationHeader.objectFullName &&
+                        item.header.replicationAction == replicationHeader.replicationAction)
+                    {
+                        alreadyExistingItem = item;
+                    }
+                }
                 // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (alreadyExistingItem != null)
                     alreadyExistingItem.ReplaceMemoryStream(stream);
@@ -367,7 +376,6 @@ namespace _Scripts.Networking
                 System.Diagnostics.Stopwatch stateStopwatch = new System.Diagnostics.Stopwatch();
                 System.Diagnostics.Stopwatch inputStopwatch = new System.Diagnostics.Stopwatch();
                 System.Diagnostics.Stopwatch heartBeatStopwatch = new System.Diagnostics.Stopwatch();
-                stateStopwatch.Start();
                 inputStopwatch.Start();
                 heartBeatStopwatch.Start();
                 while (!token.IsCancellationRequested)
@@ -404,28 +412,29 @@ namespace _Scripts.Networking
                                         InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sequenceNumberInput}");
+                                        Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendingSequenceNumberInput}");
                                         _client.SendUdpPacket(buffer);
-                                        sequenceNumberInput++;
-                                        if (sequenceNumberInput == ulong.MaxValue - 1) sequenceNumberInput = 0;
+                                        sendingSequenceNumberInput++;
+                                        if (sendingSequenceNumberInput == ulong.MaxValue - 1) sendingSequenceNumberInput = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sequenceNumberInput}");
+                                        Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendingSequenceNumberInput}");
                                         _server.SendUdpToAll(buffer);
-                                        sequenceNumberInput++;
-                                        if (sequenceNumberInput == ulong.MaxValue - 1) sequenceNumberInput = 0;
+                                        sendingSequenceNumberInput++;
+                                        if (sendingSequenceNumberInput == ulong.MaxValue - 1) sendingSequenceNumberInput = 0;
                                     }
                                 }
                             }
                         }
                     }
-                    
+                     
                     //State buffer
                     lock (_stateQueueLock)
                     {
                         if (_stateStreamBuffer.Count > 0)
                         {
+                            stateStopwatch.Restart();
                             //Debug.Log("Network Manager: Preparing state stream buffer");
                             int totalSize = 0;
                             List<ReplicationItem> replicationItemsToSend = new List<ReplicationItem>();
@@ -447,6 +456,7 @@ namespace _Scripts.Networking
                                 replicationItemsToSend.Add(replicationItem);
 
                                 // Adjust timeout based on elapsed time
+                                stateStopwatch.Stop();
                                 stateTimeout -= stateStopwatch.ElapsedMilliseconds;
                                 stateStopwatch.Restart();
                                 //Debug.Log($"Network Manager: Timeout state stream buffer {stateTimeout}");
@@ -457,17 +467,17 @@ namespace _Scripts.Networking
                                         replicationItemsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
+                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendingSequenceNumberState}");
                                         _client.SendUdpPacket(buffer);
-                                        sequenceNumberState++;
-                                        if (sequenceNumberState == ulong.MaxValue - 1) sequenceNumberState = 0;
+                                        sendingSequenceNumberState++;
+                                        if (sendingSequenceNumberState == ulong.MaxValue - 1) sendingSequenceNumberState = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
+                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendingSequenceNumberState}");
                                         _server.SendUdpToAll(buffer);
-                                        sequenceNumberState++;
-                                        if (sequenceNumberState == ulong.MaxValue - 1) sequenceNumberState = 0;
+                                        sendingSequenceNumberState++;
+                                        if (sendingSequenceNumberState == ulong.MaxValue - 1) sendingSequenceNumberState = 0;
                                     }
 
                                     // Clear the streams to send for the next iteration
@@ -685,17 +695,26 @@ namespace _Scripts.Networking
                     ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
                 
                 // TODO: If influx of packets is high, start discarding data and only read creates, destroy, updates, important events.
-
+                
                 foreach (ReplicationHeader header in replicationHeaders)
                 {
-                    if (isBehindThreshold && header.replicationAction == ReplicationAction.TRANSFORM || header.replicationAction == ReplicationAction.EVENT)
+                    if (sequenceNumInput - currentSequenceNumberStateRead >= (ulong)thresholdToStartDiscardingPackets)
+                        isBehindThreshold = true;
+                    else
+                        isBehindThreshold = false;
+                    
+                    if (isBehindThreshold && (header.replicationAction == ReplicationAction.TRANSFORM || header.replicationAction == ReplicationAction.EVENT))
                     {
+                        Debug.Log($"Network Manager: Is behind threshold, discarding {header.id}, {header.objectFullName},  {header.replicationAction},  {header.memoryStreamSize}");
                         reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                         continue;
                     }
                     
                     _replicationManager.HandleReplication(reader, header.id, timeStamp, sequenceNumInput, header.replicationAction, Type.GetType(header.objectFullName));
                 }
+                
+                isBehindThreshold = false;
+                currentSequenceNumberStateRead++;
             }
             catch (EndOfStreamException ex)
             {
@@ -732,11 +751,11 @@ namespace _Scripts.Networking
             // Packet sequence number
             if (type == PacketType.OBJECT_STATE)
             {
-                writer.Write(sequenceNumberState);
+                writer.Write(sendingSequenceNumberState);
             }
             else if (type == PacketType.INPUT)
             {
-                writer.Write(sequenceNumberInput);
+                writer.Write(sendingSequenceNumberInput);
             }
             
             // Packet sender id
@@ -777,11 +796,11 @@ namespace _Scripts.Networking
             // Packet sequence number
             if (type == PacketType.OBJECT_STATE)
             {
-                writer.Write(sequenceNumberState);
+                writer.Write(sendingSequenceNumberState);
             }
             else if (type == PacketType.INPUT)
             {
-                writer.Write(sequenceNumberInput);
+                writer.Write(sendingSequenceNumberInput);
             }
             
             // Packet sender id
@@ -811,11 +830,11 @@ namespace _Scripts.Networking
             // Packet sequence number
             if (type == PacketType.OBJECT_STATE)
             {
-                writer.Write(sequenceNumberState);
+                writer.Write(sendingSequenceNumberState);
             }
             else if (type == PacketType.INPUT)
             {
-                writer.Write(sequenceNumberInput);
+                writer.Write(sendingSequenceNumberInput);
             }
             
             // Packet sender id
