@@ -67,11 +67,26 @@ namespace _Scripts.Networking
 
         public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
         {
+            //Check if the transfrom belongs to the client if so avoid reading the data sent by the server
+            //client->send data, server -> broadcast, skip if owner
+            if (TryGetComponent<Player.Player>(out Player.Player player))
+            {
+                if (player.isOwner())
+                {
+                    Debug.Log("Player is owner, skiping T data revieced");
+                    // Discard the packet and skip the remaining bytes
+                    int remainingBytes = (sizeof(float) * 3 + sizeof(Int64) + sizeof(Int32) );
+                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                    return;
+                }
+            }
+            
             // init transform data
             TransformData newReceivedTransformData =
                 new TransformData(transform.position, transform.rotation, transform.localScale);
             newReceivedTransformData.sequenceNumber = reader.ReadInt64();
             newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
+
             lock (_lockCurrentTransform)
             {
                 if(showDebugInfo)
@@ -179,7 +194,7 @@ namespace _Scripts.Networking
 
         private void Update()
         {
-            //if (Time.frameCount <= 300) return;
+            if (Time.frameCount <= 300) return;
 
             // only send the position as a server
 
@@ -210,12 +225,11 @@ namespace _Scripts.Networking
             if (tickCounter >= finalRate && hasChanged)
             {
                 tickCounter = 0.0f;
-                Debug.Log("Sending T");
                 if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
                     WriteReplicationTransform(TransformAction.INTERPOLATE);
             }
 
-            //tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
+            tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
 
             transform.hasChanged = false;
         }
