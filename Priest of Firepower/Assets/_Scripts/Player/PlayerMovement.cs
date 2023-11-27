@@ -44,33 +44,33 @@ namespace _Scripts.Player
         {
             base.Update();
             // Only the owner of the player will control it
-            if (myId == player.GetPlayerId())
+            if (!player.isOwner()) return;
+            
+
+            if (Input.GetKey(KeyCode.W))
             {
-
-                if (Input.GetKey(KeyCode.W))
-                {
-                    input[0] = true;
-                    hasChanged = true;
-                }
-
-                if (Input.GetKey(KeyCode.D))
-                {
-                    input[1] = true;
-                    hasChanged = true;
-                }
-
-                if (Input.GetKey(KeyCode.S))
-                {
-                    input[2] = true;
-                    hasChanged = true;
-                }
-
-                if (Input.GetKey(KeyCode.A))
-                {
-                    input[3] = true;
-                    hasChanged = true;
-                }
+                input[0] = true;
+                hasChanged = true;
             }
+
+            if (Input.GetKey(KeyCode.D))
+            {
+                input[1] = true;
+                hasChanged = true;
+            }
+
+            if (Input.GetKey(KeyCode.S))
+            {
+                input[2] = true;
+                hasChanged = true;
+            }
+
+            if (Input.GetKey(KeyCode.A))
+            {
+                input[3] = true;
+                hasChanged = true;
+            }
+            
             
             if (hasChanged)
             {

@@ -179,38 +179,45 @@ namespace _Scripts.Networking
 
         private void Update()
         {
-            if (Time.frameCount <= 300) return;
+            //if (Time.frameCount <= 300) return;
 
-            if (transform.hasChanged && isInterpolating)
+            // only send the position as a server
+
+            if (NetworkManager.Instance.IsClient()) return;
+
+            bool hasChanged = transform.hasChanged;
+
+            if (hasChanged && isInterpolating)
             {
-                transform.hasChanged = false;
+                hasChanged = false;
             }
 
-            if (transform.hasChanged && lastAction == TransformAction.NETWORK_SET)
+            if (hasChanged && lastAction == TransformAction.NETWORK_SET)
             {
-                transform.hasChanged = false;
+                hasChanged = false;
             }
-            
-            if (transform.hasChanged && sendEveryChange)
+
+            if (hasChanged && sendEveryChange)
             {
                 WriteReplicationTransform(TransformAction.INTERPOLATE);
                 lastAction = TransformAction.NETWORK_SEND;
-                transform.hasChanged = false;
+                hasChanged = false;
             }
-            
+
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
-            if (tickCounter >= finalRate && transform.hasChanged)
+            tickCounter += Time.deltaTime;
+            if (tickCounter >= finalRate && hasChanged)
             {
                 tickCounter = 0.0f;
-                
+                Debug.Log("Sending T");
                 if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
                     WriteReplicationTransform(TransformAction.INTERPOLATE);
             }
 
-            tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
-            
-            tickCounter += Time.deltaTime;
+            //tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
+
+            transform.hasChanged = false;
         }
 
         private void FixedUpdate()
