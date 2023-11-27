@@ -139,7 +139,7 @@ namespace _Scripts.Networking
         private void Awake()
         {
             base.Awake();
-            Debug.Log("nw hello");
+            Debug.Log("Network Manager: Awake");
         }
         private void Start()
         {
