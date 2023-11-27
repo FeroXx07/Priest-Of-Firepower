@@ -34,8 +34,6 @@ namespace _Scripts.Networking
 
             ipInputField.onEndEdit.AddListener(ConnectToServer);
             userNameInputField.onEndEdit.AddListener(SetPriestName);
-
-            Debug.Log("hello");
         }
 
         private void OnDisable()
