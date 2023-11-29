@@ -16,6 +16,8 @@ namespace _Scripts.Player
         [SerializeField] private string _playerName;
 
 
+        public float speed = 7.0f;
+
         private void Start()
         {
             //if host render on top the player over the others

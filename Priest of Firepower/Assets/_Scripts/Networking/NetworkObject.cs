@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 namespace _Scripts.Networking
 {
@@ -45,13 +48,20 @@ namespace _Scripts.Networking
         public bool sendTickChange = true;
         public bool clientSendReplicationData = false;
         [SerializeField] private bool isInterpolating = false;
+        public float speed =0f;
         
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         
         public List<TransformData> receivedTransformList = new List<TransformData>();
         TransformData newTransformData;
         private object _lockCurrentTransform = new object();
-
+        //prediction variables
+        private TransformData predictedPosition;
+        private Stopwatch timerPacketFrequency = new Stopwatch();
+        private float timeBetweenPackets;
+        private Vector2 lastDirection;
+        private bool PredictPosition = false;
+        
         public long sequenceNum = 0;
         public long lastProcessedSequenceNum = -1;
         public float interpolationTime = 0.1f; 
@@ -61,6 +71,15 @@ namespace _Scripts.Networking
         private void Awake()
         {
             newTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
+        }
+
+        private void Start()
+        {
+            timerPacketFrequency.Start();
+            if (TryGetComponent<Player.Player>( out Player.Player player))
+            {
+                speed = player.speed;
+            }
         }
 
         #region Network Transforms
@@ -100,11 +119,21 @@ namespace _Scripts.Networking
                     reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
                     return;
                 }
-
+                
                 // Serialize
                 Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
                 float rotZ = reader.ReadSingle();
-                
+
+                //get time between packets
+                timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
+                Debug.Log("time between packets: "+timeBetweenPackets);
+                timerPacketFrequency.Restart();
+                //calculate the direction of movement
+                lastDirection = (Vector2)(newPos - transform.position).normalized;
+                PredictPosition = true;
+                predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f) * lastDirection) ;  
+
+
                 lastAction = TransformAction.NETWORK_SET;
 
                 isInterpolating = true;
@@ -259,10 +288,18 @@ namespace _Scripts.Networking
                     // Perform interpolation towards the new target position
                     if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
                     transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
-
+                    
                     if (t >= 1.0f)
                     {
                         isInterpolating = false;
+                        //if reached destination of the server, keep moving towards that direction
+                        if (PredictPosition)
+                        {
+                            newTransformData.position = predictedPosition.position;
+                            PredictPosition = false;
+                            isInterpolating = true;
+                        }
+                        
                     }
                 }
             }
