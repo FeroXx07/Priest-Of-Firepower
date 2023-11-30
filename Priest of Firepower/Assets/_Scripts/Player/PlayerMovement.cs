@@ -3,6 +3,8 @@ using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
 using UnityEngine;
+using UnityEngine.Serialization;
+
 namespace _Scripts.Player
 {
     public enum PlayerMovementInputs
@@ -28,7 +30,7 @@ namespace _Scripts.Player
         [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
         [SerializeField] private Player player;
         bool hasChanged = false;
-        public float tickRate = 10.0f; // Network writes inside a second.
+        public float tickRatePlayer = 10.0f; // Network writes inside a second.
         [SerializeField] private float tickCounter = 0.0f;
         private Vector2 direction;
         [HideInInspector] public PlayerState state;
@@ -142,7 +144,7 @@ namespace _Scripts.Player
                 hasChanged = false;
                 if (NetworkManager.Instance.IsClient())
                 {   
-                    float finalRate = 1.0f / tickRate;
+                    float finalRate = 1.0f / tickRatePlayer;
                     if (tickCounter >= finalRate)
                     {
                         tickCounter = 0.0f;
@@ -201,7 +203,6 @@ namespace _Scripts.Player
             if (input[1]) direction += Vector2.right;
             if (input[2]) direction += Vector2.down;
             if (input[3]) direction += Vector2.left;
-
         }
 
         public override void SendInputToClients()
@@ -223,16 +224,31 @@ namespace _Scripts.Player
 
         public override void ReceiveInputFromServer(BinaryReader reader)
         {
-            UInt64 id = reader.ReadUInt64();
-            if (id != player.GetPlayerId())
-            {
-                int offset = (sizeof(bool)*4);
-                reader.BaseStream.Seek(offset, SeekOrigin.Current); 
-                return;
-            }
             Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM server: {input}");
+
+            state = (PlayerState)reader.ReadInt32();
+            
+            UInt64 id = reader.ReadUInt64();
+            
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
+            
+            direction = Vector2.zero;
+            //store new direction
+            if (input[0]) direction += Vector2.up;
+            if (input[1]) direction += Vector2.right;
+            if (input[2]) direction += Vector2.down;
+            if (input[3]) direction += Vector2.left;
+            // UInt64 id = reader.ReadUInt64();
+            // if (id != player.GetPlayerId())
+            // {
+            //     int offset = (sizeof(bool)*4);
+            //     reader.BaseStream.Seek(offset, SeekOrigin.Current); 
+            //     return;
+            // }
+            // Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM server: {input}");
+            // for (int i = 0; i < 4; i++)
+            //     input[i] = reader.ReadBoolean();
         }
     }
 }

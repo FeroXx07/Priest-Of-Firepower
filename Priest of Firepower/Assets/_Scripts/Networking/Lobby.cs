@@ -183,7 +183,7 @@ namespace _Scripts.Networking
                         //nothing, just send the start game action
                         break;
                     case LobbyAction.NONE:
-                        Debug.Log("Lobby: Action None");
+                        if (showDebugInfo) Debug.Log("Lobby: Action None");
                         ret = false;
                         break;
                 }

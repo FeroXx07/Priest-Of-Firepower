@@ -4,14 +4,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+    using UnityEngine.Serialization;
 
-namespace _Scripts.Networking
+    namespace _Scripts.Networking
 {
     public abstract class NetworkBehaviour : MonoBehaviour
     {
-        [SerializeField] private bool showDebugInfo = true;
+        [SerializeField] protected bool showDebugInfo = true;
         #region TickInfo
-        public float tickRate = 10.0f; // Network writes inside a second.
+        public float tickRateBehaviour = 10.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         public bool doTickUpdates = true;
         public bool clientSendReplicationData = false;
@@ -203,7 +204,7 @@ namespace _Scripts.Networking
                 return;
             
             // Send Write to state buffer
-            float finalRate = 1.0f / tickRate;
+            float finalRate = 1.0f / tickRateBehaviour;
             if (_tickCounter >= finalRate )
             {
                 SendReplicationData(ReplicationAction.UPDATE);

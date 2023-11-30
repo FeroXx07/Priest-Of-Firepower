@@ -93,9 +93,9 @@ namespace _Scripts.Networking
             {
                 if (player.isOwner())
                 {
-                    Debug.Log("Player is owner, skiping T data revieced");
+                    if(showDebugInfo) Debug.Log("Player is owner, skiping T data revieced");
                     // Discard the packet and skip the remaining bytes
-                    int remainingBytes = (sizeof(float) * 3 + sizeof(Int64) + sizeof(Int32) );
+                    int remainingBytes = (sizeof(float) * 3 + sizeof(Int32));
                     reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
                     return;
                 }
@@ -105,20 +105,21 @@ namespace _Scripts.Networking
             TransformData newReceivedTransformData =
                 new TransformData(transform.position, transform.rotation, transform.localScale);
             newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
-
+            newReceivedTransformData.sequenceNumber = sequenceState;
+            
             lock (_lockCurrentTransform)
             {
                 if(showDebugInfo)
                     Debug.Log($"new transform: {sequenceState}");
                 
-                // Check if the packet is outdated
-                if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
-                {
-                    // Discard the packet and skip the remaining bytes
-                    int remainingBytes = (sizeof(float) * 3);
-                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
-                    return;
-                }
+                // // Check if the packet is outdated
+                // if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
+                // {
+                //     // Discard the packet and skip the remaining bytes
+                //     int remainingBytes = (sizeof(float) * 3);
+                //     reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                //     return;
+                // }
                 
                 // Serialize
                 Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
@@ -126,7 +127,7 @@ namespace _Scripts.Networking
 
                 //get time between packets
                 timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
-                Debug.Log("time between packets: "+timeBetweenPackets);
+                if(showDebugInfo) Debug.Log("time between packets: "+timeBetweenPackets);
                 timerPacketFrequency.Restart();
                 
                 //move all this to player script
@@ -328,6 +329,7 @@ public struct TransformData
     public Vector3 scale;
     public long timeStamp;
     public TransformAction action;
+    public ulong sequenceNumber;
     public TransformData(Vector3 pos, Quaternion rot, Vector3 s)
     {
         position = new Vector3(pos.x, pos.y, pos.z);
@@ -335,5 +337,6 @@ public struct TransformData
         scale = new Vector3(s.x, s.y, s.z);
         action = TransformAction.INTERPOLATE;
         timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+        sequenceNumber = 0;
     }
 }

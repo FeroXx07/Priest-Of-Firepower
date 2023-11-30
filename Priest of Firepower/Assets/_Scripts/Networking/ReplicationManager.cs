@@ -108,15 +108,29 @@ namespace _Scripts.Networking
                     break;
                 case ReplicationAction.UPDATE:
                 {
-                    networkObjectMap[id].HandleNetworkBehaviour(reader, id, timeStamp, sequenceNumState, type);
+                    if (networkObjectMap.ContainsKey(id))
+                    {
+                        networkObjectMap[id].HandleNetworkBehaviour(reader, id, timeStamp, sequenceNumState, type);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Replication Manager: Network object map does NOT contain ID {id}");
+                    }
                 }
                     break;
                 case ReplicationAction.DESTROY:
                     break;
                 case ReplicationAction.TRANSFORM:
                 {
-                    if (networkObjectMap[id].synchronizeTransform)
-                        networkObjectMap[id].ReadReplicationTransform(reader, id, timeStamp, sequenceNumState);
+                    if (networkObjectMap.ContainsKey(id))
+                    {
+                        if (networkObjectMap[id].synchronizeTransform)
+                            networkObjectMap[id].ReadReplicationTransform(reader, id, timeStamp, sequenceNumState);
+                    }
+                    else
+                    {
+                        Debug.LogError($"Replication Manager: Network object map does NOT contain ID {id}");
+                    }
                 }
                     break;
                 case ReplicationAction.EVENT:
