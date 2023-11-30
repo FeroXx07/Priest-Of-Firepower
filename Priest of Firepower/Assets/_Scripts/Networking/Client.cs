@@ -174,7 +174,7 @@ namespace _Scripts.Networking
 
         #region Data Transmission
          public void SendTcp(byte[] data)
-        {
+         {
             try
             {
                 Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Sending Tcp packet from {_clientData.connectionTcp.LocalEndPoint}to {_clientData.connectionTcp.RemoteEndPoint} - Length: {data.Length}");
@@ -193,7 +193,7 @@ namespace _Scripts.Networking
             {
                 Debug.LogError($"Client {_clientData.userName}_{_clientData.id}: Unexpected exception : {e.ToString()}");
             }
-        }
+         }
 
         public void SendUdpPacket(byte[] data)
         {

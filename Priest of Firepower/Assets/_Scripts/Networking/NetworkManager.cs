@@ -147,7 +147,7 @@ namespace _Scripts.Networking
         private void Awake()
         {
             base.Awake();
-            Debug.Log("nw hello");
+            Debug.Log("Network Manager: Awake");
         }
         private void Start()
         {
@@ -476,14 +476,16 @@ namespace _Scripts.Networking
                                         replicationItemsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}, and SEQ STATE: {sendingSequenceNumberState}");
+                                        if(debugShowMessagePackets)
+                                            Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
                                         _client.SendUdpPacket(buffer);
                                         sendingSequenceNumberState++;
                                         if (sendingSequenceNumberState == ulong.MaxValue - 1) sendingSequenceNumberState = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}, and SEQ STATE: {sendingSequenceNumberState}");
+                                        if(debugShowMessagePackets)
+                                            Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
                                         _server.SendUdpToAll(buffer);
                                         sendingSequenceNumberState++;
                                         if (sendingSequenceNumberState == ulong.MaxValue - 1) sendingSequenceNumberState = 0;

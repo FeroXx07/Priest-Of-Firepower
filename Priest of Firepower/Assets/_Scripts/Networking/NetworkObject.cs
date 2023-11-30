@@ -1,12 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
+using _Scripts.Player;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Debug = UnityEngine.Debug;
 
 namespace _Scripts.Networking
 {
@@ -45,11 +49,23 @@ namespace _Scripts.Networking
         public bool sendTickChange = true;
         public bool clientSendReplicationData = false;
         [SerializeField] private bool isInterpolating = false;
+        public float speed =0f;
         
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         TransformData newTransformData;
         TransformData lastTransformSentData;
         private object _lockCurrentTransform = new object();
+        //prediction variables
+        private TransformData predictedPosition;
+        private Stopwatch timerPacketFrequency = new Stopwatch();
+        private float timeBetweenPackets;
+        private Vector2 lastDirection;
+        private bool PredictPosition = false;
+        
+        public long sequenceNum = 0;
+        public long lastProcessedSequenceNum = -1;
+        public float interpolationTime = 0.1f; 
+        [SerializeField] private float interpolationTimer = 0f;
         #endregion
         
         private void Awake()
@@ -58,23 +74,83 @@ namespace _Scripts.Networking
             lastTransformSentData = new TransformData(transform.position, transform.rotation, transform.localScale);
         }
 
+        private void Start()
+        {
+            timerPacketFrequency.Start();
+            if (TryGetComponent<Player.Player>( out Player.Player player))
+            {
+                speed = player.speed;
+            }
+        }
+
         #region Network Transforms
 
         public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
         {
+            //Check if the transfrom belongs to the client if so avoid reading the data sent by the server
+            //client->send data, server -> broadcast, skip if owner
+            if (TryGetComponent<Player.Player>(out Player.Player player))
+            {
+                if (player.isOwner())
+                {
+                    Debug.Log("Player is owner, skiping T data revieced");
+                    // Discard the packet and skip the remaining bytes
+                    int remainingBytes = (sizeof(float) * 3 + sizeof(Int64) + sizeof(Int32) );
+                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                    return;
+                }
+            }
+            
             // init transform data
             TransformData newReceivedTransformData =
                 new TransformData(transform.position, transform.rotation, transform.localScale);
             newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
+
             lock (_lockCurrentTransform)
             {
                 if(showDebugInfo)
                     Debug.Log($"new transform: {sequenceState}");
                 
+                // Check if the packet is outdated
+                if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
+                {
+                    // Discard the packet and skip the remaining bytes
+                    int remainingBytes = (sizeof(float) * 3);
+                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                    return;
+                }
+                
                 // Serialize
                 Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
                 float rotZ = reader.ReadSingle();
+
+                //get time between packets
+                timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
+                Debug.Log("time between packets: "+timeBetweenPackets);
+                timerPacketFrequency.Restart();
                 
+                //move all this to player script
+                Player.PlayerMovement p = GetComponent<Player.PlayerMovement>();
+                if (p != null)
+                {
+                    if (p.state == PlayerState.IDLE)
+                    {
+                        PredictPosition = false;
+                        //calculate the direction of movement
+                        lastDirection = Vector3.zero;
+                        predictedPosition.position = transform.position;  
+
+                    }else if(p.state == PlayerState.MOVING)
+                    {
+                        PredictPosition = true;
+                        //calculate the direction of movement
+                        lastDirection = (Vector2)(newPos - transform.position).normalized;
+                        predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f) * lastDirection) ;  
+
+                    }
+                }
+
+
                 lastAction = TransformAction.NETWORK_SET;
 
                 isInterpolating = true;
@@ -162,36 +238,42 @@ namespace _Scripts.Networking
         {
             if (Time.frameCount <= 300) return;
 
-            if (transform.hasChanged && isInterpolating)
+            // only send the position as a server
+
+            if (NetworkManager.Instance.IsClient()) return;
+
+            bool hasChanged = transform.hasChanged;
+
+            if (hasChanged && isInterpolating)
             {
-                transform.hasChanged = false;
+                hasChanged = false;
             }
 
-            if (transform.hasChanged && lastAction == TransformAction.NETWORK_SET)
+            if (hasChanged && lastAction == TransformAction.NETWORK_SET)
             {
-                transform.hasChanged = false;
+                hasChanged = false;
             }
-            
-            if (transform.hasChanged && sendEveryChange)
+
+            if (hasChanged && sendEveryChange)
             {
                 WriteReplicationTransform(TransformAction.INTERPOLATE);
                 lastAction = TransformAction.NETWORK_SEND;
-                transform.hasChanged = false;
+                hasChanged = false;
             }
-            
+
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
-            if (tickCounter >= finalRate && transform.hasChanged)
+            tickCounter += Time.deltaTime;
+            if (tickCounter >= finalRate && hasChanged)
             {
                 tickCounter = 0.0f;
-                
-                if (!isInterpolating && sendTickChange && transform.position != lastTransformSentData.position) // Only server should be able to these send sanity snapshots!
+                if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
                     WriteReplicationTransform(TransformAction.INTERPOLATE);
             }
 
             tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
-            
-            tickCounter += Time.deltaTime;
+
+            transform.hasChanged = false;
         }
 
         private void FixedUpdate()
@@ -219,10 +301,18 @@ namespace _Scripts.Networking
                     // Perform interpolation towards the new target position
                     if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
                     transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
-
+                    
                     if (t >= 1.0f)
                     {
                         isInterpolating = false;
+                        //if reached destination of the server, keep moving towards that direction
+                        if (PredictPosition)
+                        {
+                            newTransformData.position = predictedPosition.position;
+                            PredictPosition = false;
+                            isInterpolating = true;
+                        }
+                        
                     }
                 }
             }
