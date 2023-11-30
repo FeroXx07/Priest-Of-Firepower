@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
+using _Scripts.Player;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -128,10 +129,27 @@ namespace _Scripts.Networking
                 timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
                 Debug.Log("time between packets: "+timeBetweenPackets);
                 timerPacketFrequency.Restart();
-                //calculate the direction of movement
-                lastDirection = (Vector2)(newPos - transform.position).normalized;
-                PredictPosition = true;
-                predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f) * lastDirection) ;  
+                
+                //move all this to player script
+                Player.PlayerMovement p = GetComponent<Player.PlayerMovement>();
+                if (p != null)
+                {
+                    if (p.state == PlayerState.IDLE)
+                    {
+                        PredictPosition = false;
+                        //calculate the direction of movement
+                        lastDirection = Vector3.zero;
+                        predictedPosition.position = transform.position;  
+
+                    }else if(p.state == PlayerState.MOVING)
+                    {
+                        PredictPosition = true;
+                        //calculate the direction of movement
+                        lastDirection = (Vector2)(newPos - transform.position).normalized;
+                        predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f) * lastDirection) ;  
+
+                    }
+                }
 
 
                 lastAction = TransformAction.NETWORK_SET;

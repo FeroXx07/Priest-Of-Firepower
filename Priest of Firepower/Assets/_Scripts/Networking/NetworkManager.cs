@@ -436,14 +436,16 @@ namespace _Scripts.Networking
                                         streamsToSend);
                                     if (_isClient)
                                     {
-                                        Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
+                                        if(debugShowMessagePackets)
+                                            Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
                                         _client.SendUdpPacket(buffer);
                                         sequenceNumberState++;
                                         if (sequenceNumberState == ulong.MaxValue - 1) sequenceNumberState = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
+                                        if(debugShowMessagePackets)
+                                            Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sequenceNumberState}");
                                         _server.SendUdpToAll(buffer);
                                         sequenceNumberState++;
                                         if (sequenceNumberState == ulong.MaxValue - 1) sequenceNumberState = 0;

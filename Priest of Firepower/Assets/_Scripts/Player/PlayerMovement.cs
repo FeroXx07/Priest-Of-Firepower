@@ -12,6 +12,16 @@ namespace _Scripts.Player
         DOWN = 2,
         LEFT = 3
     }
+
+    public enum PlayerState
+    {
+        MOVING,
+        IDLE,
+        INTERACTING,
+        SHOOTING,
+        RELOADING,
+        DEAD
+    }
     public class PlayerMovement : NetworkBehaviour
     {
         [SerializeField] private bool isHost => NetworkManager.Instance.IsHost();
@@ -20,6 +30,8 @@ namespace _Scripts.Player
         bool hasChanged = false;
         public float tickRate = 10.0f; // Network writes inside a second.
         [SerializeField] private float tickCounter = 0.0f;
+        private Vector2 direction;
+        [HideInInspector] public PlayerState state;
         protected override void InitNetworkVariablesList()
         {
             //throw new NotImplementedException();
@@ -36,6 +48,7 @@ namespace _Scripts.Player
             input[3] = false;
             player = GetComponent<Player>();
             _rb = GetComponent<Rigidbody2D>();
+            state = PlayerState.IDLE;
         }
         public float speed;
         private bool[] input = new bool[4];
@@ -46,37 +59,89 @@ namespace _Scripts.Player
             // Only the owner of the player will control it
             if (!player.isOwner()) return;
             
+            direction = Vector2.zero;
 
+            // input[0] = Input.GetKey(KeyCode.W);
+            // input[1] = Input.GetKey(KeyCode.D);
+            // input[2] = Input.GetKey(KeyCode.S);
+            // input[3] = Input.GetKey(KeyCode.A);
+            
+            
             if (Input.GetKey(KeyCode.W))
             {
                 input[0] = true;
                 hasChanged = true;
+                direction += Vector2.up;
+            }
+            else
+            {
+                input[0] = false;
             }
 
             if (Input.GetKey(KeyCode.D))
             {
                 input[1] = true;
                 hasChanged = true;
+                direction += Vector2.right;
+            }
+            else
+            {
+                input[1] = false;
             }
 
             if (Input.GetKey(KeyCode.S))
             {
                 input[2] = true;
                 hasChanged = true;
+                direction += Vector2.down;
+            }
+            else
+            {
+                input[2] = false;
             }
 
             if (Input.GetKey(KeyCode.A))
             {
                 input[3] = true;
                 hasChanged = true;
+                direction += Vector2.left;
+            }
+            else
+            {
+                input[3] = false;
             }
             
+            bool isMoving = false;
+            
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (input[i])
+                {
+                    isMoving = true;
+                    break;
+                }   
+            }
+            
+            if (isMoving)
+            {
+                state = PlayerState.MOVING;
+            }
+            else
+            {
+                // if last state was moving and it stopped, then send that "stop" input
+                if (state == PlayerState.MOVING)
+                {
+                    state = PlayerState.IDLE;
+                    SendInputToServer();
+                }
+                state = PlayerState.IDLE;
+            }
             
             if (hasChanged)
             {
                 hasChanged = false;
                 if (NetworkManager.Instance.IsClient())
-                {
+                {   
                     float finalRate = 1.0f / tickRate;
                     if (tickCounter >= finalRate)
                     {
@@ -89,21 +154,14 @@ namespace _Scripts.Player
                 else if (NetworkManager.Instance.IsHost())
                 {
                     //SendInputToClients();
+ 
                 }
             }
         }
         public void FixedUpdate()
         {
-            // Only the host machine will move all the players
-            Vector2 direction = Vector2.zero;
-            if (input[0]) direction += Vector2.up;
-            if (input[1]) direction += Vector2.right;
-            if (input[2]) direction += Vector2.down;
-            if (input[3]) direction += Vector2.left;
-            _rb.velocity = direction.normalized * speed;
-            
-            for (int i = 0; i < 4; i++)
-                input[i] = false;
+            //apply velocity to the client 
+           _rb.velocity = direction.normalized * speed;
         }
         public string nameIdentifier => "PlayerMovement";
         public override void SendInputToServer()
@@ -111,13 +169,15 @@ namespace _Scripts.Player
             if (myId != player.GetPlayerId())
                 return;
             
-            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs TO server: {input}");
+            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs TO server: {input}");
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             Type objectType = this.GetType();
             writer.Write(objectType.FullName);
             writer.Write(NetworkObject.GetNetworkId());
-            
+            writer.Write((int)state);
+            if(state == PlayerState.IDLE)
+                Debug.Log(state);
             writer.Write(player.GetPlayerId());
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
@@ -127,12 +187,21 @@ namespace _Scripts.Player
         public override void ReceiveInputFromClient(BinaryReader reader)
         {
             Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM client: {input}");
+
+            state = (PlayerState)reader.ReadInt32();
+            
             UInt64 id = reader.ReadUInt64();
             
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
+            
+            direction = Vector2.zero;
+            //store new direction
+            if (input[0]) direction += Vector2.up;
+            if (input[1]) direction += Vector2.right;
+            if (input[2]) direction += Vector2.down;
+            if (input[3]) direction += Vector2.left;
 
-            //SendInputToClients();
         }
 
         public override void SendInputToClients()
