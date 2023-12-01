@@ -109,8 +109,7 @@ namespace _Scripts.Networking
             
             lock (_lockCurrentTransform)
             {
-                if(showDebugInfo)
-                    Debug.Log($"new transform: {sequenceState}");
+                //if(showDebugInfo)Debug.Log($"new transform: {sequenceState}");
                 
                 // // Check if the packet is outdated
                 // if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
@@ -127,13 +126,14 @@ namespace _Scripts.Networking
 
                 //get time between packets
                 timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
-                if(showDebugInfo) Debug.Log("time between packets: "+timeBetweenPackets);
+               // if(showDebugInfo) Debug.Log("time between packets: "+timeBetweenPackets);
                 timerPacketFrequency.Restart();
                 
                 //move all this to player script
                 Player.PlayerMovement p = GetComponent<Player.PlayerMovement>();
                 if (p != null)
                 {
+                    Debug.Log(p.state);
                     if (p.state == PlayerState.IDLE)
                     {
                         PredictPosition = false;
@@ -146,7 +146,7 @@ namespace _Scripts.Networking
                         PredictPosition = true;
                         //calculate the direction of movement
                         lastDirection = (Vector2)(newPos - transform.position).normalized;
-                        predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f) * lastDirection) ;  
+                        predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f)*0.1f* lastDirection) ;  
 
                     }
                 }
@@ -292,7 +292,6 @@ namespace _Scripts.Networking
                     
                     Vector3 pointA = transform.position; // Current position
                     Vector3 pointB = newTransformData.position; // New position
-                    float speed = 7.0f; // Speed of the player
                     // Calculate the distance between pointA and pointB
                     float distance = Vector3.Distance(pointA, pointB);
                     // Calculate the time needed to travel the distance at the given speed
@@ -300,7 +299,7 @@ namespace _Scripts.Networking
                     // Calculate the interpolation factor based on the elapsed time
                     float t = Mathf.Clamp01(Time.deltaTime / travelTime);
                     // Perform interpolation towards the new target position
-                    if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
+                    //if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
                     transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
                     
                     if (t >= 1.0f)
@@ -309,6 +308,7 @@ namespace _Scripts.Networking
                         //if reached destination of the server, keep moving towards that direction
                         if (PredictPosition)
                         {
+                            if (showDebugInfo) Debug.Log("Predicting next position");
                             newTransformData.position = predictedPosition.position;
                             PredictPosition = false;
                             isInterpolating = true;

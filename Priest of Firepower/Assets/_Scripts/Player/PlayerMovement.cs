@@ -127,6 +127,7 @@ namespace _Scripts.Player
             if (isMoving)
             {
                 state = PlayerState.MOVING;
+                Debug.Log("is moving");
             }
             else
             {
@@ -143,20 +144,28 @@ namespace _Scripts.Player
             {
                 hasChanged = false;
                 if (NetworkManager.Instance.IsClient())
-                {   
+                {    
+                    Debug.Log("sending state" + state);
                     float finalRate = 1.0f / tickRatePlayer;
                     if (tickCounter >= finalRate)
-                    {
+                    {                      
                         tickCounter = 0.0f;
                         SendInputToServer();
                     }
                     tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
                     tickCounter += Time.deltaTime;
                 }
-                else if (NetworkManager.Instance.IsHost())
+                else
                 {
-                    //SendInputToClients();
- 
+                    Debug.Log("sending state" + state);
+                    float finalRate = 1.0f / tickRatePlayer;
+                    if (tickCounter >= finalRate)
+                    {
+                        tickCounter = 0.0f;
+                        SendInputToClients();
+                    }
+                    tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
+                    tickCounter += Time.deltaTime;
                 }
             }
         }
@@ -176,11 +185,13 @@ namespace _Scripts.Player
             BinaryWriter writer = new BinaryWriter(stream);
             Type objectType = this.GetType();
             writer.Write(objectType.FullName);
+
             writer.Write(NetworkObject.GetNetworkId());
-            writer.Write((int)state);
-            if(state == PlayerState.IDLE)
-                Debug.Log(state);
+            
             writer.Write(player.GetPlayerId());
+
+            writer.Write((int)state);
+  
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
             
@@ -190,9 +201,9 @@ namespace _Scripts.Player
         {
             Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM client: {input}");
 
-            state = (PlayerState)reader.ReadInt32();
-            
             UInt64 id = reader.ReadUInt64();
+
+            state = (PlayerState)reader.ReadInt32();         
             
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
@@ -215,7 +226,9 @@ namespace _Scripts.Player
             writer.Write(objectType.FullName);
             writer.Write(NetworkObject.GetNetworkId());
             writer.Write(player.GetPlayerId());
-            
+
+            writer.Write((int)state);
+
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
             
@@ -226,10 +239,10 @@ namespace _Scripts.Player
         {
             Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM server: {input}");
 
-            state = (PlayerState)reader.ReadInt32();
-            
             UInt64 id = reader.ReadUInt64();
-            
+
+            state = (PlayerState)reader.ReadInt32();
+
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
             
