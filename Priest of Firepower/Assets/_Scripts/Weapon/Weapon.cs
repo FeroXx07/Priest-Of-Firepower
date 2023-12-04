@@ -112,8 +112,7 @@ namespace _Scripts.Weapon
                     onTriggerAttack.Damage = localData.damage;
                     onTriggerAttack.SetOwner(_owner);
                     transform.localRotation = transform.parent.rotation;
-                    float dispersion;
-                    dispersion = Random.Range(-localData.dispersion, localData.dispersion);
+                    var dispersion = Random.Range(-localData.dispersion, localData.dispersion);
                     Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x, transform.localEulerAngles.y,
                         transform.localEulerAngles.z + dispersion);
                     transform.rotation = newRot;

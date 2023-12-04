@@ -303,12 +303,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   showDebugInfo: 1
-  tickRate: 10
+  tickRateBehaviour: 10
   doTickUpdates: 1
   clientSendReplicationData: 0
   player: {fileID: 0}
-  tickRate: 10
+  tickRatePlayer: 10
   tickCounter: 0
+  state: 0
   speed: 7
   _rb: {fileID: 0}
 --- !u!114 &1747872900250147758
@@ -323,11 +324,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92cd418e1fc647544bc91dd265695290, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 1
   shootMarker: {fileID: 1747872900257342778}
   layerMask:
     serializedVersion: 2
     m_Bits: 896
   weaponOffset: 0.5
+  shootDir: {x: 0, y: 0, z: 0}
   _currentWeapon: {fileID: 0}
   _player: {fileID: 0}
   _weaponSwitcher: {fileID: 0}
@@ -424,8 +430,8 @@ MonoBehaviour:
   sendTickChange: 1
   clientSendReplicationData: 0
   isInterpolating: 0
+  speed: 0
   lastAction: 4
-  receivedTransformList: []
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
@@ -444,6 +450,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerId: 0
   _playerName: 
+  speed: 7
 --- !u!1 &1747872900254246786
 GameObject:
   m_ObjectHideFlags: 0

@@ -127,7 +127,7 @@ namespace _Scripts.Player
             if (isMoving)
             {
                 state = PlayerState.MOVING;
-                Debug.Log("is moving");
+                if (showDebugInfo) Debug.Log("is moving");
             }
             else
             {
