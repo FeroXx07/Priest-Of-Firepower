@@ -1,5 +1,6 @@
 using _Scripts.Networking;
 using System;
+using Cinemachine;
 using UnityEngine;
 
 namespace _Scripts.Player
@@ -7,7 +8,7 @@ namespace _Scripts.Player
     public class Player : MonoBehaviour
     {
         public void SetPlayerId(UInt64 id) => _playerId = id;
-        public bool isOwner() => _playerId == NetworkManager.Instance.getId ? true:false;
+        public bool isOwner() => _playerId == NetworkManager.Instance.getId ? true : false;
         public UInt64 GetPlayerId() => _playerId;
         [SerializeField] private UInt64 _playerId;
 
@@ -21,8 +22,11 @@ namespace _Scripts.Player
         private void Start()
         {
             //if host render on top the player over the others
-            if(isOwner())
+            if (isOwner())
+            {
                 GetComponent<SpriteRenderer>().sortingOrder = 11;
+                FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
+            }
         }
     }
 }
