@@ -42,7 +42,7 @@ namespace _Scripts.Networking
         [SerializeField] private float tickCounter = 0.0f;
         [SerializeField] private bool showDebugInfo = false;
         #endregion
-        
+
         #region TransformInfo
         public bool synchronizeTransform = true;
         public bool sendEveryChange = false;
@@ -53,6 +53,7 @@ namespace _Scripts.Networking
         
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         TransformData newTransformData;
+        TransformData currentTransfromData;
         TransformData lastTransformSentData;
         private object _lockCurrentTransform = new object();
         //prediction variables
@@ -66,6 +67,8 @@ namespace _Scripts.Networking
         public long lastProcessedSequenceNum = -1;
         public float interpolationTime = 0.1f; 
         [SerializeField] private float interpolationTimer = 0f;
+
+        private Interpolator interpolator;
         #endregion
         
         private void Awake()
@@ -80,94 +83,110 @@ namespace _Scripts.Networking
             if (TryGetComponent<Player.Player>( out Player.Player player))
             {
                 speed = player.speed;
+                
+                // if not owner add interpolator as it needs to move with server
+                // positions
+                if(NetworkManager.Instance.IsClient() && !player.isOwner())
+                {
+                    interpolator = gameObject.AddComponent(typeof(Interpolator)) as Interpolator;
+                }
+            }
+
+            // if is not a player, eg enemy
+            // then add interpolator as it needs to be moved with the server
+            // as host we will move it locally so no need to add interpolator
+            if(NetworkManager.Instance.IsClient())
+            {
+                interpolator = gameObject.AddComponent(typeof(Interpolator)) as Interpolator;
             }
         }
 
         #region Network Transforms
 
-        public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
+        private void UpdatePosition(TransformAction action,Vector3 newPos,float rotZ, UInt64 sequenceState )
         {
-            //Check if the transfrom belongs to the client if so avoid reading the data sent by the server
-            //client->send data, server -> broadcast, skip if owner
-            if (TryGetComponent<Player.Player>(out Player.Player player))
+
+            if (TryGetComponent<Player.Player>(out Player.Player player) && player.isOwner())
             {
-                if (player.isOwner())
-                {
-                    if(showDebugInfo) Debug.Log("Player is owner, skiping T data revieced");
-                    // Discard the packet and skip the remaining bytes
-                    int remainingBytes = (sizeof(float) * 3 + sizeof(Int32));
-                    reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
-                    return;
-                }
+                //if (showDebugInfo) Debug.Log("Player is owner, skipping T data received");
+                //// Discard the packet and skip the remaining bytes
+                //int remainingBytes = sizeof(float) * 3 + sizeof(Int32);
+                //reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                return;
             }
-            
-            // init transform data
-            TransformData newReceivedTransformData =
-                new TransformData(transform.position, transform.rotation, transform.localScale);
-            newReceivedTransformData.action = (TransformAction)reader.ReadInt32();
-            newReceivedTransformData.sequenceNumber = sequenceState;
-            
+
             lock (_lockCurrentTransform)
             {
-                //if(showDebugInfo)Debug.Log($"new transform: {sequenceState}");
-                
-                // // Check if the packet is outdated
-                // if (newReceivedTransformData.sequenceNumber <= newTransformData.sequenceNumber)
-                // {
-                //     // Discard the packet and skip the remaining bytes
-                //     int remainingBytes = (sizeof(float) * 3);
-                //     reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
-                //     return;
-                // }
-                
-                // Serialize
-                Vector3 newPos = new Vector3(reader.ReadSingle(), reader.ReadSingle());
-                float rotZ = reader.ReadSingle();
+                TransformData newReceivedTransformData =
+                    new TransformData(transform.position, transform.rotation, transform.localScale);
 
-                //get time between packets
+                newReceivedTransformData.action = action;
+                newReceivedTransformData.sequenceNumber = sequenceState;
+
+                // Calculate time between packets
                 timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
-               // if(showDebugInfo) Debug.Log("time between packets: "+timeBetweenPackets);
                 timerPacketFrequency.Restart();
-                
-                //move all this to player script
+
                 Player.PlayerMovement p = GetComponent<Player.PlayerMovement>();
                 if (p != null)
                 {
-                    Debug.Log(p.state);
                     if (p.state == PlayerState.IDLE)
                     {
                         PredictPosition = false;
-                        //calculate the direction of movement
                         lastDirection = Vector3.zero;
-                        predictedPosition.position = transform.position;  
-
-                    }else if(p.state == PlayerState.MOVING)
+                        predictedPosition.position = transform.position;
+                    }
+                    else if (p.state == PlayerState.MOVING)
                     {
                         PredictPosition = true;
-                        //calculate the direction of movement
                         lastDirection = (Vector2)(newPos - transform.position).normalized;
-                        predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f)*0.1f* lastDirection) ;  
-
+                        predictedPosition.position = newPos;
+                        predictedPosition.position = newPos + (Vector3)(speed * (timeBetweenPackets * 0.001f) * lastDirection);
                     }
                 }
 
-
                 lastAction = TransformAction.NETWORK_SET;
-
                 isInterpolating = true;
 
-                // Cache the new value
                 newReceivedTransformData.position = newPos;
                 newReceivedTransformData.rotation.z = rotZ;
-                newTransformData.action = TransformAction.INTERPOLATE;
-                //store new pos
                 newTransformData = newReceivedTransformData;
-            
 
-                if(showDebugInfo)
-                    Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
-            
+                //if (showDebugInfo)
+                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
             }
+        }
+
+        void AddNewTransform(ushort tick,bool isTeleport, Vector2 pos, float angle)
+        {
+
+            if (TryGetComponent<Player.Player>(out Player.Player player) && player.isOwner())
+            {
+                return;
+            }
+            transform.position = pos;
+            transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+
+            return;
+            if (interpolator != null)
+            {
+               // Debug.Log($"recieved new transform update tick: {tick} pos: {pos} angle {angle}");
+                interpolator.NewUpdatetransform(tick, isTeleport, pos, angle); 
+            }
+        }
+        public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
+        {
+
+            //read data on second thread
+            int actionValue = reader.ReadInt32();
+            ushort tick = reader.ReadUInt16();
+            bool isTeleport = reader.ReadBoolean();
+            Vector2 newPos = new Vector2(reader.ReadSingle(), reader.ReadSingle());
+            float rotZ = reader.ReadSingle();
+
+            //send new data to main thread
+            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => AddNewTransform(tick,isTeleport,newPos,rotZ));
+            //UnityMainThreadDispatcher.Dispatcher.Enqueue(() => UpdatePosition((TransformAction)actionValue,newPos,rotZ, sequenceState));
         }
 
         public void WriteReplicationTransform(TransformAction transformAction)
@@ -177,7 +196,11 @@ namespace _Scripts.Networking
                 if (clientSendReplicationData == false)
                     return;
             }
-            
+
+            if (!NetworkManager.Instance.IsHost())
+                return;
+
+
             // Serialize
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
@@ -187,10 +210,12 @@ namespace _Scripts.Networking
             }
             
             writer.Write((int)transformAction);
+            writer.Write(NetworkManager.Instance.GetServer()._currentTick);
+            writer.Write(false);//teleport to be added
             writer.Write((float)transform.position.x);
             writer.Write((float)transform.position.y);
             writer.Write(transform.rotation.eulerAngles.z);
-
+            Debug.Log("Sending transform");
             int size = stream.ToArray().Length;
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {size}");
@@ -203,16 +228,44 @@ namespace _Scripts.Networking
         }
 
         #endregion
-
+        private readonly Dictionary<Type, NetworkBehaviour> behaviourCache = new Dictionary<Type, NetworkBehaviour>();
         public void HandleNetworkBehaviour(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberState, Type type)
         {
             long currentPosition = reader.BaseStream.Position;
-            NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
 
-            if (behaviour != null)
-                behaviour.ReadReplicationPacket(reader, currentPosition);
+            if (typeof(NetworkBehaviour).IsAssignableFrom(type))
+            {
+                NetworkBehaviour behaviour;
+
+                // Try to get the cached behaviour
+                if (behaviourCache.TryGetValue(type, out behaviour))
+                {
+                    // Use the cached behaviour
+                    behaviour.ReadReplicationPacket(reader, currentPosition);
+                }
+                else
+                {
+                    // If not cached, try to get the component on the main thread
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {
+                        behaviour = GetComponent(type) as NetworkBehaviour;
+
+                        // Cache the result
+                        if (behaviour != null)
+                        {
+                            behaviourCache[type] = behaviour;
+                            behaviour.ReadReplicationPacket(reader, currentPosition);
+                        }
+                        else
+                        {
+                            Debug.LogError($"NetworkBehaviour component not found on the GameObject for type {type}");
+                        }
+                    });
+                }
+            }
             else
-                Debug.LogError($"NetworkBehaviour cast failed {type}");
+            {
+                Debug.LogError($"{type} is not a valid NetworkBehaviour type");
+            }
         }
         
         public void HandleNetworkInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberInput, Type type)
@@ -262,6 +315,7 @@ namespace _Scripts.Networking
                 hasChanged = false;
             }
 
+            
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;
             tickCounter += Time.deltaTime;
@@ -279,41 +333,55 @@ namespace _Scripts.Networking
 
         private void FixedUpdate()
         {
-            Interpolate();
+          // Interpolate();
         }
 
         void Interpolate()
         {
+
             lock (_lockCurrentTransform)
             {
-                if (newTransformData.action == TransformAction.INTERPOLATE && isInterpolating )
+                currentTransfromData = newTransformData;
+            }
+            if (currentTransfromData.action == TransformAction.INTERPOLATE && isInterpolating )
+            {
+                lastAction = TransformAction.INTERPOLATE;
+                
+                Vector3 pointA = transform.position; // Current position
+                Vector3 pointB = currentTransfromData.position; // New position
+                // Calculate the distance between pointA and pointB
+                float distance = Vector3.Distance(pointA, pointB);
+
+
+                // Speed up the interpolation if it's lagging behind
+                float adjustedSpeed = speed;
+                float lagThreshold = 1.5f; // Tweak this threshold as needed
+
+                if (distance > lagThreshold)
                 {
-                    lastAction = TransformAction.INTERPOLATE;
-                    
-                    Vector3 pointA = transform.position; // Current position
-                    Vector3 pointB = newTransformData.position; // New position
-                    // Calculate the distance between pointA and pointB
-                    float distance = Vector3.Distance(pointA, pointB);
-                    // Calculate the time needed to travel the distance at the given speed
-                    float travelTime = distance / speed;
-                    // Calculate the interpolation factor based on the elapsed time
-                    float t = Mathf.Clamp01(Time.deltaTime / travelTime);
-                    // Perform interpolation towards the new target position
-                    //if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
-                    transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
-                    
-                    if (t >= 1.0f)
+                    float accelerationFactor = 2.0f; // Tweak this factor as needed
+                    adjustedSpeed *= accelerationFactor;
+                }
+
+                // Calculate the time needed to travel the distance at the given speed
+                float travelTime = distance / adjustedSpeed;
+                // Calculate the interpolation factor based on the elapsed time
+                float t = Mathf.Clamp01(Time.deltaTime / travelTime);
+
+
+                // Perform interpolation towards the new target position
+                //if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
+                transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
+                
+                if (t >= 1.0f)
+                {
+                    isInterpolating = false;
+                    //if reached destination of the server, keep moving towards that direction
+                    if (PredictPosition)
                     {
-                        isInterpolating = false;
-                        //if reached destination of the server, keep moving towards that direction
-                        if (PredictPosition)
-                        {
-                            if (showDebugInfo) Debug.Log("Predicting next position");
-                            newTransformData.position = predictedPosition.position;
-                            PredictPosition = false;
-                            isInterpolating = true;
-                        }
-                        
+                        currentTransfromData.position = predictedPosition.position;
+                        PredictPosition = false;
+                        isInterpolating = true;
                     }
                 }
             }
@@ -338,5 +406,20 @@ public struct TransformData
         action = TransformAction.INTERPOLATE;
         timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
         sequenceNumber = 0;
+    }
+}
+
+public class TransformUpdate 
+{
+    public ushort Tick { get; private set; }
+    public bool IsTeleport { get; private set; }
+    public Vector2 Position { get; private set;}
+    public float Rotation { get;private set; }
+    public TransformUpdate(ushort tick,bool teleport, Vector2 position,float rotation)
+    {
+        Tick = tick;
+        IsTeleport = teleport;
+        Position = position;    
+        Rotation = rotation;    
     }
 }

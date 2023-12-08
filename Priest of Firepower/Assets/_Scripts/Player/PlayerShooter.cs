@@ -180,15 +180,19 @@ namespace _Scripts.Player
             if (showDebugInfo) Debug.Log($"{_player.GetPlayerId()} Player Shooter: Sending data");
             return replicationHeader;
         }
-
+        void UpdateRotation(float angle)
+        {
+            if (showDebugInfo) Debug.Log($"{_player.GetPlayerId()} Player Shooter: New angle received: {angle}");
+            _weaponHolder.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
+        }
         public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
             float angle = reader.ReadSingle();
             shootDir.x = reader.ReadSingle();
             shootDir.y = reader.ReadSingle();
             shootDir.z = reader.ReadSingle();
-            if (showDebugInfo) Debug.Log($"{_player.GetPlayerId()} Player Shooter: New angle received: {angle}");
-            _weaponHolder.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
+
+            UnityMainThreadDispatcher.Dispatcher.Enqueue(()=>UpdateRotation(angle));
             return true;
         }
 

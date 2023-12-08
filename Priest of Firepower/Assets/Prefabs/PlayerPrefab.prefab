@@ -324,16 +324,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92cd418e1fc647544bc91dd265695290, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
+  showDebugInfo: 0
   tickRateBehaviour: 1
-  doTickUpdates: 1
-  clientSendReplicationData: 1
+  doTickUpdates: 0
+  clientSendReplicationData: 0
   shootMarker: {fileID: 1747872900257342778}
   layerMask:
     serializedVersion: 2
     m_Bits: 896
   weaponOffset: 0.5
   shootDir: {x: 0, y: 0, z: 0}
+  currentInput: 0
+  _flipped: 0
+  _range: 1
   _currentWeapon: {fileID: 0}
   _player: {fileID: 0}
   _weaponSwitcher: {fileID: 0}

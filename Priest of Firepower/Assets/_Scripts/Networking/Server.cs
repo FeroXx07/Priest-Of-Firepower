@@ -27,6 +27,8 @@ namespace _Scripts.Networking
         private IPEndPoint _localEndPointUdp;
         private Socket _serverTcp;
         private Socket _serverUdp;
+
+        public ushort _currentTick { get; private set; } = 0;
         public bool isServerInitialized { get; private set; } = false;
         private UInt64 _nextClientId = 0;
        
@@ -250,7 +252,7 @@ namespace _Scripts.Networking
                         _clientsToRemove.Add(clientData);
                     }
                     
-                    if (clientData.connectionTcp.Available > 0)
+                    while (clientData.connectionTcp.Available > 0)
                     {
                         ReceiveTcpSocketData(clientData.connectionTcp);
                     }
@@ -259,7 +261,7 @@ namespace _Scripts.Networking
                     if(clientData.endPointUdp != null)
                         ReceiveUDPSocketData(_serverUdp, clientData);
                     
-                    Thread.Sleep(10);
+                    Thread.Sleep(1);
                 }
             }
             catch (SocketException se)
@@ -581,7 +583,27 @@ namespace _Scripts.Networking
 
         }
         #endregion
+        #region TickSync
+        public void FixedUpdate()
+        {
+            //send every 200 ticks
+            if (_currentTick % 200 == 0)
+            {
+                SendSyncTick();
+                //Debug.Log($"Sending tick: {_currentTick}");
+            }
+            _currentTick++;
+        }
 
+        void SendSyncTick()
+        {
+            MemoryStream newStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(newStream);
+            writer.Write((int)PacketType.SYNC);
+            writer.Write(_currentTick);
+            SendUdpToAll(newStream.ToArray());
+        }
+        #endregion
         #region Heart Beat
         public void HandleHeartBeat(BinaryReader reader)
         {

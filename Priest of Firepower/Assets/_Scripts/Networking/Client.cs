@@ -5,6 +5,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
@@ -20,7 +21,32 @@ namespace _Scripts.Networking
         
         private Process _authenticationProcess = new Process();
         private Process _serverListenerProcess = new Process();
-        
+
+        //tick sync
+        private ushort _serverTick;
+        public ushort ServerTick
+        {
+            get => _serverTick;
+            private set
+            {
+                _serverTick = value;
+                InterpolationTick = (ushort)(value - TicksBetweenPositionUpdates);
+            }
+        }
+        public ushort InterpolationTick { get; private set; }
+        private ushort _ticksBetweenPositionUpdates = 2;
+
+        public ushort TicksBetweenPositionUpdates
+        {
+            get => _ticksBetweenPositionUpdates;
+            private set
+            {
+                _ticksBetweenPositionUpdates = value;
+                InterpolationTick = (ushort)(ServerTick - value);
+            }
+        }
+        private ushort tickDivergencceTolerance = 1;
+
         public Action onConnected;
 
         private ClientAuthenticator _authenticator;
@@ -30,6 +56,7 @@ namespace _Scripts.Networking
         {
             _clientData = new ClientData(69, name, localEndPointTcp, new IPEndPoint(IPAddress.Any, 0));
             this.onConnected += onConnected;
+            ServerTick = 2;
         }
         #endregion
 
@@ -126,7 +153,7 @@ namespace _Scripts.Networking
                     // if (_serverUdp.Available > 0) // For connectionless protocols (UDP), the available property won't work as intended like in TCP.
                     ReceiveUdpSocketData(_clientData.connectionUdp);
 
-                    if (_clientData.connectionTcp.Available > 0)
+                    while (_clientData.connectionTcp.Available > 0)
                     {
                         ReceiveTcpSocketData(_clientData.connectionTcp);
                     }
@@ -151,7 +178,7 @@ namespace _Scripts.Networking
                     Debug.LogException(e);
                 }
 
-                Thread.Sleep(100);
+                Thread.Sleep(1);
             }
 
             Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Is ending listening server.");
@@ -274,6 +301,22 @@ namespace _Scripts.Networking
         }
         #endregion
 
+        #region TickSync
+
+        public void SetTick(ushort serverTick)
+        {
+            if (MathF.Abs(ServerTick - serverTick) > tickDivergencceTolerance)
+            {
+                //Debug.Log($"Sync Client Tick: {ServerTick} -> {serverTick}");
+                ServerTick = serverTick;
+            }
+        }
+        public void FixedUpdate()
+        {
+            ServerTick++;
+        }
+        #endregion
+
         #region Getter/Setter
         public UInt64 GetId()
         {
@@ -296,7 +339,6 @@ namespace _Scripts.Networking
             writer.Write(0);
             SendUdpPacket(newStream.ToArray());
         }
-
         #endregion
     }
 }

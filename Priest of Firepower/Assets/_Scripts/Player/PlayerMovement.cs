@@ -127,7 +127,6 @@ namespace _Scripts.Player
             if (isMoving)
             {
                 state = PlayerState.MOVING;
-                if (showDebugInfo) Debug.Log("is moving");
             }
             else
             {
@@ -145,7 +144,6 @@ namespace _Scripts.Player
                 hasChanged = false;
                 if (NetworkManager.Instance.IsClient())
                 {    
-                    Debug.Log("sending state" + state);
                     float finalRate = 1.0f / tickRatePlayer;
                     if (tickCounter >= finalRate)
                     {                      
@@ -156,16 +154,16 @@ namespace _Scripts.Player
                     tickCounter += Time.deltaTime;
                 }
                 else
-                {
-                    Debug.Log("sending state" + state);
-                    float finalRate = 1.0f / tickRatePlayer;
-                    if (tickCounter >= finalRate)
-                    {
-                        tickCounter = 0.0f;
-                        SendInputToClients();
-                    }
-                    tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
-                    tickCounter += Time.deltaTime;
+                {//dont uncomment this code otherwise the player moves with the input + the client movement
+                    //Debug.Log("sending state" + state);
+                    //float finalRate = 1.0f / tickRatePlayer;
+                    //if (tickCounter >= finalRate)
+                    //{
+                    //    tickCounter = 0.0f;
+                    //    SendInputToClients();
+                    //}
+                    //tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
+                    //tickCounter += Time.deltaTime;
                 }
             }
         }
@@ -181,6 +179,7 @@ namespace _Scripts.Player
                 return;
             
             //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs TO server: {input}");
+            Debug.Log($"{player.GetName()}: Sending movement inputs TO server");
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             Type objectType = this.GetType();
@@ -199,7 +198,7 @@ namespace _Scripts.Player
         }
         public override void ReceiveInputFromClient(BinaryReader reader)
         {
-            Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM client: {input}");
+            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Receiving movement inputs FROM client: {input}");
 
             UInt64 id = reader.ReadUInt64();
 
