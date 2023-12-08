@@ -63,7 +63,7 @@ public class Interpolator : MonoBehaviour
                 timeElapsed = 0f;
                 timeToReachTarget = (to.Tick - from.Tick) * Time.fixedDeltaTime;
 
-                Debug.Log($"Time to reach target {timeToReachTarget}, target{futureTransformUpdates[i].Position}");
+                Debug.Log($"Time to reach target {timeToReachTarget}, target{to.Position}");
             }
         }
         timeElapsed += Time.deltaTime;
@@ -91,7 +91,7 @@ public class Interpolator : MonoBehaviour
         transform.position = Vector2.LerpUnclamped(from.Position,to.Position,lerpAmount);
     }
 
-    public void NewUpdatetransform(ushort tick, bool isTeleport, Vector2 position, float rotation)
+    public void NewUpdateTransform(ushort tick, bool isTeleport, Vector2 position, float rotation)
     {
         //if the tick is outdated then skip this new transform
         if(tick <= NetworkManager.Instance.GetClient().ServerTick && !isTeleport)
@@ -113,6 +113,5 @@ public class Interpolator : MonoBehaviour
    
         //if the list is empty or is the newest then add it to the end
         futureTransformUpdates.Add(new TransformUpdate(tick,isTeleport,position,rotation));
-
     }
 }

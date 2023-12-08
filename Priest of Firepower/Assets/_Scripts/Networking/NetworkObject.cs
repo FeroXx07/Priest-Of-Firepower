@@ -108,10 +108,7 @@ namespace _Scripts.Networking
 
             if (TryGetComponent<Player.Player>(out Player.Player player) && player.isOwner())
             {
-                //if (showDebugInfo) Debug.Log("Player is owner, skipping T data received");
-                //// Discard the packet and skip the remaining bytes
-                //int remainingBytes = sizeof(float) * 3 + sizeof(Int32);
-                //reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
+                // Discard update position as the client owner moves by himself
                 return;
             }
 
@@ -164,14 +161,14 @@ namespace _Scripts.Networking
             {
                 return;
             }
-            transform.position = pos;
-            transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
+            //transform.position = pos;
+            //transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
 
-            return;
+            //return;
             if (interpolator != null)
             {
                // Debug.Log($"recieved new transform update tick: {tick} pos: {pos} angle {angle}");
-                interpolator.NewUpdatetransform(tick, isTeleport, pos, angle); 
+                interpolator.NewUpdateTransform(tick, isTeleport, pos, angle); 
             }
         }
         public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
@@ -185,8 +182,8 @@ namespace _Scripts.Networking
             float rotZ = reader.ReadSingle();
 
             //send new data to main thread
-            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => AddNewTransform(tick,isTeleport,newPos,rotZ));
-            //UnityMainThreadDispatcher.Dispatcher.Enqueue(() => UpdatePosition((TransformAction)actionValue,newPos,rotZ, sequenceState));
+            //UnityMainThreadDispatcher.Dispatcher.Enqueue(() => AddNewTransform(tick,isTeleport,newPos,rotZ));
+            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => UpdatePosition((TransformAction)actionValue,newPos,rotZ, sequenceState));
         }
 
         public void WriteReplicationTransform(TransformAction transformAction)
@@ -333,7 +330,7 @@ namespace _Scripts.Networking
 
         private void FixedUpdate()
         {
-          // Interpolate();
+          Interpolate();
         }
 
         void Interpolate()
