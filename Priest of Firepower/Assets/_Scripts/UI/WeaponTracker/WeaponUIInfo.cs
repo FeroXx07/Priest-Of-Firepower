@@ -32,7 +32,7 @@ namespace _Scripts.UI.WeaponTracker
         }      
         private void OnEnable()
         {
-            PlayerShooter shooter = NetworkManager.Instance.player.GetComponent<PlayerShooter>();
+            Player.Player shooter = NetworkManager.Instance.player.GetComponent<Player.Player>();
             shooter.OnStartingReload += Reload;
             shooter.OnShoot += TryShoot;
             PowerUpBase.PowerUpPickedGlobal += OnPowerUp;
@@ -40,7 +40,7 @@ namespace _Scripts.UI.WeaponTracker
 
         private void OnDisable()
         {
-            PlayerShooter shooter = NetworkManager.Instance.player.GetComponent<PlayerShooter>();
+            Player.Player shooter = NetworkManager.Instance.player.GetComponent<Player.Player>();
             shooter.OnStartingReload -= Reload;
             shooter.OnShoot -= TryShoot;
             PowerUpBase.PowerUpPickedGlobal -= OnPowerUp;

@@ -46,7 +46,7 @@ namespace _Scripts.Networking
         
         public GameObject player { get; set; }
         public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
-        private ReplicationManager _replicationManager = new ReplicationManager();
+        public ReplicationManager replicationManager = new ReplicationManager();
         #endregion
 
         #region Buffers
@@ -181,7 +181,16 @@ namespace _Scripts.Networking
                     foreach (ClientData clientData in _server.GetClients())
                     {
                         if (clientData.playerInstantiated) continue;
-                        GameObject go = _replicationManager.Server_InstantiateNetworkObject(prefab, clientData);
+                        
+                        MemoryStream mem = new MemoryStream();
+                        BinaryWriter writer = new BinaryWriter(mem);
+                        writer.Write(clientData.userName);
+                        writer.Write(clientData.id);
+                        ReplicationHeader header = new ReplicationHeader(0, this.GetType().FullName,
+                            ReplicationAction.CREATE, mem.ToArray().Length);
+                        
+                        GameObject go = replicationManager.Server_InstantiateNetworkObject(prefab, header, mem);
+                        
                         go.gameObject.name = clientData.userName;
                         Player.Player player = go.GetComponent<Player.Player>();
                         player.SetName(clientData.userName);
@@ -228,7 +237,7 @@ namespace _Scripts.Networking
             
             _isHost = false;
             _isClient = false;
-            _replicationManager = new ReplicationManager();
+            replicationManager = new ReplicationManager();
             Start();
         }
         private void OnDisable()
@@ -750,7 +759,7 @@ namespace _Scripts.Networking
                         reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                         continue;
                     }
-                    _replicationManager.HandleReplication(reader, header.id, timeStamp, seqNum, header.replicationAction, Type.GetType(header.objectFullName));
+                    replicationManager.HandleReplication(reader, header.id, timeStamp, seqNum, header.replicationAction, Type.GetType(header.objectFullName));
 
                 }
 
@@ -770,7 +779,7 @@ namespace _Scripts.Networking
                 {
                     string objClass = reader.ReadString();
                     UInt64 netObjId = reader.ReadUInt64();
-                    _replicationManager.networkObjectMap[netObjId].HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, Type.GetType(objClass));
+                    replicationManager.networkObjectMap[netObjId].HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, Type.GetType(objClass));
                 }
             }
             catch (EndOfStreamException ex)
@@ -943,7 +952,7 @@ namespace _Scripts.Networking
         void ResetNetworkIds(Scene scene, LoadSceneMode mode)
         {
             List<NetworkObject> list = FindObjectsOfType<NetworkObject>(true).ToList();
-            _replicationManager.InitManager(list);
+            replicationManager.InitManager(list);
         }
 
         #endregion

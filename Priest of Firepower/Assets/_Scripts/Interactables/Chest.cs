@@ -84,7 +84,7 @@ namespace _Scripts.Interactables
                     {
                         if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                         {
-                            switcher.ChangeWeapon(_weapon);
+                            switcher.ChangeWeaponServer(_weapon);
                             CloseChest();
                         }
                         else

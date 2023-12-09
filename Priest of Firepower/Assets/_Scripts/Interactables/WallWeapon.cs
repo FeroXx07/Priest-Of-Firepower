@@ -47,7 +47,7 @@ namespace _Scripts.Interactables
                             // if has not this weapon change by current weapon
                             if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                             {
-                                switcher.ChangeWeapon(weapon);
+                                switcher.ChangeWeaponServer(weapon);
                                 _timer = InteractionTime;
                                 EnablePromptUI(false);
 

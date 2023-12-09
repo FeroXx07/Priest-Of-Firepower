@@ -102,8 +102,8 @@ namespace _Scripts.Networking
             switch (action)
             {
                 case ReplicationAction.CREATE:
-                {
-                   Client_ObjectCreationRegistryRead(id, reader, timeStamp);
+                { 
+                    Client_ObjectCreationRegistryRead(id, reader, timeStamp);
                 }
                     break;
                 case ReplicationAction.UPDATE:
@@ -152,44 +152,74 @@ namespace _Scripts.Networking
             }
         }
         
-        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ClientData clientData)
+        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ReplicationHeader ownerSpawner, MemoryStream ownerSpawnerData)
         {
             NetworkObject newGo = GameObject.Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
             UInt64 newId = RegisterObjectLocally(newGo);
-            Server_ObjectCreationRegistrySend(newId, prefab, clientData);
-            return newGo.gameObject;
-        }
-
-        public void Server_ObjectCreationRegistrySend(UInt64 newNetObjId, GameObject prefab, ClientData clientData)
-        {
+            
             // Send replication packet to clients to create this prefab
             MemoryStream outputMemoryStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             
             writer.Write(prefab.name);
-            writer.Write(clientData.userName);
-            writer.Write(clientData.id);
             
-            ReplicationHeader replicationHeader = new ReplicationHeader(newNetObjId, this.GetType().FullName, ReplicationAction.CREATE, outputMemoryStream.ToArray().Length);
+            MemoryStream headerOwner = ownerSpawner.GetSerializedHeader();
+            headerOwner.Position = 0;
+            headerOwner.CopyTo(outputMemoryStream);
+            ownerSpawnerData.Position = 0;
+            ownerSpawnerData.CopyTo(outputMemoryStream);
+            
+            ReplicationHeader replicationHeader = new ReplicationHeader(newId, this.GetType().FullName, ReplicationAction.CREATE, outputMemoryStream.ToArray().Length);
+            Debug.LogWarning($"Network Manager: Sending create, header size {replicationHeader.GetSerializedHeader().Length}, data size {replicationHeader.memoryStreamSize}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
+            return newGo.gameObject;
         }
+        
 
         public void Client_ObjectCreationRegistryRead(UInt64 serverAssignedNetObjId, BinaryReader reader, Int64 timeStamp)
         {
+            // Read essential data
             string prefabName = reader.ReadString();
-            string clientName = reader.ReadString();
-            UInt64 clientId = reader.ReadUInt64();
+            ReplicationHeader spawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
+            
             var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(p => p.name == prefabName);
             NetworkObject newGo = GameObject.Instantiate(prefab).GetComponent<NetworkObject>();
             RegisterObjectFromServer(serverAssignedNetObjId, newGo);
+            Debug.LogWarning($"Replication Manager: Creating object {prefabName} ID {id}, size: {spawnerOwnerHeader.memoryStreamSize}");
+
+            // An temporary exception
             if (prefabName.Equals("PlayerPrefab"))
             {
+                string clientName = reader.ReadString();
+                UInt64 clientId = reader.ReadUInt64();
                 Player.Player player = newGo.GetComponent<Player.Player>();
                 player.SetName(clientName);
                 player.SetPlayerId(clientId);
                 newGo.gameObject.name = clientName;
                 NetworkManager.Instance.GetClient()._clientData.playerInstantiated = true;
+                return;
             }
+            
+            // Call init functions in both the object spawned and the spawner of that object.
+            // For example if a bullet is spawned, on the bullet OnNetworkSpawn(weapon...) is called and on the weapon CallBackSpawnObjectOther(bullet...);
+            Type type = Type.GetType(spawnerOwnerHeader.objectFullName);
+            NetworkObject spawnerGameObject = networkObjectMap[spawnerOwnerHeader.id];
+            NetworkBehaviour spawnerBehaviour = spawnerGameObject.GetComponent(type) as NetworkBehaviour;
+            
+            long startPosData = reader.BaseStream.Position;
+            if (spawnerBehaviour != null)
+            {
+                spawnerBehaviour.CallBackSpawnObjectOther(newGo, reader, timeStamp, spawnerOwnerHeader.memoryStreamSize);
+            }
+            
+            NetworkBehaviour[] listToInit = newGo.GetComponents<NetworkBehaviour>();
+            foreach (NetworkBehaviour networkBehaviour in listToInit)
+            {
+                reader.BaseStream.Position = startPosData;
+                networkBehaviour.OnNetworkSpawn(spawnerGameObject, reader, timeStamp, spawnerOwnerHeader.memoryStreamSize);
+            }
+
+            reader.BaseStream.Seek(spawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
         }
     }
 }

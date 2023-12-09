@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7430432126554555483}
   - component: {fileID: 7249099300773690799}
   - component: {fileID: 474254513456688477}
+  - component: {fileID: 8876505552431262553}
   m_Layer: 0
   m_Name: BasicBullet
   m_TagString: Untagged
@@ -167,3 +168,30 @@ CapsuleCollider2D:
   m_Offset: {x: 0, y: 0}
   m_Size: {x: 0.59, y: 0.33}
   m_Direction: 1
+--- !u!114 &8876505552431262553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7430432126554555486}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 0
+  tickCounter: 0
+  showDebugInfo: 0
+  synchronizeTransform: 0
+  sendEveryChange: 0
+  sendTickChange: 0
+  clientSendReplicationData: 0
+  isInterpolating: 0
+  speed: 0
+  lastAction: 4
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  interpolationTimer: 0

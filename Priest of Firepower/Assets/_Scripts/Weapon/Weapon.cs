@@ -1,5 +1,8 @@
+using System;
 using System.Collections;
+using System.IO;
 using _Scripts.Attacks;
+using _Scripts.Networking;
 using _Scripts.Object_Pool;
 using _Scripts.Player;
 using _Scripts.ScriptableObjects;
@@ -8,7 +11,12 @@ using UnityEngine.VFX;
 
 namespace _Scripts.Weapon
 {
-    public class Weapon : MonoBehaviour
+    public enum BulletState
+    {
+        CREATION,
+        HIT
+    }
+    public class Weapon : NetworkBehaviour
     {
         #region Fields
 
@@ -20,13 +28,16 @@ namespace _Scripts.Weapon
         private SpriteRenderer _spriteRenderer;
         [SerializeField] VisualEffect muzzleFlash;
         GameObject _owner;
-        public PlayerShooter shooterOwner { get; private set; }
+        public Player.Player shooterOwner { get; private set; }
         bool _localDataCopied = false;
 
         #endregion
 
-        private void Awake()
+        public override void Awake()
         {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
             if (!_localDataCopied) SetData();
         }
 
@@ -47,23 +58,30 @@ namespace _Scripts.Weapon
             _timeSinceLastShoot = 10;
         }
 
-        private void OnEnable()
+        protected override void InitNetworkVariablesList()
         {
         }
 
-        private void OnDisable()
+        public override void OnEnable()
         {
+            base.OnEnable();
+        }
+
+        public override void OnDisable()
+        {
+            base.OnDisable();
             localData.reloading = false;
         }
 
-        private void Update()
+        public override void Update()
         {
+            base.Update();
             _timeSinceLastShoot += Time.deltaTime;
         }
 
         #region Reload
 
-        void Reload()
+        public void Reload()
         {
             if (localData.reloading || localData.totalAmmo <= 0 || localData.ammoInMagazine >= localData.magazineSize ||
                 !gameObject.activeSelf)
@@ -99,35 +117,101 @@ namespace _Scripts.Weapon
             return !localData.reloading && _timeSinceLastShoot > 1 / localData.fireRate / 60;
         }
 
-        void Shoot()
+        public void ShootServer()
         {
+            if (!NetworkManager.Instance.IsHost())
+                return;
+            
             if (localData.ammoInMagazine > 0)
             {
                 if (CanShoot())
                 {
-                    GameObject bullet = null;
-                    //bullet = PoolManager.Instance.Pull(bulletRef);
-                    bullet = Instantiate(bulletRef);
-                    OnTriggerAttack onTriggerAttack = bullet.GetComponent<OnTriggerAttack>();
-                    onTriggerAttack.Damage = localData.damage;
-                    onTriggerAttack.SetOwner(_owner);
-                    transform.localRotation = transform.parent.rotation;
-                    var dispersion = Random.Range(-localData.dispersion, localData.dispersion);
-                    Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x, transform.localEulerAngles.y,
-                        transform.localEulerAngles.z + dispersion);
-                    transform.rotation = newRot;
-                    bullet.transform.rotation = transform.rotation;
-                    bullet.transform.position = firePoint.position;
-                    bullet.GetComponent<Rigidbody2D>().velocity = transform.right * localData.bulletSpeed;
-                    localData.ammoInMagazine--;
-                    localData.totalAmmo--;
-                    _timeSinceLastShoot = 0;
+                    //bullet = Instantiate();
+                    // 
+                    InstantiateBulletServer();
                     OnGunShoot();
                 }
             }
             else
             {
                 Reload();
+            }
+        }
+
+        public void ShootClient()
+        {
+            if (localData.ammoInMagazine > 0)
+            {
+                if (CanShoot())
+                {
+                    OnGunShoot();
+                }
+            }
+        }
+
+        void InstantiateBulletServer()
+        {
+            MemoryStream bulletDataStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(bulletDataStream);
+                    
+            writer.Write(shooterOwner.GetPlayerId());
+            writer.Write(weaponData.weaponName);
+            writer.Write((int)BulletState.CREATION);
+            ReplicationHeader bulletDataHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.CREATE, bulletDataStream.ToArray().Length);
+
+            GameObject bullet =
+                NetworkManager.Instance.replicationManager.Server_InstantiateNetworkObject(bulletRef, bulletDataHeader,
+                    bulletDataStream);
+                    
+            OnTriggerAttack onTriggerAttack = bullet.GetComponent<OnTriggerAttack>();
+            onTriggerAttack.Damage = localData.damage;
+            onTriggerAttack.SetOwner(_owner);
+
+            transform.localRotation = transform.parent.rotation;
+            //var dispersion = Random.Range(-localData.dispersion, localData.dispersion); NO DISPERSION BECAUSE RNG ARE DIFFICULT TO HANDLE IN DIFFERENT MACHINES
+            
+            Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x, transform.localEulerAngles.y,
+                transform.localEulerAngles.z /*+ dispersion*/);
+            transform.rotation = newRot;
+            bullet.transform.rotation = transform.rotation;
+            bullet.transform.position = firePoint.position;
+            bullet.GetComponent<Rigidbody2D>().velocity = transform.right * localData.bulletSpeed;
+            localData.ammoInMagazine--;
+            localData.totalAmmo--;
+            _timeSinceLastShoot = 0;
+        }
+
+        public override void CallBackSpawnObjectOther(NetworkObject objectSpawned, BinaryReader reader, Int64 timeStamp, int lenght)
+        {
+            UInt64 shooterOwnerId = reader.ReadUInt64();
+            if (shooterOwner.GetPlayerId() != shooterOwnerId) Debug.LogError("Wrong owner");
+            string weaponName = reader.ReadString();
+            if (!weaponName.Equals(weaponData.weaponName)) Debug.LogError("Wrong weapon");
+            BulletState bulletState = (BulletState)reader.ReadInt32();
+
+            if (bulletState == BulletState.CREATION)
+            {
+                OnTriggerAttack onTriggerAttack = objectSpawned.GetComponent<OnTriggerAttack>();
+                onTriggerAttack.Damage = localData.damage;
+                onTriggerAttack.SetOwner(_owner);
+
+                transform.localRotation = transform.parent.rotation;
+                //var dispersion = Random.Range(-localData.dispersion, localData.dispersion); NO DISPERSION BECAUSE RNG ARE DIFFICULT TO HANDLE IN DIFFERENT MACHINES
+            
+                Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x, transform.localEulerAngles.y,
+                    transform.localEulerAngles.z /*+ dispersion*/);
+                transform.rotation = newRot;
+
+                Int64 currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                Rigidbody2D rigidbody2D = objectSpawned.GetComponent<Rigidbody2D>();
+                rigidbody2D.velocity = transform.right * localData.bulletSpeed;
+                
+                objectSpawned.transform.rotation = transform.rotation;
+                //objectSpawned.transform.position = firePoint.position + (Vector3)rigidbody2D.velocity * (currentTime * 0.001f);
+                objectSpawned.transform.position = firePoint.position;
+                localData.ammoInMagazine--;
+                localData.totalAmmo--;
+                _timeSinceLastShoot = 0;
             }
         }
 
@@ -139,7 +223,7 @@ namespace _Scripts.Weapon
 
         #endregion
 
-        void FlipGun(bool flip)
+        public void FlipGun(bool flip)
         {
             //_spriteRenderer.flipY = flip;
             if (flip)
@@ -168,22 +252,9 @@ namespace _Scripts.Weapon
             return _owner;
         }
 
-        public void SetPlayerShooter(PlayerShooter shooter)
+        public void SetPlayerShooter(Player.Player player)
         {
-            if (shooterOwner != null)
-            {
-                shooterOwner.OnShoot -= Shoot;
-                shooterOwner.OnReload -= Reload;
-                shooterOwner.OnFlip -= FlipGun;
-            }
-
-            shooterOwner = shooter;
-            if (shooterOwner != null)
-            {
-                shooterOwner.OnShoot += Shoot;
-                shooterOwner.OnReload += Reload;
-                shooterOwner.OnFlip += FlipGun;
-            }
+            shooterOwner = player;
         }
     }
 }

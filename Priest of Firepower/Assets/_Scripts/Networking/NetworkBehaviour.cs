@@ -12,7 +12,7 @@ using UnityEngine;
     {
         [SerializeField] protected bool showDebugInfo = true;
         #region TickInfo
-        public float tickRateBehaviour = 10.0f; // Network writes inside a second.
+        public float tickRateBehaviour = 1.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         public bool doTickUpdates = true;
         public bool clientSendReplicationData = false;
@@ -114,8 +114,8 @@ using UnityEngine;
         {
             reader.BaseStream.Position = position;
             // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
-            //if (showDebugInfo)
-            //    Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Receiving data network behavior: {name}");
+            if (showDebugInfo)
+                Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Receiving data network behavior: {name}");
 
             int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();
@@ -143,9 +143,10 @@ using UnityEngine;
             }
         }
         #endregion
-        public virtual void OnNetworkSpawn() { }
-        public virtual void OnNetworkDespawn() { }
-
+        public virtual void OnNetworkSpawn(NetworkObject spawner, BinaryReader reader, Int64 timeStamp, int lenght) { }
+        public virtual void OnNetworkDespawn(NetworkObject destroyer, BinaryReader reader,  Int64 timeStamp, int lenght) { }
+        public virtual void CallBackSpawnObjectOther(NetworkObject objectSpawned, BinaryReader reader,  Int64 timeStamp, int lenght){}
+        public virtual void CallBackDeSpawnObjectOther(NetworkObject objectDestroyed, BinaryReader reader,  Int64 timeStamp, int lenght){}
         public virtual void Awake()
         {
             if (TryGetComponent<NetworkObject>(out NetworkObject) == false)

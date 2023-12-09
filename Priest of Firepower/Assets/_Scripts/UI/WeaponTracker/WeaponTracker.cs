@@ -11,7 +11,7 @@ namespace _Scripts.UI.WeaponTracker
     {
         [SerializeField] WeaponUIInfo primaryWeapon;
         [SerializeField] WeaponUIInfo secodnaryWeapon;
-        private PlayerShooter lastPlayerShooter;
+        private Player.Player lastPlayerShooter;
         private void OnEnable()
         {
             WeaponSwitcher weaponSwitcher = NetworkManager.Instance.player.GetComponent<WeaponSwitcher>();
@@ -35,7 +35,7 @@ namespace _Scripts.UI.WeaponTracker
             secodnaryWeapon.UpdateUI();
         }
 
-        void ChangeWeapon(PlayerShooter shooter, GameObject weapon, int index)
+        void ChangeWeapon(Player.Player shooter, GameObject weapon, int index)
         {
             lastPlayerShooter = shooter;
             shooter.OnShoot += UpdateWeaponUI;

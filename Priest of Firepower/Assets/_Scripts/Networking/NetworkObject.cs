@@ -124,7 +124,7 @@ namespace _Scripts.Networking
                 timeBetweenPackets = timerPacketFrequency.ElapsedMilliseconds;
                 timerPacketFrequency.Restart();
 
-                Player.PlayerMovement p = GetComponent<Player.PlayerMovement>();
+                Player.Player p = GetComponent<Player.Player>();
                 if (p != null)
                 {
                     if (p.state == PlayerState.IDLE)

@@ -99,8 +99,7 @@ namespace _Scripts.Enemies
 
         private void StartParalyzerAttack()
         {
-            Target.gameObject.GetComponent<PlayerMovement>().enabled = false;
-            Target.gameObject.GetComponent<PlayerShooter>().enabled = false;
+            Target.gameObject.GetComponent<Player.Player>().enabled = false;
 
             if(InternalAttackObject){}
             else
@@ -115,8 +114,7 @@ namespace _Scripts.Enemies
 
         private void StopParalyzerAttack()
         {
-            Target.gameObject.GetComponent<PlayerMovement>().enabled = true;
-            Target.gameObject.GetComponent<PlayerShooter>().enabled = true;
+            Target.gameObject.GetComponent<Player.Player>().enabled = true;
 
             if (InternalAttackObject)
             {

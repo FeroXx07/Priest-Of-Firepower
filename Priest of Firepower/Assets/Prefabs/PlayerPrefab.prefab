@@ -120,8 +120,6 @@ GameObject:
   - component: {fileID: 1747872900250147752}
   - component: {fileID: 1747872900250147757}
   - component: {fileID: 1747872900250147756}
-  - component: {fileID: 1747872900250147759}
-  - component: {fileID: 1747872900250147758}
   - component: {fileID: 1747872900250147729}
   - component: {fileID: 1747872900250147728}
   - component: {fileID: 1747872900250147731}
@@ -143,7 +141,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1747872900250147753}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.5, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -290,56 +288,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
---- !u!114 &1747872900250147759
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1747872900250147753}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e13517d7820ec25418160215ffcd4a11, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showDebugInfo: 1
-  tickRateBehaviour: 10
-  doTickUpdates: 1
-  clientSendReplicationData: 0
-  player: {fileID: 0}
-  tickRatePlayer: 10
-  tickCounter: 0
-  state: 0
-  speed: 7
-  _rb: {fileID: 0}
---- !u!114 &1747872900250147758
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1747872900250147753}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 92cd418e1fc647544bc91dd265695290, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  showDebugInfo: 0
-  tickRateBehaviour: 1
-  doTickUpdates: 0
-  clientSendReplicationData: 0
-  shootMarker: {fileID: 1747872900257342778}
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 896
-  weaponOffset: 0.5
-  shootDir: {x: 0, y: 0, z: 0}
-  currentInput: 0
-  _flipped: 0
-  _range: 1
-  _currentWeapon: {fileID: 0}
-  _player: {fileID: 0}
-  _weaponSwitcher: {fileID: 0}
 --- !u!114 &1747872900250147729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -369,6 +317,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ed7c0425c0a5f34691ce754c77b1ad4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   keys: 3100000032000000
   slots:
   - holder: {fileID: 1747872898691203083}
@@ -382,6 +334,7 @@ MonoBehaviour:
   switchTime: 0.1
   initialWeaponPrefab: {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
   initialSecondaryWeaponPrefab: {fileID: 0}
+  player: {fileID: -4167005071263701011}
 --- !u!114 &1747872900250147731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -451,9 +404,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95050936e68dac64fb357f26ce69ee76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 10
+  doTickUpdates: 1
+  clientSendReplicationData: 1
+  state: 0
   _playerId: 0
   _playerName: 
+  hasChangedMovement: 0
+  directionMovement: {x: 0, y: 0}
+  input: 00000000
+  tickRatePlayer: 10
+  tickCounter: 0
   speed: 7
+  shootMarker: {fileID: 1747872900257342778}
+  layerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  weaponOffset: 0.5
+  shootDir: {x: 0, y: 0, z: 0}
+  currentWeaponInput: 0
+  _weaponFlipped: 0
+  _range: 1
+  _currentWeapon: {fileID: 0}
+  _weaponSwitcher: {fileID: 0}
 --- !u!1 &1747872900254246786
 GameObject:
   m_ObjectHideFlags: 0

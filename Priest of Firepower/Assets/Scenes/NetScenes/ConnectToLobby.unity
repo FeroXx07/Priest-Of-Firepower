@@ -3416,6 +3416,14 @@ PrefabInstance:
       propertyPath: debugShowPingPackets
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
+      propertyPath: instantiatablesPrefabs.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
+      propertyPath: instantiatablesPrefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
     - target: {fileID: 9178497600898120432, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
       propertyPath: m_RootOrder
       value: 4
