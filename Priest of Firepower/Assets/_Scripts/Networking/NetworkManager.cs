@@ -52,7 +52,7 @@ namespace _Scripts.Networking
         #region Buffers
 
         private uint _mtu = 1400;
-        private int _stateBufferTimeout = 10; // time with no activity to send not fulled packets
+        private int _stateBufferTimeout = 100; // time with no activity to send not fulled packets
         private int _inputBufferTimeout = 10; // time with no activity to send not fulled packets
         private int _heartBeatRate = 1000; // beat rate to send to the server 
         private System.Diagnostics.Stopwatch _inputStopwatch = new System.Diagnostics.Stopwatch();
@@ -61,6 +61,7 @@ namespace _Scripts.Networking
         
         // store all state streams to send
         private ConcurrentQueue<ReplicationItem> _stateStreamBuffer = new ConcurrentQueue<ReplicationItem>();
+        private List<ReplicationItem> _replicationItemsToSend = new List<ReplicationItem>();
         [SerializeField] private UInt64 sendSeqNumState = 0;
         [SerializeField] private UInt64 recSeqNumState = 0;
         public UInt64 currSeqNumStateRead { get; private set; } = 0;
@@ -394,6 +395,7 @@ namespace _Scripts.Networking
                 float stateTimeout = _stateBufferTimeout;
                 float inputTimeout = _inputBufferTimeout;
                 _heartBeatStopwatch.Start();
+                _stateStopwatch.Start();
                 
                 while (!token.IsCancellationRequested)
                 {
@@ -404,15 +406,11 @@ namespace _Scripts.Networking
                     {
                         if (_stateStreamBuffer.Count > 0)
                         {
-                            List<ReplicationItem> replicationItemsToSend = new List<ReplicationItem>();
                             int totalSize = 0;
                             bool mtuFull = false;
-                            
-                            _stateStopwatch.Stop();
-                            _stateStopwatch.Reset();
-                            _stateStopwatch.Start();
+                            bool isTimeout = false;
                             //Debug.Log( $"Network Manager: Starting STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
-                            while (_stateStreamBuffer.Count > 0 && (totalSize <= _mtu || stateTimeout < _stateStopwatch.ElapsedMilliseconds))
+                            while (_stateStreamBuffer.Count > 0 && mtuFull == false /*&& _stateStopwatch.ElapsedMilliseconds < _stateBufferTimeout)*/)
                             {
                                 if (_stateStreamBuffer.TryPeek(out ReplicationItem nextItem))
                                 {
@@ -425,30 +423,33 @@ namespace _Scripts.Networking
                                         // Able to insert next header into mtu
                                         if (_stateStreamBuffer.TryDequeue(out ReplicationItem replicationItem))
                                         {
-                                            currentItemHeaderStream = nextItem.header.GetSerializedHeader();
-
-                                            MemoryStream nextStream = replicationItem.memoryStream;
-                                            totalSize += (int)nextStream.Length + (int)currentItemHeaderStream.Length;
-                                            replicationItemsToSend.Add(replicationItem);
-                                            //Debug.Log( $"Network Manager: Inserting item into STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                                            totalSize += (int)replicationItem.memoryStream.Length + (int)currentItemHeaderStream.Length;
+                                            _replicationItemsToSend.Add(replicationItem);
+                                            if(debugShowObjectStatePackets) Debug.Log( $"Network Manager: Inserting item into STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
                                         }
                                     }
                                     else
                                     {
                                         // Unable to insert next header into mtu because it's full
                                         mtuFull = true;
-                                        Debug.Log( $"Network Manager: MTU is full! STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                                        if(debugShowObjectStatePackets) Debug.Log( $"Network Manager: MTU is full! STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
                                     }
                                 }
-                                
-                                if (totalSize > 0)
+
+                                if (_stateStopwatch.ElapsedMilliseconds >= stateTimeout)
                                 {
+                                    isTimeout = true;
+                                }
+                                
+                                if (totalSize > 0 && mtuFull || isTimeout)
+                                {
+                                    _stateStopwatch.Restart();
                                     byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.OBJECT_STATE,
-                                        replicationItemsToSend);
+                                        _replicationItemsToSend);
                                     if (_isClient)
                                     {
                                         if(debugShowObjectStatePackets)
-                                            Debug.Log( $"Network Manager: Sending state as client, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendSeqNumState}");
+                                            Debug.Log( $"Network Manager: Sending state as client, Items:{_replicationItemsToSend.Count()}, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendSeqNumState}");
                                         _client.SendUdpPacket(buffer);
                                         sendSeqNumState++;
                                         if (sendSeqNumState == ulong.MaxValue - 1) sendSeqNumState = 0;
@@ -456,12 +457,12 @@ namespace _Scripts.Networking
                                     else if (_isHost)
                                     {
                                         if(debugShowObjectStatePackets)
-                                            Debug.Log($"Network Manager: Sending state as server, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendSeqNumState}");
+                                            Debug.Log($"Network Manager: Sending state as server, Items:{_replicationItemsToSend.Count()}, SIZE {buffer.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {sendSeqNumState}");
                                         _server.SendUdpToAll(buffer);
                                         sendSeqNumState++;
                                         if (sendSeqNumState == ulong.MaxValue - 1) sendSeqNumState = 0;
                                     }
-                                    replicationItemsToSend.Clear();
+                                    _replicationItemsToSend.Clear();
                                     totalSize = 0;
                                 }
                             }
@@ -737,8 +738,8 @@ namespace _Scripts.Networking
 
         void HandleObjectState(MemoryStream stream, Int64 streamPosition, UInt64 packetSender, Int64 timeStamp, UInt64 seqNum, int replicationItemsCount)
         {
-            try
-            {
+            // try
+            // {
                 BinaryReader reader = new BinaryReader(stream);
                 List<ReplicationHeader> replicationHeaders =
                     ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
@@ -764,11 +765,11 @@ namespace _Scripts.Networking
                 }
 
                 isBehindThreshold = false;
-            }
-            catch (EndOfStreamException ex)
-            {
-                Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
-            }
+            //}
+            // catch (EndOfStreamException ex)
+            // {
+            //     Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+            // }
         }
 
         void HandleInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)

@@ -219,6 +219,7 @@ namespace _Scripts.Networking
                 networkBehaviour.OnNetworkSpawn(spawnerGameObject, reader, timeStamp, spawnerOwnerHeader.memoryStreamSize);
             }
 
+            reader.BaseStream.Position = startPosData;
             reader.BaseStream.Seek(spawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
         }
     }

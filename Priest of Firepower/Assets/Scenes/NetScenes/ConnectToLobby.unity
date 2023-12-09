@@ -3417,6 +3417,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
+      propertyPath: debugShowObjectStatePackets
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
       propertyPath: instantiatablesPrefabs.Array.size
       value: 3
       objectReference: {fileID: 0}
