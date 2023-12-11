@@ -676,12 +676,12 @@ namespace _Scripts.Networking
             {
                 case PacketType.SYNC:
                 {
-                
                   if(_isClient)
                   {
                      _client.SetTick(reader.ReadUInt16());
                   }
-                }break;
+                }
+                    break;
                 case PacketType.PING:
                 {
                     //if (debugShowPingPackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
@@ -738,8 +738,8 @@ namespace _Scripts.Networking
 
         void HandleObjectState(MemoryStream stream, Int64 streamPosition, UInt64 packetSender, Int64 timeStamp, UInt64 seqNum, int replicationItemsCount)
         {
-            // try
-            // {
+            //try
+            //{
                 BinaryReader reader = new BinaryReader(stream);
                 List<ReplicationHeader> replicationHeaders =
                     ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
@@ -770,7 +770,7 @@ namespace _Scripts.Networking
             // {
             //     Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
             // }
-        }
+}
 
         void HandleInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)
         {

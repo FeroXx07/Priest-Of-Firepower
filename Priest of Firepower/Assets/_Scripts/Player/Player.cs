@@ -93,6 +93,8 @@ namespace _Scripts.Player
             _weaponSwitcher = GetComponent<WeaponSwitcher>();
             _rb = GetComponent<Rigidbody2D>();
             state = PlayerState.IDLE;
+
+            clientSendReplicationData = true;
         }
         
         public override void OnEnable()

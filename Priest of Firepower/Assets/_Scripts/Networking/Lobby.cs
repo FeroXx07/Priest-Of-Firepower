@@ -17,7 +17,8 @@ namespace _Scripts.Networking
             UPDATE_LIST,
             REMOVE_PLAYER,
             START_GAME,
-            LEAVE_GAME
+            LEAVE_GAME,
+            MSSAGE
         }
 
         private LobbyAction _lobbyAction;
@@ -27,7 +28,13 @@ namespace _Scripts.Networking
         [Header("Lobby info")]
         [SerializeField] private GameObject clientUiPrefab;
         [SerializeField] private Transform listHolder;
-        
+        [Header("Lobby info")]
+        [SerializeField] private TMP_InputField inputMessage;
+        [SerializeField] private GameObject mesagePrefab;
+        [SerializeField] private Transform msgContainer;
+        [SerializeField] private List<GameObject> mesageObjectList;
+        private string composedMessage;
+
         [SerializeField] private TMP_Text ipAddress;
         private List<GameObject> playerList = new List<GameObject>();
         public override void Awake()
@@ -40,8 +47,10 @@ namespace _Scripts.Networking
             
             NetworkManager.Instance.OnClientConnected += OnClientConnected;
             NetworkManager.Instance.OnClientDisconnected += OnClientDisconnected;
+
+            inputMessage.onSubmit.AddListener(OnSendMSG);
         
-            //enable the start button if host otherwise not
+            //enable the start button if host other wise don't
             if (NetworkManager.Instance.IsHost())
             {
                 startGameBtn.gameObject.SetActive(true);
@@ -52,6 +61,7 @@ namespace _Scripts.Networking
                 startGameBtn.gameObject.SetActive(false);
             }
 
+            ClearMessages();
         }
 
         private void Start()
@@ -81,16 +91,19 @@ namespace _Scripts.Networking
             NetworkManager.Instance.OnClientConnected -= OnClientConnected;
             NetworkManager.Instance.OnClientDisconnected -= OnClientDisconnected;
             startGameBtn.onClick.RemoveListener(StartGame);
+            inputMessage.onSubmit.RemoveListener(OnSendMSG);
         }
 
-        protected override void InitNetworkVariablesList()
+        private void ClearMessages()
         {
-            
+            foreach(Transform t in msgContainer)
+            {
+                Destroy(t.gameObject);
+            }
         }
         
         void StartGame()
-        {
-       
+        {       
             if (!NetworkManager.Instance.IsHost()) return;
             
             _lobbyAction = LobbyAction.START_GAME;
@@ -101,13 +114,6 @@ namespace _Scripts.Networking
         void OnStartGame()
         {
             GameManager.Instance.StartGame(sceneToLoadOnGameStart);
-        }
-        public override void ListenToMessages(ulong senderId, string message, long timeStamp)
-        {
-            if (NetworkManager.Instance.IsClient())
-            {
-                
-            }
         }
 
         public void OnClientConnected()
@@ -160,6 +166,27 @@ namespace _Scripts.Networking
                 playerList.Add(go);
             }
         }
+
+        void OnMsgRecieved(BinaryReader reader, long currentPosition = 0)
+        {
+            string msg = reader.ReadString();
+            Debug.Log("Msg received: " + msg);
+            GameObject msgObj = Instantiate(mesagePrefab,msgContainer);
+            msgObj.GetComponent<TMP_Text>().text = msg;
+
+        }
+        void OnSendMSG(string msg)
+        {
+            string name = NetworkManager.Instance.PlayerName;
+            composedMessage = name +": " + msg;
+
+            GameObject msgObj = Instantiate(mesagePrefab, msgContainer);
+            msgObj.GetComponent<TMP_Text>().text = composedMessage;
+
+            _lobbyAction = LobbyAction.MSSAGE;
+            SendReplicationData(ReplicationAction.UPDATE);
+
+        }
         #region write
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream,
             ReplicationAction action)
@@ -181,6 +208,23 @@ namespace _Scripts.Networking
                         break;
                     case LobbyAction.START_GAME:
                         //nothing, just send the start game action
+                        break;
+                    case LobbyAction.MSSAGE:
+                        writer.Write(composedMessage);
+                        composedMessage = "";
+                        break;
+                    case LobbyAction.NONE:
+                        if (showDebugInfo) Debug.Log("Lobby: Action None");
+                        ret = false;
+                        break;
+                }
+            }else if (NetworkManager.Instance.IsClient())
+            {
+                switch (_lobbyAction)
+                {
+                    case LobbyAction.MSSAGE:
+                        writer.Write(composedMessage);
+                        composedMessage = "";
                         break;
                     case LobbyAction.NONE:
                         if (showDebugInfo) Debug.Log("Lobby: Action None");
@@ -213,9 +257,9 @@ namespace _Scripts.Networking
         public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
         {
             base.ReadReplicationPacket(reader, currentPosition);
+            _lobbyAction = (LobbyAction)reader.ReadInt32();
             if (NetworkManager.Instance.IsClient())
             {
-                _lobbyAction = (LobbyAction)reader.ReadInt32();
                 switch (_lobbyAction)
                 {
                     case LobbyAction.UPDATE_LIST:
@@ -223,6 +267,20 @@ namespace _Scripts.Networking
                         break;
                     case LobbyAction.START_GAME:
                         OnStartGame();
+                        break;
+                    case LobbyAction.MSSAGE:
+                        OnMsgRecieved(reader, currentPosition);
+                        break;
+                    case LobbyAction.NONE:
+                        Debug.Log("Lobby: Action None");
+                        break;
+                }
+            }else if(NetworkManager.Instance.IsHost())
+            {
+                switch (_lobbyAction)
+                {
+                    case LobbyAction.MSSAGE:
+                        OnMsgRecieved(reader, currentPosition);
                         break;
                     case LobbyAction.NONE:
                         Debug.Log("Lobby: Action None");
@@ -246,6 +304,11 @@ namespace _Scripts.Networking
                 newPlayerList.Add(client);
             }
             UpdatePlayerList(newPlayerList);
+        }
+
+        protected override void InitNetworkVariablesList()
+        {
+
         }
         #endregion
     }

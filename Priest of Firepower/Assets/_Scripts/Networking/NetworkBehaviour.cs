@@ -12,6 +12,7 @@ using UnityEngine;
     {
         [SerializeField] protected bool showDebugInfo = true;
         #region TickInfo
+        [Header("NetworkBehaviour TickInfo")]
         public float tickRateBehaviour = 1.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         public bool doTickUpdates = true;
