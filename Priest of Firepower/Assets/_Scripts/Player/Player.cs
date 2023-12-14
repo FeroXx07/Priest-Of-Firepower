@@ -341,7 +341,7 @@ namespace _Scripts.Player
             return replicationHeader;
         }
 
-        public override bool ServerReadReplicationPacket(BinaryReader reader, long position = 0)
+        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
             float angle = reader.ReadSingle();
             shootDir.x = reader.ReadSingle();
@@ -356,30 +356,22 @@ namespace _Scripts.Player
         {
             if (myUserId != _playerId)
                 return;
-            
-            //Debug.Log($"{player.GetPlayerId()}--{player.GetName()}: Sending movement inputs TO server: {input}");
+
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-
-            writer.Write(NetworkObject.GetNetworkId());
-            
-            writer.Write(_playerId);
 
             writer.Write((int)state);
             writer.Write((int)currentWeaponInput);
   
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
-            
-            NetworkManager.Instance.AddInputStreamQueue(stream);
+
+            SendInput(stream, false);
         }
-        public override void ReceiveInputFromClient(BinaryReader reader)
+        public override void ReceiveInputFromClient(InputPacketHeader header, BinaryReader reader)
         {
             Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM client: {input}");
 
-            UInt64 id = reader.ReadUInt64();
 
             state = (PlayerState)reader.ReadInt32();         
             currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();         
@@ -409,21 +401,17 @@ namespace _Scripts.Player
             // Redirect input to other clients
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
-            writer.Write(_playerId);
-
+ 
             writer.Write((int)state);
             writer.Write((int)currentWeaponInput);
 
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
-            
-            NetworkManager.Instance.AddInputStreamQueue(stream);
+
+            SendInput(stream, false);
         }
 
-        public override void ReceiveInputFromServer(BinaryReader reader)
+        public override void ReceiveInputFromServer(InputPacketHeader header, BinaryReader reader)
         {
             if (isOwner())
             {
@@ -434,7 +422,6 @@ namespace _Scripts.Player
             
             Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM server: {input}");
 
-            UInt64 id = reader.ReadUInt64();
 
             state = (PlayerState)reader.ReadInt32();
             currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();         

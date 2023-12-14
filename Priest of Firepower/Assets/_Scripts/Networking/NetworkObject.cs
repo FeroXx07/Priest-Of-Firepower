@@ -22,6 +22,23 @@ namespace _Scripts.Networking
         LOCAL_SET,
         NONE
     }
+    public struct InputPacketHeader
+    {
+        public Int64 timeStamp;
+        public UInt64 clientId;
+        public UInt64 sequenceNumberState;
+        public UInt64 packetSender;
+
+        public InputPacketHeader(UInt64 clientRequestId, Int64 timeStamp, UInt64 sequenceNumberState,UInt64 packetSender)
+        {
+            this.clientId = clientRequestId;
+            this.timeStamp = timeStamp;
+            this.sequenceNumberState = sequenceNumberState;
+            this.packetSender = packetSender;
+        }
+    }
+
+    
     public class NetworkObject : MonoBehaviour
     {
         #region NetworkId
@@ -66,7 +83,7 @@ namespace _Scripts.Networking
         public long sequenceNum = 0;
         public long lastProcessedSequenceNum = -1;
         public float interpolationTime = 0.1f; 
-        [SerializeField] private float interpolationTimer = 0f;
+        //[SerializeField] private float interpolationTimer = 0f;
 
         private Interpolator interpolator;
         #endregion
@@ -238,16 +255,7 @@ namespace _Scripts.Networking
                 if (behaviourCache.TryGetValue(type, out behaviour))
                 {
                     // Use the cached behaviour
-                    behaviour.ServerReadReplicationPacket(reader, currentPosition);
-                    if (NetworkManager.Instance.IsHost())
-                    { 
-                  
-                    }
-                    else if(NetworkManager.Instance.IsClient())
-                    { 
-                        //behaviour.ClientReadReplicationPacket(reader, currentPosition);
-                    }
-                   
+                    behaviour.ReadReplicationPacket(reader, currentPosition);
                 }
                 else
                 {
@@ -259,15 +267,7 @@ namespace _Scripts.Networking
                         if (behaviour != null)
                         {
                             behaviourCache[type] = behaviour;
-                            behaviour.ServerReadReplicationPacket(reader, currentPosition);
-                            if (NetworkManager.Instance.IsHost())
-                            { 
-                  
-                            }
-                            else if(NetworkManager.Instance.IsClient())
-                            { 
-                                //behaviour.ClientReadReplicationPacket(reader, currentPosition);
-                            }
+                            behaviour.ReadReplicationPacket(reader, currentPosition);
                         }
                         else
                         {
@@ -287,15 +287,17 @@ namespace _Scripts.Networking
             long currentPosition = reader.BaseStream.Position;
             NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
 
+            InputPacketHeader header = new InputPacketHeader(reader.ReadUInt64(),timeStamp,sequenceNumberInput,packetSender);
+
             if (behaviour != null)
             {
                 if (NetworkManager.Instance.IsClient())
                 {
-                    behaviour.ReceiveInputFromServer(reader);
+                    behaviour.ReceiveInputFromServer(header,reader);
                 }
                 else if (NetworkManager.Instance.IsHost())
                 {
-                    behaviour.ReceiveInputFromClient(reader);
+                    behaviour.ReceiveInputFromClient(header,reader);
                 }
             }
             else

@@ -163,21 +163,16 @@ namespace _Scripts
             
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
+ 
             Hit.SerializeHit(writer, _lastHit);
-            
-            NetworkManager.Instance.AddInputStreamQueue(stream);
+
+            SendInput(stream, false);
         }
 
-        public override void ReceiveInputFromServer(BinaryReader reader)
+        public override void ReceiveInputFromServer(InputPacketHeader header, BinaryReader reader)
         {
             Hit hit = Hit.DeSerializeHit(reader);
             ProcessHit(hit);
-        }
-        
-        
-        
+        } 
     }
 }

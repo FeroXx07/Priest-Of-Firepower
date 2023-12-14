@@ -70,13 +70,14 @@ namespace _Scripts.Networking
         private ConcurrentQueue<MemoryStream> _inputStreamBuffer = new ConcurrentQueue<MemoryStream>();
         [SerializeField] private UInt64 sendSeqNumInput= 0;
         [SerializeField] private UInt64 recSeqNumInput = 0;
-
+        private ConcurrentQueue<MemoryStream> _inputRealiableStreamBuffer = new ConcurrentQueue<MemoryStream>();
         // store all critical data streams to send (TCP)
         private ConcurrentQueue<MemoryStream> _reliableStreamBuffer = new ConcurrentQueue<MemoryStream>();
 
         // Mutex for thread safety
         private readonly object _stateQueueLock = new object();
         private readonly object _inputQueueLock = new object();
+        private readonly object _reliableInputQueueLock = new object();
         private readonly object _reliableQueueLock = new object();
 
         // store all data in streams received
@@ -334,8 +335,8 @@ namespace _Scripts.Networking
         {
             lock (_stateQueueLock)
             {
-                // Check if replication header contains already contains an exact replication header id, obj, an action, if true then replace with the most recent.
-                bool headerExistsAndIsReplaced = false;
+                //// Check if replication header contains already contains an exact replication header id, obj, an action, if true then replace with the most recent.
+                //bool headerExistsAndIsReplaced = false;
 
                 ReplicationItem alreadyExistingItem = null;
                 foreach (var item in _stateStreamBuffer)
@@ -359,7 +360,14 @@ namespace _Scripts.Networking
         {
             lock (_inputQueueLock)
             {
-                _inputStreamBuffer.Enqueue(stream);
+                 _inputStreamBuffer.Enqueue(stream);             
+            }
+        }
+        public void AddReliableInputStreamQueue(MemoryStream stream)
+        {
+            lock (_reliableInputQueueLock)
+            {
+                _inputRealiableStreamBuffer.Enqueue(stream);
             }
         }
 
@@ -469,53 +477,95 @@ namespace _Scripts.Networking
                         }
                     }
 
-                     lock (_inputQueueLock)
+                    lock (_inputQueueLock)
                     {
-                        //Input buffer
-                        if (_inputStreamBuffer.Count > 0)
+                       //Input buffer
+                       if (_inputStreamBuffer.Count > 0)
+                       {
+                           //Debug.Log("Network Manager: Preparing input stream buffer");
+                           int totalSize = 0;
+                           List<MemoryStream> streamsToSend = new List<MemoryStream>();
+
+                           //check if the totalsize + the next stream total size is less than the specified size
+                           while (_inputStreamBuffer.Count > 0)
+                           {
+                               if (_inputStreamBuffer.TryPeek(out MemoryStream memoryStream) == false) break;
+                               if (totalSize + (int)memoryStream.Length >= _mtu) break;
+                               
+                               if (_inputStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
+                               totalSize += (int)nextStream.Length;
+                               streamsToSend.Add(nextStream);
+
+                               // Adjust timeout based on elapsed time
+                               inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
+                               _inputStopwatch.Restart();
+                               //Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
+                               if (totalSize > 0 && (totalSize <= _mtu || inputTimeout < _inputStopwatch.ElapsedMilliseconds))
+                               {
+                                   inputTimeout = _inputBufferTimeout;
+                                   byte[] buffer =
+                                       InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                                   if (_isClient)
+                                   {
+                                       if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                                       _client.SendUdpPacket(buffer);
+                                       sendSeqNumInput++;
+                                       if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                                   }
+                                   else if (_isHost)
+                                   {
+                                       if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                                       _server.SendUdpToAll(buffer);
+                                       sendSeqNumInput++;
+                                       if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                                   }
+                               }
+                           }
+                       }
+                    }
+
+                    lock (_reliableInputQueueLock)
+                    {
+                        //Reliable Input buffer
+                        if (_inputRealiableStreamBuffer.Count > 0)
                         {
                             //Debug.Log("Network Manager: Preparing input stream buffer");
                             int totalSize = 0;
                             List<MemoryStream> streamsToSend = new List<MemoryStream>();
 
                             //check if the totalsize + the next stream total size is less than the specified size
-                            while (_inputStreamBuffer.Count > 0)
+                            while (_inputRealiableStreamBuffer.Count > 0)
                             {
-                                if (_inputStreamBuffer.TryPeek(out MemoryStream memoryStream) == false) break;
-                                if (totalSize + (int)memoryStream.Length >= _mtu) break;
-                                
-                                if (_inputStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
+                                if (_inputRealiableStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
                                 totalSize += (int)nextStream.Length;
                                 streamsToSend.Add(nextStream);
 
                                 // Adjust timeout based on elapsed time
                                 inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
                                 _inputStopwatch.Restart();
-                                //Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
-                                if (totalSize > 0 && (totalSize <= _mtu || inputTimeout < _inputStopwatch.ElapsedMilliseconds))
-                                {
-                                    inputTimeout = _inputBufferTimeout;
-                                    byte[] buffer =
-                                        InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                                if(inputTimeout < _inputStopwatch.ElapsedMilliseconds)
+                                {                                
+                                    byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+
                                     if (_isClient)
                                     {
-                                        if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
-                                        _client.SendUdpPacket(buffer);
+                                        if (debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                                        _client.SendTcp(buffer);
                                         sendSeqNumInput++;
                                         if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
                                     }
                                     else if (_isHost)
                                     {
-                                        if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
-                                        _server.SendUdpToAll(buffer);
+                                        if (debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                                        _server.SendTcpToAll(buffer);
                                         sendSeqNumInput++;
                                         if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
                                     }
                                 }
+                                
                             }
                         }
                     }
-                     
 
                     lock (_reliableQueueLock)
                     {
@@ -528,7 +578,6 @@ namespace _Scripts.Networking
                                 if (_reliableStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
                                 MemoryStream newStream = new MemoryStream();
                                 BinaryWriter writer = new BinaryWriter(newStream);
-                                ///writer.Write((UInt64)senderid);
                                 nextStream.CopyTo(newStream);
                                 byte[] buffer = nextStream.ToArray();
                                 if (_isClient)
