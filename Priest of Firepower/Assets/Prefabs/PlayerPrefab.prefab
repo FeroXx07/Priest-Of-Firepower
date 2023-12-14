@@ -391,7 +391,6 @@ MonoBehaviour:
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
-  interpolationTimer: 0
 --- !u!114 &-4167005071263701011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -404,7 +403,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95050936e68dac64fb357f26ce69ee76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
+  showDebugInfo: 0
   tickRateBehaviour: 10
   doTickUpdates: 1
   clientSendReplicationData: 1

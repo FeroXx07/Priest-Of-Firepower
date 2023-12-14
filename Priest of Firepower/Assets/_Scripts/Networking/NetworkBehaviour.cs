@@ -8,6 +8,7 @@ using UnityEngine;
 
     namespace _Scripts.Networking
 {
+    [RequireComponent(typeof(NetworkObject))]
     public abstract class NetworkBehaviour : MonoBehaviour
     {
         [SerializeField] protected bool showDebugInfo = true;

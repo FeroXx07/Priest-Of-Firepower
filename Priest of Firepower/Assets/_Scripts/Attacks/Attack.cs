@@ -1,12 +1,14 @@
 using System;
 using _Scripts.Interfaces;
+using _Scripts.Networking;
 using _Scripts.Object_Pool;
 using UnityEngine;
 
 namespace _Scripts.Attacks
 {
-    public class Attack : MonoBehaviour, IDamageDealer
+    public class Attack : NetworkBehaviour, IDamageDealer
     {
+        [Header("Attack Properties")]
         #region Layers
         [SerializeField] LayerMask layers;
         public LayerMask Layers { get => layers; set => layers = value; }
@@ -46,6 +48,11 @@ namespace _Scripts.Attacks
         }
         protected void RaiseEventOnDealth(GameObject gameObject) {
             OnDamageDealth?.Invoke(gameObject);
+        }
+
+        protected override void InitNetworkVariablesList()
+        {
+            throw new NotImplementedException();
         }
     }
 }
