@@ -238,7 +238,16 @@ namespace _Scripts.Networking
                 if (behaviourCache.TryGetValue(type, out behaviour))
                 {
                     // Use the cached behaviour
-                    behaviour.ReadReplicationPacket(reader, currentPosition);
+                    behaviour.ServerReadReplicationPacket(reader, currentPosition);
+                    if (NetworkManager.Instance.IsHost())
+                    { 
+                  
+                    }
+                    else if(NetworkManager.Instance.IsClient())
+                    { 
+                        //behaviour.ClientReadReplicationPacket(reader, currentPosition);
+                    }
+                   
                 }
                 else
                 {
@@ -250,7 +259,15 @@ namespace _Scripts.Networking
                         if (behaviour != null)
                         {
                             behaviourCache[type] = behaviour;
-                            behaviour.ReadReplicationPacket(reader, currentPosition);
+                            behaviour.ServerReadReplicationPacket(reader, currentPosition);
+                            if (NetworkManager.Instance.IsHost())
+                            { 
+                  
+                            }
+                            else if(NetworkManager.Instance.IsClient())
+                            { 
+                                //behaviour.ClientReadReplicationPacket(reader, currentPosition);
+                            }
                         }
                         else
                         {

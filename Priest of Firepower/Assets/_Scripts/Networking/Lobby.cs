@@ -33,7 +33,6 @@ namespace _Scripts.Networking
         [SerializeField] private GameObject mesagePrefab;
         [SerializeField] private Transform msgContainer;
         [SerializeField] private List<GameObject> mesageObjectList;
-        private string composedMessage;
 
         [SerializeField] private TMP_Text ipAddress;
         private List<GameObject> playerList = new List<GameObject>();
@@ -63,7 +62,6 @@ namespace _Scripts.Networking
 
             ClearMessages();
         }
-
         private void Start()
         {
             
@@ -106,8 +104,11 @@ namespace _Scripts.Networking
         {       
             if (!NetworkManager.Instance.IsHost()) return;
             
-            _lobbyAction = LobbyAction.START_GAME;
-            SendReplicationData(ReplicationAction.UPDATE);
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            
+            writer.Write((int)LobbyAction.START_GAME);
+            SendReplicationData(ReplicationAction.UPDATE,stream);
             OnStartGame();
         }
 
@@ -119,9 +120,19 @@ namespace _Scripts.Networking
         public void OnClientConnected()
         {
             if (!NetworkManager.Instance.IsHost()) return;
+
+            List<ClientData> clients = NetworkManager.Instance.GetServer().GetClients();
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
             
-            _lobbyAction = LobbyAction.UPDATE_LIST;
-            SendReplicationData(ReplicationAction.UPDATE);
+            writer.Write((int)LobbyAction.UPDATE_LIST);
+            writer.Write(clients.Count);
+            foreach (ClientData client in clients)
+            {
+                writer.Write(client.userName);
+            }
+              
+            SendReplicationData(ReplicationAction.UPDATE,stream);
             //as host just update the new list when a client is connected
             UpdatePlayerList(NetworkManager.Instance.GetServer().GetClients());
         }
@@ -130,8 +141,18 @@ namespace _Scripts.Networking
         {
             if (!NetworkManager.Instance.IsHost()) return;
             
-            _lobbyAction = LobbyAction.UPDATE_LIST;
-            SendReplicationData(ReplicationAction.UPDATE);
+            List<ClientData> clients = NetworkManager.Instance.GetServer().GetClients();
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            
+            writer.Write((int)LobbyAction.UPDATE_LIST);
+            writer.Write(clients.Count);
+            foreach (ClientData client in clients)
+            {
+                writer.Write(client.userName);
+            }
+              
+            SendReplicationData(ReplicationAction.UPDATE,stream);
             //as host just update the new list when a client is connected
             UpdatePlayerList(NetworkManager.Instance.GetServer().GetClients());
         }
@@ -167,130 +188,125 @@ namespace _Scripts.Networking
             }
         }
 
-        void OnMsgRecieved(BinaryReader reader, long currentPosition = 0)
-        {
-            string msg = reader.ReadString();
-            Debug.Log("Msg received: " + msg);
-            GameObject msgObj = Instantiate(mesagePrefab,msgContainer);
-            msgObj.GetComponent<TMP_Text>().text = msg;
-
-        }
         void OnSendMSG(string msg)
         {
-            string name = NetworkManager.Instance.PlayerName;
-            composedMessage = name +": " + msg;
-
+            inputMessage.text = ""; // clear the inputfield
+            string message = NetworkManager.Instance.PlayerName +": " + msg;
+            
+            //instantiate the message in the current machine
             GameObject msgObj = Instantiate(mesagePrefab, msgContainer);
-            msgObj.GetComponent<TMP_Text>().text = composedMessage;
+            msgObj.GetComponent<TMP_Text>().text = message; 
 
-            _lobbyAction = LobbyAction.MSSAGE;
-            SendReplicationData(ReplicationAction.UPDATE);
-
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            
+            //Send the action,text and the sender id. Server will replicate the msg 
+            writer.Write((int)LobbyAction.MSSAGE);
+            writer.Write(message);
+            writer.Write(NetworkManager.Instance.getId);
+            
+            SendReplicationData(ReplicationAction.UPDATE,stream);
         }
         #region write
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream,
             ReplicationAction action)
         {
             base.WriteReplicationPacket(outputMemoryStream, action);
-            
-            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            writer.BaseStream.Position = outputMemoryStream.Length;
-            bool ret = true;
-            
-            // write lobby actions
-            writer.Write((int)_lobbyAction);
-            if (NetworkManager.Instance.IsHost())
-            {
-                switch (_lobbyAction)
-                {
-                    case LobbyAction.UPDATE_LIST:
-                        WritePlayersList(writer);
-                        break;
-                    case LobbyAction.START_GAME:
-                        //nothing, just send the start game action
-                        break;
-                    case LobbyAction.MSSAGE:
-                        writer.Write(composedMessage);
-                        composedMessage = "";
-                        break;
-                    case LobbyAction.NONE:
-                        if (showDebugInfo) Debug.Log("Lobby: Action None");
-                        ret = false;
-                        break;
-                }
-            }else if (NetworkManager.Instance.IsClient())
-            {
-                switch (_lobbyAction)
-                {
-                    case LobbyAction.MSSAGE:
-                        writer.Write(composedMessage);
-                        composedMessage = "";
-                        break;
-                    case LobbyAction.NONE:
-                        if (showDebugInfo) Debug.Log("Lobby: Action None");
-                        ret = false;
-                        break;
-                }
-            }
-            //Set the lobby action to none avoid any posible error writing corrupted data
-            _lobbyAction = LobbyAction.NONE;
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             return replicationHeader;
         }
-        
-        void WritePlayersList(BinaryWriter writer)
-        {
-            if (NetworkManager.Instance.IsHost())
-            {
-                List<ClientData> clients = NetworkManager.Instance.GetServer().GetClients();
-                writer.Write(clients.Count);
-                foreach (ClientData client in clients)
-                {
-                    writer.Write(client.userName);
-                }
-            }    
-        }
-
+  
         #endregion
 
         #region  read
-        public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
+        public override bool ServerReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
         {
-            base.ReadReplicationPacket(reader, currentPosition);
-            _lobbyAction = (LobbyAction)reader.ReadInt32();
-            if (NetworkManager.Instance.IsClient())
+            if (NetworkManager.Instance.IsHost())
             {
-                switch (_lobbyAction)
+                switch ((LobbyAction)reader.ReadInt32())
+                {
+                    case LobbyAction.MSSAGE:
+                    {
+                        ServerMsgRecieved(reader,currentPosition);
+                    }
+                break;
+                    case LobbyAction.NONE:
+                        Debug.Log("Lobby: Action None");
+                        break;
+                }
+            }
+            else
+            {
+                switch ((LobbyAction)reader.ReadInt32())
                 {
                     case LobbyAction.UPDATE_LIST:
-                        ReadPlayerList(reader,currentPosition);
+                        ReadPlayerList(reader, currentPosition);
                         break;
                     case LobbyAction.START_GAME:
                         OnStartGame();
                         break;
                     case LobbyAction.MSSAGE:
-                        OnMsgRecieved(reader, currentPosition);
-                        break;
-                    case LobbyAction.NONE:
-                        Debug.Log("Lobby: Action None");
-                        break;
-                }
-            }else if(NetworkManager.Instance.IsHost())
-            {
-                switch (_lobbyAction)
-                {
-                    case LobbyAction.MSSAGE:
-                        OnMsgRecieved(reader, currentPosition);
+                        ClientMsgRecieved(reader, currentPosition);
                         break;
                     case LobbyAction.NONE:
                         Debug.Log("Lobby: Action None");
                         break;
                 }
             }
-
+            
             //Set the lobby action to none avoid any posible error reading corrupted data
             _lobbyAction = LobbyAction.NONE;
-            return false;
+            return true;
+        }
+        public override bool ClientReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
+        {
+            switch ((LobbyAction)reader.ReadInt32())
+            {
+                case LobbyAction.UPDATE_LIST:
+                    ReadPlayerList(reader, currentPosition);
+                    break;
+                case LobbyAction.START_GAME:
+                    OnStartGame();
+                    break;
+                case LobbyAction.MSSAGE:
+                    ClientMsgRecieved(reader, currentPosition);
+                    break;
+                case LobbyAction.NONE:
+                    Debug.Log("Lobby: Action None");
+                    break;
+            }
+            //Set the lobby action to none avoid any posible error reading corrupted data
+            _lobbyAction = LobbyAction.NONE;
+            return true;
+        }
+        void ClientMsgRecieved(BinaryReader reader, long currentPosition = 0)
+        {
+            string msg = reader.ReadString();
+            UInt64 id = reader.ReadUInt64();
+            //if the mesage replicated by the server is mine then skip it
+            if(id == NetworkManager.Instance.getId) return;
+            Debug.Log("Msg received: " + msg);
+            GameObject msgObj = Instantiate(mesagePrefab,msgContainer);
+            msgObj.GetComponent<TMP_Text>().text = msg;
+        }
+        void ServerMsgRecieved(BinaryReader reader, long currentPosition = 0)
+        {
+            //message recieve from antoher client
+            string msg = reader.ReadString();
+            UInt64 clientId = reader.ReadUInt64();
+            Debug.Log("Msg received: " + msg);
+            GameObject msgObj = Instantiate(mesagePrefab, msgContainer);
+            msgObj.GetComponent<TMP_Text>().text = msg;
+           
+            //re send the message to everyone
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+           
+            writer.Write((int)LobbyAction.MSSAGE);
+            writer.Write(msg);
+            writer.Write(clientId);
+           
+            SendReplicationData(ReplicationAction.UPDATE,stream);
         }
         //client have to read the new clients names and whatever is needed then updatePlayer list
         void ReadPlayerList(BinaryReader reader, long currentPosition = 0)

@@ -685,7 +685,7 @@ namespace _Scripts.Networking
                 case PacketType.PING:
                 {
                     //if (debugShowPingPackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-                    Debug.Log($"Network Manager: Received packet {type}");
+                    if (debugShowPingPackets)Debug.Log($"Network Manager: Received packet {type}");
                     if (_isHost) _server.HandleHeartBeat(reader);
                     else if (_isClient) _client.HandleHeartBeat(reader);
                 }

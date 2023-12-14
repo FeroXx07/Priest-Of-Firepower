@@ -110,8 +110,9 @@ using UnityEngine;
         /// Takes a binary reader an de serializes.
         /// </summary>
         /// <param name="reader"></param>
+        /// <param name="position"></param>
         /// <returns>True: stream has been read correctly. False: stream has not been read corrcetly.</returns>
-        public virtual bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        public virtual bool ServerReadReplicationPacket(BinaryReader reader, long position = 0)
         {
             reader.BaseStream.Position = position;
             // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
@@ -132,7 +133,28 @@ using UnityEngine;
             DeSerializeFieldsData(reader, receivedFieldCount, receivedBitfield);
             return true;
         }
+        public virtual bool ClientReadReplicationPacket(BinaryReader reader, long position = 0)
+        {
+            reader.BaseStream.Position = position;
+            // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
+            if (showDebugInfo)
+                Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Receiving data network behavior: {name}");
 
+            int fieldCount = BITTracker.GetBitfield().Length;
+            int receivedFieldCount = reader.ReadInt32();
+            if (receivedFieldCount != fieldCount)
+            {
+                Debug.LogError("Mismatch in the count of fields");
+                return false;
+            }
+            
+            byte[] receivedBitfieldBytes = reader.ReadBytes((fieldCount + 7) / 8);
+            BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
+
+            DeSerializeFieldsData(reader, receivedFieldCount, receivedBitfield);
+            return true;
+        }
+    
         private void DeSerializeFieldsData(BinaryReader reader, int receivedFieldCount, BitArray receivedBitfield)
         {
             for (int i = 0; i < receivedFieldCount; i++)
@@ -199,6 +221,19 @@ using UnityEngine;
             if (replicationHeader == null) return;
             if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
+        }
+        public void SendReplicationData(ReplicationAction action,MemoryStream stream)
+        {
+            // Cannot send data if no network manager
+            if (NetworkManager.Instance == false && NetworkObject == false)
+            {
+                Debug.LogWarning("No NetworkManager or NetworkObject");
+            }
+            ReplicationHeader header = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName,
+                action, stream.ToArray().Length);
+
+            if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
+            NetworkManager.Instance.AddStateStreamQueue(header, stream);
         }
         public virtual void Update()
         {

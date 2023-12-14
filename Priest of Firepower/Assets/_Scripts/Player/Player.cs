@@ -341,7 +341,7 @@ namespace _Scripts.Player
             return replicationHeader;
         }
 
-        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        public override bool ServerReadReplicationPacket(BinaryReader reader, long position = 0)
         {
             float angle = reader.ReadSingle();
             shootDir.x = reader.ReadSingle();
