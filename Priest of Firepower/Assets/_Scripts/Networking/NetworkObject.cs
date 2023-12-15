@@ -52,23 +52,37 @@ namespace _Scripts.Networking
         {
             return globalObjectIdHash;
         }
-        #endregion
-        
-        #region TickInfo
-        public float tickRate = 10.0f; // Network writes inside a second.
-        [SerializeField] private float tickCounter = 0.0f;
-        [SerializeField] private bool showDebugInfo = false;
+
+        public bool clientSendReplicationData = false;
+
         #endregion
 
-        #region TransformInfo
-        public bool synchronizeTransform = true;
-        public bool sendEveryChange = false;
-        public bool sendTickChange = true;
-        public bool clientSendReplicationData = false;
+        #region Internal Info
+
+        [Header("Internal info")]
+        [SerializeField] private float tickCounter = 0.0f;
+        [SerializeField] private bool showDebugInfo = false;
         [SerializeField] private bool isInterpolating = false;
-        public float speed =0f;
-        
         [SerializeField] private TransformAction lastAction = TransformAction.NONE;
+        public long sequenceNum = 0;
+        public long lastProcessedSequenceNum = -1;
+        public float interpolationTime = 0.1f; 
+        public float speed =0f;//velocity of the obj to calculate interpolation
+        #endregion
+
+        #region Send Transform Info
+
+        [Header("Transform sync")]
+        public float sendTickRate = 10.0f; // Network writes inside a second.
+        private float finalTickRate = 0f;
+        public bool synchronizeTransform = true;
+        public bool sendOnTransformChange = false;
+        public bool sendOnConstantRate = true;
+
+
+        
+        
+
         TransformData newTransformData;
         TransformData currentTransfromData;
         TransformData lastTransformSentData;
@@ -79,10 +93,6 @@ namespace _Scripts.Networking
         private float timeBetweenPackets;
         private Vector2 lastDirection;
         private bool PredictPosition = false;
-        
-        public long sequenceNum = 0;
-        public long lastProcessedSequenceNum = -1;
-        public float interpolationTime = 0.1f; 
         //[SerializeField] private float interpolationTimer = 0f;
 
         private Interpolator interpolator;
@@ -92,30 +102,15 @@ namespace _Scripts.Networking
         {
             newTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
             lastTransformSentData = new TransformData(transform.position, transform.rotation, transform.localScale);
+
+            if (sendTickRate == 0)
+                sendTickRate = 0.001f;
+            finalTickRate = 1 / sendTickRate;
         }
 
         private void Start()
         {
             timerPacketFrequency.Start();
-            if (TryGetComponent<Player.Player>( out Player.Player player))
-            {
-                speed = player.speed;
-                
-                // if not owner add interpolator as it needs to move with server
-                // positions
-                if(NetworkManager.Instance.IsClient() && !player.isOwner())
-                {
-                    interpolator = gameObject.AddComponent(typeof(Interpolator)) as Interpolator;
-                }
-            }
-
-            // if is not a player, eg enemy
-            // then add interpolator as it needs to be moved with the server
-            // as host we will move it locally so no need to add interpolator
-            if(NetworkManager.Instance.IsClient())
-            {
-                interpolator = gameObject.AddComponent(typeof(Interpolator)) as Interpolator;
-            }
         }
 
         #region Network Transforms
@@ -229,7 +224,7 @@ namespace _Scripts.Networking
             writer.Write((float)transform.position.x);
             writer.Write((float)transform.position.y);
             writer.Write(transform.rotation.eulerAngles.z);
-            Debug.Log("Sending transform");
+            Debug.Log(name+ " Sending transform");
             int size = stream.ToArray().Length;
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {size}");
@@ -306,11 +301,14 @@ namespace _Scripts.Networking
 
         private void Update()
         {
+            //if transform doesn't require any update leave
+            if (!sendOnConstantRate && !sendOnTransformChange) return;
+
             if (Time.frameCount <= 300) return;
 
             // only send the position as a server
-
             if (NetworkManager.Instance.IsClient()) return;
+
 
             bool hasChanged = transform.hasChanged;
 
@@ -324,22 +322,17 @@ namespace _Scripts.Networking
                 hasChanged = false;
             }
 
-            if (hasChanged && sendEveryChange)
-            {
-                WriteReplicationTransform(TransformAction.INTERPOLATE);
-                lastAction = TransformAction.NETWORK_SEND;
-                hasChanged = false;
-            }
-
-            
             // Send Write to state buffer
-            float finalRate = 1.0f / tickRate;
             tickCounter += Time.deltaTime;
-            if (tickCounter >= finalRate && hasChanged)
+            if (tickCounter >= finalTickRate)
             {
                 tickCounter = 0.0f;
-                if (!isInterpolating && sendTickChange) // Only server should be able to these send sanity snapshots!
-                    WriteReplicationTransform(TransformAction.INTERPOLATE);
+                //if (!isInterpolating && sendOnConstantRate)
+                //    WriteReplicationTransform(TransformAction.INTERPOLATE);
+                //else if(!isInterpolating && sendOnTransformChange && hasChanged)
+                //    WriteReplicationTransform(TransformAction.INTERPOLATE);
+
+                lastAction = TransformAction.NETWORK_SEND;
             }
 
             tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
@@ -349,7 +342,7 @@ namespace _Scripts.Networking
 
         private void FixedUpdate()
         {
-          Interpolate();
+            Interpolate();
         }
 
         void Interpolate()

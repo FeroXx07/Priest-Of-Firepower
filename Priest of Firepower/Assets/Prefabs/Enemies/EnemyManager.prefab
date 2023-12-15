@@ -227,6 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2928409446186404591}
   - component: {fileID: 1612897591331697877}
+  - component: {fileID: 562035260194561817}
   m_Layer: 0
   m_Name: EnemyManager
   m_TagString: Untagged
@@ -276,6 +277,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1de4b52ab737df744baf8738e3056908, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   enemiesPrefabs:
   - {fileID: 824060067660528363, guid: 4eef580d63463244abf0796b10d30d7d, type: 3}
   - {fileID: 824060067660528363, guid: bcc07618a1f2cbd4cb88a47082ff33ab, type: 3}
@@ -307,6 +312,32 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   enemiesAlive: []
+--- !u!114 &562035260194561817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7234543218594271033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  clientSendReplicationData: 0
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 4
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
+  sendTickRate: 1
+  synchronizeTransform: 1
+  sendOnTransformChange: 0
+  sendOnConstantRate: 1
 --- !u!1 &8051760738569706016
 GameObject:
   m_ObjectHideFlags: 0

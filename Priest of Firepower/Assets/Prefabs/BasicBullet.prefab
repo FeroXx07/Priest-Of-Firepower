@@ -127,23 +127,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df0f2b720801e474285fd5ceb10e1646, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  globalObjectIdHash: 0
-  tickRate: 10
-  tickCounter: 0
   showDebugInfo: 0
-  synchronizeTransform: 1
-  sendEveryChange: 0
-  sendTickChange: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
   clientSendReplicationData: 0
-  isInterpolating: 0
-  speed: 0
-  lastAction: 4
-  sequenceNum: 0
-  lastProcessedSequenceNum: -1
-  interpolationTime: 0.1
   layers:
     serializedVersion: 2
-    m_Bits: 960
+    m_Bits: 448
   damage: 5
   destroyOnContactWithLayer: 1
   destructionTime: 1
@@ -195,16 +185,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalObjectIdHash: 0
-  tickRate: 0
+  clientSendReplicationData: 0
   tickCounter: 0
   showDebugInfo: 0
-  synchronizeTransform: 0
-  sendEveryChange: 0
-  sendTickChange: 0
-  clientSendReplicationData: 0
   isInterpolating: 0
-  speed: 0
   lastAction: 4
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
+  speed: 0
+  sendTickRate: 10
+  synchronizeTransform: 0
+  sendOnTransformChange: 0
+  sendOnConstantRate: 1
