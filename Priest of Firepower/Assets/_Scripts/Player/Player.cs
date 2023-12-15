@@ -37,8 +37,6 @@ namespace _Scripts.Player
         #region User Data
         public void SetPlayerId(UInt64 id) => _playerId = id;
         public bool isOwner() => _playerId == NetworkManager.Instance.getId;
-        [SerializeField] private bool isHost => NetworkManager.Instance.IsHost();
-        [SerializeField] private bool isClient => NetworkManager.Instance.IsClient();
         public UInt64 GetPlayerId() => _playerId;
         [SerializeField] private UInt64 _playerId;
         [SerializeField] private UInt64 myUserId => NetworkManager.Instance.getId;

@@ -147,7 +147,7 @@ namespace _Scripts.Networking
         #endregion
 
         #region Enable/Disable
-        private void Awake()
+        public override void Awake()
         {
             base.Awake();
             Debug.Log("Network Manager: Awake");
@@ -742,7 +742,7 @@ namespace _Scripts.Networking
                 case PacketType.INPUT:
                 {
                     //if (debugShowInputPackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-                    Debug.Log($"Network Manager: Received packet {type}");
+                    if(debugShowInputPackets) Debug.Log($"Network Manager: Received packet {type}");
                     recSeqNumInput = reader.ReadUInt64();
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
@@ -752,7 +752,7 @@ namespace _Scripts.Networking
                 case PacketType.OBJECT_STATE:
                 {
                     //if (debugShowObjectStatePackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
-                    Debug.Log($"Network Manager: Received packet {type}");
+                    if(debugShowObjectStatePackets) Debug.Log($"Network Manager: Received packet {type}");
                     recSeqNumState = reader.ReadUInt64();
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();

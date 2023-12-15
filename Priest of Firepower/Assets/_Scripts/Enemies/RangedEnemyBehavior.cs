@@ -1,4 +1,7 @@
+using System.IO;
+using _Scripts.Networking;
 using _Scripts.Object_Pool;
+using _Scripts.Weapon;
 using UnityEngine;
 
 namespace _Scripts.Enemies
@@ -8,18 +11,19 @@ namespace _Scripts.Enemies
         public float bulletSpeedMultiplier = 2.0f;
 
         // Update is called once per frame
-        void Update()
+        protected override void UpdateServer()
         {
             switch (EnemyState)
             {
                 case EnemyState.SPAWN:
+                {
                     Agent.isStopped = true;
                     // Spawn sound, particle and animation
                     EnemyState = EnemyState.CHASE;
+                }
                     break;
-
                 case EnemyState.CHASE:
-                
+                {
                     Agent.isStopped = false;
 
                     Agent.SetDestination(Target.position);
@@ -42,16 +46,15 @@ namespace _Scripts.Enemies
                         EnemyState = EnemyState.ATTACK;
                         // Debug.Log("Attack mode");
                     }
-
+                }
                     break;
-
                 case EnemyState.ATTACK:
-
+                {
                     Agent.isStopped = true;
 
                     if ( CooldownTimer <= 0f)
                     {
-                        StartRangedAttack();
+                        //StartRangedAttack();
                     }
 
                     if (CooldownTimer > 0f)
@@ -65,10 +68,10 @@ namespace _Scripts.Enemies
                         EnemyState = EnemyState.CHASE;
                     }
 
+                }
                     break;
-
                 case EnemyState.DIE:
-
+                {
                     Agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
                     Collider.enabled = false;
@@ -76,14 +79,65 @@ namespace _Scripts.Enemies
                     TimeRemaining -= Time.deltaTime;
                     if (TimeRemaining <= 0)
                     {
+                        MemoryStream stream = new MemoryStream();
+                        BinaryWriter writer = new BinaryWriter(stream);
+                        
+                        ReplicationHeader enemyDeSpawnHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+                        NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
                         DisposeGameObject();
                     }
+                }
                     break;
-
                 default:
                     Agent.isStopped = true;
                     break;
             }
+        }
+
+        protected override void UpdateClient()
+        {
+            switch (EnemyState)
+            {
+                case EnemyState.CHASE:
+                {
+                    Agent.isStopped = false;
+
+                    // Agent.SetDestination(Target.position);
+                    //
+                    // float distance = Vector3.Distance(Target.position, this.transform.position);
+                    //
+                    // if (distance < 3)
+                    // {
+                    //     Agent.SetDestination(-Target.position); // To be revewed
+                    // }
+                    // else
+                    // {
+                    //     Agent.SetDestination(Target.position);
+                    // }
+                }
+                    break;
+                case EnemyState.DIE:
+                {
+                    Agent.isStopped = true;
+                    // Play death animation, sound and particles, destroy enemy object
+                    Collider.enabled = false;
+                }
+                    break;
+                default:
+                    Agent.isStopped = true;
+                    break;
+            }
+        }
+
+        public override void OnNetworkSpawn(NetworkObject spawner, BinaryReader reader, long timeStamp, int lenght)
+        {
+            Debug.Log("Enemy spawned in client");
+        }
+
+        public override void OnNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        {
+            Debug.Log("Enemy dead in client");
+            DisposeGameObject();
         }
 
         private void StartRangedAttack()
@@ -116,8 +170,6 @@ namespace _Scripts.Enemies
 
             CooldownTimer = CooldownDuration;
         }
-
-        
 
         private void DisposeGameObject()
         {

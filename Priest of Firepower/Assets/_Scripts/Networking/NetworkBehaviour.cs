@@ -11,6 +11,9 @@ using UnityEngine;
     [RequireComponent(typeof(NetworkObject))]
     public abstract class NetworkBehaviour : MonoBehaviour
     {
+        [SerializeField] protected bool isHost => NetworkManager.Instance.IsHost();
+        [SerializeField] protected bool isClient => NetworkManager.Instance.IsClient();
+        
         [SerializeField] protected bool showDebugInfo = true;
         #region TickInfo
         [Header("NetworkBehaviour TickInfo")]

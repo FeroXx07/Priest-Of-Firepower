@@ -21,8 +21,13 @@ namespace _Scripts.Enemies
         //}
 
         // Update is called once per frame
-        void Update()
+        public override void Update()
         {
+            base.Update();
+            
+            // Execute logic of enemy manager only in server
+            if (!isHost) return;
+            
             switch (EnemyState)
             {
                 case EnemyState.SPAWN:

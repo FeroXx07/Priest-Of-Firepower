@@ -50,11 +50,14 @@ MonoBehaviour:
   instantiatablesPrefabs:
   - {fileID: 1747872900250147753, guid: d8a41d9ffc3dad24eb4139bdec85de48, type: 3}
   - {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
-  sendingSequenceNumberState: 0
-  receivedSequenceNumberState: 0
-  sendingSequenceNumberInput: 0
-  receivedSequenceNumberInput: 0
-  debugShowPingPackets: 1
+  - {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
+  - {fileID: 824060067660528363, guid: 4eef580d63463244abf0796b10d30d7d, type: 3}
+  - {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
+  sendSeqNumState: 0
+  recSeqNumState: 0
+  sendSeqNumInput: 0
+  recSeqNumInput: 0
+  debugShowPingPackets: 0
   debugShowObjectStatePackets: 0
   debugShowInputPackets: 0
   debugShowAuthenticationPackets: 0

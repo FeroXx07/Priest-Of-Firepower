@@ -9,8 +9,13 @@ namespace _Scripts.Enemies
         public float bulletSpeedMultiplier = 6.0f;
 
         // Update is called once per frame
-        void Update()
+        public override void Update()
         {
+            base.Update();
+            
+            // Execute logic of enemy manager only in server
+            if (!isHost) return;
+            
             switch (EnemyState)
             {
                 case EnemyState.SPAWN:
@@ -123,7 +128,7 @@ namespace _Scripts.Enemies
 
         }
 
-        bool CheckLineOfSight(Transform playerTransform)
+        new bool CheckLineOfSight(Transform playerTransform)
         {
             Vector2 directionToPlayer = (playerTransform.position - transform.position).normalized;
             float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);

@@ -1,4 +1,7 @@
+using System;
+using System.IO;
 using _Scripts.Interfaces;
+using _Scripts.Networking;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -13,12 +16,12 @@ namespace _Scripts.Enemies
         DIE,
     }
 
-    public class Enemy : MonoBehaviour, IPointsProvider
+    public class Enemy : NetworkBehaviour, IPointsProvider
     {
         [SerializeField] private int pointsOnHit = 10;
         [SerializeField] private int pointsOnDeath = 100;
 
-        protected Transform Target;
+        [SerializeField] protected Transform Target;
         protected NavMeshAgent Agent;
         protected HealthSystem HealthSystem;
         protected Collider2D Collider;
@@ -40,8 +43,12 @@ namespace _Scripts.Enemies
         public int PointsOnHit { get => pointsOnHit; }
         public int PointsOnDeath { get => pointsOnDeath; }
 
-        private void Awake()
+        public override void Awake()
         {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+            
             HealthSystem = GetComponent<HealthSystem>();
             Agent = GetComponent<NavMeshAgent>();
             Collider = gameObject.GetComponent<Collider2D>();
@@ -49,12 +56,40 @@ namespace _Scripts.Enemies
             Agent.updateRotation = false;
             Agent.updateUpAxis = false;
         }
+        protected override void InitNetworkVariablesList()
+        {
+        }
         void Start()
         {
-            SetTarget();
+            // Only server executes the logic of the enemy
+            if (!isHost) return;
+            
+            ServerSetTarget();
         }
 
-        protected void SetTarget()
+        public override void Update()
+        {
+            base.Update();
+            if (isHost)
+            {
+                UpdateServer();
+            }
+            else if (isClient)
+            {
+                UpdateClient();
+            }
+        }
+
+        // Override in each enemy behaviour
+        protected virtual void UpdateServer()
+        {
+        }
+
+        protected virtual void UpdateClient()
+        {
+        }
+
+        private void ServerSetTarget()
         {
             PlayerList = GameObject.FindGameObjectsWithTag("Player");
             float smallerDistance = Mathf.Infinity;
@@ -71,19 +106,58 @@ namespace _Scripts.Enemies
             }
         }
 
-        private void OnEnable()
+        private void ClientSetTarget(UInt64 playerNetworkObjectId)
         {
+            GameObject targetPlayer = NetworkManager.Instance.replicationManager.networkObjectMap[playerNetworkObjectId].gameObject;
+            Target = targetPlayer.transform;
+        }
+
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        {
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            
+            if (Target.TryGetComponent<Player.Player>(out Player.Player player))
+            {
+                NetworkObject netObj = Target.GetComponent<NetworkObject>();
+                writer.Write(player.GetPlayerId());
+                writer.Write(player.GetName());
+                writer.Write(netObj.GetNetworkId());
+                writer.Write((int)EnemyState);
+            }
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            
+            //if (showDebugInfo) Debug.Log($"{_playerId} Player Shooter: Sending data");
+            return replicationHeader;
+        }
+
+        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        {
+            UInt64 playerId = reader.ReadUInt64();
+            string playerName = reader.ReadString();
+            UInt64 networkId = reader.ReadUInt64();
+            EnemyState = (EnemyState)reader.ReadInt32();
+            ClientSetTarget(networkId);
+            UpdateClient();
+            return true;
+        }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            
             HealthSystem.OnDamageableDestroyed += HandleDeath;
             EnemyState = EnemyState.SPAWN;
             Collider.enabled = true;
         }
 
-        private void OnDisable()
+        public override void OnDisable()
         {
+            base.OnDisable();
+            
             HealthSystem.OnDamageableDestroyed -= HandleDeath;
         }
 
-        protected virtual void HandleDeath(GameObject destroyed, GameObject destroyer)
+        private void HandleDeath(GameObject destroyed, GameObject destroyer)
         {
             EnemyState = EnemyState.DIE;
             onDeath?.Invoke(this);
@@ -103,8 +177,7 @@ namespace _Scripts.Enemies
         {
             Vector2 directionToPlayer = (playerTransform.position - transform.position);
             float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
-
-
+            
             int playerMask = LayerMask.GetMask("Player");
             int mapMask = LayerMask.GetMask("Enviroment");
 
@@ -113,22 +186,17 @@ namespace _Scripts.Enemies
             // Cast a ray from the enemy towards the player
             RaycastHit2D hit = Physics2D.Raycast(transform.position, directionToPlayer, distanceToPlayer, combinedMask);
 
-
-
-
-            //// Draw the ray in the editor for debugging purposes
-            //if (hit)
-            //{
-            //    // Draw a red line to show that line of sight is blocked
-            //    Debug.DrawRay(transform.position, directionToPlayer, Color.green);
-
-            //}
-            //else
-            //{
-            //    // Draw a green line to show that line of sight is clear
-            //    Debug.DrawRay(transform.position, directionToPlayer, Color.red);
-
-            //}
+            // Draw the ray in the editor for debugging purposes
+            if (hit)
+            {
+                // Draw a red line to show that line of sight is blocked
+                Debug.DrawRay(transform.position, directionToPlayer, Color.green);
+            }
+            else
+            {
+                // Draw a green line to show that line of sight is clear
+                Debug.DrawRay(transform.position, directionToPlayer, Color.red);
+            }
 
             // If we hit something, check if it was the player
             return hit.collider != null && hit.collider.transform == playerTransform;

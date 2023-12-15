@@ -50,9 +50,6 @@ namespace _Scripts
     }
     public class HitManager : NetworkBehaviour
     {
-        [SerializeField] private bool isHost => NetworkManager.Instance.IsHost();
-        [SerializeField] private bool isClient => NetworkManager.Instance.IsClient();
-        
         private ConcurrentQueue<Hit> _hits = new ConcurrentQueue<Hit>();
         private object _hitObj = new object();
         private Hit _lastHit = null;

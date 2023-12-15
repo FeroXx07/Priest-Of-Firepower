@@ -10,12 +10,17 @@ namespace _Scripts.Attacks
         [SerializeField] protected float destructionTime = 1.0f;
         private float _timer;
 
-        private void OnEnable()
+        public override void OnEnable()
         {
+            base.OnEnable();
+            
             _timer = destructionTime;
         }
-        private void Update()
+
+        public override void Update()
         {
+            base.OnDisable();
+            
             _timer -= Time.deltaTime;
 
             if (_timer < 0.0f)

@@ -10,8 +10,13 @@ namespace _Scripts.Enemies
         private float _attackTimer = 0.1f;
 
         // Update is called once per frame
-        void Update()
+        public override void Update()
         {
+            base.Update();
+            
+            // Execute logic of enemy manager only in server
+            if (!isHost) return;
+            
             switch (EnemyState)
             {
                 case EnemyState.SPAWN:
