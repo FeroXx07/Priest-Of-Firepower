@@ -18,10 +18,8 @@ namespace _Scripts.Enemies
 
     public class Enemy : NetworkBehaviour, IPointsProvider
     {
-        [Header("Enemy properties")]
         [SerializeField] private int pointsOnHit = 10;
         [SerializeField] private int pointsOnDeath = 100;
-        [SerializeField] private float speed = 2;
 
         [SerializeField] protected Transform Target;
         protected NavMeshAgent Agent;
@@ -57,17 +55,6 @@ namespace _Scripts.Enemies
 
             Agent.updateRotation = false;
             Agent.updateUpAxis = false;
-
-            Agent.speed = speed;
-            GetComponent<NetworkObject>().speed = speed;
-
-            // disable components that server runs to avoid confilicts
-            //if(NetworkManager.Instance.IsClient())
-            //{
-            //    Agent.enabled = false;
-            //    Collider.enabled = false;
-            //}
-
         }
         protected override void InitNetworkVariablesList()
         {

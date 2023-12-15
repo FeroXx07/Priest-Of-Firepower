@@ -93,9 +93,6 @@ namespace _Scripts.Player
             state = PlayerState.IDLE;
 
             clientSendReplicationData = true;
-
-            GetComponent<NetworkObject>().speed = speed;
-
         }
         
         public override void OnEnable()

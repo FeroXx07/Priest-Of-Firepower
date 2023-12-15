@@ -28,7 +28,7 @@ namespace _Scripts.Attacks
         }
         protected virtual void CollisionHandeler(GameObject collision)
         {
-            if (collision.TryGetComponent<IDamageable>(out IDamageable dmg) && NetworkManager.Instance.IsHost())
+            if (collision.TryGetComponent<IDamageable>(out IDamageable dmg))
             {
                 if (IsSelected(collision.layer))
                 {
@@ -41,7 +41,6 @@ namespace _Scripts.Attacks
                         if (obj == null) { Debug.Log(Owner.name + " has no network object"); return; }
                         if (coll == null) { Debug.Log(collision.name + " has no network object"); return; }
                         if (rb2d == null) { Debug.Log(name + " has no rb2d"); return; }
-                        if (nObj == null) { Debug.Log(name + " has no network object"); return; }
                         
                         HitManager.Instance.RegisterHit(obj.GetNetworkId(),
                                                         nObj.GetNetworkId(), 
@@ -51,7 +50,11 @@ namespace _Scripts.Attacks
                                                         GetComponent<Rigidbody2D>().velocity.normalized);
 
 
-                    }                   
+                    }
+                    
+                    //dmg.TakeDamage(this, Vector2.zero, Owner);
+
+                    //RaiseEventOnDealth(collision);
                 }
             }
 

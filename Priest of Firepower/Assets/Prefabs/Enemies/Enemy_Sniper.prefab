@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 824060067660528355}
   - component: {fileID: 824060067660528381}
   - component: {fileID: 8303289804945422049}
-  - component: {fileID: 5189478850491432953}
   m_Layer: 7
   m_Name: Enemy_Sniper
   m_TagString: Untagged
@@ -151,45 +150,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 07537a4b3c70e384aafefd0320e322ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
-  tickRateBehaviour: 1
-  doTickUpdates: 1
-  clientSendReplicationData: 0
   pointsOnHit: 10
   pointsOnDeath: 100
-  speed: 2
-  Target: {fileID: 0}
   attackPrefab: {fileID: 4472022888998543014, guid: f0967a45807eeee4391e62641838d932, type: 3}
   onDeath:
     m_PersistentCalls:
       m_Calls: []
   bulletSpeedMultiplier: 6
---- !u!114 &5189478850491432953
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824060067660528363}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  globalObjectIdHash: 0
-  clientSendReplicationData: 0
-  tickCounter: 0
-  showDebugInfo: 0
-  isInterpolating: 0
-  lastAction: 4
-  sequenceNum: 0
-  lastProcessedSequenceNum: -1
-  interpolationTime: 0.1
-  speed: 0
-  sendTickRate: 1
-  synchronizeTransform: 1
-  sendOnTransformChange: 0
-  sendOnConstantRate: 1
 --- !u!1 &4243154942462018850
 GameObject:
   m_ObjectHideFlags: 0

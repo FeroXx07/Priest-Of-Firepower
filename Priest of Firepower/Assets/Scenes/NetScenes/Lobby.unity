@@ -613,19 +613,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   globalObjectIdHash: 10
-  clientSendReplicationData: 0
+  tickRate: -1
   tickCounter: 0
   showDebugInfo: 0
+  synchronizeTransform: 0
+  sendEveryChange: 0
+  sendTickChange: 0
+  clientSendReplicationData: 1
   isInterpolating: 0
+  speed: 0
   lastAction: 4
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
-  speed: 0
-  sendTickRate: 1
-  synchronizeTransform: 0
-  sendOnTransformChange: 0
-  sendOnConstantRate: 0
+  interpolationTimer: 0
 --- !u!1 &459644970
 GameObject:
   m_ObjectHideFlags: 0
