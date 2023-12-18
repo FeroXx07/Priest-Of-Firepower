@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -128,6 +129,9 @@ namespace _Scripts.Networking
                 }
                     break;
                 case ReplicationAction.DESTROY:
+                {
+                    Client_DeSpawnNetworkObject(id,reader,timeStamp);
+                }
                     break;
                 case ReplicationAction.TRANSFORM:
                 {
@@ -161,7 +165,7 @@ namespace _Scripts.Networking
             }
         }
         
-        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ReplicationHeader ownerSpawner, MemoryStream ownerSpawnerData)
+        public GameObject Server_InstantiateNetworkObject(GameObject prefab, ReplicationHeader spawnerObjHeader, MemoryStream ownerSpawnerData)
         {
             NetworkObject newGo = GameObject.Instantiate<GameObject>(prefab).GetComponent<NetworkObject>();
             UInt64 newId = RegisterObjectServer(newGo);
@@ -172,7 +176,7 @@ namespace _Scripts.Networking
             
             writer.Write(prefab.name);
             
-            MemoryStream headerOwner = ownerSpawner.GetSerializedHeader();
+            MemoryStream headerOwner = spawnerObjHeader.GetSerializedHeader();
             headerOwner.Position = 0;
             headerOwner.CopyTo(outputMemoryStream);
             ownerSpawnerData.Position = 0;
@@ -191,7 +195,7 @@ namespace _Scripts.Networking
             string prefabName = reader.ReadString();
             ReplicationHeader spawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
             
-            var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(p => p.name == prefabName);
+            var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(prefab => prefab.name == prefabName);
             NetworkObject newGo = GameObject.Instantiate(prefab).GetComponent<NetworkObject>();
             RegisterObjectClient(serverAssignedNetObjId, newGo);
             Debug.LogWarning($"Replication Manager: Creating object {prefabName} ID {id}, size: {spawnerOwnerHeader.memoryStreamSize}");
@@ -232,29 +236,29 @@ namespace _Scripts.Networking
             reader.BaseStream.Seek(spawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
         }
 
-        public void Server_DeSpawnNetworkObject(NetworkObject networkObject, ReplicationHeader ownerSpawner, MemoryStream ownerSpawnerData)
+        public void Server_DeSpawnNetworkObject(NetworkObject nObjToDespawn, ReplicationHeader objDestroyer, MemoryStream objDestroyerData)
         {
-            UnRegisterObjectServer(networkObject);
+            UnRegisterObjectServer(nObjToDespawn);
             
             // Send replication packet to clients to remove this object
             MemoryStream outputMemoryStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             
-            MemoryStream headerOwner = ownerSpawner.GetSerializedHeader();
+            MemoryStream headerOwner = objDestroyer.GetSerializedHeader();
             headerOwner.Position = 0;
             headerOwner.CopyTo(outputMemoryStream);
-            ownerSpawnerData.Position = 0;
-            ownerSpawnerData.CopyTo(outputMemoryStream);
+            objDestroyerData.Position = 0;
+            objDestroyerData.CopyTo(outputMemoryStream);
             
-            ReplicationHeader replicationHeader = new ReplicationHeader(networkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
+            ReplicationHeader replicationHeader = new ReplicationHeader(nObjToDespawn.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
             Debug.LogWarning($"Network Manager: Sending destroy, header size {replicationHeader.GetSerializedHeader().Length}, data size {replicationHeader.memoryStreamSize}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
+            GameObject.Destroy(nObjToDespawn.gameObject);
         }
 
         public void Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
         {
             ReplicationHeader deSpawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
-            UnRegisterObjectClient(networkObjectId);
             
             Type type = Type.GetType(deSpawnerOwnerHeader.objectFullName);
             NetworkObject objectToDestroy = networkObjectMap[networkObjectId]; // The object that is despawned
@@ -276,6 +280,8 @@ namespace _Scripts.Networking
 
             reader.BaseStream.Position = startPosData;
             reader.BaseStream.Seek(deSpawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
+            
+            UnRegisterObjectClient(networkObjectId);
         }
     }
 }

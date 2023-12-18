@@ -134,6 +134,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4152c504c31e8548a451fc8d636155b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 0
+  doTickUpdates: 0
+  clientSendReplicationData: 0
   health: 10
   maxHealth: 10
   layer:
@@ -151,8 +155,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bda3c09d495ceb48a98434682d706d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   pointsOnHit: 10
   pointsOnDeath: 100
+  speed: 2
+  Target: {fileID: 0}
   attackPrefab: {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
   onDeath:
     m_PersistentCalls:
@@ -172,18 +182,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   globalObjectIdHash: 0
   tickRate: 2
-  tickCounter: 0
-  showDebugInfo: 0
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1
   clientSendReplicationData: 0
+  tickCounter: 0
+  showDebugInfo: 0
   isInterpolating: 0
-  speed: 0
   lastAction: 4
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
+  speed: 0
 --- !u!1 &4297529891857988982
 GameObject:
   m_ObjectHideFlags: 0

@@ -143,6 +143,8 @@ namespace _Scripts.Networking
         // Message sendId, message string, message timestamp
         public Action<UInt64, string, long> OnGameEventMessageReceived;
 
+        private List<GameObject> playerInstancesList = new List<GameObject>();
+        
         #endregion
         #endregion
 
@@ -194,12 +196,49 @@ namespace _Scripts.Networking
                         GameObject go = replicationManager.Server_InstantiateNetworkObject(prefab, header, mem);
                         
                         go.gameObject.name = clientData.userName;
+                        playerInstancesList.Add(go);
+                        
                         Player.Player player = go.GetComponent<Player.Player>();
                         player.SetName(clientData.userName);
                         player.SetPlayerId(clientData.id);
                         clientData.playerInstantiated = true;
                     }
                 }
+            }
+        }
+
+        void DespawnPlayer(UInt64 id , string userName)
+        {
+            if (_isHost)
+            {
+                MemoryStream stream = new MemoryStream();
+                BinaryWriter writer = new BinaryWriter(stream);
+                writer.Write(userName);
+                writer.Write(id);
+                ReplicationHeader header = new ReplicationHeader(0, this.GetType().FullName,
+                    ReplicationAction.DESTROY, stream.ToArray().Length);
+
+                GameObject obj = null;
+
+                foreach (GameObject player in playerInstancesList)
+                {
+                    if (player.name == userName)
+                    {
+                        obj = player;
+                        break;
+                    }
+                }
+                if (obj==null)
+                {
+                    Debug.LogError("Something happend when removing player instace ... ");
+                    return;
+                }
+
+                playerInstancesList.Remove(obj);
+
+                NetworkObject nObj = obj.GetComponent<NetworkObject>();
+
+                replicationManager.Server_DeSpawnNetworkObject(nObj, header, stream);
             }
         }
         
@@ -213,6 +252,7 @@ namespace _Scripts.Networking
             {
                 try
                 {
+                    _client.onServerConnectionLost -= Reset;
                     _client.Shutdown();
                     _client = null;
                 }
@@ -252,6 +292,7 @@ namespace _Scripts.Networking
             {
                 try
                 {
+                    _client.onServerConnectionLost -= Reset;
                     _client.Shutdown();
                     _client = null;
                 }
@@ -292,6 +333,7 @@ namespace _Scripts.Networking
             _client.ConnectToServer(new IPEndPoint(serverAdress, defaultServerTcpPort),
                 new IPEndPoint(serverAdress, defaultServerUdpPort));
             _isClient = true;
+            _client.onServerConnectionLost += Reset;
         }
 
         public void StartHost()
@@ -733,7 +775,6 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.PING:
                 {
-                    //if (debugShowPingPackets) Debug.Log($"Network Manager: Received packet {type} with stream array lenght {stream.ToArray().Length}");
                     if (debugShowPingPackets)Debug.Log($"Network Manager: Received packet {type}");
                     if (_isHost) _server.HandleHeartBeat(reader);
                     else if (_isClient) _client.HandleHeartBeat(reader);
@@ -787,8 +828,6 @@ namespace _Scripts.Networking
 
         void HandleObjectState(MemoryStream stream, Int64 streamPosition, UInt64 packetSender, Int64 timeStamp, UInt64 seqNum, int replicationItemsCount)
         {
-            //try
-            //{
                 BinaryReader reader = new BinaryReader(stream);
                 List<ReplicationHeader> replicationHeaders =
                     ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
@@ -814,12 +853,7 @@ namespace _Scripts.Networking
                 }
 
                 isBehindThreshold = false;
-            //}
-            // catch (EndOfStreamException ex)
-            // {
-            //     Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
-            // }
-}
+        }   
 
         void HandleInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)
         {
@@ -955,9 +989,10 @@ namespace _Scripts.Networking
             OnClientConnected?.Invoke();
         }
 
-        public void ClientDisconected()
+        public void ClientDisconected(UInt64 id, string userName)
         {
             OnClientDisconnected?.Invoke();
+            DespawnPlayer(id,userName);
         }
 
         public void RemoveClient(ClientData clientToRemove)

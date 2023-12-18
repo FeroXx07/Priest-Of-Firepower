@@ -41,17 +41,13 @@ namespace _Scripts.Networking
         // Cancellation tokens are particularly useful when you want to stop an ongoing operation due to user input, a timeout,
         // or any other condition that requires the operation to terminate prematurely.
         private List<ServerAuthenticator> _authenticationProcesses = new List<ServerAuthenticator>();
-        // private Dictionary<IPEndPoint, Process> _authenticationProcesses = new Dictionary<IPEndPoint, Process>();
-        // private Dictionary<IPEndPoint, Socket> _authenticationConnections = new Dictionary<IPEndPoint, Socket>();
-        // private Dictionary<IPEndPoint, ServerAuthenticator> _authenticators = new Dictionary<IPEndPoint, ServerAuthenticator>();
-        // private List<Process> _authenticationProcessList = new List<Process>();
         private Dictionary<IPEndPoint, Socket> _incomingConnections = new Dictionary<IPEndPoint, Socket>();
         #endregion
 
         #region  Actions
 
         public Action onClientConnected;
-        public Action onClientDisconnected;
+        public Action<UInt64, string> onClientDisconnected;
         #endregion
         
         #region Disconnections & Threads Cancellation
@@ -130,10 +126,9 @@ namespace _Scripts.Networking
         {
             Debug.Log($"Server {_localEndPointTcp}: Starting to disable server...");
             //frist disconnect all sockets
-            if (_serverTcp.Connected)
-            {
-                _serverTcp.Shutdown(SocketShutdown.Both);
-            }
+            _serverTcp.Shutdown(SocketShutdown.Both);
+            _serverUdp.Shutdown(SocketShutdown.Both);
+            
             _serverUdp.Close();
             _serverTcp.Close();
 
@@ -271,7 +266,7 @@ namespace _Scripts.Networking
                 {
                     // Handle client disconnection (optional)
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} just disconnected: {se.Message}");
-                    RemoveClient(clientData);
+                    AddClientToRemove(clientData);
                 }
                 else
                 {
@@ -333,11 +328,13 @@ namespace _Scripts.Networking
             {
                 // Handle other socket exceptions
                 Debug.LogError($"Server {_localEndPointTcp}: SocketException: {se.SocketErrorCode}, {se.Message}");
+                AddClientToRemove(clientData);
             }
             catch (Exception e)
             {
                 // Handle other exceptions
                 Debug.LogError($"Server {_localEndPointTcp}: Exception: {e.Message}");
+                AddClientToRemove(clientData);
             }
         }
         #endregion
@@ -494,7 +491,8 @@ namespace _Scripts.Networking
 
         public void AddClientToRemove(ClientData client)
         {
-            _clientsToRemove.Add(client);
+            if(!_clientsToRemove.Contains(client))
+                _clientsToRemove.Add(client);
         }
 
         private void RemoveClient(ClientData clientData)
@@ -517,7 +515,8 @@ namespace _Scripts.Networking
                     clientData.connectionTcp.Close();
                     Debug.Log($"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected successfully");
                     _clientsList.Remove(clientData);
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(onClientDisconnected);
+
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(()=>onClientDisconnected(clientData.id,clientData.userName));
                 }
             }
             catch (Exception e)

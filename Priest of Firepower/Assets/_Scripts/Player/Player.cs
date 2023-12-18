@@ -2,6 +2,7 @@ using _Scripts.Networking;
 using System;
 using System.IO;
 using _Scripts.Weapon;
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -91,7 +92,9 @@ namespace _Scripts.Player
             _weaponSwitcher = GetComponent<WeaponSwitcher>();
             _rb = GetComponent<Rigidbody2D>();
             state = PlayerState.IDLE;
-
+            
+            GetComponent<NetworkObject>().speed = speed;
+            
             clientSendReplicationData = true;
         }
         
@@ -110,9 +113,12 @@ namespace _Scripts.Player
         private void Start()
         {
             //if host render on top the player over the others
-            if(isOwner())
+            if (isOwner())
+            {
                 GetComponent<SpriteRenderer>().sortingOrder = 11;
-            
+                FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
+            }
+
             shootMarker.positionCount = 2;
             _weaponFlipped = false;
         }
@@ -233,18 +239,6 @@ namespace _Scripts.Player
                     tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
                     tickCounter += Time.deltaTime;
                 }
-                // else
-                // {
-                //     Debug.Log("sending state" + state);
-                //     float finalRate = 1.0f / tickRatePlayer;
-                //     if (tickCounter >= finalRate)
-                //     {
-                //         tickCounter = 0.0f;
-                //         SendInputToClients();
-                //     }
-                //     tickCounter = tickCounter >= float.MaxValue - 100 ? 0.0f : tickCounter;
-                //     tickCounter += Time.deltaTime;
-                // }
             }
         }
 

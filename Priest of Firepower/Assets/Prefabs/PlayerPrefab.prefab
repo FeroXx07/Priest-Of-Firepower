@@ -347,6 +347,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4152c504c31e8548a451fc8d636155b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 0
+  doTickUpdates: 0
+  clientSendReplicationData: 0
   health: 1000
   maxHealth: 1000
   layer:
@@ -379,18 +383,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   globalObjectIdHash: 0
   tickRate: 10
-  tickCounter: 0
-  showDebugInfo: 0
   synchronizeTransform: 1
   sendEveryChange: 0
   sendTickChange: 1
   clientSendReplicationData: 0
+  tickCounter: 0
+  showDebugInfo: 0
   isInterpolating: 0
-  speed: 0
   lastAction: 4
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
+  speed: 0
 --- !u!114 &-4167005071263701011
 MonoBehaviour:
   m_ObjectHideFlags: 0

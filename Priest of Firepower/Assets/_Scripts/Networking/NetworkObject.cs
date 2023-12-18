@@ -54,21 +54,13 @@ namespace _Scripts.Networking
         }
         #endregion
         
-        #region TickInfo
+        #region Transform Info
+        [Header("Transform sync")]
         public float tickRate = 10.0f; // Network writes inside a second.
-        [SerializeField] private float tickCounter = 0.0f;
-        [SerializeField] private bool showDebugInfo = false;
-        #endregion
-
-        #region TransformInfo
         public bool synchronizeTransform = true;
         public bool sendEveryChange = false;
         public bool sendTickChange = true;
         public bool clientSendReplicationData = false;
-        [SerializeField] private bool isInterpolating = false;
-        public float speed =0f;
-        
-        [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         TransformData newTransformData;
         TransformData currentTransfromData;
         TransformData lastTransformSentData;
@@ -79,13 +71,19 @@ namespace _Scripts.Networking
         private float timeBetweenPackets;
         private Vector2 lastDirection;
         private bool PredictPosition = false;
+        private Interpolator interpolator;
+        #endregion
         
+        #region Internal Info
+        [Header("Internal info")]
+        [SerializeField] private float tickCounter = 0.0f;
+        [SerializeField] private bool showDebugInfo = false;
+        [SerializeField] private bool isInterpolating = false;
+        [SerializeField] private TransformAction lastAction = TransformAction.NONE;
         public long sequenceNum = 0;
         public long lastProcessedSequenceNum = -1;
         public float interpolationTime = 0.1f; 
-        //[SerializeField] private float interpolationTimer = 0f;
-
-        private Interpolator interpolator;
+        public float speed =0f;//velocity of the obj to calculate interpolation
         #endregion
         
         private void Awake()
@@ -97,25 +95,6 @@ namespace _Scripts.Networking
         private void Start()
         {
             timerPacketFrequency.Start();
-            if (TryGetComponent<Player.Player>( out Player.Player player))
-            {
-                speed = player.speed;
-                
-                // if not owner add interpolator as it needs to move with server
-                // positions
-                if(NetworkManager.Instance.IsClient() && !player.isOwner())
-                {
-                    interpolator = gameObject.AddComponent(typeof(Interpolator)) as Interpolator;
-                }
-            }
-
-            // if is not a player, eg enemy
-            // then add interpolator as it needs to be moved with the server
-            // as host we will move it locally so no need to add interpolator
-            if(NetworkManager.Instance.IsClient())
-            {
-                interpolator = gameObject.AddComponent(typeof(Interpolator)) as Interpolator;
-            }
         }
 
         #region Network Transforms
@@ -170,36 +149,15 @@ namespace _Scripts.Networking
                 Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
             }
         }
-
-        void AddNewTransform(ushort tick,bool isTeleport, Vector2 pos, float angle)
-        {
-
-            if (TryGetComponent<Player.Player>(out Player.Player player) && player.isOwner())
-            {
-                return;
-            }
-            //transform.position = pos;
-            //transform.rotation = Quaternion.Euler(new Vector3(0, 0, angle));
-
-            //return;
-            if (interpolator != null)
-            {
-               // Debug.Log($"recieved new transform update tick: {tick} pos: {pos} angle {angle}");
-                interpolator.NewUpdateTransform(tick, isTeleport, pos, angle); 
-            }
-        }
         public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
         {
-
             //read data on second thread
             int actionValue = reader.ReadInt32();
             ushort tick = reader.ReadUInt16();
-            bool isTeleport = reader.ReadBoolean();
             Vector2 newPos = new Vector2(reader.ReadSingle(), reader.ReadSingle());
             float rotZ = reader.ReadSingle();
 
             //send new data to main thread
-            //UnityMainThreadDispatcher.Dispatcher.Enqueue(() => AddNewTransform(tick,isTeleport,newPos,rotZ));
             UnityMainThreadDispatcher.Dispatcher.Enqueue(() => UpdatePosition((TransformAction)actionValue,newPos,rotZ, sequenceState));
         }
 
@@ -211,10 +169,6 @@ namespace _Scripts.Networking
                     return;
             }
 
-            if (!NetworkManager.Instance.IsHost())
-                return;
-
-
             // Serialize
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
@@ -225,7 +179,6 @@ namespace _Scripts.Networking
             
             writer.Write((int)transformAction);
             writer.Write(NetworkManager.Instance.GetServer()._currentTick);
-            writer.Write(false);//teleport to be added
             writer.Write((float)transform.position.x);
             writer.Write((float)transform.position.y);
             writer.Write(transform.rotation.eulerAngles.z);

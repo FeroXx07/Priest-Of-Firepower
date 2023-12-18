@@ -154,7 +154,6 @@ namespace _Scripts
                  }
              }
         }
-
         public override void SendInputToClients()
         {
             // Create a hit input, because inputs are faster and have more priority than states.

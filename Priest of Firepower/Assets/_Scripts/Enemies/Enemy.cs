@@ -16,11 +16,13 @@ namespace _Scripts.Enemies
         DIE,
     }
 
-    public class Enemy : NetworkBehaviour, IPointsProvider
+    public class Enemy : NetworkBehaviour, IPointsProvider, IDamageable
     {
+        [Header("Enemy properties")]
         [SerializeField] private int pointsOnHit = 10;
         [SerializeField] private int pointsOnDeath = 100;
-
+        [SerializeField] private float speed = 2;
+        
         [SerializeField] protected Transform Target;
         protected NavMeshAgent Agent;
         protected HealthSystem HealthSystem;
@@ -52,7 +54,10 @@ namespace _Scripts.Enemies
             HealthSystem = GetComponent<HealthSystem>();
             Agent = GetComponent<NavMeshAgent>();
             Collider = gameObject.GetComponent<Collider2D>();
-
+            
+            Agent.speed = speed;
+            GetComponent<NetworkObject>().speed = speed;
+            
             Agent.updateRotation = false;
             Agent.updateUpAxis = false;
         }
@@ -200,6 +205,20 @@ namespace _Scripts.Enemies
 
             // If we hit something, check if it was the player
             return hit.collider != null && hit.collider.transform == playerTransform;
+        }
+
+        public event Action<GameObject, GameObject> OnDamageableDestroyed;
+        public event Action<GameObject, GameObject> OnDamageTaken;
+        public LayerMask Layers { get; set; }
+        public int Health { get; set; }
+        public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RaiseEventOnDamageableDestroyed(GameObject destroyer)
+        {
+            throw new NotImplementedException();
         }
     }
 }

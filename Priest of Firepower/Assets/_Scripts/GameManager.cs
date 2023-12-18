@@ -27,6 +27,7 @@ namespace _Scripts
                 NetworkManager.Instance.SpawnPlayers();
             }
         }
+
         private void Start()
         {
             //roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
@@ -38,9 +39,7 @@ namespace _Scripts
         {
            // roundSystem.RoundFinished(enemySpawnManager);
         }
-
-
-
+        
     }
 }
 

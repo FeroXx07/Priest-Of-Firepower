@@ -48,6 +48,7 @@ namespace _Scripts.Networking
         private ushort tickDivergencceTolerance = 1;
 
         public Action onConnected;
+        public Action onServerConnectionLost;
 
         private ClientAuthenticator _authenticator;
         public ClientAuthenticator authenticator => _authenticator;
@@ -187,12 +188,18 @@ namespace _Scripts.Networking
         void DisconnectFromServer()
         {
             Debug.Log($"Client {_clientData.userName}_{_clientData.id}: Is disconnecting and shutting down the sockets.");
+            
             _serverListenerProcess.Shutdown();
             _authenticationProcess.Shutdown();
             if (_clientData.connectionTcp != null)
             {
                 _clientData.connectionTcp.Shutdown(SocketShutdown.Both);
                 _clientData.connectionTcp.Close();
+            }
+
+            if (_clientData.connectionUdp != null)
+            {
+                _clientData.connectionUdp.Shutdown(SocketShutdown.Both);
                 _clientData.connectionUdp.Close();
             }
         }
@@ -290,7 +297,10 @@ namespace _Scripts.Networking
             }
             catch (SocketException se)
             {
+                
                 // Handle other socket exceptions
+                UnityMainThreadDispatcher.Dispatcher.Enqueue(onServerConnectionLost);
+                UnityMainThreadDispatcher.Dispatcher.Enqueue(()=>SceneManager.LoadScene("ConnectToLobby"));
                 UnityMainThreadDispatcher.Dispatcher.Enqueue(() => Debug.LogError($"Client {_clientData.userName}_{_clientData.id}: SocketException: {se.SocketErrorCode}, {se.Message}"));
             }
             catch (Exception e)
