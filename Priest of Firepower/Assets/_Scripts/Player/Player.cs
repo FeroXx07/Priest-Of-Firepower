@@ -96,6 +96,12 @@ namespace _Scripts.Player
             GetComponent<NetworkObject>().speed = speed;
             
             clientSendReplicationData = true;
+
+            // if (NetworkManager.Instance.IsClient())
+            // {
+            //     NetworkObject.sendEveryChange = false;
+            //     NetworkObject.tickRate = 1.0f;
+            // }
         }
         
         public override void OnEnable()
@@ -220,6 +226,7 @@ namespace _Scripts.Player
                 {
                     state = PlayerState.IDLE;
                     SendInputToServer();
+                    NetworkObject.WriteReplicationTransform(TransformAction.INTERPOLATE);
                 }
                 state = PlayerState.IDLE;
             }

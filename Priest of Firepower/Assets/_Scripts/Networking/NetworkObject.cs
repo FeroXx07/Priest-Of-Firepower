@@ -19,7 +19,6 @@ namespace _Scripts.Networking
         INTERPOLATE,
         NETWORK_SET,
         NETWORK_SEND,
-        LOCAL_SET,
         NONE
     }
     public struct InputPacketHeader
@@ -163,11 +162,11 @@ namespace _Scripts.Networking
 
         public void WriteReplicationTransform(TransformAction transformAction)
         {
-            if (NetworkManager.Instance.IsClient())
-            {
-                if (clientSendReplicationData == false)
-                    return;
-            }
+            // if (NetworkManager.Instance.IsClient())
+            // {
+            //     if (clientSendReplicationData == false)
+            //         return;
+            // }
 
             // Serialize
             MemoryStream stream = new MemoryStream();
@@ -178,11 +177,18 @@ namespace _Scripts.Networking
             }
             
             writer.Write((int)transformAction);
-            writer.Write(NetworkManager.Instance.GetServer()._currentTick);
+            if (NetworkManager.Instance.IsHost())
+            {
+                writer.Write(NetworkManager.Instance.GetServer()._currentTick);
+            }
+            else
+            {
+                writer.Write(NetworkManager.Instance.GetClient().ServerTick);
+            }
             writer.Write((float)transform.position.x);
             writer.Write((float)transform.position.y);
             writer.Write(transform.rotation.eulerAngles.z);
-            Debug.Log("Sending transform");
+            Debug.Log($"Sending transform isHost: {NetworkManager.Instance.IsHost()}");
             int size = stream.ToArray().Length;
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {size}");
@@ -283,7 +289,6 @@ namespace _Scripts.Networking
                 lastAction = TransformAction.NETWORK_SEND;
                 hasChanged = false;
             }
-
             
             // Send Write to state buffer
             float finalRate = 1.0f / tickRate;

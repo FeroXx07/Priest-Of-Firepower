@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.IO;
 using _Scripts.Interfaces;
+using _Scripts.Networking;
 using _Scripts.UI.Interactables;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
 namespace _Scripts.Interactables
 {
-    public class Door : MonoBehaviour, IInteractable
+    public class Door : NetworkBehaviour, IInteractable
     {
 
         [SerializeField] string message;
@@ -28,8 +29,17 @@ namespace _Scripts.Interactables
         public int InteractionCost => price;
 
         bool _open  = false;
-        private void OnEnable()
+        protected override void InitNetworkVariablesList()
         {
+            
+        }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+            
             interactionPromptUI.SetText(message);
             EnablePromptUI(false);
             EnableObjects(false);
@@ -75,7 +85,7 @@ namespace _Scripts.Interactables
                             DisableDoor();
                             
                             
-                            InteractionManager.Instance.ClientSendInteraction(interactor,this,);
+                            InteractionManager.Instance.ClientSendInteraction(interactor,this);
                         }
                     }
                 }
