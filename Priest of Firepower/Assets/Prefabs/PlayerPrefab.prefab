@@ -323,8 +323,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showDebugInfo: 1
   tickRateBehaviour: 1
-  doTickUpdates: 1
-  clientSendReplicationData: 0
+  doTickUpdates: 0
+  clientSendReplicationData: 1
+  _state: 0
   keys: 3100000032000000
   slots:
   - holder: {fileID: 1747872898691203083}

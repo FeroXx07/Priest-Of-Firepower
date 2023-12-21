@@ -369,7 +369,7 @@ namespace _Scripts.Player
         }
         public override void ReceiveInputFromClient(InputPacketHeader header, BinaryReader reader)
         {
-            Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM client: {input}");
+            if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM client: {input}");
 
 
             state = (PlayerState)reader.ReadInt32();         
@@ -396,7 +396,7 @@ namespace _Scripts.Player
 
         public override void SendInputToClients()
         {
-            Debug.Log($"{_playerId}--{_playerName}: Sending movement inputs TO clients: {input}");
+            if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Sending movement inputs TO clients: {input}");
             // Redirect input to other clients
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
@@ -419,7 +419,7 @@ namespace _Scripts.Player
                 return;
             }
             
-            Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM server: {input}");
+            if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM server: {input}");
 
 
             state = (PlayerState)reader.ReadInt32();

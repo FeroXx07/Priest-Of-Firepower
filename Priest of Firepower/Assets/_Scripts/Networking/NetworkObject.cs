@@ -143,9 +143,8 @@ namespace _Scripts.Networking
                 newReceivedTransformData.position = newPos;
                 newReceivedTransformData.rotation.z = rotZ;
                 newTransformData = newReceivedTransformData;
-
-                //if (showDebugInfo)
-                Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
+                
+                if(showDebugInfo) Debug.Log($"ID: {globalObjectIdHash}, Receiving transform network: {newPos}");
             }
         }
         public void ReadReplicationTransform(BinaryReader reader, UInt64 senderId, Int64 timeStamp, UInt64 sequenceState)
@@ -188,7 +187,7 @@ namespace _Scripts.Networking
             writer.Write((float)transform.position.x);
             writer.Write((float)transform.position.y);
             writer.Write(transform.rotation.eulerAngles.z);
-            Debug.Log($"Sending transform isHost: {NetworkManager.Instance.IsHost()}");
+            if (showDebugInfo) Debug.Log($"Sending transform isHost: {NetworkManager.Instance.IsHost()}");
             int size = stream.ToArray().Length;
             if(showDebugInfo)
                 Debug.Log($"ID: {globalObjectIdHash}, Sending transform network: {transformAction} {transform.position}, {transform.rotation}, size: {size}");

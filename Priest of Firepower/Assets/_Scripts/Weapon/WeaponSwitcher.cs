@@ -9,10 +9,13 @@ namespace _Scripts.Weapon
 {
     public enum WeaponSwitcherStates
     {
-        NEW_WEAPON = 0,
+        NONE = 0,
+        NEW_WEAPON,
+        CHANGE_WEAPON
     }
     public class WeaponSwitcher : NetworkBehaviour
     {
+        [SerializeField] private WeaponSwitcherStates _state = WeaponSwitcherStates.NONE;
         public KeyCode[] keys;
         public WeaponSlot[] slots;
         int _selectedWeapon = 0;
@@ -27,6 +30,8 @@ namespace _Scripts.Weapon
         [SerializeField] GameObject initialSecondaryWeaponPrefab;
         [SerializeField] private Player.Player player;
         
+        [SerializeField] private UInt64 myUserId => NetworkManager.Instance.getId;
+
         [Serializable]
         public struct WeaponSlot
         {
@@ -83,29 +88,66 @@ namespace _Scripts.Weapon
 
         public override void Update()
         {
+            base.Update();
+            if (!player.isOwner()) return;  // Only the owner of the player will control it
+            
             int previousWeapon = _selectedWeapon;
-
-            if (player.isOwner())
+            
+            for(int i = 0; i<keys.Length; i++)
             {
-                for(int i = 0; i<keys.Length; i++)
+                if (Input.GetKey(keys[i]) && _lastSwtichTime >= switchTime)
                 {
-                    if (Input.GetKey(keys[i]) && _lastSwtichTime >= switchTime)
-                    {
-                        _selectedWeapon = i;
-                    }
+                    _selectedWeapon = i;
                 }
             }
-            
+
             if (_selectedWeapon != previousWeapon)
+            {
+                _state = WeaponSwitcherStates.CHANGE_WEAPON;
+                
                 SelectWeapon(_selectedWeapon);
+                SendReplicationData(ReplicationAction.UPDATE);
+            }
 
             _lastSwtichTime += Time.deltaTime;
+        }
+
+        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        {
+            WeaponSwitcherStates receivedState = (WeaponSwitcherStates)reader.ReadInt32();
+
+            if (receivedState == WeaponSwitcherStates.CHANGE_WEAPON)
+            {
+                _selectedWeapon = reader.ReadInt32();
+                Debug.Log($"Weapon switcher: Reading change weapon {_selectedWeapon}");
+                SelectWeapon(_selectedWeapon);
+            }
+            
+            _state = receivedState;
+            return true;
+        }
+
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        {
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            writer.Write((int)_state);
+
+            if (_state == WeaponSwitcherStates.CHANGE_WEAPON)
+            {
+                Debug.Log($"Weapon switcher: {_state} Sending change weapon {_selectedWeapon}");
+                writer.Write(_selectedWeapon);
+            }
+            
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            return replicationHeader;
         }
 
         public void ChangeWeaponServer(GameObject newWeaponPrefab)
         {
             if (newWeaponPrefab == null || !NetworkManager.Instance.IsHost()) return;
 
+            _state = WeaponSwitcherStates.NEW_WEAPON;
+            
             WeaponSlot emptySlot = new WeaponSlot{empty = true, holder = null, weapon = null,index = -1 };
 
             //check if one of the slots is empty, if so add the new weapon there
@@ -149,7 +191,7 @@ namespace _Scripts.Weapon
             BinaryWriter writer = new BinaryWriter(changeWeaponMemoryStream);
             writer.Write(user.GetPlayerId());
             writer.Write(user.GetName());
-            writer.Write((int)WeaponSwitcherStates.NEW_WEAPON);
+            writer.Write((int)_state);
             ReplicationHeader changeWeaponHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.CREATE, changeWeaponMemoryStream.ToArray().Length);
             GameObject weapon = NetworkManager.Instance.replicationManager.Server_InstantiateNetworkObject(newWeaponPrefab,
                 changeWeaponHeader, changeWeaponMemoryStream);
@@ -215,9 +257,9 @@ namespace _Scripts.Weapon
             // Called through the replication manager when state is CREATE.
             UInt64 playerId = reader.ReadUInt64();
             string playerName = reader.ReadString();
-            WeaponSwitcherStates state = (WeaponSwitcherStates)reader.ReadInt32();
+            _state = (WeaponSwitcherStates)reader.ReadInt32();
 
-            if (state == WeaponSwitcherStates.NEW_WEAPON)
+            if (_state == WeaponSwitcherStates.NEW_WEAPON)
             {
                 ChangeWeaponClient(objectSpawned.gameObject);
             }

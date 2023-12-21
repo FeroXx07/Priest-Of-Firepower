@@ -170,7 +170,7 @@ using UnityEngine;
                 Debug.LogWarning("A NetworkBehaviour needs a NetworkObject");
             }
         }
-        public void SendReplicationData(ReplicationAction action)
+        protected void SendReplicationData(ReplicationAction action)
         {
             // Cannot send data if no network manager
             if (NetworkManager.Instance == false && NetworkObject == false)
@@ -242,7 +242,7 @@ using UnityEngine;
             }
             _tickCounter += Time.deltaTime;
         }
-        public void SendInput(MemoryStream dataStream, bool Reliable)
+        protected void SendInput(MemoryStream dataStream, bool Reliable)
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);

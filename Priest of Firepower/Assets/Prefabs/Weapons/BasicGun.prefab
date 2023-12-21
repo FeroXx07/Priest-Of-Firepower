@@ -134,7 +134,7 @@ MonoBehaviour:
   showDebugInfo: 1
   tickRateBehaviour: 1
   doTickUpdates: 1
-  clientSendReplicationData: 0
+  clientSendReplicationData: 1
   weaponData: {fileID: 11400000, guid: e702a8c25d9793b45b8160d8a0a2fa82, type: 2}
   localData: {fileID: 0}
   bulletRef: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
@@ -154,19 +154,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   globalObjectIdHash: 0
   tickRate: 0
-  tickCounter: 0
-  showDebugInfo: 0
   synchronizeTransform: 0
   sendEveryChange: 0
   sendTickChange: 0
   clientSendReplicationData: 0
+  tickCounter: 0
+  showDebugInfo: 0
   isInterpolating: 0
-  speed: 0
   lastAction: 4
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
-  interpolationTimer: 0
+  speed: 0
 --- !u!1001 &6532589348408444412
 PrefabInstance:
   m_ObjectHideFlags: 0
