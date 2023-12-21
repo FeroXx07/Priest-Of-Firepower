@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Weapon;
 using _Scripts.UI.Interactables;
@@ -10,6 +11,8 @@ namespace _Scripts.Interactables
 {
     public class Chest : MonoBehaviour, IInteractable
     {
+
+        
         [SerializeField] string message;
         [SerializeField] float time;
         [SerializeField] int price;
@@ -23,6 +26,7 @@ namespace _Scripts.Interactables
         GameObject _weapon;
         float _timer;
         public string Prompt => message;
+        public bool IsBeingInteracted { get; }
         public float InteractionTime => time;
         public int InteractionCost => price;
 
@@ -52,6 +56,20 @@ namespace _Scripts.Interactables
         public void EnablePromptUI(bool show)
         {
             interactionPromptUI.gameObject.SetActive(show);
+        }
+
+        public MemoryStream GetInteractionStream()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+
+            return stream;
+        }
+
+        public void ReadInteractionStream(MemoryStream stream)
+        {
+
         }
 
         public void Interact(Interactor interactor, bool keyPressed)

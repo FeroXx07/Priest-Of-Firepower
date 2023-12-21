@@ -1,14 +1,20 @@
 using _Scripts.Interfaces;
+using _Scripts.Networking;
 using UnityEngine;
 
 namespace _Scripts
 {
-    public class Interactor : MonoBehaviour
+    public class Interactor : NetworkBehaviour
     {
         [SerializeField] KeyCode key;
         [SerializeField]private LayerMask layer;
         [SerializeField] private float interactionRange;
         private Collider2D _interactable;
+
+        protected override void InitNetworkVariablesList()
+        {
+            throw new System.NotImplementedException();
+        }
 
         private void Update()
         {

@@ -16,7 +16,7 @@ namespace _Scripts.Enemies
         DIE,
     }
 
-    public class Enemy : NetworkBehaviour, IPointsProvider, IDamageable
+    public class Enemy : NetworkBehaviour, IPointsProvider
     {
         [Header("Enemy properties")]
         [SerializeField] private int pointsOnHit = 10;
@@ -205,20 +205,6 @@ namespace _Scripts.Enemies
 
             // If we hit something, check if it was the player
             return hit.collider != null && hit.collider.transform == playerTransform;
-        }
-
-        public event Action<GameObject, GameObject> OnDamageableDestroyed;
-        public event Action<GameObject, GameObject> OnDamageTaken;
-        public LayerMask Layers { get; set; }
-        public int Health { get; set; }
-        public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void RaiseEventOnDamageableDestroyed(GameObject destroyer)
-        {
-            throw new NotImplementedException();
         }
     }
 }

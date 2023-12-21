@@ -1,3 +1,4 @@
+using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Weapon;
 using _Scripts.UI.Interactables;
@@ -16,6 +17,7 @@ namespace _Scripts.Interactables
         private SpriteRenderer _wallWeaponImg;
         float _timer;
         public string Prompt => message;
+        public bool IsBeingInteracted { get; }
         public float InteractionTime => timeToInteract;
 
         public int InteractionCost => price;
@@ -68,6 +70,16 @@ namespace _Scripts.Interactables
         public void EnablePromptUI(bool show)
         {
             interactionPromptUI.gameObject.SetActive(show);
+        }
+
+        public MemoryStream GetInteractionStream()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ReadInteractionStream(MemoryStream stream)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

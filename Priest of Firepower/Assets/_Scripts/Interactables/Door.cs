@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.UI.Interactables;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace _Scripts.Interactables
         float _timer;
         public string Prompt => message;
 
+        public bool IsBeingInteracted { get; }
         public float InteractionTime => time;
 
         public int InteractionCost => price;
@@ -35,6 +37,16 @@ namespace _Scripts.Interactables
         public void EnablePromptUI(bool show)
         {
             interactionPromptUI.gameObject.SetActive(show);
+        }
+
+        public MemoryStream GetInteractionStream()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ReadInteractionStream(MemoryStream stream)
+        {
+            throw new System.NotImplementedException();
         }
 
         public void Interact(Interactor interactor, bool keyPressed)
@@ -55,12 +67,15 @@ namespace _Scripts.Interactables
                             Debug.Log(Prompt);
                             _timer = InteractionTime;
                             pointSystem.RemovePoints(price);
-
+                            
                             EnablePromptUI(false);
 
                             EnableObjects(true);
 
                             DisableDoor();
+                            
+                            
+                            InteractionManager.Instance.ClientSendInteraction(interactor,this,);
                         }
                     }
                 }

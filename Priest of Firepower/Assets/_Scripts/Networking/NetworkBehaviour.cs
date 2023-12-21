@@ -41,6 +41,16 @@ using UnityEngine;
         {
             NetworkManager.Instance.OnGameEventMessageReceived -= ListenToMessages;
         }
+
+        ///<summary>
+        /// returns the id of the networkobjet this behaviour belong to
+        /// </summary>
+        
+        public UInt64 GetObjId()
+        {
+            return GetComponent<NetworkObject>().GetNetworkId();
+        }
+        
         #region Serialization
 
         /// <summary>
