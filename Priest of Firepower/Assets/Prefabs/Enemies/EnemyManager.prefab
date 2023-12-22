@@ -227,6 +227,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2928409446186404591}
   - component: {fileID: 1612897591331697877}
+  - component: {fileID: 562035260194561817}
   m_Layer: 0
   m_Name: EnemyManager
   m_TagString: Untagged
@@ -262,7 +263,7 @@ Transform:
   - {fileID: 708210843287775367}
   - {fileID: 5669235707808785978}
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1612897591331697877
 MonoBehaviour:
@@ -276,37 +277,64 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1de4b52ab737df744baf8738e3056908, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   enemiesPrefabs:
   - {fileID: 824060067660528363, guid: 4eef580d63463244abf0796b10d30d7d, type: 3}
-  - {fileID: 824060067660528363, guid: bcc07618a1f2cbd4cb88a47082ff33ab, type: 3}
-  - {fileID: 824060067660528363, guid: fdfdc2d5b14c7174eb31e561c1d6c086, type: 3}
-  - {fileID: 824060067660528363, guid: 584bcf8e84042ef418b9cf2156c37d2d, type: 3}
-  numToInit: 5
+  numToInit: 2
   enemyCountProgression:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 3
-      inSlope: 4.97
-      outSlope: 4.97
+      value: 1
+      inSlope: 0
+      outSlope: 0
       tangentMode: 34
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.33333334
+      outWeight: 0
     - serializedVersion: 3
-      time: 100
-      value: 500
-      inSlope: 4.97
-      outSlope: 4.97
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
       tangentMode: 34
       weightedMode: 0
-      inWeight: 0.33333334
+      inWeight: 0
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
   enemiesAlive: []
+--- !u!114 &562035260194561817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7234543218594271033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 0
+  synchronizeTransform: 0
+  sendEveryChange: 0
+  sendTickChange: 0
+  clientSendReplicationData: 0
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1 &8051760738569706016
 GameObject:
   m_ObjectHideFlags: 0
@@ -516,6 +544,10 @@ PrefabInstance:
       value: EnemySpawner_2
       objectReference: {fileID: 0}
     - target: {fileID: 2532309951790806659, guid: e2fc7afe7a72a69409e7d3dfa9c70199, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532309951790806659, guid: e2fc7afe7a72a69409e7d3dfa9c70199, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
@@ -604,6 +636,10 @@ PrefabInstance:
     - target: {fileID: 2532309951790806659, guid: e2fc7afe7a72a69409e7d3dfa9c70199, type: 3}
       propertyPath: m_Name
       value: EnemySpawner
+      objectReference: {fileID: 0}
+    - target: {fileID: 2532309951790806659, guid: e2fc7afe7a72a69409e7d3dfa9c70199, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2532309951790806659, guid: e2fc7afe7a72a69409e7d3dfa9c70199, type: 3}
       propertyPath: m_StaticEditorFlags

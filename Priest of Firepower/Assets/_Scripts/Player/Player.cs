@@ -136,7 +136,7 @@ namespace _Scripts.Player
             directionMovement = Vector2.zero;
             currentWeaponInput = PlayerShooterInputs.NONE;
             
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButtonDown(0))
             {
                 if (isHost)
                 {
@@ -236,7 +236,7 @@ namespace _Scripts.Player
                 hasChangedMovement = false;
                 if (NetworkManager.Instance.IsClient())
                 {    
-                    Debug.Log("sending state" + state);
+                    if (showDebugInfo) Debug.Log("sending state" + state);
                     float finalRate = 1.0f / tickRatePlayer;
                     if (tickCounter >= finalRate)
                     {                      
@@ -414,14 +414,13 @@ namespace _Scripts.Player
         {
             if (isOwner())
             {
-                int remainingBytes = (sizeof(UInt64) + sizeof(Int32) * 2 + sizeof(bool) * 4);
+                int remainingBytes = (sizeof(Int32) * 2 + sizeof(bool) * 4);
                 reader.BaseStream.Seek(remainingBytes, SeekOrigin.Current);
                 return;
             }
             
             if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM server: {input}");
-
-
+            
             state = (PlayerState)reader.ReadInt32();
             currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();         
 

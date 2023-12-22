@@ -859,11 +859,13 @@ namespace _Scripts.Networking
         {
             try
             {
+                int i = 0;
                 while (reader.BaseStream.Position < reader.BaseStream.Length)
                 {
                     string objClass = reader.ReadString();
                     UInt64 netObjId = reader.ReadUInt64();
                     replicationManager.networkObjectMap[netObjId].HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, Type.GetType(objClass));
+                    i++;
                 }
             }
             catch (EndOfStreamException ex)

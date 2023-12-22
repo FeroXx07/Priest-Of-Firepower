@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bda3c09d495ceb48a98434682d706d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
+  showDebugInfo: 0
   tickRateBehaviour: 1
   doTickUpdates: 1
   clientSendReplicationData: 0

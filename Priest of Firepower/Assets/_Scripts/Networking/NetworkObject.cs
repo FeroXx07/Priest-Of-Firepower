@@ -217,21 +217,34 @@ namespace _Scripts.Networking
                 }
                 else
                 {
-                    // If not cached, try to get the component on the main thread
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {
-                        behaviour = GetComponent(type) as NetworkBehaviour;
+                    behaviour = GetComponent(type) as NetworkBehaviour;
 
-                        // Cache the result
-                        if (behaviour != null)
-                        {
-                            behaviourCache[type] = behaviour;
-                            behaviour.ReadReplicationPacket(reader, currentPosition);
-                        }
-                        else
-                        {
-                            Debug.LogError($"NetworkBehaviour component not found on the GameObject for type {type}");
-                        }
-                    });
+                    // Cache the result
+                    if (behaviour != null)
+                    {
+                        behaviourCache[type] = behaviour;
+                        behaviour.ReadReplicationPacket(reader, currentPosition);
+                    }
+                    else
+                    {
+                        Debug.LogError($"NetworkBehaviour component not found on the GameObject for type {type}");
+                    }
+                    
+                    // // If not cached, try to get the component on the main thread
+                    // UnityMainThreadDispatcher.Dispatcher.Enqueue(() => {
+                    //     behaviour = GetComponent(type) as NetworkBehaviour;
+                    //
+                    //     // Cache the result
+                    //     if (behaviour != null)
+                    //     {
+                    //         behaviourCache[type] = behaviour;
+                    //         behaviour.ReadReplicationPacket(reader, currentPosition);
+                    //     }
+                    //     else
+                    //     {
+                    //         Debug.LogError($"NetworkBehaviour component not found on the GameObject for type {type}");
+                    //     }
+                    // });
                 }
             }
             else

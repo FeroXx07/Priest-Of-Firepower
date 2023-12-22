@@ -10,6 +10,14 @@ namespace _Scripts
         [SerializeField]private LayerMask layer;
         [SerializeField] private float interactionRange;
         private Collider2D _interactable;
+
+        public override void Awake()
+        {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
+
         protected override void InitNetworkVariablesList()
         {
      
