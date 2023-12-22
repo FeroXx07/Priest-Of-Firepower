@@ -129,12 +129,12 @@ namespace _Scripts.Enemies
             }
         }
 
-        public override void OnNetworkSpawn(NetworkObject spawner, BinaryReader reader, long timeStamp, int lenght)
+        public override void OnClientNetworkSpawn(NetworkObject spawner, BinaryReader reader, long timeStamp, int lenght)
         {
             Debug.Log("Enemy spawned in client");
         }
 
-        public override void OnNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
         {
             Debug.Log("Enemy dead in client");
             DisposeGameObject();

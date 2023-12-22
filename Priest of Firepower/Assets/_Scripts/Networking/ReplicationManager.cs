@@ -229,7 +229,7 @@ namespace _Scripts.Networking
             foreach (NetworkBehaviour networkBehaviour in listToInit)
             {
                 reader.BaseStream.Position = startPosData;
-                networkBehaviour.OnNetworkSpawn(spawnerGameObject, reader, timeStamp, spawnerOwnerHeader.memoryStreamSize);
+                networkBehaviour.OnClientNetworkSpawn(spawnerGameObject, reader, timeStamp, spawnerOwnerHeader.memoryStreamSize);
             }
 
             reader.BaseStream.Position = startPosData;
@@ -253,7 +253,7 @@ namespace _Scripts.Networking
             ReplicationHeader replicationHeader = new ReplicationHeader(nObjToDespawn.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
             Debug.LogWarning($"Network Manager: Sending destroy, header size {replicationHeader.GetSerializedHeader().Length}, data size {replicationHeader.memoryStreamSize}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
-            GameObject.Destroy(nObjToDespawn.gameObject);
+            //GameObject.Destroy(nObjToDespawn.gameObject);
         }
 
         public void Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
@@ -275,7 +275,7 @@ namespace _Scripts.Networking
             foreach (NetworkBehaviour networkBehaviour in listToInit)
             {
                 reader.BaseStream.Position = startPosData;
-                networkBehaviour.OnNetworkDespawn(objectDestroyee, reader, timeStamp, deSpawnerOwnerHeader.memoryStreamSize);
+                networkBehaviour.OnClientNetworkDespawn(objectDestroyee, reader, timeStamp, deSpawnerOwnerHeader.memoryStreamSize);
             }
 
             reader.BaseStream.Position = startPosData;

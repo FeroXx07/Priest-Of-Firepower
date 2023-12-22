@@ -52,7 +52,7 @@ namespace _Scripts.Attacks
 
         protected override void InitNetworkVariablesList()
         {
-            throw new NotImplementedException();
+           
         }
     }
 }

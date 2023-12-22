@@ -1,3 +1,4 @@
+using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
 using UnityEngine;
@@ -9,7 +10,6 @@ namespace _Scripts.Attacks
         [SerializeField] protected bool destroyOnContactWithLayer = true;
         [SerializeField] protected float destructionTime = 1.0f;
         private float _timer;
-
         public override void OnEnable()
         {
             base.OnEnable();
@@ -19,12 +19,20 @@ namespace _Scripts.Attacks
 
         public override void Update()
         {
-            base.OnDisable();
+            base.Update();
+
+            if (!NetworkManager.Instance.IsHost()) return;
             
             _timer -= Time.deltaTime;
-
+            
             if (_timer < 0.0f)
+            {
+                MemoryStream stream = new MemoryStream();
+                BinaryWriter writer = new BinaryWriter(stream);
+                ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+                NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
                 DisposeGameObject();
+            }
         }
         protected virtual void CollisionHandeler(GameObject collision)
         {
@@ -55,8 +63,20 @@ namespace _Scripts.Attacks
                 }
             }
 
-            if (IsSelected(collision.layer) && destroyOnContactWithLayer)
+            if (IsSelected(collision.layer) && destroyOnContactWithLayer && NetworkManager.Instance.IsHost())
+            {
+                MemoryStream stream = new MemoryStream();
+                BinaryWriter writer = new BinaryWriter(stream);
+                ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+                NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
                 DisposeGameObject();
+            }
+        }
+        
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        {
+            Debug.Log("OnTriggerAttack: Despawn by server");
+            DisposeGameObject();
         }
 
         #region Collisions

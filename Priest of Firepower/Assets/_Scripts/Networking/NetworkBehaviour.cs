@@ -159,8 +159,8 @@ using UnityEngine;
             }
         }
         #endregion
-        public virtual void OnNetworkSpawn(NetworkObject spawner, BinaryReader reader, Int64 timeStamp, int lenght) { }
-        public virtual void OnNetworkDespawn(NetworkObject destroyer, BinaryReader reader,  Int64 timeStamp, int lenght) { }
+        public virtual void OnClientNetworkSpawn(NetworkObject spawner, BinaryReader reader, Int64 timeStamp, int lenght) { }
+        public virtual void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader,  Int64 timeStamp, int lenght) { }
         public virtual void CallBackSpawnObjectOther(NetworkObject objectSpawned, BinaryReader reader,  Int64 timeStamp, int lenght){}
         public virtual void CallBackDeSpawnObjectOther(NetworkObject objectDestroyed, BinaryReader reader,  Int64 timeStamp, int lenght){}
         public virtual void Awake()
