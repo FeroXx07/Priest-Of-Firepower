@@ -46,15 +46,23 @@ public class InteractionManager : NetworkBehaviour
     }
 
     #endregion
+    
+    
     void Start()
     {
         
     }
 
-
-    void Update()
+    public override void Awake()
     {
-        
+        base.Awake();
+        InitNetworkVariablesList();
+        BITTracker = new ChangeTracker(NetworkVariableList.Count);
+    }
+
+    public override void Update()
+    {
+        base.Update();
     }
 
     public void ServerRecieveInteraction()

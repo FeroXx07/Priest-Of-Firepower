@@ -130,9 +130,10 @@ namespace _Scripts.Interactables
         {
             interactionPromptUI.gameObject.SetActive(show);
         }
-        private void Update()
+        public override void Update()
         {
-
+            base.Update();
+            
             if (isClient) return;
 
             //check wether the door can interacted with or not

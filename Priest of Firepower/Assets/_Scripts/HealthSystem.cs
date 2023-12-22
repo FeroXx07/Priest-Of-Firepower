@@ -10,7 +10,6 @@ namespace _Scripts
 {
     public class HealthSystem : NetworkBehaviour,IDamageable
     {
-
         [SerializeField] private int health;
         [SerializeField] private int maxHealth;
         [SerializeField] private LayerMask layer;
@@ -23,11 +22,19 @@ namespace _Scripts
 
         protected override void InitNetworkVariablesList()
         {
-            throw new NotImplementedException();
         }
 
-        private void OnEnable()
+        public override void Awake()
         {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+            
             health = maxHealth;
         }
 

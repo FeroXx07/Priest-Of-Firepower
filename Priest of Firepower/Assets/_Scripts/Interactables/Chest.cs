@@ -12,8 +12,6 @@ namespace _Scripts.Interactables
 {
     public class Chest : MonoBehaviour, IInteractable
     {
-
-        
         [SerializeField] string message;
         [SerializeField] float time;
         [SerializeField] int price;
