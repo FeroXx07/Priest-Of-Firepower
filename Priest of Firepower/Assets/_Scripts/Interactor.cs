@@ -10,28 +10,27 @@ namespace _Scripts
         [SerializeField]private LayerMask layer;
         [SerializeField] private float interactionRange;
         private Collider2D _interactable;
-
         protected override void InitNetworkVariablesList()
         {
-            throw new System.NotImplementedException();
+     
         }
 
-        private void Update()
+        public override void Update()
         {
+            base.Update();
             // Get the mouse position in world coordinates.
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = 0;
 
             Vector3 dir = (mousePos - transform.position).normalized;
 
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, dir ,interactionRange,layer);
-    
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, dir ,interactionRange,layer);    
 
             if(hit.collider != null)
             {
                 _interactable = hit.collider;
                 IInteractable obj =  _interactable.GetComponent<IInteractable>();
-                obj.Interact(this, Input.GetKey(key));
+                //obj.Interact(this, Input.GetKey(key));
             }
             // if not looking any more the las interacteable, diable UI and clear the reference to it
             else if (_interactable != null)

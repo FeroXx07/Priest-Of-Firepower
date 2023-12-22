@@ -6,6 +6,7 @@ using _Scripts.Weapon;
 using _Scripts.UI.Interactables;
 using UnityEngine;
 using UnityEngine.VFX;
+using Unity.VisualScripting;
 
 namespace _Scripts.Interactables
 {
@@ -29,6 +30,9 @@ namespace _Scripts.Interactables
         public bool IsBeingInteracted { get; }
         public float InteractionTime => time;
         public int InteractionCost => price;
+
+        private InteractableState currentState;
+        public InteractableState state { get => currentState; set => currentState = value; }
 
         bool _randomizingWeapon;
         bool _openChest;
@@ -183,5 +187,29 @@ namespace _Scripts.Interactables
             return weapons[Random.Range(0, weapons.Count)];
         }
 
+        public void Interact(State _state)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ClientInteract(Interactor interactor, bool keyPressed)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ClientHandleInteraction(MemoryStream stream)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ServerInteract(Interactor interactor, bool keyPressed)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void ServerHandleInteraction(MemoryStream stream)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
