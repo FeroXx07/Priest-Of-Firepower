@@ -128,29 +128,40 @@ namespace _Scripts.Enemies
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+
+            if (target == null)
+            {
+                writer.Write(false);
+            }
             
             if (target.TryGetComponent<Player.Player>(out Player.Player player))
             {
                 NetworkObject netObj = target.GetComponent<NetworkObject>();
+                writer.Write(true);
                 writer.Write(player.GetPlayerId());
                 writer.Write(player.GetName());
                 writer.Write(netObj.GetNetworkId());
                 writer.Write((int)enemyState);
             }
-            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             //if (showDebugInfo) Debug.Log($"{_playerId} Player Shooter: Sending data");
             return replicationHeader;
         }
 
         public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
-            UInt64 playerId = reader.ReadUInt64();
-            string playerName = reader.ReadString();
-            UInt64 networkId = reader.ReadUInt64();
-            enemyState = (EnemyState)reader.ReadInt32();
-            ClientSetTarget(networkId);
-            UpdateClient();
+            bool hasTarget = reader.ReadBoolean();
+
+            if (hasTarget)
+            {
+                UInt64 playerId = reader.ReadUInt64();
+                string playerName = reader.ReadString();
+                UInt64 networkId = reader.ReadUInt64();
+                enemyState = (EnemyState)reader.ReadInt32();
+                ClientSetTarget(networkId);
+                UpdateClient();
+            }
             return true;
         }
 
@@ -222,7 +233,7 @@ namespace _Scripts.Enemies
                 gameObject.SetActive(false);
             }
             else
-                Destroy(gameObject);
+                Destroy(gameObject, 0.1f);
         }
     }
 }

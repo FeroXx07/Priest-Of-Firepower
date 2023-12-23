@@ -27,6 +27,7 @@ namespace _Scripts.Attacks
             
             if (_timer < 0.0f)
             {
+                Debug.Log("OnTriggerAttack: Timer destroy");
                 MemoryStream stream = new MemoryStream();
                 BinaryWriter writer = new BinaryWriter(stream);
                 ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
@@ -43,16 +44,14 @@ namespace _Scripts.Attacks
 
                     if (Owner.TryGetComponent<NetworkObject>(out NetworkObject obj) &&
                         collision.TryGetComponent<NetworkObject>(out NetworkObject coll)&&
-                        TryGetComponent<Rigidbody2D>(out Rigidbody2D rb2d)&&
-                        TryGetComponent<NetworkObject>(out NetworkObject nObj))
+                        TryGetComponent<Rigidbody2D>(out Rigidbody2D rb2d))
                     {
                         if (obj == null) { Debug.Log(Owner.name + " has no network object"); return; }
                         if (coll == null) { Debug.Log(collision.name + " has no network object"); return; }
                         if (rb2d == null) { Debug.Log(name + " has no rb2d"); return; }
-                        if (nObj == null) { Debug.Log(name + " has no network object"); return; }
                         
                         HitManager.Instance.RegisterHit(obj.GetNetworkId(),
-                                                        nObj.GetNetworkId(), 
+                                                        NetworkObject.GetNetworkId(), 
                                                         coll.GetNetworkId(),
                                                         GetComponent<Collider2D>().isTrigger,
                                                         collision.GetComponent<Collider2D>().isTrigger,
@@ -66,6 +65,7 @@ namespace _Scripts.Attacks
 
             if (IsSelected(collision.layer) && destroyOnContactWithLayer && NetworkManager.Instance.IsHost())
             {
+                Debug.Log("OnTriggerAttack: Collision destroy");
                 MemoryStream stream = new MemoryStream();
                 BinaryWriter writer = new BinaryWriter(stream);
                 ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);

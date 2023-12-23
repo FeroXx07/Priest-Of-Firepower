@@ -13,6 +13,8 @@ using UnityEngine;
     {
         [SerializeField] protected bool isHost => NetworkManager.Instance.IsHost();
         [SerializeField] protected bool isClient => NetworkManager.Instance.IsClient();
+
+        [SerializeField] protected bool isDeSpawned = false;
         
         [SerializeField] protected bool showDebugInfo = true;
         #region TickInfo

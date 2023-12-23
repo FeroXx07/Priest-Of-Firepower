@@ -73,6 +73,7 @@ namespace _Scripts.Networking
         public GameObject gameObject;
         public UInt64 id { get; private set; }
         public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
+        public List<UInt64> unRegisteredNetIds = new List<UInt64>();
 
         public void InitManager(List<NetworkObject> listNetObj)
         {
@@ -100,10 +101,12 @@ namespace _Scripts.Networking
 
         public void UnRegisterObjectServer(NetworkObject obj)
         {
+            unRegisteredNetIds.Add(obj.GetNetworkId());
             networkObjectMap.Remove(obj.GetNetworkId());
         }
         public void UnRegisterObjectClient(UInt64 id_)
         {
+            unRegisteredNetIds.Add(id_);
             networkObjectMap.Remove(id_);
         }
 
@@ -122,6 +125,11 @@ namespace _Scripts.Networking
                     if (networkObjectMap.ContainsKey(id))
                     {
                         networkObjectMap[id].HandleNetworkBehaviour(reader, id, timeStamp, sequenceNumState, type);
+                    }
+                    else if (unRegisteredNetIds.Contains(id))
+                    {
+                        Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {id}");
+                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
                     }
                     else
                     {
@@ -144,6 +152,11 @@ namespace _Scripts.Networking
                     {
                         if (networkObjectMap[id].synchronizeTransform)
                             networkObjectMap[id].ReadReplicationTransform(reader, id, timeStamp, sequenceNumState);
+                    }
+                    else if (unRegisteredNetIds.Contains(id))
+                    {
+                        Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {id}");
+                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
                     }
                     else
                     {
@@ -204,7 +217,7 @@ namespace _Scripts.Networking
             var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(prefab => prefab.name == prefabName);
             NetworkObject newGo = GameObject.Instantiate(prefab).GetComponent<NetworkObject>();
             RegisterObjectClient(serverAssignedNetObjId, newGo);
-            Debug.LogWarning($"Replication Manager: Creating object {prefabName} ID {id}, size: {spawnerOwnerHeader.memoryStreamSize}");
+            Debug.LogWarning($"Replication Manager: Creating object {prefabName} ID {serverAssignedNetObjId}, size: {spawnerOwnerHeader.memoryStreamSize}");
 
             // An temporary exception
             if (prefabName.Equals("PlayerPrefab"))
@@ -244,7 +257,9 @@ namespace _Scripts.Networking
 
         public void Server_DeSpawnNetworkObject(NetworkObject nObjToDespawn, ReplicationHeader objDestroyer, MemoryStream objDestroyerData)
         {
-            UnRegisterObjectServer(nObjToDespawn);
+            // Check if it has already been despawned
+            if (unRegisteredNetIds.Contains(nObjToDespawn.GetNetworkId()))
+                return;
             
             // Send replication packet to clients to remove this object
             MemoryStream outputMemoryStream = new MemoryStream();
@@ -259,6 +274,8 @@ namespace _Scripts.Networking
             ReplicationHeader replicationHeader = new ReplicationHeader(nObjToDespawn.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
             Debug.LogWarning($"Network Manager: Sending destroy, header size {replicationHeader.GetSerializedHeader().Length}, data size {replicationHeader.memoryStreamSize}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
+            
+            UnRegisterObjectServer(nObjToDespawn);
             //GameObject.Destroy(nObjToDespawn.gameObject);
         }
 

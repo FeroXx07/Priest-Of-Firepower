@@ -136,23 +136,25 @@ namespace _Scripts
         }
         void ProcessHit(Hit hit)
         {
-             GameObject hitterObj = NetworkManager.Instance.replicationManager.networkObjectMap[hit.hitter].gameObject;
-             GameObject hittedObj = NetworkManager.Instance.replicationManager.networkObjectMap[hit.hitted].gameObject;
-             GameObject owner = NetworkManager.Instance.replicationManager.networkObjectMap[hit.owner].gameObject;
-
-             if (hitterObj == null || hittedObj == null || owner == null)
-             {
-                 Debug.LogError("Cannot process hit because one field is null");
-                 return;
-             }
+            if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(hit.hitter,
+                    out NetworkObject hitterObj) && NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(hit.hitted,
+                    out NetworkObject hittedObj) && NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(hit.owner,
+                    out NetworkObject owner))
+            {
+                if (hitterObj == null || hittedObj == null || owner == null)
+                {
+                    Debug.LogError("Cannot process hit because one field is null");
+                    return;
+                }
              
-             if (hitterObj.TryGetComponent<IDamageDealer>(out IDamageDealer damageDealer))
-             {
-                 if (hittedObj.TryGetComponent<IDamageable>(out IDamageable damageable))
-                 {
-                     damageable.TakeDamage(damageDealer, hit.hitDirection, owner);
-                 }
-             }
+                if (hitterObj.TryGetComponent<IDamageDealer>(out IDamageDealer damageDealer))
+                {
+                    if (hittedObj.TryGetComponent<IDamageable>(out IDamageable damageable))
+                    {
+                        damageable.TakeDamage(damageDealer, hit.hitDirection, owner.gameObject);
+                    }
+                }
+            }
         }
         public override void SendInputToClients()
         {
