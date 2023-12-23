@@ -9,7 +9,7 @@ namespace _Scripts
 {
     class Hit
     {
-        public Hit(UInt64 owner, UInt64 hitter, UInt64 hitted, bool hitterIsTrigger, Vector2 position,
+        public Hit(UInt64 owner, UInt64 hitter, UInt64 hitted, bool hitterIsTrigger, bool hittedIsTrigger, Vector2 position,
             Vector2 direction)
         {
             this.owner = owner; 
@@ -45,7 +45,7 @@ namespace _Scripts
 
         public static Hit DeSerializeHit(BinaryReader reader)
         {
-            return new Hit(reader.ReadUInt64(),reader.ReadUInt64(),reader.ReadUInt64(),reader.ReadBoolean(),new Vector2(reader.ReadSingle(),reader.ReadSingle()),new Vector2(reader.ReadSingle(),reader.ReadSingle()));
+            return new Hit(reader.ReadUInt64(),reader.ReadUInt64(),reader.ReadUInt64(),reader.ReadBoolean(),reader.ReadBoolean(),new Vector2(reader.ReadSingle(),reader.ReadSingle()),new Vector2(reader.ReadSingle(),reader.ReadSingle()));
         }
     }
     public class HitManager : NetworkBehaviour
@@ -119,14 +119,14 @@ namespace _Scripts
             }
         }
 
-        public void RegisterHit(UInt64 owner, UInt64 hitter, UInt64 hitted, bool hitterIsTrigger, Vector2 position, Vector2 direction)
+        public void RegisterHit(UInt64 owner, UInt64 hitter, UInt64 hitted, bool hitterIsTrigger, bool hittedIsTrigger, Vector2 position, Vector2 direction)
         {
             if (!isHost) Debug.LogError("Clients cannot register hit, only server authority can");
             //
             Debug.Log("Registered Hit: " + owner + " hitter id: "+ hitter + " hitted id: " + hitted);
 
             // Cache new Hit
-            _lastHit = new Hit(owner, hitter, hitted, hitterIsTrigger, position, direction);
+            _lastHit = new Hit(owner, hitter, hitted, hitterIsTrigger, hittedIsTrigger, position, direction);
             
             // Send hit to client's Hit Managers
             SendInputToClients();

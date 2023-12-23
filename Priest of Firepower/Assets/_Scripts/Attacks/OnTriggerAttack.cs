@@ -55,6 +55,7 @@ namespace _Scripts.Attacks
                                                         nObj.GetNetworkId(), 
                                                         coll.GetNetworkId(),
                                                         GetComponent<Collider2D>().isTrigger,
+                                                        collision.GetComponent<Collider2D>().isTrigger,
                                                         (Vector2)transform.position, 
                                                         GetComponent<Rigidbody2D>().velocity.normalized);
 
