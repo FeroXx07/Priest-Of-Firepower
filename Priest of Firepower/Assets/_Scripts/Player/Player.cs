@@ -367,7 +367,7 @@ namespace _Scripts.Player
 
             SendInput(stream, false);
         }
-        public override void ReceiveInputFromClient(InputPacketHeader header, BinaryReader reader)
+        public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
         {
             if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM client: {input}");
 
@@ -410,7 +410,7 @@ namespace _Scripts.Player
             SendInput(stream, false);
         }
 
-        public override void ReceiveInputFromServer(InputPacketHeader header, BinaryReader reader)
+        public override void ReceiveInputFromServer(InputHeader header, BinaryReader reader)
         {
             if (isOwner())
             {

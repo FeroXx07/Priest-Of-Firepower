@@ -21,22 +21,6 @@ namespace _Scripts.Networking
         NETWORK_SEND,
         NONE
     }
-    public struct InputPacketHeader
-    {
-        public Int64 timeStamp;
-        public UInt64 clientId;
-        public UInt64 sequenceNumberState;
-        public UInt64 packetSender;
-
-        public InputPacketHeader(UInt64 clientRequestId, Int64 timeStamp, UInt64 sequenceNumberState,UInt64 packetSender)
-        {
-            this.clientId = clientRequestId;
-            this.timeStamp = timeStamp;
-            this.sequenceNumberState = sequenceNumberState;
-            this.packetSender = packetSender;
-        }
-    }
-
     
     public class NetworkObject : MonoBehaviour
     {
@@ -253,26 +237,24 @@ namespace _Scripts.Networking
             }
         }
         
-        public void HandleNetworkInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberInput, Type type)
+        public void HandleNetworkInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberInput, InputHeader header)
         {
             long currentPosition = reader.BaseStream.Position;
-            NetworkBehaviour behaviour = GetComponent(type) as NetworkBehaviour;
-
-            InputPacketHeader header = new InputPacketHeader(reader.ReadUInt64(),timeStamp,sequenceNumberInput,packetSender);
+            NetworkBehaviour behaviour = GetComponent(Type.GetType(header.objectFullName)) as NetworkBehaviour;
 
             if (behaviour != null)
             {
                 if (NetworkManager.Instance.IsClient())
                 {
-                    behaviour.ReceiveInputFromServer(header,reader);
+                    behaviour.ReceiveInputFromServer(header, reader);
                 }
                 else if (NetworkManager.Instance.IsHost())
                 {
-                    behaviour.ReceiveInputFromClient(header,reader);
+                    behaviour.ReceiveInputFromClient(header, reader);
                 }
             }
             else
-                Debug.LogError($"NetworkBehaviour cast failed {type}");
+                Debug.LogError($"NetworkBehaviour cast failed {Type.GetType(header.objectFullName)}");
         }
 
         private void Update()

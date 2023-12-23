@@ -219,7 +219,7 @@ namespace _Scripts.Networking
 
         #region  read
 
-        public override void ReceiveInputFromClient(InputPacketHeader header, BinaryReader reader)
+        public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
         {
             switch ((LobbyAction)reader.ReadInt32())
             {
@@ -234,7 +234,7 @@ namespace _Scripts.Networking
             }
         }
 
-        public override void ReceiveInputFromServer(InputPacketHeader header, BinaryReader reader)
+        public override void ReceiveInputFromServer(InputHeader header, BinaryReader reader)
         {
             switch ((LobbyAction)reader.ReadInt32())
             {

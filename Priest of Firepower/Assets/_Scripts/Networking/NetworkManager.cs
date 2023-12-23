@@ -67,10 +67,15 @@ namespace _Scripts.Networking
         public UInt64 currSeqNumStateRead { get; private set; } = 0;
 
         // store all input streams to send
-        private ConcurrentQueue<MemoryStream> _inputStreamBuffer = new ConcurrentQueue<MemoryStream>();
+        private ConcurrentQueue<InputItem> _inputStreamBuffer = new ConcurrentQueue<InputItem>();
+        private List<InputItem> _inputItemsToSend = new List<InputItem>();
+
         [SerializeField] private UInt64 sendSeqNumInput= 0;
         [SerializeField] private UInt64 recSeqNumInput = 0;
-        private ConcurrentQueue<MemoryStream> _inputRealiableStreamBuffer = new ConcurrentQueue<MemoryStream>();
+        
+        private ConcurrentQueue<InputItem> _inputRealiableStreamBuffer = new ConcurrentQueue<InputItem>();
+        private List<InputItem> _inputReliableItemsToSend = new List<InputItem>();
+
         // store all critical data streams to send (TCP)
         private ConcurrentQueue<MemoryStream> _reliableStreamBuffer = new ConcurrentQueue<MemoryStream>();
 
@@ -398,18 +403,18 @@ namespace _Scripts.Networking
             }
         }
 
-        public void AddInputStreamQueue(MemoryStream stream)
+        public void AddInputStreamQueue(InputHeader inputHeader, MemoryStream stream)
         {
             lock (_inputQueueLock)
             {
-                 _inputStreamBuffer.Enqueue(stream);             
+                 _inputStreamBuffer.Enqueue(new InputItem(inputHeader, stream));             
             }
         }
-        public void AddReliableInputStreamQueue(MemoryStream stream)
+        public void AddReliableInputStreamQueue(InputHeader inputHeader, MemoryStream stream)
         {
             lock (_reliableInputQueueLock)
             {
-                _inputRealiableStreamBuffer.Enqueue(stream);
+                _inputRealiableStreamBuffer.Enqueue(new InputItem(inputHeader, stream));
             }
         }
 
@@ -446,10 +451,68 @@ namespace _Scripts.Networking
                 float inputTimeout = _inputBufferTimeout;
                 _heartBeatStopwatch.Start();
                 _stateStopwatch.Start();
+                _inputStopwatch.Start();
                 
                 while (!token.IsCancellationRequested)
                 {
                     UInt64 senderid = IsClient() ? _client.GetId() : 0;
+                    
+                    lock (_inputQueueLock)
+                    {
+                        if (_inputStreamBuffer.Count > 0)
+                        {
+                            int totalSize = 0;
+                            bool mtuFull = false;
+                            //Debug.Log( $"Network Manager: Starting STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                            while (_inputStreamBuffer.Count > 0 && mtuFull == false /*&& _stateStopwatch.ElapsedMilliseconds < _stateBufferTimeout)*/)
+                            {
+                                if (_inputStreamBuffer.TryPeek(out InputItem nextItem))
+                                {
+                                    // Able to peek
+                                    MemoryStream currentItemHeaderStream = nextItem.header.GetSerializedHeader();
+
+                                    if (totalSize + (int)nextItem.memoryStream.Length +
+                                        (int)currentItemHeaderStream.Length <= _mtu)
+                                    {
+                                        // Able to insert next header into mtu
+                                        if (_inputStreamBuffer.TryDequeue(out InputItem inputItem))
+                                        {
+                                            totalSize += (int)inputItem.memoryStream.Length + (int)currentItemHeaderStream.Length;
+                                            _inputItemsToSend.Add(inputItem);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Unable to insert next header into mtu because it's full
+                                        mtuFull = true;
+                                    }
+                                }
+                                
+                                if (totalSize > 0 || mtuFull)
+                                {
+                                    byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.INPUT,
+                                        _inputItemsToSend);
+                                    if (_isClient)
+                                    {
+                                        if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {_inputStopwatch.ElapsedMilliseconds} - {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                                        _client.SendUdpPacket(buffer);
+                                        sendSeqNumInput++;
+                                        if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                                    }
+                                    else if (_isHost)
+                                    {
+                                         if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {_inputStopwatch.ElapsedMilliseconds} - {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                                        _server.SendUdpToAll(buffer);
+                                        sendSeqNumInput++;
+                                        if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                                    }
+                                    _inputItemsToSend.Clear();
+                                    _inputStopwatch.Restart();
+                                    totalSize = 0;
+                                }
+                            }
+                        }
+                    }
                     
                     //State buffer
                     lock (_stateQueueLock)
@@ -518,77 +581,96 @@ namespace _Scripts.Networking
                             }
                         }
                     }
-
-                    lock (_inputQueueLock)
-                    {
-                       //Input buffer
-                       if (_inputStreamBuffer.Count > 0)
-                       {
-                           //Debug.Log("Network Manager: Preparing input stream buffer");
-                           int totalSize = 0;
-                           List<MemoryStream> streamsToSend = new List<MemoryStream>();
-
-                           //check if the totalsize + the next stream total size is less than the specified size
-                           while (_inputStreamBuffer.Count > 0)
-                           {
-                               if (_inputStreamBuffer.TryPeek(out MemoryStream memoryStream) == false) break;
-                               if (totalSize + (int)memoryStream.Length >= _mtu) break;
-                               
-                               if (_inputStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
-                               totalSize += (int)nextStream.Length;
-                               streamsToSend.Add(nextStream);
-
-                               // Adjust timeout based on elapsed time
-                               inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
-                               _inputStopwatch.Restart();
-                               //Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
-                               if (totalSize > 0 && (totalSize <= _mtu || inputTimeout < _inputStopwatch.ElapsedMilliseconds))
-                               {
-                                   inputTimeout = _inputBufferTimeout;
-                                   byte[] buffer =
-                                       InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
-                                   if (_isClient)
-                                   {
-                                       if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
-                                       _client.SendUdpPacket(buffer);
-                                       sendSeqNumInput++;
-                                       if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
-                                   }
-                                   else if (_isHost)
-                                   {
-                                       if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
-                                       _server.SendUdpToAll(buffer);
-                                       sendSeqNumInput++;
-                                       if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
-                                   }
-                               }
-                           }
-                       }
-                    }
-
+                    
+                    // lock (_inputQueueLock)
+                    // {
+                    //    //Input buffer
+                    //    if (_inputStreamBuffer.Count > 0)
+                    //    {
+                    //        //Debug.Log("Network Manager: Preparing input stream buffer");
+                    //        int totalSize = 0;
+                    //        List<MemoryStream> streamsToSend = new List<MemoryStream>();
+                    //
+                    //        //check if the totalsize + the next stream total size is less than the specified size
+                    //        while (_inputStreamBuffer.Count > 0)
+                    //        {
+                    //            if (_inputStreamBuffer.TryPeek(out MemoryStream memoryStream) == false) break;
+                    //            if (totalSize + (int)memoryStream.Length >= _mtu) break;
+                    //            
+                    //            if (_inputStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
+                    //            totalSize += (int)nextStream.Length;
+                    //            streamsToSend.Add(nextStream);
+                    //
+                    //            // Adjust timeout based on elapsed time
+                    //            inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
+                    //            _inputStopwatch.Restart();
+                    //            //Debug.Log($"Network Manager: Timeout input stream buffer {inputTimeout}");
+                    //            if (totalSize > 0 && (totalSize <= _mtu || inputTimeout < _inputStopwatch.ElapsedMilliseconds))
+                    //            {
+                    //                inputTimeout = _inputBufferTimeout;
+                    //                byte[] buffer =
+                    //                    InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                    //                if (_isClient)
+                    //                {
+                    //                    if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                    //                    _client.SendUdpPacket(buffer);
+                    //                    sendSeqNumInput++;
+                    //                    if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                    //                }
+                    //                else if (_isHost)
+                    //                {
+                    //                    if(debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                    //                    _server.SendUdpToAll(buffer);
+                    //                    sendSeqNumInput++;
+                    //                    if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                    //                }
+                    //            }
+                    //        }
+                    //    }
+                    // }
+                    
                     lock (_reliableInputQueueLock)
                     {
-                        //Reliable Input buffer
                         if (_inputRealiableStreamBuffer.Count > 0)
                         {
-                            //Debug.Log("Network Manager: Preparing input stream buffer");
                             int totalSize = 0;
-                            List<MemoryStream> streamsToSend = new List<MemoryStream>();
-
-                            //check if the totalsize + the next stream total size is less than the specified size
-                            while (_inputRealiableStreamBuffer.Count > 0)
+                            bool mtuFull = false;
+                            bool isTimeout = false;
+                            //Debug.Log( $"Network Manager: Starting STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                            while (_inputRealiableStreamBuffer.Count > 0 && mtuFull == false /*&& _stateStopwatch.ElapsedMilliseconds < _stateBufferTimeout)*/)
                             {
-                                if (_inputRealiableStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
-                                totalSize += (int)nextStream.Length;
-                                streamsToSend.Add(nextStream);
+                                if (_inputRealiableStreamBuffer.TryPeek(out InputItem nextItem))
+                                {
+                                    // Able to peek
+                                    MemoryStream currentItemHeaderStream = nextItem.header.GetSerializedHeader();
 
-                                // Adjust timeout based on elapsed time
-                                inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
-                                _inputStopwatch.Restart();
-                                if(inputTimeout < _inputStopwatch.ElapsedMilliseconds)
-                                {                                
-                                    byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                                    if (totalSize + (int)nextItem.memoryStream.Length +
+                                        (int)currentItemHeaderStream.Length <= _mtu)
+                                    {
+                                        // Able to insert next header into mtu
+                                        if (_inputRealiableStreamBuffer.TryDequeue(out InputItem inputItem))
+                                        {
+                                            totalSize += (int)inputItem.memoryStream.Length + (int)currentItemHeaderStream.Length;
+                                            _inputReliableItemsToSend.Add(inputItem);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Unable to insert next header into mtu because it's full
+                                        mtuFull = true;
+                                    }
+                                }
 
+                                if (_inputStopwatch.ElapsedMilliseconds >= inputTimeout)
+                                {
+                                    isTimeout = true;
+                                }
+                                
+                                if (totalSize > 0 && mtuFull || isTimeout)
+                                {
+                                    _inputStopwatch.Restart();
+                                    byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.INPUT,
+                                        _inputReliableItemsToSend);
                                     if (_isClient)
                                     {
                                         if (debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
@@ -603,11 +685,55 @@ namespace _Scripts.Networking
                                         sendSeqNumInput++;
                                         if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
                                     }
+                                    _inputReliableItemsToSend.Clear();
+                                    totalSize = 0;
                                 }
-                                
                             }
                         }
                     }
+                    
+                    // lock (_reliableInputQueueLock)
+                    // {
+                    //     //Reliable Input buffer
+                    //     if (_inputRealiableStreamBuffer.Count > 0)
+                    //     {
+                    //         //Debug.Log("Network Manager: Preparing input stream buffer");
+                    //         int totalSize = 0;
+                    //         List<MemoryStream> streamsToSend = new List<MemoryStream>();
+                    //
+                    //         //check if the totalsize + the next stream total size is less than the specified size
+                    //         while (_inputRealiableStreamBuffer.Count > 0)
+                    //         {
+                    //             if (_inputRealiableStreamBuffer.TryDequeue(out MemoryStream nextStream) == false) break;
+                    //             totalSize += (int)nextStream.Length;
+                    //             streamsToSend.Add(nextStream);
+                    //
+                    //             // Adjust timeout based on elapsed time
+                    //             inputTimeout -= _inputStopwatch.ElapsedMilliseconds;
+                    //             _inputStopwatch.Restart();
+                    //             if(inputTimeout < _inputStopwatch.ElapsedMilliseconds)
+                    //             {                                
+                    //                 byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.INPUT, streamsToSend);
+                    //
+                    //                 if (_isClient)
+                    //                 {
+                    //                     if (debugShowInputPackets) Debug.Log($"Network Manager: Sending input as client, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                    //                     _client.SendTcp(buffer);
+                    //                     sendSeqNumInput++;
+                    //                     if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                    //                 }
+                    //                 else if (_isHost)
+                    //                 {
+                    //                     if (debugShowInputPackets) Debug.Log($"Network Manager: Sending input as server, SIZE {buffer.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {sendSeqNumInput}");
+                    //                     _server.SendTcpToAll(buffer);
+                    //                     sendSeqNumInput++;
+                    //                     if (sendSeqNumInput == ulong.MaxValue - 1) sendSeqNumInput = 0;
+                    //                 }
+                    //             }
+                    //             
+                    //         }
+                    //     }
+                    // }
 
                     lock (_reliableQueueLock)
                     {
@@ -676,9 +802,9 @@ namespace _Scripts.Networking
                 lock (_inputQueueLock)
                 {
                     Debug.Log($"Network Manager: Disposing input stream buffer");
-                    foreach (MemoryStream incomingStream in _inputStreamBuffer)
+                    foreach (InputItem incomingStream in _inputStreamBuffer)
                     {
-                        incomingStream.Dispose();
+                        incomingStream.memoryStream.Dispose();
                     }
 
                     _inputStreamBuffer.Clear(); // Clear the queue
@@ -787,7 +913,9 @@ namespace _Scripts.Networking
                     recSeqNumInput = reader.ReadUInt64();
                     UInt64 packetSenderId = reader.ReadUInt64();
                     long packetTimeStamp = reader.ReadInt64();
-                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(reader, packetSenderId, packetTimeStamp, recSeqNumInput));
+                    int inputItemsCount = reader.ReadInt32();
+
+                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(stream, stream.Position, packetSenderId, packetTimeStamp, recSeqNumInput, inputItemsCount));
                 }
                     break;
                 case PacketType.OBJECT_STATE:
@@ -848,30 +976,39 @@ namespace _Scripts.Networking
                         reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                         continue;
                     }
-                    replicationManager.HandleReplication(reader, header.id, timeStamp, seqNum, header.replicationAction, Type.GetType(header.objectFullName), header.memoryStreamSize);
+
+                    try
+                    {
+                        replicationManager.HandleReplication(reader, header.id, timeStamp, seqNum, header.replicationAction, Type.GetType(header.objectFullName), header.memoryStreamSize);
+                    }
+                    catch (EndOfStreamException ex)
+                    {
+                        Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+                    }
 
                 }
 
                 isBehindThreshold = false;
         }   
 
-        void HandleInput(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput)
+        void HandleInput(MemoryStream stream, Int64 streamPosition, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumInput, int replicationItemsCount)
         {
-            try
-            {
-                int i = 0;
-                while (reader.BaseStream.Position < reader.BaseStream.Length)
+            BinaryReader reader = new BinaryReader(stream);
+            List<InputHeader> inputHeaders =
+                    InputHeader.DeSerializeHeadersList(reader, replicationItemsCount);
+            if (inputHeaders.Count == 0)
+                Debug.LogError("Error in input packet");
+                foreach (InputHeader header in inputHeaders)
                 {
-                    string objClass = reader.ReadString();
-                    UInt64 netObjId = reader.ReadUInt64();
-                    replicationManager.networkObjectMap[netObjId].HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, Type.GetType(objClass));
-                    i++;
+                    try
+                    {
+                    replicationManager.networkObjectMap[header.id].HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, header);
+                    }
+                    catch (EndOfStreamException ex)
+                    {
+                        Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+                    }
                 }
-            }
-            catch (EndOfStreamException ex)
-            {
-                Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
-            }
         }
 
         #endregion
@@ -912,6 +1049,51 @@ namespace _Scripts.Networking
             
             // Packet fields data contents
             foreach (ReplicationItem item in streamsList)
+            {
+                item.memoryStream.Position = 0;
+                item.memoryStream.CopyTo(output);
+            }
+            
+            return output.ToArray();
+        }
+        
+        private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, List<InputItem> streamsList)
+        {
+            MemoryStream output = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(output);
+            
+            // Packet type
+            writer.Write((int)type);
+            
+            // Packet sequence number
+            if (type == PacketType.OBJECT_STATE)
+            {
+                writer.Write(sendSeqNumState);
+            }
+            else if (type == PacketType.INPUT)
+            {
+                writer.Write(sendSeqNumInput);
+            }
+            
+            // Packet sender id
+            writer.Write(senderId);
+            
+            // Packet timestamp
+            writer.Write(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            
+            // Count of total replication items in this packet
+            writer.Write(streamsList.Count);
+            
+            // Packet header contents
+            foreach (InputItem item in streamsList)
+            {
+                MemoryStream headerStream = item.header.GetSerializedHeader();
+                headerStream.Position = 0;
+                headerStream.CopyTo(output);
+            }
+            
+            // Packet fields data contents
+            foreach (InputItem item in streamsList)
             {
                 item.memoryStream.Position = 0;
                 item.memoryStream.CopyTo(output);

@@ -111,7 +111,7 @@ namespace _Scripts.Interactables
             return true;
         }
 
-        public override void ReceiveInputFromClient(InputPacketHeader header, BinaryReader reader)
+        public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
         {
            
         }

@@ -16,6 +16,7 @@ namespace _Scripts.Networking
         EVENT,
         IMPORTANT_EVENT
     }
+
     public class ReplicationHeader
     {
         public ReplicationHeader(UInt64 id, string objectFullName, ReplicationAction replicationAction, int memoryStreamSize)

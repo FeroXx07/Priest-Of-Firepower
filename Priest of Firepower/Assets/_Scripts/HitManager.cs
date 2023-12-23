@@ -167,7 +167,7 @@ namespace _Scripts
             SendInput(stream, false);
         }
 
-        public override void ReceiveInputFromServer(InputPacketHeader header, BinaryReader reader)
+        public override void ReceiveInputFromServer(InputHeader header, BinaryReader reader)
         {
             Hit hit = Hit.DeSerializeHit(reader);
             ProcessHit(hit);

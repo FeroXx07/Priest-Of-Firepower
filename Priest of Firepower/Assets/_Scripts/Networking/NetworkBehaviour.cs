@@ -242,31 +242,25 @@ using UnityEngine;
             }
             _tickCounter += Time.deltaTime;
         }
-        protected void SendInput(MemoryStream dataStream, bool Reliable)
+        protected void SendInput(MemoryStream dataStream, bool reliable)
         {
-            MemoryStream stream = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(stream);
-
-            Type objectType = this.GetType();
-            writer.Write(objectType.FullName);
-            writer.Write(NetworkObject.GetNetworkId());
-            writer.Write(NetworkManager.Instance.getId);
-
-            writer.Write(dataStream.ToArray());
-
-            if(Reliable)
+            InputHeader inputHeader = new InputHeader(NetworkObject.GetNetworkId(), this.GetType().FullName,
+                dataStream.ToArray().Length,
+                NetworkManager.Instance.getId, DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            
+            if(reliable)
             {
-                NetworkManager.Instance.AddReliableInputStreamQueue(stream);
+                NetworkManager.Instance.AddReliableInputStreamQueue(inputHeader, dataStream);
             }
             else
             {
-                NetworkManager.Instance.AddInputStreamQueue(stream);
+                NetworkManager.Instance.AddInputStreamQueue(inputHeader, dataStream);
             }
         }
         public virtual void SendInputToServer(){}
-        public virtual void ReceiveInputFromClient(InputPacketHeader header,BinaryReader reader){}
+        public virtual void ReceiveInputFromClient(InputHeader header, BinaryReader reader){}
         public virtual void SendInputToClients(){}
-        public virtual void ReceiveInputFromServer(InputPacketHeader header,BinaryReader reader){}
+        public virtual void ReceiveInputFromServer(InputHeader header, BinaryReader reader){}
         public virtual void SendStringMessage(string message, bool isImportant = true)
         {
             if (NetworkManager.Instance.IsHost())
