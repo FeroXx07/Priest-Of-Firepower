@@ -106,7 +106,7 @@ namespace _Scripts.Networking
             networkObjectMap.Remove(id_);
         }
 
-        public void HandleReplication(BinaryReader reader, ulong id, long timeStamp, ulong sequenceNumState, ReplicationAction action, Type type)
+        public void HandleReplication(BinaryReader reader, ulong id, long timeStamp, ulong sequenceNumState, ReplicationAction action, Type type, int memoryStreamSize)
         {
             //Debug.Log( $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (action)
@@ -125,12 +125,16 @@ namespace _Scripts.Networking
                     else
                     {
                         Debug.LogError($"Replication Manager: Network object map does NOT contain ID {id}");
+                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
                     }
                 }
                     break;
                 case ReplicationAction.DESTROY:
                 {
-                    Client_DeSpawnNetworkObject(id,reader,timeStamp);
+                    bool successfulDespawn = Client_DeSpawnNetworkObject(id,reader,timeStamp);
+                    
+                    if (!successfulDespawn)
+                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
                 }
                     break;
                 case ReplicationAction.TRANSFORM:
@@ -143,6 +147,7 @@ namespace _Scripts.Networking
                     else
                     {
                         Debug.LogError($"Replication Manager: Network object map does NOT contain ID {id}");
+                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
                     }
                 }
                     break;
@@ -256,32 +261,40 @@ namespace _Scripts.Networking
             //GameObject.Destroy(nObjToDespawn.gameObject);
         }
 
-        public void Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
+        public bool Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
         {
             ReplicationHeader deSpawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
             
             Type type = Type.GetType(deSpawnerOwnerHeader.objectFullName);
-            NetworkObject objectToDestroy = networkObjectMap[networkObjectId]; // The object that is despawned
-            NetworkObject objectDestroyee = networkObjectMap[deSpawnerOwnerHeader.id]; // The object that has caused the despawnation of another object
-            NetworkBehaviour deSpawnerBehaviour = objectDestroyee.GetComponent(type) as NetworkBehaviour;
-            
-            long startPosData = reader.BaseStream.Position;
-            if (deSpawnerBehaviour != null)
-            {
-                deSpawnerBehaviour.CallBackDeSpawnObjectOther(objectToDestroy, reader, timeStamp, deSpawnerOwnerHeader.memoryStreamSize);
-            }
-            
-            NetworkBehaviour[] listToInit = objectToDestroy.GetComponents<NetworkBehaviour>();
-            foreach (NetworkBehaviour networkBehaviour in listToInit)
-            {
-                reader.BaseStream.Position = startPosData;
-                networkBehaviour.OnClientNetworkDespawn(objectDestroyee, reader, timeStamp, deSpawnerOwnerHeader.memoryStreamSize);
-            }
 
-            reader.BaseStream.Position = startPosData;
-            reader.BaseStream.Seek(deSpawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
+            if (networkObjectMap.TryGetValue(networkObjectId, out NetworkObject objectToDestroy) && networkObjectMap.TryGetValue(deSpawnerOwnerHeader.id, out NetworkObject objectDestroyee))
+            {
+                NetworkBehaviour deSpawnerBehaviour = objectDestroyee.GetComponent(type) as NetworkBehaviour;
             
-            UnRegisterObjectClient(networkObjectId);
+                long startPosData = reader.BaseStream.Position;
+                if (deSpawnerBehaviour != null)
+                {
+                    deSpawnerBehaviour.CallBackDeSpawnObjectOther(objectToDestroy, reader, timeStamp, deSpawnerOwnerHeader.memoryStreamSize);
+                }
+            
+                NetworkBehaviour[] listToInit = objectToDestroy.GetComponents<NetworkBehaviour>();
+                foreach (NetworkBehaviour networkBehaviour in listToInit)
+                {
+                    reader.BaseStream.Position = startPosData;
+                    networkBehaviour.OnClientNetworkDespawn(objectDestroyee, reader, timeStamp, deSpawnerOwnerHeader.memoryStreamSize);
+                }
+
+                reader.BaseStream.Position = startPosData;
+                reader.BaseStream.Seek(deSpawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
+            
+                UnRegisterObjectClient(networkObjectId);
+            }
+            else
+            {
+                return false;
+            }
+            
+            return true;
         }
     }
 }
