@@ -2,9 +2,11 @@ using System;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
+using _Scripts.Object_Pool;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace _Scripts.Enemies
 {
@@ -23,43 +25,44 @@ namespace _Scripts.Enemies
         [SerializeField] private int pointsOnDeath = 100;
         [SerializeField] private float speed = 2;
         
-        [SerializeField] protected Transform Target;
-        protected NavMeshAgent Agent;
-        protected HealthSystem HealthSystem;
-        protected Collider2D Collider;
+        [SerializeField] protected Transform target;
+        protected NavMeshAgent agent;
+        protected HealthSystem healthSystem;
+        protected new Collider2D collider2D;
 
         [SerializeField] protected GameObject attackPrefab;
 
-        protected float TimeRemaining = 1.2f;
+        protected float timeRemaining = 1.2f;
 
-        protected float CooldownDuration = 1.5f;
-        protected float AttackOffset = 1.0f;
-        protected float CooldownTimer = 1f;
+        protected float cooldownDuration = 1.5f;
+        protected float attackOffset = 1.0f;
+        protected float cooldownTimer = 1f;
 
-        protected GameObject[] PlayerList;
-        protected GameObject InternalAttackObject;
+        protected GameObject[] playerList;
+        protected GameObject internalAttackObject;
 
-        protected EnemyState EnemyState;
+        protected EnemyState enemyState;
 
         public UnityEvent<Enemy> onDeath = new UnityEvent<Enemy>();
         public int PointsOnHit { get => pointsOnHit; }
         public int PointsOnDeath { get => pointsOnDeath; }
 
+        public int logicFrameIntervalUpdate = 10;
         public override void Awake()
         {
             base.Awake();
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
             
-            HealthSystem = GetComponent<HealthSystem>();
-            Agent = GetComponent<NavMeshAgent>();
-            Collider = gameObject.GetComponent<Collider2D>();
+            healthSystem = GetComponent<HealthSystem>();
+            agent = GetComponent<NavMeshAgent>();
+            collider2D = gameObject.GetComponent<Collider2D>();
             
-            Agent.speed = speed;
+            agent.speed = speed;
             GetComponent<NetworkObject>().speed = speed;
             
-            Agent.updateRotation = false;
-            Agent.updateUpAxis = false;
+            agent.updateRotation = false;
+            agent.updateUpAxis = false;
         }
         protected override void InitNetworkVariablesList()
         {
@@ -75,6 +78,11 @@ namespace _Scripts.Enemies
         public override void Update()
         {
             base.Update();
+            if (Time.frameCount % logicFrameIntervalUpdate == 0)
+            {
+                ServerSetTarget();
+            }
+            
             if (isHost)
             {
                 UpdateServer();
@@ -96,17 +104,17 @@ namespace _Scripts.Enemies
 
         private void ServerSetTarget()
         {
-            PlayerList = GameObject.FindGameObjectsWithTag("Player");
+            playerList = GameObject.FindGameObjectsWithTag("Player");
             float smallerDistance = Mathf.Infinity;
 
-            foreach (var player in PlayerList)
+            foreach (var player in playerList)
             {
                 float actualDistance = Vector2.Distance(player.transform.position, this.transform.position);
 
                 if (actualDistance < smallerDistance)
                 {
                     smallerDistance = actualDistance;
-                    Target = player.transform;
+                    target = player.transform;
                 }
             }
         }
@@ -114,20 +122,20 @@ namespace _Scripts.Enemies
         private void ClientSetTarget(UInt64 playerNetworkObjectId)
         {
             GameObject targetPlayer = NetworkManager.Instance.replicationManager.networkObjectMap[playerNetworkObjectId].gameObject;
-            Target = targetPlayer.transform;
+            target = targetPlayer.transform;
         }
 
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
             
-            if (Target.TryGetComponent<Player.Player>(out Player.Player player))
+            if (target.TryGetComponent<Player.Player>(out Player.Player player))
             {
-                NetworkObject netObj = Target.GetComponent<NetworkObject>();
+                NetworkObject netObj = target.GetComponent<NetworkObject>();
                 writer.Write(player.GetPlayerId());
                 writer.Write(player.GetName());
                 writer.Write(netObj.GetNetworkId());
-                writer.Write((int)EnemyState);
+                writer.Write((int)enemyState);
             }
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             
@@ -140,7 +148,7 @@ namespace _Scripts.Enemies
             UInt64 playerId = reader.ReadUInt64();
             string playerName = reader.ReadString();
             UInt64 networkId = reader.ReadUInt64();
-            EnemyState = (EnemyState)reader.ReadInt32();
+            enemyState = (EnemyState)reader.ReadInt32();
             ClientSetTarget(networkId);
             UpdateClient();
             return true;
@@ -150,21 +158,21 @@ namespace _Scripts.Enemies
         {
             base.OnEnable();
             
-            HealthSystem.OnDamageableDestroyed += HandleDeath;
-            EnemyState = EnemyState.SPAWN;
-            Collider.enabled = true;
+            healthSystem.OnDamageableDestroyed += HandleDeath;
+            enemyState = EnemyState.SPAWN;
+            collider2D.enabled = true;
         }
 
         public override void OnDisable()
         {
             base.OnDisable();
             
-            HealthSystem.OnDamageableDestroyed -= HandleDeath;
+            healthSystem.OnDamageableDestroyed -= HandleDeath;
         }
 
         private void HandleDeath(GameObject destroyed, GameObject destroyer)
         {
-            EnemyState = EnemyState.DIE;
+            enemyState = EnemyState.DIE;
             onDeath?.Invoke(this);
         }
 
@@ -205,6 +213,16 @@ namespace _Scripts.Enemies
 
             // If we hit something, check if it was the player
             return hit.collider != null && hit.collider.transform == playerTransform;
+        }
+        
+        protected void DisposeGameObject()
+        {
+            if (TryGetComponent(out PoolObject pool))
+            {
+                gameObject.SetActive(false);
+            }
+            else
+                Destroy(gameObject);
         }
     }
 }

@@ -17,32 +17,32 @@ namespace _Scripts.Enemies
             // Execute logic of enemy manager only in server
             if (!isHost) return;
             
-            switch (EnemyState)
+            switch (enemyState)
             {
                 case EnemyState.SPAWN:
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Spawn sound, particle and animation
-                    EnemyState = EnemyState.CHASE;
+                    enemyState = EnemyState.CHASE;
                     break;
 
                 case EnemyState.CHASE:
                     //Debug.Log("Enemy chase");
-                    Agent.isStopped = false;
+                    agent.isStopped = false;
                     // animation, particles and sound
-                    Agent.SetDestination(Target.position);
+                    agent.SetDestination(target.position);
 
-                    if(Vector3.Distance(Target.position, this.transform.position) <= 1)
+                    if(Vector3.Distance(target.position, this.transform.position) <= 1)
                     {
-                        EnemyState = EnemyState.ATTACK;
+                        enemyState = EnemyState.ATTACK;
                     }
 
                     break;
 
                 case EnemyState.ATTACK:
                     //Debug.Log("Enemy attacks");
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
 
-                    if (!_isAttacking && CooldownTimer <= 0f)
+                    if (!_isAttacking && cooldownTimer <= 0f)
                     {
                         StartMeleeAttack();
                     }
@@ -55,34 +55,34 @@ namespace _Scripts.Enemies
                             EndMeleeAttack();
                         }
                     }
-                    else if (CooldownTimer > 0f)
+                    else if (cooldownTimer > 0f)
                     {
-                        CooldownTimer -= Time.deltaTime;
+                        cooldownTimer -= Time.deltaTime;
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(Target.position, this.transform.position) > 1)
+                    if (Vector3.Distance(target.position, this.transform.position) > 1)
                     {
-                        EnemyState = EnemyState.CHASE;                    
+                        enemyState = EnemyState.CHASE;                    
                     }
 
                     break;
 
                 case EnemyState.DIE:
                 
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    Collider.enabled = false;
+                    GetComponent<Collider>().enabled = false;
                 
-                    TimeRemaining -= Time.deltaTime;
-                    if (TimeRemaining <= 0)
+                    timeRemaining -= Time.deltaTime;
+                    if (timeRemaining <= 0)
                     {
                         DisposeGameObject();
                     }
                     break;
 
                 default:
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     break;
             }
         }
@@ -93,19 +93,19 @@ namespace _Scripts.Enemies
             Vector3 closerPlayerPosition = new Vector3(0,0,0);
             float distance = Mathf.Infinity;
 
-            for(int i = 0; i < PlayerList.Length; i++)
+            for(int i = 0; i < playerList.Length; i++)
             {
-                if(Vector3.Distance(PlayerList[i].transform.position, gameObject.transform.position) < distance)
+                if(Vector3.Distance(playerList[i].transform.position, gameObject.transform.position) < distance)
                 {
-                    closerPlayerPosition = PlayerList[i].transform.position;
-                    distance = Vector3.Distance(PlayerList[i].transform.position, gameObject.transform.position);
+                    closerPlayerPosition = playerList[i].transform.position;
+                    distance = Vector3.Distance(playerList[i].transform.position, gameObject.transform.position);
                 }
             }
 
             Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
 
-            InternalAttackObject = Instantiate(attackPrefab);
-            InternalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * AttackOffset;
+            internalAttackObject = Instantiate(attackPrefab);
+            internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
 
             _attackTimer = attackDuration;
         }
@@ -116,22 +116,12 @@ namespace _Scripts.Enemies
 
             //
 
-            if(InternalAttackObject != null) // TODO Add to pool
+            if(internalAttackObject != null) // TODO Add to pool
             {
-                Destroy(InternalAttackObject);
+                Destroy(internalAttackObject);
             }
 
-            CooldownTimer = CooldownDuration;
-        }
-
-        private void DisposeGameObject()
-        {
-            if (TryGetComponent(out PoolObject pool))
-            {
-                gameObject.SetActive(false);
-            }
-            else
-                Destroy(gameObject);
+            cooldownTimer = cooldownDuration;
         }
     }
 }

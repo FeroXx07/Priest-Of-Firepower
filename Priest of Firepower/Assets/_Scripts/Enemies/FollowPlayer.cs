@@ -5,10 +5,7 @@ namespace _Scripts.Enemies
 {
     public class FollowPlayer : MonoBehaviour
     {
-        [SerializeField] 
-        Transform target;
-
-
+        [SerializeField] private Transform target;
         NavMeshAgent _agent;
 
         // Start is called before the first frame update

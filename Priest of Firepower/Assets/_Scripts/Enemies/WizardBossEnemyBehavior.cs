@@ -28,36 +28,36 @@ namespace _Scripts.Enemies
             // Execute logic of enemy manager only in server
             if (!isHost) return;
             
-            switch (EnemyState)
+            switch (enemyState)
             {
                 case EnemyState.SPAWN:
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Spawn sound, particle and animation
-                    EnemyState = EnemyState.CHASE;
+                    enemyState = EnemyState.CHASE;
                     break;
 
                 case EnemyState.CHASE:
 
-                    Agent.isStopped = false;
+                    agent.isStopped = false;
 
-                    Agent.SetDestination(Target.position);
+                    agent.SetDestination(target.position);
 
-                    float distance = Vector3.Distance(Target.position, this.transform.position);
+                    float distance = Vector3.Distance(target.position, this.transform.position);
 
                     if (distance < 3)
                     {
-                        Agent.SetDestination(-Target.position); // To be revewed
+                        agent.SetDestination(-target.position); // To be revewed
                     }
                     else
                     {
-                        Agent.SetDestination(Target.position);
+                        agent.SetDestination(target.position);
                     }
 
                     //Debug.Log("Chase");
 
-                    if (distance <= 9 && distance >= 3 && (CheckLineOfSight(Target) == true)) 
+                    if (distance <= 9 && distance >= 3 && (CheckLineOfSight(target) == true)) 
                     {
-                        EnemyState = EnemyState.ATTACK;
+                        enemyState = EnemyState.ATTACK;
                         // Debug.Log("Attack mode");
                     }
 
@@ -67,11 +67,11 @@ namespace _Scripts.Enemies
 
                 case EnemyState.ATTACK:
 
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
 
                     //Debug.Log("Attack");
 
-                    if (CooldownTimer <= 0f)
+                    if (cooldownTimer <= 0f)
                     {
                         int randNum = -1;
 
@@ -104,20 +104,20 @@ namespace _Scripts.Enemies
                     
                     }
 
-                    if (CooldownTimer > 0f)
+                    if (cooldownTimer > 0f)
                     {
-                        CooldownTimer -= Time.deltaTime;
+                        cooldownTimer -= Time.deltaTime;
                     }
 
-                    if (InternalAttackObject) 
+                    if (internalAttackObject) 
                     {
-                        InternalAttackObject.transform.position = Target.position;
+                        internalAttackObject.transform.position = target.position;
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(Target.position, this.transform.position) > 9 || (CheckLineOfSight(Target) == false))
+                    if (Vector3.Distance(target.position, this.transform.position) > 9 || (CheckLineOfSight(target) == false))
                     {
-                        EnemyState = EnemyState.CHASE;
+                        enemyState = EnemyState.CHASE;
 
                     }
 
@@ -125,27 +125,27 @@ namespace _Scripts.Enemies
 
                 case EnemyState.DIE:
 
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    Collider.enabled = false;
+                    GetComponent<Collider2D>().enabled = false;
 
 
-                    TimeRemaining -= Time.deltaTime;
-                    if (TimeRemaining <= 0)
+                    timeRemaining -= Time.deltaTime;
+                    if (timeRemaining <= 0)
                     {
                         DisposeGameObject();
                     }
                     break;
 
                 default:
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     break;
             }
         }
 
         private void StartSimpleBulletPatternAttack()
         {
-            Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
+            Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
 
             for (int i = 0; i < 12; i++)
             {
@@ -155,7 +155,7 @@ namespace _Scripts.Enemies
 
                 // Instantiate the bullet and set its position
                 GameObject bullet = Instantiate(attackPrefab);
-                bullet.transform.position = gameObject.transform.position + direction * AttackOffset;
+                bullet.transform.position = gameObject.transform.position + direction * attackOffset;
 
                 // Apply force to the bullet
                 Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
@@ -172,13 +172,13 @@ namespace _Scripts.Enemies
                 _shotCount = 0;
             }
 
-            CooldownTimer = CooldownDuration;
+            cooldownTimer = cooldownDuration;
         }
 
 
         private void StartBouncingBulletPatternAttack()
         {
-            Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
+            Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
 
             for (int i = 0; i < 8; i++)
             {
@@ -188,7 +188,7 @@ namespace _Scripts.Enemies
 
                 // Instantiate the bullet and set its position
                 GameObject bullet = Instantiate(secondAttackPrefab);
-                bullet.transform.position = gameObject.transform.position + direction * AttackOffset;
+                bullet.transform.position = gameObject.transform.position + direction * attackOffset;
 
                 // Apply force to the bullet
                 Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
@@ -205,12 +205,12 @@ namespace _Scripts.Enemies
                 _shotCount = 0;
             }
 
-            CooldownTimer = CooldownDuration;
+            cooldownTimer = cooldownDuration;
         }
 
         private void StartDuplicatingBulletAttack()
         {
-            Vector3 directionToPlayer = (Target.position - gameObject.transform.position).normalized;
+            Vector3 directionToPlayer = (target.position - gameObject.transform.position).normalized;
 
             for (int i = 0; i < 3; i++)
             {
@@ -220,7 +220,7 @@ namespace _Scripts.Enemies
 
                 // Instantiate the bullet and set its position
                 GameObject bullet = Instantiate(thirdAttackPrefab);
-                bullet.transform.position = gameObject.transform.position + direction * AttackOffset;
+                bullet.transform.position = gameObject.transform.position + direction * attackOffset;
 
                 // Apply force to the bullet
                 Rigidbody2D rbComp = bullet.GetComponent<Rigidbody2D>();
@@ -237,22 +237,12 @@ namespace _Scripts.Enemies
                 _shotCount = 0;
             }
 
-            CooldownTimer = CooldownDuration;
+            cooldownTimer = cooldownDuration;
         }
 
         int RandomizeInt(int min, int max)
         {
             return Random.Range(min, max + 1);
-        }
-
-        private void DisposeGameObject()
-        {
-            if (TryGetComponent(out PoolObject pool))
-            {
-                gameObject.SetActive(false);
-            }
-            else
-                Destroy(gameObject);
         }
     }
 }

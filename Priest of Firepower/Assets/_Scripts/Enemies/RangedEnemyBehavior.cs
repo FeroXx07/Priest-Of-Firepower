@@ -13,75 +13,75 @@ namespace _Scripts.Enemies
         // Update is called once per frame
         protected override void UpdateServer()
         {
-            switch (EnemyState)
+            switch (enemyState)
             {
                 case EnemyState.SPAWN:
                 {
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Spawn sound, particle and animation
-                    EnemyState = EnemyState.CHASE;
+                    enemyState = EnemyState.CHASE;
                 }
                     break;
                 case EnemyState.CHASE:
                 {
-                    Agent.isStopped = false;
+                    agent.isStopped = false;
 
-                    Agent.SetDestination(Target.position);
+                    agent.SetDestination(target.position);
 
-                    float distance = Vector3.Distance(Target.position, this.transform.position);
+                    float distance = Vector3.Distance(target.position, this.transform.position);
 
                     if (distance < 3)
                     {
-                        Agent.SetDestination(-Target.position); // To be revewed
+                        agent.SetDestination(-target.position); // To be revewed
                     }
                     else
                     {
-                        Agent.SetDestination(Target.position);
+                        agent.SetDestination(target.position);
                     }
 
                     //Debug.Log("Before if: "+ CheckLineOfSight(target));
 
-                    if (distance <= 8 && distance >= 3 && (CheckLineOfSight(Target) == true))
+                    if (distance <= 8 && distance >= 3 && (CheckLineOfSight(target) == true))
                     {
-                        EnemyState = EnemyState.ATTACK;
+                        enemyState = EnemyState.ATTACK;
                         // Debug.Log("Attack mode");
                     }
                 }
                     break;
                 case EnemyState.ATTACK:
                 {
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
 
-                    if ( CooldownTimer <= 0f)
+                    if ( cooldownTimer <= 0f)
                     {
                         //StartRangedAttack();
                     }
 
-                    if (CooldownTimer > 0f)
+                    if (cooldownTimer > 0f)
                     {
-                        CooldownTimer -= Time.deltaTime;
+                        cooldownTimer -= Time.deltaTime;
                     }
 
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(Target.position, this.transform.position) > 8 || (CheckLineOfSight(Target) == false))  
+                    if (Vector3.Distance(target.position, this.transform.position) > 8 || (CheckLineOfSight(target) == false))  
                     {
-                        EnemyState = EnemyState.CHASE;
+                        enemyState = EnemyState.CHASE;
                     }
 
                 }
                     break;
                 case EnemyState.DIE:
                 {
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    Collider.enabled = false;
+                    collider2D.enabled = false;
 
-                    TimeRemaining -= Time.deltaTime;
-                    if (TimeRemaining <= 0)
+                    timeRemaining -= Time.deltaTime;
+                    if (timeRemaining <= 0)
                     {
                         MemoryStream stream = new MemoryStream();
                         BinaryWriter writer = new BinaryWriter(stream);
-                        
+                        Debug.Log("Dying enemy");
                         ReplicationHeader enemyDeSpawnHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
                         NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
                         DisposeGameObject();
@@ -89,42 +89,65 @@ namespace _Scripts.Enemies
                 }
                     break;
                 default:
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     break;
             }
         }
 
         protected override void UpdateClient()
         {
-            switch (EnemyState)
+            switch (enemyState)
             {
+                case EnemyState.SPAWN:
+                {
+                    agent.isStopped = true;
+                    // Spawn sound, particle and animation
+                    enemyState = EnemyState.CHASE;
+                }
+                    break;
                 case EnemyState.CHASE:
                 {
-                    Agent.isStopped = false;
+                    agent.isStopped = false;
+                    
+                    if (target == null) return;
+                    
+                    agent.SetDestination(target.position);
+                    
+                    float distance = Vector3.Distance(target.position, this.transform.position);
+                    
+                    if (distance < 3)
+                    {
+                        agent.SetDestination(-target.position); // To be revewed
+                    }
+                    else
+                    {
+                        agent.SetDestination(target.position);
+                    }
+                }
+                    break;
+                case EnemyState.ATTACK:
+                {
+                    agent.isStopped = true;
+                    
+                    if (target == null) return;
+                    
+                    // For example: Perform attack, reduce player health, animation sound and particles
+                    if (Vector3.Distance(target.position, this.transform.position) > 8 || (CheckLineOfSight(target) == false))  
+                    {
+                        enemyState = EnemyState.CHASE;
+                    }
 
-                    // Agent.SetDestination(Target.position);
-                    //
-                    // float distance = Vector3.Distance(Target.position, this.transform.position);
-                    //
-                    // if (distance < 3)
-                    // {
-                    //     Agent.SetDestination(-Target.position); // To be revewed
-                    // }
-                    // else
-                    // {
-                    //     Agent.SetDestination(Target.position);
-                    // }
                 }
                     break;
                 case EnemyState.DIE:
                 {
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    Collider.enabled = false;
+                    collider2D.enabled = false;
                 }
                     break;
                 default:
-                    Agent.isStopped = true;
+                    agent.isStopped = true;
                     break;
             }
         }
@@ -137,7 +160,7 @@ namespace _Scripts.Enemies
         public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
         {
             Debug.Log("Enemy dead in client");
-            DisposeGameObject();
+            //DisposeGameObject();
         }
 
         private void StartRangedAttack()
@@ -145,21 +168,21 @@ namespace _Scripts.Enemies
             Vector3 closerPlayerPosition = new Vector3(0, 0, 0);
             float distance = Mathf.Infinity;
 
-            for (int i = 0; i < PlayerList.Length; i++)
+            for (int i = 0; i < playerList.Length; i++)
             {
-                if (Vector3.Distance(PlayerList[i].transform.position, gameObject.transform.position) < distance)
+                if (Vector3.Distance(playerList[i].transform.position, gameObject.transform.position) < distance)
                 {
-                    closerPlayerPosition = PlayerList[i].transform.position;
-                    distance = Vector3.Distance(PlayerList[i].transform.position, gameObject.transform.position);
+                    closerPlayerPosition = playerList[i].transform.position;
+                    distance = Vector3.Distance(playerList[i].transform.position, gameObject.transform.position);
                 }
             }
 
             Vector3 directionToPlayer = (closerPlayerPosition - gameObject.transform.position).normalized;
 
-            InternalAttackObject = Instantiate(attackPrefab);
-            InternalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * AttackOffset;
+            internalAttackObject = Instantiate(attackPrefab);
+            internalAttackObject.transform.position = gameObject.transform.position + directionToPlayer * attackOffset;
 
-            Rigidbody2D rbComp = InternalAttackObject.GetComponent<Rigidbody2D>();
+            Rigidbody2D rbComp = internalAttackObject.GetComponent<Rigidbody2D>();
 
             if (rbComp)
             {
@@ -168,17 +191,7 @@ namespace _Scripts.Enemies
 
             //Debug.Log("Ranged Attack done");
 
-            CooldownTimer = CooldownDuration;
-        }
-
-        private void DisposeGameObject()
-        {
-            if (TryGetComponent(out PoolObject pool))
-            {
-                gameObject.SetActive(false);
-            }
-            else
-                Destroy(gameObject);
+            cooldownTimer = cooldownDuration;
         }
     }
 }
