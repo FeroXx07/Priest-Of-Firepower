@@ -151,7 +151,8 @@ namespace _Scripts
                 {
                     if (hittedObj.TryGetComponent<IDamageable>(out IDamageable damageable))
                     {
-                        damageable.TakeDamage(damageDealer, hit.hitDirection, owner.gameObject);
+                        damageDealer.ProcessHit(damageable, hit.hitDirection, owner.gameObject, hitterObj.gameObject, hittedObj.gameObject);
+                        damageable.ProcessHit(damageDealer, hit.hitDirection, owner.gameObject, hitterObj.gameObject, hittedObj.gameObject);
                     }
                 }
             }

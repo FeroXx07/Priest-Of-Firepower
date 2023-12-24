@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
-using _Scripts.Weapon;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace _Scripts
@@ -40,27 +38,21 @@ namespace _Scripts
 
         public void RaiseEventOnDamageableDestroyed(GameObject destroyer)
         {
-            if (NetworkManager.Instance.IsClient()) return;
-            
-            MemoryStream objStream = new MemoryStream();
-            NetworkObject nObj = GetComponent<NetworkObject>();
-            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, objStream.ToArray().Length);
-            NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(nObj,replicationHeader,objStream);    
             OnDamageableDestroyed?.Invoke(gameObject, destroyer);
         }
-
-        public override void CallBackDeSpawnObjectOther(NetworkObject objectDestroyed, BinaryReader reader,
-            Int64 timeStamp, int lenght)
+        
+        public void ProcessHit(IDamageDealer damageDealer, Vector3 dir, GameObject hitOwnerGameObject, GameObject hitterGameObject,
+            GameObject hittedGameObject)
         {
-            Debug.Log("Client despawning " + gameObject.name);
-            Destroy(gameObject);
+            Debug.Log($"Health system: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+            TakeDamage(damageDealer, dir, hitOwnerGameObject);
         }
 
         public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
         {
             health -= damageDealer.Damage;
             OnDamageTaken?.Invoke(gameObject, owner);
-
+            
             if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
             {
                 if (owner.TryGetComponent<PointSystem>(out PointSystem pointSystem))
@@ -82,10 +74,23 @@ namespace _Scripts
                 health = 0;
                 RaiseEventOnDamageableDestroyed(owner);
             }
+            
+            SendReplicationData(ReplicationAction.UPDATE);
         }
+
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        {
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            writer.Write(Health);
+            writer.Write(MaxHealth);
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            return replicationHeader;
+        }
+
         public override bool ReadReplicationPacket(BinaryReader reader, long currentPosition = 0)
-        {   
-            Debug.Log("HealthSystem behaviour update");
+        {
+            Health = reader.ReadInt32();
+            MaxHealth = reader.ReadInt32();
             return true;
         }
     }

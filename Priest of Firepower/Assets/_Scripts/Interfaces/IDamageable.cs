@@ -11,6 +11,8 @@ namespace _Scripts.Interfaces
 
         LayerMask Layers { get; set; }
         int Health { get; set; }    
+        void ProcessHit(IDamageDealer damageDealer, Vector3 dir, GameObject hitOwnerGameObject, GameObject hitterGameObject,
+            GameObject hittedGameObject);
         void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner);
         void RaiseEventOnDamageableDestroyed(GameObject destroyer);
     }
