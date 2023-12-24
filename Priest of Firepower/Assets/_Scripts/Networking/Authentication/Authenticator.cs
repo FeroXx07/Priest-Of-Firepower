@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Authentication
 {
     public abstract class Authenticator 
     {

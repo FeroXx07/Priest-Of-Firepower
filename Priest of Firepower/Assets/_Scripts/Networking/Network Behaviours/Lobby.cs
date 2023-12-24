@@ -1,11 +1,14 @@
-using System.IO;
-using UnityEngine;
-using UnityEngine.UI;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using _Scripts.Networking.Client;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Network_Behaviours
 {
     public class Lobby : NetworkBehaviour
     {

@@ -6,10 +6,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using _Scripts.Networking.Authentication;
+using _Scripts.Networking.Client;
 using Debug = UnityEngine.Debug;
+using Process = _Scripts.Networking.Utility.Process;
 
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Server
 {
     public class Server
     {

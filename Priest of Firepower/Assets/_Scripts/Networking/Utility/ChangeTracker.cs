@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Utility
 {
     public class ChangeTracker
     {

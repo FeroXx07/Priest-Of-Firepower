@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using _Scripts.Networking.Client;
 using UnityEngine;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Authentication
 {
     public class ServerAuthenticator : Authenticator
     {

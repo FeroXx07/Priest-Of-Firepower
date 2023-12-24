@@ -1,6 +1,7 @@
 using System.IO;
 using _Scripts.Attacks;
 using _Scripts.Networking;
+using _Scripts.Networking.Replication;
 using UnityEngine;
 
 namespace _Scripts.Enemies

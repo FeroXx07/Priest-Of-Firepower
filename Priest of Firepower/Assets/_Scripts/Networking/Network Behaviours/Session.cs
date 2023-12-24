@@ -1,5 +1,7 @@
 using System.Collections;
 using System.IO;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 
 namespace _Scripts.Networking.Network_Behaviours
 {

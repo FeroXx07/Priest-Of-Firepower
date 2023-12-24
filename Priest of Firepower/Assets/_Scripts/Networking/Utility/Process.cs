@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using UnityEngine;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Utility
 {
     public struct Process
     {

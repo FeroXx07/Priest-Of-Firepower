@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
+using _Scripts.Networking.Utility;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Client
 {
     public enum ClientSate
     {

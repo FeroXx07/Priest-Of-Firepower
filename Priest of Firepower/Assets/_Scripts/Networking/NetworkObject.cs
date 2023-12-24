@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using _Scripts.Networking;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 using _Scripts.Player;
 using UnityEngine;
 using Debug = UnityEngine.Debug;

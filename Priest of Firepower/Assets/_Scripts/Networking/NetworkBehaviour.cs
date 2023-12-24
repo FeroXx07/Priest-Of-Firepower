@@ -1,43 +1,50 @@
-    using System;
-    using System.Collections;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 using UnityEngine;
 
-    namespace _Scripts.Networking
+namespace _Scripts.Networking
 {
     [RequireComponent(typeof(NetworkObject))]
     public abstract class NetworkBehaviour : MonoBehaviour
     {
         [SerializeField] protected bool isHost => NetworkManager.Instance.IsHost();
         [SerializeField] protected bool isClient => NetworkManager.Instance.IsClient();
-
         [SerializeField] protected bool isDeSpawned = false;
-        
         [SerializeField] protected bool showDebugInfo = true;
+
         #region TickInfo
-        [Header("NetworkBehaviour TickInfo")]
-        public float tickRateBehaviour = 1.0f; // Network writes inside a second.
+
+        [Header("NetworkBehaviour TickInfo")] public float tickRateBehaviour = 1.0f; // Network writes inside a second.
         private float _tickCounter = 0.0f;
         public bool doTickUpdates = true;
         public bool clientSendReplicationData = false;
+
         #endregion
-        
+
         #region TrackingInfo
+
         protected ChangeTracker BITTracker;
         protected NetworkObject NetworkObject;
         protected List<INetworkVariable> NetworkVariableList = new List<INetworkVariable>();
         protected abstract void InitNetworkVariablesList();
+
         protected List<INetworkVariable> GetNetworkVariables()
         {
             return NetworkVariableList;
         }
+
         #endregion
+
         public virtual void OnEnable()
         {
             NetworkManager.Instance.OnGameEventMessageReceived += ListenToMessages;
         }
+
         public virtual void OnDisable()
         {
             NetworkManager.Instance.OnGameEventMessageReceived -= ListenToMessages;
@@ -46,12 +53,11 @@ using UnityEngine;
         ///<summary>
         /// returns the id of the networkobjet this behaviour belong to
         /// </summary>
-        
         public UInt64 GetObjId()
         {
             return GetComponent<NetworkObject>().GetNetworkId();
         }
-        
+
         #region Serialization
 
         /// <summary>
@@ -60,13 +66,13 @@ using UnityEngine;
         /// <param name="outputMemoryStream">Stream to fill with serialization data</param>
         /// <param name="action">The network action header to include</param>
         /// <returns>True: stream has been filled. False: stream has not been filled</returns>
-        protected virtual ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        protected virtual ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream,
+            ReplicationAction action)
         {
             // [Object State] -- We are here! -- [Object Class][Object ID][NetworkAction][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][NetworkAction][Bitfield Lenght]...
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            
+
             // Serialize
-            
             BitArray bitfield = BITTracker.GetBitfield();
             for (int i = 0; i < bitfield.Length; i++)
             {
@@ -77,13 +83,10 @@ using UnityEngine;
             }
 
             int fieldCount = bitfield.Length;
-            
             writer.Write(fieldCount);
-            
             byte[] bitfieldBytes = new byte[(fieldCount + 7) / 8];
             bitfield.CopyTo(bitfieldBytes, 0);
             writer.Write(bitfieldBytes);
-
             int count = 0;
             count = SerializeFieldsData(bitfield, count, writer);
 
@@ -92,11 +95,12 @@ using UnityEngine;
             {
                 return null;
             }
-            
+
             if (showDebugInfo)
-                Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Trying to send {count} variables from network behavior: {name}");
-            
-            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+                Debug.Log(
+                    $"ID: {NetworkObject.GetNetworkId()}, Trying to send {count} variables from network behavior: {name}");
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(),
+                this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
 
             // Detrack all variables and return stream to the 
             BITTracker.SetAll(false);
@@ -118,6 +122,7 @@ using UnityEngine;
                     NetworkVariableList[i].WriteInBinaryWriter(writer);
                 }
             }
+
             return count;
         }
 
@@ -133,7 +138,6 @@ using UnityEngine;
             // [Object State][Object Class] -- We are here! -- [Object ID][Bitfield Lenght][Bitfield Data][DATA I][Data J]...[Object Class][Object ID][Bitfield Lenght]...
             if (showDebugInfo)
                 Debug.Log($"ID: {NetworkObject.GetNetworkId()}, Receiving data network behavior: {name}");
-
             int fieldCount = BITTracker.GetBitfield().Length;
             int receivedFieldCount = reader.ReadInt32();
             if (receivedFieldCount != fieldCount)
@@ -141,14 +145,13 @@ using UnityEngine;
                 Debug.LogError("Mismatch in the count of fields");
                 return false;
             }
-            
+
             byte[] receivedBitfieldBytes = reader.ReadBytes((fieldCount + 7) / 8);
             BitArray receivedBitfield = new BitArray(receivedBitfieldBytes);
-
             DeSerializeFieldsData(reader, receivedFieldCount, receivedBitfield);
             return true;
         }
-        
+
         private void DeSerializeFieldsData(BinaryReader reader, int receivedFieldCount, BitArray receivedBitfield)
         {
             for (int i = 0; i < receivedFieldCount; i++)
@@ -159,11 +162,29 @@ using UnityEngine;
                 }
             }
         }
+
         #endregion
-        public virtual void OnClientNetworkSpawn(NetworkObject spawner, BinaryReader reader, Int64 timeStamp, int lenght) { }
-        public virtual void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader,  Int64 timeStamp, int lenght) { }
-        public virtual void CallBackSpawnObjectOther(NetworkObject objectSpawned, BinaryReader reader,  Int64 timeStamp, int lenght){}
-        public virtual void CallBackDeSpawnObjectOther(NetworkObject objectDestroyed, BinaryReader reader,  Int64 timeStamp, int lenght){}
+
+        public virtual void OnClientNetworkSpawn(NetworkObject spawner, BinaryReader reader, Int64 timeStamp,
+            int lenght)
+        {
+        }
+
+        public virtual void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, Int64 timeStamp,
+            int lenght)
+        {
+        }
+
+        public virtual void CallBackSpawnObjectOther(NetworkObject objectSpawned, BinaryReader reader, Int64 timeStamp,
+            int lenght)
+        {
+        }
+
+        public virtual void CallBackDeSpawnObjectOther(NetworkObject objectDestroyed, BinaryReader reader,
+            Int64 timeStamp, int lenght)
+        {
+        }
+
         public virtual void Awake()
         {
             if (TryGetComponent<NetworkObject>(out NetworkObject) == false)
@@ -171,6 +192,7 @@ using UnityEngine;
                 Debug.LogWarning("A NetworkBehaviour needs a NetworkObject");
             }
         }
+
         protected void SendReplicationData(ReplicationAction action)
         {
             // Cannot send data if no network manager
@@ -181,10 +203,9 @@ using UnityEngine;
 
             if (NetworkManager.Instance.IsClient())
             {
-                if (clientSendReplicationData == false)
-                    return;
+                if (clientSendReplicationData == false) return;
             }
-            
+
             MemoryStream stream = new MemoryStream();
             ReplicationHeader replicationHeader = null;
             switch (action)
@@ -211,32 +232,35 @@ using UnityEngine;
                 }
                     break;
             }
-            
+
             if (replicationHeader == null) return;
-            if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
+            if (showDebugInfo)
+                Debug.Log(
+                    $"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
         }
+
         public virtual void Update()
         {
-            if (!doTickUpdates)
-                return;
-            
+            if (!doTickUpdates) return;
+
             // Send Write to state buffer
             float finalRate = 1.0f / tickRateBehaviour;
-            if (_tickCounter >= finalRate )
+            if (_tickCounter >= finalRate)
             {
                 SendReplicationData(ReplicationAction.UPDATE);
                 _tickCounter = 0.0f;
             }
+
             _tickCounter += Time.deltaTime;
         }
+
         protected void SendInput(MemoryStream dataStream, bool reliable)
         {
             InputHeader inputHeader = new InputHeader(NetworkObject.GetNetworkId(), this.GetType().FullName,
-                dataStream.ToArray().Length,
-                NetworkManager.Instance.getId, DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
-            
-            if(reliable)
+                dataStream.ToArray().Length, NetworkManager.Instance.getId,
+                DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+            if (reliable)
             {
                 NetworkManager.Instance.AddReliableInputStreamQueue(inputHeader, dataStream);
             }
@@ -245,27 +269,39 @@ using UnityEngine;
                 NetworkManager.Instance.AddInputStreamQueue(inputHeader, dataStream);
             }
         }
-        public virtual void SendInputToServer(){}
-        public virtual void ReceiveInputFromClient(InputHeader header, BinaryReader reader){}
-        public virtual void SendInputToClients(){}
-        public virtual void ReceiveInputFromServer(InputHeader header, BinaryReader reader){}
+
+        public virtual void SendInputToServer()
+        {
+        }
+
+        public virtual void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
+        {
+        }
+
+        public virtual void SendInputToClients()
+        {
+        }
+
+        public virtual void ReceiveInputFromServer(InputHeader header, BinaryReader reader)
+        {
+        }
+
         public virtual void SendStringMessage(string message, bool isImportant = true)
         {
-            if (NetworkManager.Instance.IsHost())
-                return;
-            
+            if (NetworkManager.Instance.IsHost()) return;
             Debug.Log($"Sending message: {message}");
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-
             ReplicationAction action = isImportant ? ReplicationAction.IMPORTANT_EVENT : ReplicationAction.EVENT;
             writer.Write(NetworkManager.Instance.getId);
             writer.Write(message);
-            
-            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, stream.ToArray().Length);
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(),
+                this.GetType().FullName, action, stream.ToArray().Length);
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
         }
 
-        public virtual void ListenToMessages(UInt64 senderId, string message, long timeStamp){}
+        public virtual void ListenToMessages(UInt64 senderId, string message, long timeStamp)
+        {
+        }
     }
 }

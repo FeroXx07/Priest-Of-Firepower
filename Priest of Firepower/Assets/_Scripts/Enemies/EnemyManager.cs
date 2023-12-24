@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using System.IO;
 using _Scripts.Networking;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 
 namespace _Scripts.Enemies
 {

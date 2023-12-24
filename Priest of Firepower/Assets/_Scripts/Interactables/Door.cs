@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 using _Scripts.UI.Interactables;
 using Unity.VisualScripting;
 using UnityEngine;

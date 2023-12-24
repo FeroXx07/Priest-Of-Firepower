@@ -4,10 +4,12 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using _Scripts.Networking.Authentication;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
+using Process = _Scripts.Networking.Utility.Process;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Client
 {
     public class Client 
     {

@@ -6,6 +6,9 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using _Scripts.Networking.Client;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -35,8 +38,8 @@ namespace _Scripts.Networking
 
         #region Server/Client Fields
 
-        private Client _client;
-        private Server _server;
+        private Client.Client _client;
+        private Server.Server _server;
         private bool _isHost = false;
         private bool _isClient = false;
         public static readonly UInt64 UNKNOWN_ID = 69;
@@ -324,7 +327,7 @@ namespace _Scripts.Networking
 
         public void StartClient()
         {
-            if (_client == null) _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            if (_client == null) _client = new Client.Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             if (isServerOnSameMachine)
             {
                 serverAdress = IPAddress.Parse("127.0.0.1");
@@ -338,11 +341,11 @@ namespace _Scripts.Networking
 
         public void StartHost()
         {
-            _server = new Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
+            _server = new Server.Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
                 new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
             _server.onClientConnected += ClientConnected;
             _server.onClientDisconnected += ClientDisconected;
-            _client = new Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client = new Client.Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             if (_server.isServerInitialized)
             {
@@ -1165,12 +1168,12 @@ namespace _Scripts.Networking
             return _isClient;
         }
 
-        public Client GetClient()
+        public Client.Client GetClient()
         {
             return _client;
         }
 
-        public Server GetServer()
+        public Server.Server GetServer()
         {
             if (_isHost)
                 return _server;

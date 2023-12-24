@@ -1,6 +1,8 @@
 using _Scripts.Networking;
 using System;
 using System.IO;
+using _Scripts.Networking.Replication;
+using _Scripts.Networking.Utility;
 using _Scripts.Weapon;
 using Cinemachine;
 using UnityEngine;

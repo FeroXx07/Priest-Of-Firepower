@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
+using _Scripts.Networking.Replication;
 using UnityEngine;
 
 namespace _Scripts.Attacks

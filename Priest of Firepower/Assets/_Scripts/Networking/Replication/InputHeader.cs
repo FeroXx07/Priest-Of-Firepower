@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace _Scripts.Networking
+namespace _Scripts.Networking.Replication
 {
     public class InputHeader
     {
