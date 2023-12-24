@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {

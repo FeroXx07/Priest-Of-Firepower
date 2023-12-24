@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-    using UnityEngine.Serialization;
 
     namespace _Scripts.Networking
 {
@@ -216,19 +215,6 @@ using UnityEngine;
             if (replicationHeader == null) return;
             if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
-        }
-        public void SendReplicationData(ReplicationAction action,MemoryStream stream)
-        {
-            // Cannot send data if no network manager
-            if (NetworkManager.Instance == false && NetworkObject == false)
-            {
-                Debug.LogWarning("No NetworkManager or NetworkObject");
-            }
-            ReplicationHeader header = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName,
-                action, stream.ToArray().Length);
-
-            if (showDebugInfo) Debug.Log($"{gameObject.name}.{GetType().Name} -> Sending data: with size {stream.ToArray().Length} and {action}");
-            NetworkManager.Instance.AddStateStreamQueue(header, stream);
         }
         public virtual void Update()
         {

@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using _Scripts.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;

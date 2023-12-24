@@ -1,6 +1,4 @@
-using System;
 using _Scripts.Networking;
-using _Scripts.Player;
 using _Scripts.ScriptableObjects;
 using _Scripts.Weapon;
 using UnityEngine;

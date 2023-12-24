@@ -4,7 +4,6 @@ using System.IO;
 using _Scripts.Weapon;
 using Cinemachine;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Player
 {

@@ -1,9 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using _Scripts;
 
 namespace _Scripts.UI.TeamInfo
 {

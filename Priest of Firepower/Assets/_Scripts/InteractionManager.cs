@@ -1,11 +1,8 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using _Scripts;
 using _Scripts.Networking;
 using UnityEngine;
-using _Scripts.Interfaces;
 
 
 [RequireComponent(typeof(NetworkObject))]

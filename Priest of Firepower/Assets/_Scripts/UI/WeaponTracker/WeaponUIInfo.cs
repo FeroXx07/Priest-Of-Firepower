@@ -1,5 +1,3 @@
-using System;
-using _Scripts.Player;
 using _Scripts.ScriptableObjects;
 using _Scripts.Power_Ups;
 using System.Collections;

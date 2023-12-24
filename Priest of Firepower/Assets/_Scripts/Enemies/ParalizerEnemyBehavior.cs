@@ -1,5 +1,3 @@
-using _Scripts.Object_Pool;
-using _Scripts.Player;
 using UnityEngine;
 
 namespace _Scripts.Enemies

@@ -8,7 +8,6 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Networking
 {

@@ -1,4 +1,3 @@
-using System;
 using _Scripts.Networking;
 using TMPro;
 using UnityEngine;

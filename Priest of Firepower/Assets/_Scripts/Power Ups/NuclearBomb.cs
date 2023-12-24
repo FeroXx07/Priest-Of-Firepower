@@ -9,6 +9,12 @@ namespace _Scripts.Power_Ups
         int _damage = 10000;
         public int Damage { get => _damage; set => _damage = value; }
 
+        public void ProcessHit(IDamageable damageable, Vector3 dir, GameObject hitOwnerGameObject, GameObject hitterGameObject,
+            GameObject hittedGameObject)
+        {
+            
+        }
+
         public event Action<GameObject> OnDamageDealerDestroyed;
         public event Action<GameObject> OnDamageDealth;
 

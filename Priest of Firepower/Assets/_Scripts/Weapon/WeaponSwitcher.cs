@@ -1,9 +1,7 @@
 using System;
 using System.IO;
 using _Scripts.Networking;
-using _Scripts.Player;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Weapon
 {
