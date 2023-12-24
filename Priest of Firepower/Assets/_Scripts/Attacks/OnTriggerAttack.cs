@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
@@ -5,11 +6,22 @@ using UnityEngine;
 
 namespace _Scripts.Attacks
 {
-    public class OnTriggerAttack : Attack
+    public class OnTriggerAttack : Attack, IDamageDealer
     {
+        [Header("OnTriggerAttack Properties")]
         [SerializeField] protected bool destroyOnContactWithLayer = true;
         [SerializeField] protected float destructionTime = 1.0f;
         private float _timer;
+        public event Action<GameObject> OnDamageDealerDestroyed;
+        public event Action<GameObject> OnDamageDealth;
+        public int Damage { get => damage; set => damage = value; }
+        public void ProcessHit(IDamageable damageable, Vector3 dir, GameObject hitOwnerGameObject, GameObject hitterGameObject,
+            GameObject hittedGameObject)
+        {
+            OnDamageDealth?.Invoke(hittedGameObject);
+            Debug.Log($"OnTriggerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+        }
+        
         public override void OnEnable()
         {
             base.OnEnable();
@@ -25,7 +37,7 @@ namespace _Scripts.Attacks
             
             _timer -= Time.deltaTime;
             
-            if (_timer < 0.0f)
+            if (_timer < 0.0f && !isDeSpawned)
             {
                 Debug.Log("OnTriggerAttack: Timer destroy");
                 MemoryStream stream = new MemoryStream();
@@ -42,11 +54,11 @@ namespace _Scripts.Attacks
                 if (IsSelected(collision.layer))
                 {
 
-                    if (Owner.TryGetComponent<NetworkObject>(out NetworkObject obj) &&
+                    if (owner.TryGetComponent<NetworkObject>(out NetworkObject obj) &&
                         collision.TryGetComponent<NetworkObject>(out NetworkObject coll)&&
                         TryGetComponent<Rigidbody2D>(out Rigidbody2D rb2d))
                     {
-                        if (obj == null) { Debug.Log(Owner.name + " has no network object"); return; }
+                        if (obj == null) { Debug.Log(owner.name + " has no network object"); return; }
                         if (coll == null) { Debug.Log(collision.name + " has no network object"); return; }
                         if (rb2d == null) { Debug.Log(name + " has no rb2d"); return; }
                         
@@ -90,5 +102,11 @@ namespace _Scripts.Attacks
             CollisionHandeler(collision.gameObject);
         }
         #endregion
+
+        protected override void DisposeGameObject()
+        {
+            OnDamageDealerDestroyed?.Invoke(gameObject);
+            base.DisposeGameObject();
+        }
     }
 }

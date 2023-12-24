@@ -300,6 +300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74e3901570f45264890c76f75e8f347c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
   showDebugInfo: 1
   tickRateBehaviour: 1
   doTickUpdates: 1
@@ -321,6 +322,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ed7c0425c0a5f34691ce754c77b1ad4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
   showDebugInfo: 1
   tickRateBehaviour: 1
   doTickUpdates: 0
@@ -352,9 +354,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4152c504c31e8548a451fc8d636155b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
   showDebugInfo: 1
-  tickRateBehaviour: 0
-  doTickUpdates: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
   clientSendReplicationData: 0
   health: 1000
   maxHealth: 1000
@@ -412,6 +415,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95050936e68dac64fb357f26ce69ee76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
   showDebugInfo: 0
   tickRateBehaviour: 10
   doTickUpdates: 1

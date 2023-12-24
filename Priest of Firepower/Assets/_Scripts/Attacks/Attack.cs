@@ -1,12 +1,10 @@
-using System;
-using _Scripts.Interfaces;
 using _Scripts.Networking;
 using _Scripts.Object_Pool;
 using UnityEngine;
 
 namespace _Scripts.Attacks
 {
-    public class Attack : NetworkBehaviour, IDamageDealer
+    public class Attack : NetworkBehaviour
     {
         [Header("Attack Properties")]
         #region Layers
@@ -14,25 +12,15 @@ namespace _Scripts.Attacks
         public LayerMask Layers { get => layers; set => layers = value; }
         #endregion
 
-        #region Damage
         public int damage;
-        public int Damage { get => damage; set => damage = value; }
-        public event Action<GameObject> OnDamageDealerDestroyed;
-        public event Action<GameObject> OnDamageDealth;
-        #endregion
-        protected GameObject Owner;
-        public void SetOwner(GameObject owner)
+        protected GameObject owner;
+        public void SetOwner(GameObject newOwner)
         {
-            Owner = owner;
+            owner = newOwner;
         }
-        public GameObject GetOwner()
+        protected virtual void DisposeGameObject()
         {
-            return Owner;
-        }
-        protected void DisposeGameObject()
-        {
-            OnDamageDealerDestroyed?.Invoke(gameObject);
-
+            isDeSpawned = true;
             if (TryGetComponent(out PoolObject pool))
             {
                 gameObject.SetActive(false);
@@ -42,14 +30,14 @@ namespace _Scripts.Attacks
         }
 
         protected bool IsSelected(int layer) => ((layers.value >> layer) & 1) == 1;
-
-        protected void RaiseEventOnDestroyed(GameObject gameObject){
-            OnDamageDealerDestroyed?.Invoke(gameObject);
+        
+        public override void Awake()
+        {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
         }
-        protected void RaiseEventOnDealth(GameObject gameObject) {
-            OnDamageDealth?.Invoke(gameObject);
-        }
-
+        
         protected override void InitNetworkVariablesList()
         {
            

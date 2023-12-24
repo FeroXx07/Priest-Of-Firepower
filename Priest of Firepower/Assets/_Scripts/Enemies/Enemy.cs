@@ -6,7 +6,6 @@ using _Scripts.Object_Pool;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace _Scripts.Enemies
 {
@@ -18,12 +17,19 @@ namespace _Scripts.Enemies
         DIE,
     }
 
+    public enum EnemyAttackState
+    {
+        COOLDOWN,
+        EXECUTE
+    }
+
     public class Enemy : NetworkBehaviour, IPointsProvider
     {
         [Header("Enemy properties")]
-        [SerializeField] private int pointsOnHit = 10;
-        [SerializeField] private int pointsOnDeath = 100;
-        [SerializeField] private float speed = 2;
+        [SerializeField] protected int pointsOnHit = 10;
+        [SerializeField] protected int pointsOnDeath = 100;
+        [SerializeField] protected float speed = 2;
+        [SerializeField] protected int damage = 5;
         
         [SerializeField] protected Transform target;
         protected NavMeshAgent agent;
@@ -42,6 +48,7 @@ namespace _Scripts.Enemies
         protected GameObject internalAttackObject;
 
         protected EnemyState enemyState;
+        protected EnemyAttackState attackState = EnemyAttackState.COOLDOWN;
 
         public UnityEvent<Enemy> onDeath = new UnityEvent<Enemy>();
         public int PointsOnHit { get => pointsOnHit; }
@@ -142,6 +149,7 @@ namespace _Scripts.Enemies
                 writer.Write(player.GetName());
                 writer.Write(netObj.GetNetworkId());
                 writer.Write((int)enemyState);
+                writer.Write((int)attackState);
             }
             
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
@@ -159,6 +167,7 @@ namespace _Scripts.Enemies
                 string playerName = reader.ReadString();
                 UInt64 networkId = reader.ReadUInt64();
                 enemyState = (EnemyState)reader.ReadInt32();
+                attackState = (EnemyAttackState)reader.ReadInt32();
                 ClientSetTarget(networkId);
                 UpdateClient();
             }
@@ -228,6 +237,8 @@ namespace _Scripts.Enemies
         
         protected void DisposeGameObject()
         {
+            Debug.Log("Enemy: Disposing");
+            isDeSpawned = true;
             if (TryGetComponent(out PoolObject pool))
             {
                 gameObject.SetActive(false);

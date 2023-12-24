@@ -127,6 +127,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df0f2b720801e474285fd5ceb10e1646, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
   showDebugInfo: 0
   tickRateBehaviour: 1
   doTickUpdates: 1
@@ -136,7 +137,7 @@ MonoBehaviour:
     m_Bits: 960
   damage: 5
   destroyOnContactWithLayer: 1
-  destructionTime: 0.2
+  destructionTime: 1
 --- !u!70 &474254513456688477
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
