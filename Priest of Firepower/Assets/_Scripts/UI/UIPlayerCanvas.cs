@@ -1,19 +1,22 @@
 using UnityEngine;
 
-public class UIPlayerCanvas : MonoBehaviour
+namespace _Scripts.UI
 {
-
-    // Update is called once per frame
-    void Update()
+    public class UIPlayerCanvas : MonoBehaviour
     {
-        if (transform.parent.gameObject.transform.localScale.x < 0)
-        {
-            transform.localScale = new Vector3(-1, 1, 1);
-        }
-        else
-        {
-            transform.localScale = new Vector3(1, 1, 1);
 
+        // Update is called once per frame
+        void Update()
+        {
+            if (transform.parent.gameObject.transform.localScale.x < 0)
+            {
+                transform.localScale = new Vector3(-1, 1, 1);
+            }
+            else
+            {
+                transform.localScale = new Vector3(1, 1, 1);
+
+            }
         }
     }
 }

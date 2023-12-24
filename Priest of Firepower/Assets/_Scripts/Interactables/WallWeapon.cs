@@ -1,7 +1,7 @@
 using System.IO;
 using _Scripts.Interfaces;
+using _Scripts.UI.Interactable;
 using _Scripts.Weapon;
-using _Scripts.UI.Interactables;
 using UnityEngine;
 using Unity.VisualScripting;
 

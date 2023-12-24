@@ -1,7 +1,7 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
-namespace _Scripts.UI.WaveInfo
+namespace _Scripts.UI.Wave_Info
 {
     public class UIRoundTimer : MonoBehaviour
     {

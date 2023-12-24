@@ -1,7 +1,7 @@
 using _Scripts.Object_Pool;
 using UnityEngine;
 
-namespace _Scripts
+namespace _Scripts.Misc
 {
     public class BounceOnCollision : MonoBehaviour
     {

@@ -1,102 +1,103 @@
 using System;
 using System.IO;
-using _Scripts;
 using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using UnityEngine;
 
-
-[RequireComponent(typeof(NetworkObject))]
-public class InteractionManager : NetworkBehaviour
+namespace _Scripts
 {
-    public class Interaction
+    [RequireComponent(typeof(NetworkObject))]
+    public class InteractionManager : NetworkBehaviour
     {
-        // network obj ids
-        private UInt64 interactorId; 
-        private UInt64 interactableId;
-        private UInt64 startInteractionTime;
-        
-    }
-    
-    #region Singleton
-    private static InteractionManager _instance;
-    public static InteractionManager Instance
-    {
-        get
+        public class Interaction
         {
-            // if instance is null
-            if (_instance == null)
+            // network obj ids
+            private UInt64 interactorId; 
+            private UInt64 interactableId;
+            private UInt64 startInteractionTime;
+        
+        }
+    
+        #region Singleton
+        private static InteractionManager _instance;
+        public static InteractionManager Instance
+        {
+            get
             {
-                // find the generic instance
-                _instance = FindObjectOfType<InteractionManager>();
-
-                // if it's null again create a new object
-                // and attach the generic instance
+                // if instance is null
                 if (_instance == null)
                 {
-                    GameObject obj = new GameObject();
-                    obj.name = typeof(InteractionManager).Name;
-                    _instance = obj.AddComponent<InteractionManager>();
+                    // find the generic instance
+                    _instance = FindObjectOfType<InteractionManager>();
+
+                    // if it's null again create a new object
+                    // and attach the generic instance
+                    if (_instance == null)
+                    {
+                        GameObject obj = new GameObject();
+                        obj.name = typeof(InteractionManager).Name;
+                        _instance = obj.AddComponent<InteractionManager>();
+                    }
                 }
+                return _instance;
             }
-            return _instance;
         }
-    }
 
-    #endregion
+        #endregion
     
     
-    void Start()
-    {
+        void Start()
+        {
         
-    }
+        }
 
-    public override void Awake()
-    {
-        base.Awake();
-        InitNetworkVariablesList();
-        BITTracker = new ChangeTracker(NetworkVariableList.Count);
-    }
+        public override void Awake()
+        {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
 
-    public override void Update()
-    {
-        base.Update();
-    }
+        public override void Update()
+        {
+            base.Update();
+        }
 
-    public void ServerRecieveInteraction()
-    {
+        public void ServerRecieveInteraction()
+        {
         
-    }
+        }
 
-    public void ServerSendInteraction()
-    {
+        public void ServerSendInteraction()
+        {
         
-    }
+        }
 
-    public void ClientSendInteraction(Interactor interactor,NetworkBehaviour interactableNbh)
-    {
-        MemoryStream managerStream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(managerStream);
+        public void ClientSendInteraction(Interactor interactor,NetworkBehaviour interactableNbh)
+        {
+            MemoryStream managerStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(managerStream);
 
-        NetworkBehaviour interactiorNbh = interactor.GetComponent<NetworkBehaviour>();
+            NetworkBehaviour interactiorNbh = interactor.GetComponent<NetworkBehaviour>();
 
         
-       // writer.Write(interactionData.ToArray());        
+            // writer.Write(interactionData.ToArray());        
         
-        ReplicationHeader managerHeader =
-            new ReplicationHeader(GetObjId(), GetType().FullName, ReplicationAction.UPDATE,managerStream.ToArray().Length);
+            ReplicationHeader managerHeader =
+                new ReplicationHeader(GetObjId(), GetType().FullName, ReplicationAction.UPDATE,managerStream.ToArray().Length);
        
-        NetworkManager.Instance.AddStateStreamQueue(managerHeader,managerStream);
-    }
+            NetworkManager.Instance.AddStateStreamQueue(managerHeader,managerStream);
+        }
 
-    public void ClientReceiveInteraction()
-    {
+        public void ClientReceiveInteraction()
+        {
         
-    }
+        }
     
-    protected override void InitNetworkVariablesList()
-    {
+        protected override void InitNetworkVariablesList()
+        {
      
+        }
     }
 }

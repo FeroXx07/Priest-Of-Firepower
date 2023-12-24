@@ -1,9 +1,9 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
-namespace _Scripts.UI.EventBroadcasting
+namespace _Scripts.UI.EventBroadcaster
 {
     public class UIEventBroadcaster : MonoBehaviour
     {

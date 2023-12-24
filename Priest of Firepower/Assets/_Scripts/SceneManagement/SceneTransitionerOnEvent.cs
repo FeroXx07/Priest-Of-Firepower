@@ -1,32 +1,34 @@
-using _Scripts.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-public class SceneTransitionerOnEvent : MonoBehaviour
+namespace _Scripts.SceneManagement
 {
-    public SceneObject sceneToTransition;
-    public UnityEvent<string> OnSceneTransitionStart = new UnityEvent<string>();
-    public UnityEvent<string> OnSceneTransitionFinish = new UnityEvent<string>();
-    private void Awake()
+    public class SceneTransitionerOnEvent : MonoBehaviour
     {
-        DontDestroyOnLoad(this);
-    }
-    private void OnEnable()
-    {
-        SceneManager.sceneLoaded += EndTransitionToScene;
-    }
-    private void OnDisable()
-    {
-        SceneManager.sceneLoaded -= EndTransitionToScene;
-    }
-    public void TransitionToScene()
-    {
-        OnSceneTransitionStart?.Invoke(sceneToTransition);
-        SceneManager.LoadScene(sceneToTransition);
-    }
-    private void EndTransitionToScene(Scene scene, LoadSceneMode mode)
-    {
-        OnSceneTransitionFinish?.Invoke(scene.name);
+        public SceneObject sceneToTransition;
+        public UnityEvent<string> OnSceneTransitionStart = new UnityEvent<string>();
+        public UnityEvent<string> OnSceneTransitionFinish = new UnityEvent<string>();
+        private void Awake()
+        {
+            DontDestroyOnLoad(this);
+        }
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += EndTransitionToScene;
+        }
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= EndTransitionToScene;
+        }
+        public void TransitionToScene()
+        {
+            OnSceneTransitionStart?.Invoke(sceneToTransition);
+            SceneManager.LoadScene(sceneToTransition);
+        }
+        private void EndTransitionToScene(Scene scene, LoadSceneMode mode)
+        {
+            OnSceneTransitionFinish?.Invoke(scene.name);
+        }
     }
 }

@@ -1,8 +1,8 @@
-using UnityEngine;
-using TMPro;
 using _Scripts.Enemies;
+using TMPro;
+using UnityEngine;
 
-namespace _Scripts.UI.WaveInfo
+namespace _Scripts.UI.Wave_Info
 {
     public class UIWaveTracker : MonoBehaviour
     {

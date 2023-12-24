@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace _Scripts
+namespace _Scripts.Misc
 {
     public class OnTriggerEnter2DCollisionEvent : MonoBehaviour
     {

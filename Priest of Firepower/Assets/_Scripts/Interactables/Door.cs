@@ -5,7 +5,7 @@ using _Scripts.Interfaces;
 using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
-using _Scripts.UI.Interactables;
+using _Scripts.UI.Interactable;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;

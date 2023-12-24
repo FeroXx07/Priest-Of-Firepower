@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using _Scripts.Player;
@@ -298,7 +297,7 @@ namespace _Scripts.Networking
 
         private void FixedUpdate()
         {
-          Interpolate();
+            Interpolate();
         }
 
         void Interpolate()
@@ -352,39 +351,39 @@ namespace _Scripts.Networking
             }
         }
     }
-}
 
-[Serializable]
-public struct TransformData
-{
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 scale;
-    public long timeStamp;
-    public TransformAction action;
-    public ulong sequenceNumber;
-    public TransformData(Vector3 pos, Quaternion rot, Vector3 s)
+    [Serializable]
+    public struct TransformData
     {
-        position = new Vector3(pos.x, pos.y, pos.z);
-        rotation = new Quaternion(rot.x, rot.y, rot.z,rot.w);
-        scale = new Vector3(s.x, s.y, s.z);
-        action = TransformAction.INTERPOLATE;
-        timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-        sequenceNumber = 0;
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector3 scale;
+        public long timeStamp;
+        public TransformAction action;
+        public ulong sequenceNumber;
+        public TransformData(Vector3 pos, Quaternion rot, Vector3 s)
+        {
+            position = new Vector3(pos.x, pos.y, pos.z);
+            rotation = new Quaternion(rot.x, rot.y, rot.z,rot.w);
+            scale = new Vector3(s.x, s.y, s.z);
+            action = TransformAction.INTERPOLATE;
+            timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            sequenceNumber = 0;
+        }
     }
-}
 
-public class TransformUpdate 
-{
-    public ushort Tick { get; private set; }
-    public bool IsTeleport { get; private set; }
-    public Vector2 Position { get; private set;}
-    public float Rotation { get;private set; }
-    public TransformUpdate(ushort tick,bool teleport, Vector2 position,float rotation)
+    public class TransformUpdate 
     {
-        Tick = tick;
-        IsTeleport = teleport;
-        Position = position;    
-        Rotation = rotation;    
+        public ushort Tick { get; private set; }
+        public bool IsTeleport { get; private set; }
+        public Vector2 Position { get; private set;}
+        public float Rotation { get;private set; }
+        public TransformUpdate(ushort tick,bool teleport, Vector2 position,float rotation)
+        {
+            Tick = tick;
+            IsTeleport = teleport;
+            Position = position;    
+            Rotation = rotation;    
+        }
     }
 }

@@ -1,8 +1,8 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
-namespace _Scripts.UI.TeamInfo
+namespace _Scripts.UI.TeamList
 {
     public class UITeamListTile : MonoBehaviour
     {

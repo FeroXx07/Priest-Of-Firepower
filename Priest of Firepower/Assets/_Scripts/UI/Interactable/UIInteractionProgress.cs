@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace _Scripts.UI.Interactables
+namespace _Scripts.UI.Interactable
 
 {
     public class UIInteractionProgress : MonoBehaviour

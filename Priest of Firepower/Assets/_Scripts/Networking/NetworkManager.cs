@@ -45,7 +45,7 @@ namespace _Scripts.Networking
         public static readonly UInt64 UNKNOWN_ID = 69;
         public UInt64 getId => IsClient() ? _client.GetId() : 0;
         public string PlayerName = "testeo";
-        public GameObject player { get; set; }
+        public Player.Player player { get; set; }
         public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
         public ReplicationManager replicationManager = new ReplicationManager();
 
