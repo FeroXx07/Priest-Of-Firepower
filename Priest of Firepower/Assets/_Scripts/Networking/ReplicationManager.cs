@@ -202,7 +202,8 @@ namespace _Scripts.Networking
             ownerSpawnerData.CopyTo(outputMemoryStream);
             
             ReplicationHeader replicationHeader = new ReplicationHeader(newId, this.GetType().FullName, ReplicationAction.CREATE, outputMemoryStream.ToArray().Length);
-            Debug.LogWarning($"Network Manager: Sending create, header size {replicationHeader.GetSerializedHeader().Length}, data size {replicationHeader.memoryStreamSize}");
+            Debug.LogWarning($"Replication Manager: Sending spawn. Name: {prefab.name} ID: {newId}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");            
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
             return newGo.gameObject;
         }
@@ -217,8 +218,9 @@ namespace _Scripts.Networking
             var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(prefab => prefab.name == prefabName);
             NetworkObject newGo = GameObject.Instantiate(prefab).GetComponent<NetworkObject>();
             RegisterObjectClient(serverAssignedNetObjId, newGo);
-            Debug.LogWarning($"Replication Manager: Creating object {prefabName} ID {serverAssignedNetObjId}, size: {spawnerOwnerHeader.memoryStreamSize}");
-
+            Debug.LogWarning($"Replication Manager: Receiving spawn. Name: {prefab.name} ID: {serverAssignedNetObjId}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {spawnerOwnerHeader.GetSerializedHeader().Length}, Data size {spawnerOwnerHeader.memoryStreamSize}");  
+            
             // An temporary exception
             if (prefabName.Equals("PlayerPrefab"))
             {
@@ -272,7 +274,8 @@ namespace _Scripts.Networking
             objDestroyerData.CopyTo(outputMemoryStream);
             
             ReplicationHeader replicationHeader = new ReplicationHeader(nObjToDespawn.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
-            Debug.LogWarning($"Network Manager: Sending destroy, header size {replicationHeader.GetSerializedHeader().Length}, data size {replicationHeader.memoryStreamSize}");
+            Debug.LogWarning($"Replication Manager: Sending despawn. ID: {nObjToDespawn.GetNetworkId()}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
             
             UnRegisterObjectServer(nObjToDespawn);
@@ -282,7 +285,8 @@ namespace _Scripts.Networking
         public bool Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
         {
             ReplicationHeader deSpawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
-            
+            Debug.LogWarning($"Replication Manager: Receiving despawn. ID: {networkObjectId}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {deSpawnerOwnerHeader.GetSerializedHeader().Length}, Data size {deSpawnerOwnerHeader.memoryStreamSize}");
             Type type = Type.GetType(deSpawnerOwnerHeader.objectFullName);
 
             if (networkObjectMap.TryGetValue(networkObjectId, out NetworkObject objectToDestroy) && networkObjectMap.TryGetValue(deSpawnerOwnerHeader.id, out NetworkObject objectDestroyee))

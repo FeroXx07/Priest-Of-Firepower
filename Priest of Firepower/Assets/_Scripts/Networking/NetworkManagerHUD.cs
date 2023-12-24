@@ -62,7 +62,7 @@ namespace _Scripts.Networking
         void Lobby()
         {
             SceneManager.LoadScene(nextSceneToLoad);
-            Debug.Log("Going to lobby ...");
+            Debug.Log("NetworkManagerHUD: Going to lobby ...");
         }
 
         private void ConnectToServer(string ip)
