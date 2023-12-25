@@ -69,6 +69,7 @@ namespace _Scripts.Networking
         public UInt64 currSeqNumStateRead { get; private set; } = 0;
 
         // store all input streams to send
+        int replicationTotalSize = 0;
         private ConcurrentQueue<InputItem> _inputStreamBuffer = new ConcurrentQueue<InputItem>();
         private List<InputItem> _inputItemsToSend = new List<InputItem>();
         [SerializeField] private UInt64 sendSeqNumInput = 0;
@@ -604,7 +605,6 @@ namespace _Scripts.Networking
                     {
                         if (_stateStreamBuffer.Count > 0)
                         {
-                            int totalSize = 0;
                             bool mtuFull = false;
                             bool isTimeout = false;
                             //Debug.Log( $"Network Manager: Starting STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
@@ -615,8 +615,8 @@ namespace _Scripts.Networking
                                 {
                                     // Able to peek
                                     MemoryStream currentItemHeaderStream = nextItem.header.GetSerializedHeader();
-                                    if (totalSize + (int)nextItem.memoryStream.Length +
-                                        (int)currentItemHeaderStream.Length <= _mtu)
+                                    if (replicationTotalSize + (int)nextItem.memoryStream.Length +
+                                        (int)currentItemHeaderStream.Length < _mtu)
                                     {
                                         // Able to insert next header into mtu
                                         if (_stateStreamBuffer.TryDequeue(out ReplicationItem replicationItem))
@@ -624,8 +624,8 @@ namespace _Scripts.Networking
                                             if (!IsReplicationItemDuplicate(nextItem.header,
                                                     out ReplicationItem alreadyExistingItem))
                                             {
-                                                totalSize += (int)replicationItem.memoryStream.Length +
-                                                             (int)currentItemHeaderStream.Length;
+                                                replicationTotalSize += (int)replicationItem.memoryStream.Length +
+                                                                        (int)currentItemHeaderStream.Length;
                                                 _replicationItemsToSend.Add(replicationItem);
                                                 if (debugShowObjectStatePackets)
                                                     Debug.Log(
@@ -648,8 +648,9 @@ namespace _Scripts.Networking
                                     isTimeout = true;
                                 }
 
-                                if (totalSize > 0 && mtuFull || isTimeout)
+                                if (replicationTotalSize > 0 && mtuFull || isTimeout)
                                 {
+                                    Debug.LogError($"--- TOTAL SIZE: {replicationTotalSize} ---");
                                     _stateStopwatch.Restart();
                                     byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.OBJECT_STATE,
                                         _replicationItemsToSend);
@@ -673,7 +674,7 @@ namespace _Scripts.Networking
                                     }
 
                                     _replicationItemsToSend.Clear();
-                                    totalSize = 0;
+                                    replicationTotalSize = 0;
                                 }
                             }
                         }

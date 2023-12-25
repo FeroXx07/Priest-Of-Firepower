@@ -16,6 +16,12 @@ namespace _Scripts.UI.Enemies
             enemyManager.OnEnemySpawn += CreateTracker;
             enemyManager.OnEnemyRemove += DestroyTracker;
         }
+        
+        private void OnDisable()
+        {
+            enemyManager.OnEnemySpawn -= CreateTracker;
+            enemyManager.OnEnemyRemove -= DestroyTracker;
+        }
 
         private void Start()
         {
