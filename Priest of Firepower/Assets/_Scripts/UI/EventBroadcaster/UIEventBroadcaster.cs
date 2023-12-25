@@ -52,10 +52,10 @@ namespace _Scripts.UI.EventBroadcaster
         {
             for (int i = 0; i < keyCodes.Length; i++)
             {
-                if (Input.GetKeyDown(keyCodes[i]))
-                {
-                    CreateTile((PlaygroundEvent)(i + 1));
-                }
+                // if (Input.GetKeyDown(keyCodes[i]))
+                // {
+                //     CreateTile((PlaygroundEvent)(i + 1));
+                // }
 
             }
         }

@@ -16,7 +16,7 @@ namespace _Scripts.Power_Ups
 
             // TODO: Give 2x points to all active players
             _pointsProviders = FindObjectsOfType<PointSystem>(true).ToList();
-            _pointsProviders.ForEach(p => p.multiplyer = 2);
+            _pointsProviders.ForEach(p => p.multiplier = 2);
 
             for (int i = 0; i < transform.childCount; i++)
             {
@@ -35,7 +35,7 @@ namespace _Scripts.Power_Ups
                 {
                     isActive = false;
                     timerCount = 0.0f;
-                    _pointsProviders.ForEach(p => p.multiplyer = 1);
+                    _pointsProviders.ForEach(p => p.multiplier = 1);
                     _pointsProviders.Clear();
                 }
             }

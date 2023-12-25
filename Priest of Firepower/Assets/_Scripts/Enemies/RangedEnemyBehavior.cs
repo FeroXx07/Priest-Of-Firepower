@@ -213,7 +213,7 @@ namespace _Scripts.Enemies
                 rbComp.AddForce(directionToPlayer * bulletSpeedMultiplier);
             }
 
-            Debug.Log("RangedEnemyBehaviour: Server Attack done");
+            //Debug.Log("RangedEnemyBehaviour: Server Attack done");
 
             cooldownTimer = cooldownDuration;
         }
@@ -245,7 +245,7 @@ namespace _Scripts.Enemies
                 rbComp.AddForce(directionToPlayer * bulletSpeedMultiplier);
             }
             
-            Debug.Log("RangedEnemyBehaviour: Client Attack done");
+            //Debug.Log("RangedEnemyBehaviour: Client Attack done");
         }
     }
 }

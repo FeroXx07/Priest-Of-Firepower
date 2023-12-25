@@ -184,10 +184,10 @@ namespace _Scripts.Networking
 
         #endregion
         private readonly Dictionary<Type, NetworkBehaviour> behaviourCache = new Dictionary<Type, NetworkBehaviour>();
-        public void HandleNetworkBehaviour(BinaryReader reader, UInt64 packetSender, Int64 timeStamp, UInt64 sequenceNumberState, Type type)
+        public void HandleNetworkBehaviour(BinaryReader reader, ReplicationHeader header, Int64 timeStamp, UInt64 sequenceNumberState)
         {
             long currentPosition = reader.BaseStream.Position;
-
+            Type type = Type.GetType(header.objectFullName);
             if (typeof(NetworkBehaviour).IsAssignableFrom(type))
             {
                 NetworkBehaviour behaviour;
@@ -210,7 +210,7 @@ namespace _Scripts.Networking
                     }
                     else
                     {
-                        Debug.LogError($"NetworkBehaviour component not found on the GameObject for type {type}");
+                        Debug.LogError($"NetworkBehaviour component not found on the GameObject id: {header.id} for type {type}");
                     }
                     
                     // // If not cached, try to get the component on the main thread

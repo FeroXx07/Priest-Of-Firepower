@@ -24,13 +24,6 @@ namespace _Scripts.UI.Points
             if(pointSystem != null) pointSystem.OnPointsChanged += UpdatePoints;
         }
 
-        private void Update()
-        {
-            if (player != null) return;
-            Debug.LogError("UIPoints player was null");
-            Init(null);
-        }
-
         void FindAndSetPlayer()
         {
             player = NetworkManager.Instance.player.GetComponent<Player.Player>();

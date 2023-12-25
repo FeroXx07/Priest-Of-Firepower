@@ -109,6 +109,9 @@ namespace _Scripts.Player
         {
             base.OnEnable();
             _weaponSwitcher.OnWeaponSwitch += ChangeHolder;
+            
+            //if host render on top the player over the others
+            
         }
 
         public override void  OnDisable()
@@ -119,18 +122,17 @@ namespace _Scripts.Player
         
         private void Start()
         {
-            //if host render on top the player over the others
+            shootMarker.positionCount = 2;
+            _weaponFlipped = false;
+            
             if (isOwner())
             {
                 GetComponent<SpriteRenderer>().sortingOrder = 11;
                 FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
                 NetworkManager.Instance.player = gameObject;
-                GameManager.Instance.StartGame();
                 NetworkManager.Instance.OwnerPlayerCreated(gameObject);
+                GameManager.Instance.StartGame();
             }
-
-            shootMarker.positionCount = 2;
-            _weaponFlipped = false;
         }
         
         public override void Update()

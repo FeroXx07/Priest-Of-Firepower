@@ -20,7 +20,7 @@ namespace _Scripts.Attacks
             GameObject hittedGameObject)
         {
             OnDamageDealth?.Invoke(hittedGameObject);
-            Debug.Log($"OnTriggerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+            //Debug.Log($"OnTriggerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
         }
         
         public override void OnEnable()
@@ -40,7 +40,7 @@ namespace _Scripts.Attacks
             
             if (_timer < 0.0f && !isDeSpawned)
             {
-                Debug.Log("OnTriggerAttack: Timer destroy");
+                //Debug.Log("OnTriggerAttack: Timer destroy");
                 MemoryStream stream = new MemoryStream();
                 BinaryWriter writer = new BinaryWriter(stream);
                 ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
@@ -78,7 +78,7 @@ namespace _Scripts.Attacks
 
             if (IsSelected(collision.layer) && destroyOnContactWithLayer && NetworkManager.Instance.IsHost())
             {
-                Debug.Log("OnTriggerAttack: Collision destroy");
+                //Debug.Log("OnTriggerAttack: Collision destroy");
                 MemoryStream stream = new MemoryStream();
                 BinaryWriter writer = new BinaryWriter(stream);
                 ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
@@ -89,7 +89,7 @@ namespace _Scripts.Attacks
         
         public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
         {
-            Debug.Log("OnTriggerAttack: Despawn by server");
+            //Debug.Log("OnTriggerAttack: Despawn by server");
             DisposeGameObject();
         }
 

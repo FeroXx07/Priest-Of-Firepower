@@ -650,7 +650,6 @@ namespace _Scripts.Networking
 
                                 if (replicationTotalSize > 0 && mtuFull || isTimeout)
                                 {
-                                    Debug.LogError($"--- TOTAL SIZE: {replicationTotalSize} ---");
                                     _stateStopwatch.Restart();
                                     byte[] buffer = InsertHeaderMemoryStreams(senderid, PacketType.OBJECT_STATE,
                                         _replicationItemsToSend);
@@ -1011,8 +1010,7 @@ namespace _Scripts.Networking
 
                 try
                 {
-                    replicationManager.HandleReplication(reader, header.id, timeStamp, seqNum, header.replicationAction,
-                        Type.GetType(header.objectFullName), header.memoryStreamSize);
+                    replicationManager.HandleReplication(reader, header, timeStamp, seqNum);
                 }
                 catch (EndOfStreamException ex)
                 {
@@ -1031,22 +1029,30 @@ namespace _Scripts.Networking
             if (inputHeaders.Count == 0) Debug.LogError("Error in input packet");
             foreach (InputHeader header in inputHeaders)
             {
-                try
+                if (replicationManager.networkObjectMap.ContainsKey(header.id))
                 {
-                    if (header.objectFullName == "_Scripts.HitManager")
+                    try
                     {
-                        Debug.Log("Stop");
+                        replicationManager.networkObjectMap[header.id]
+                            .HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, header);
                     }
-                    replicationManager.networkObjectMap[header.id]
-                        .HandleNetworkInput(reader, packetSender, timeStamp, sequenceNumInput, header);
+                    catch (EndOfStreamException ex)
+                    {
+                        Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+                    }
                 }
-                catch (EndOfStreamException ex)
+                else if (replicationManager.unRegisteredNetIds.Contains(header.id))
                 {
-                    Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+                    Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {header.id} (input)");
+                    reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
+                }
+                else
+                {
+                    Debug.LogError($"Replication Manager: Network object map does NOT contain ID {header.id} (input)");
+                    reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                 }
             }
         }
-
         #endregion
 
         private byte[] InsertHeaderMemoryStreams(UInt64 senderId, PacketType type, List<ReplicationItem> streamsList)

@@ -269,7 +269,7 @@ Rigidbody2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1747872900250147753}
-  m_BodyType: 1
+  m_BodyType: 0
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
@@ -323,7 +323,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isDeSpawned: 0
-  showDebugInfo: 1
+  showDebugInfo: 0
   tickRateBehaviour: 1
   doTickUpdates: 0
   clientSendReplicationData: 1
@@ -376,7 +376,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 976b86e183fada8418bbb89762774e3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  multiplyer: 1
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
+  multiplier: 1
 --- !u!114 &1475039635855122171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -395,6 +400,9 @@ MonoBehaviour:
   sendEveryChange: 0
   sendTickChange: 1
   clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
   tickCounter: 0
   showDebugInfo: 0
   isInterpolating: 0

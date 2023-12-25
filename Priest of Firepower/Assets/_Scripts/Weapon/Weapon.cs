@@ -79,6 +79,32 @@ namespace _Scripts.Weapon
             _timeSinceLastShoot += Time.deltaTime;
         }
 
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        {
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            writer.Write(localData.damage);
+            writer.Write(localData.ammoInMagazine);
+            writer.Write(localData.totalAmmo);
+            writer.Write(localData.maxAmmoCapacity);
+            writer.Write(localData.magazineSize);
+            writer.Write(localData.reloadSpeed);
+            writer.Write(localData.reloading);
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            return replicationHeader;
+        }
+
+        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        {
+            localData.damage = reader.ReadInt32();
+            localData.ammoInMagazine = reader.ReadInt32();
+            localData.totalAmmo = reader.ReadInt32();
+            localData.maxAmmoCapacity = reader.ReadInt32();
+            localData.magazineSize = reader.ReadInt32();
+            localData.reloadSpeed = reader.ReadInt32();
+            localData.reloading = reader.ReadBoolean();
+            return true;
+        }
+
         #region Reload
 
         public void Reload()

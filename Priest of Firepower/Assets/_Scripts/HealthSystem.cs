@@ -46,7 +46,7 @@ namespace _Scripts
         public void ProcessHit(IDamageDealer damageDealer, Vector3 dir, GameObject hitOwnerGameObject, GameObject hitterGameObject,
             GameObject hittedGameObject)
         {
-            Debug.Log($"Health system: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+            //Debug.Log($"Health system: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
             TakeDamage(damageDealer, dir, hitOwnerGameObject);
         }
 

@@ -1,12 +1,13 @@
+using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Scripts.ScriptableObjects
 {
     [CreateAssetMenu(menuName = "ScriptableObjects/Weapon Data")]
+    [Serializable]
     public class WeaponData : ScriptableObject
     {
-        [FormerlySerializedAs("name")] [FormerlySerializedAs("_name")] [Header("Info")]
+        [Header("Info")]
         public string weaponName;
         public int price;
 
@@ -23,7 +24,7 @@ namespace _Scripts.ScriptableObjects
         public int maxAmmoCapacity;
         public int magazineSize;
         public float reloadSpeed;
-        [FormerlySerializedAs("Reloading")] public bool reloading;
+        public bool reloading;
 
         [Header("Visual")]
         public Sprite sprite;

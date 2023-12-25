@@ -19,7 +19,7 @@ namespace _Scripts.UI.Wave_Info
         }
         void Update()
         {
-            Debug.Log("UI Round timer: Updating round timer");
+            //Debug.Log("UI Round timer: Updating round timer");
             if (_timer > 0)
             {
                 _timer -= Time.deltaTime;

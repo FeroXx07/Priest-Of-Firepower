@@ -9,35 +9,29 @@ namespace _Scripts.UI.Enemies
         public Vector2 screenOffsets;
         [SerializeField] EnemyManager enemyManager;
         [SerializeField] GameObject trackerRef;
-        List<UISingleEnemyTracker> _enemyTrackers;
-
+        [SerializeField] List<UISingleEnemyTracker> _enemyTrackers;
         private void OnEnable()
         {
             enemyManager.OnEnemySpawn += CreateTracker;
             enemyManager.OnEnemyRemove += DestroyTracker;
         }
-        
         private void OnDisable()
         {
             enemyManager.OnEnemySpawn -= CreateTracker;
             enemyManager.OnEnemyRemove -= DestroyTracker;
         }
-
         private void Start()
         {
             _enemyTrackers = new List<UISingleEnemyTracker>();
         }
         void CreateTracker(Enemy e)
         {
-            GameObject tracker = Instantiate(trackerRef);
+            GameObject tracker = Instantiate(trackerRef, transform);
             UISingleEnemyTracker t = tracker.GetComponent<UISingleEnemyTracker>();
 
             t.SetEnemy(this, e);
-            tracker.transform.parent = transform;
-
             _enemyTrackers.Add(t);
         }
-
         void DestroyTracker(Enemy e)
         {
             GameObject toDestroy = null;

@@ -661,7 +661,7 @@ RectTransform:
   - {fileID: 7107754904799430847}
   - {fileID: 6946681603477303618}
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 12
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
@@ -930,9 +930,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f514da5958cb4242934c012595def17, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  screenOffsets: {x: 650, y: 450}
+  screenOffsets: {x: 1920, y: 1080}
   enemyManager: {fileID: 0}
   trackerRef: {fileID: 3735180897885984550, guid: ca028ddf8cc50ab4ebddc0df8e0bb234, type: 3}
+  _enemyTrackers: []
 --- !u!1 &3056477586946435991
 GameObject:
   m_ObjectHideFlags: 0

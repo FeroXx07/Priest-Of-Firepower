@@ -9,7 +9,7 @@ namespace _Scripts.Networking.Replication
     public class ReplicationManager
     {
         public GameObject gameObject;
-        public UInt64 id { get; private set; }
+        public UInt64 idReplication { get; private set; }
         public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
         public List<UInt64> unRegisteredNetIds = new List<UInt64>();
 
@@ -24,9 +24,9 @@ namespace _Scripts.Networking.Replication
 
         public UInt64 RegisterObjectServer(NetworkObject obj)
         {
-            obj.SetNetworkId(id);
-            networkObjectMap.Add(id, obj);
-            id++;
+            obj.SetNetworkId(idReplication);
+            networkObjectMap.Add(idReplication, obj);
+            idReplication++;
             return obj.GetNetworkId();
         }
 
@@ -48,58 +48,58 @@ namespace _Scripts.Networking.Replication
             networkObjectMap.Remove(id_);
         }
 
-        public void HandleReplication(BinaryReader reader, ulong id, long timeStamp, ulong sequenceNumState, ReplicationAction action, Type type, int memoryStreamSize)
+        public void HandleReplication(BinaryReader reader, ReplicationHeader header, long timeStamp, ulong sequenceNumState)
         {
             //Debug.Log( $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
-            switch (action)
+            switch (header.replicationAction)
             {
                 case ReplicationAction.CREATE:
                 { 
-                    Client_ObjectCreationRegistryRead(id, reader, timeStamp);
+                    Client_ObjectCreationRegistryRead(header.id, reader, timeStamp);
                 }
                     break;
                 case ReplicationAction.UPDATE:
                 {
-                    if (networkObjectMap.ContainsKey(id))
+                    if (networkObjectMap.ContainsKey(header.id))
                     {
-                        networkObjectMap[id].HandleNetworkBehaviour(reader, id, timeStamp, sequenceNumState, type);
+                        networkObjectMap[header.id].HandleNetworkBehaviour(reader, header, timeStamp, sequenceNumState);
                     }
-                    else if (unRegisteredNetIds.Contains(id))
+                    else if (unRegisteredNetIds.Contains(header.id))
                     {
-                        Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {id}");
-                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
+                        Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {header.id}");
+                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                     }
                     else
                     {
-                        Debug.LogError($"Replication Manager: Network object map does NOT contain ID {id}");
-                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
+                        Debug.LogError($"Replication Manager: Network object map does NOT contain ID {header.id}");
+                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                     }
                 }
                     break;
                 case ReplicationAction.DESTROY:
                 {
-                    bool successfulDespawn = Client_DeSpawnNetworkObject(id,reader,timeStamp);
+                    bool successfulDespawn = Client_DeSpawnNetworkObject(header.id,reader,timeStamp);
                     
                     if (!successfulDespawn)
-                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
+                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                 }
                     break;
                 case ReplicationAction.TRANSFORM:
                 {
-                    if (networkObjectMap.ContainsKey(id))
+                    if (networkObjectMap.ContainsKey(header.id))
                     {
-                        if (networkObjectMap[id].synchronizeTransform)
-                            networkObjectMap[id].ReadReplicationTransform(reader, id, timeStamp, sequenceNumState);
+                        if (networkObjectMap[header.id].synchronizeTransform)
+                            networkObjectMap[header.id].ReadReplicationTransform(reader, header.id, timeStamp, sequenceNumState);
                     }
-                    else if (unRegisteredNetIds.Contains(id))
+                    else if (unRegisteredNetIds.Contains(header.id))
                     {
-                        Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {id}");
-                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
+                        Debug.LogWarning($"Replication Manager: Network object map trying to access unregistered ID {header.id}");
+                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                     }
                     else
                     {
-                        Debug.LogError($"Replication Manager: Network object map does NOT contain ID {id}");
-                        reader.BaseStream.Seek(memoryStreamSize, SeekOrigin.Current);
+                        Debug.LogError($"Replication Manager: Network object map does NOT contain ID {header.id}");
+                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
                     }
                 }
                     break;
@@ -118,7 +118,7 @@ namespace _Scripts.Networking.Replication
                 }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(action), action, null);
+                    throw new ArgumentOutOfRangeException(nameof(header.replicationAction), header.replicationAction, null);
             }
         }
         
@@ -140,8 +140,8 @@ namespace _Scripts.Networking.Replication
             ownerSpawnerData.CopyTo(outputMemoryStream);
             
             ReplicationHeader replicationHeader = new ReplicationHeader(newId, this.GetType().FullName, ReplicationAction.CREATE, outputMemoryStream.ToArray().Length);
-            Debug.LogWarning($"Replication Manager: Sending spawn. Name: {prefab.name} ID: {newId}, Obj: {this.GetType().FullName}, " +
-                             $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");            
+            // Debug.LogWarning($"Replication Manager: Sending spawn. Name: {prefab.name} ID: {newId}, Obj: {this.GetType().FullName}, " +
+            //                  $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");            
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
             return newGo.gameObject;
         }
@@ -156,8 +156,8 @@ namespace _Scripts.Networking.Replication
             var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(prefab => prefab.name == prefabName);
             NetworkObject newGo = GameObject.Instantiate(prefab).GetComponent<NetworkObject>();
             RegisterObjectClient(serverAssignedNetObjId, newGo);
-            Debug.LogWarning($"Replication Manager: Receiving spawn. Name: {prefab.name} ID: {serverAssignedNetObjId}, Obj: {this.GetType().FullName}, " +
-                             $"Header Size: {spawnerOwnerHeader.GetSerializedHeader().Length}, Data size {spawnerOwnerHeader.memoryStreamSize}");  
+            // Debug.LogWarning($"Replication Manager: Receiving spawn. Name: {prefab.name} ID: {serverAssignedNetObjId}, Obj: {this.GetType().FullName}, " +
+            //                  $"Header Size: {spawnerOwnerHeader.GetSerializedHeader().Length}, Data size {spawnerOwnerHeader.memoryStreamSize}");  
             
             // An temporary exception
             if (prefabName.Equals("PlayerPrefab"))
@@ -212,8 +212,8 @@ namespace _Scripts.Networking.Replication
             objDestroyerData.CopyTo(outputMemoryStream);
             
             ReplicationHeader replicationHeader = new ReplicationHeader(nObjToDespawn.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
-            Debug.LogWarning($"Replication Manager: Sending despawn. ID: {nObjToDespawn.GetNetworkId()}, Obj: {this.GetType().FullName}, " +
-                             $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");
+            // Debug.LogWarning($"Replication Manager: Sending despawn. ID: {nObjToDespawn.GetNetworkId()}, Obj: {this.GetType().FullName}, " +
+            //                  $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
             
             UnRegisterObjectServer(nObjToDespawn);
@@ -223,8 +223,8 @@ namespace _Scripts.Networking.Replication
         public bool Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
         {
             ReplicationHeader deSpawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
-            Debug.LogWarning($"Replication Manager: Receiving despawn. ID: {networkObjectId}, Obj: {this.GetType().FullName}, " +
-                             $"Header Size: {deSpawnerOwnerHeader.GetSerializedHeader().Length}, Data size {deSpawnerOwnerHeader.memoryStreamSize}");
+            // Debug.LogWarning($"Replication Manager: Receiving despawn. ID: {networkObjectId}, Obj: {this.GetType().FullName}, " +
+            //                  $"Header Size: {deSpawnerOwnerHeader.GetSerializedHeader().Length}, Data size {deSpawnerOwnerHeader.memoryStreamSize}");
             Type type = Type.GetType(deSpawnerOwnerHeader.objectFullName);
 
             if (networkObjectMap.TryGetValue(networkObjectId, out NetworkObject objectToDestroy) && networkObjectMap.TryGetValue(deSpawnerOwnerHeader.id, out NetworkObject objectDestroyee))

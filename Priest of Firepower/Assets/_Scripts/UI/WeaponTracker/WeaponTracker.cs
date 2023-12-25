@@ -7,56 +7,84 @@ namespace _Scripts.UI.WeaponTracker
 {
     public class WeaponTracker : MonoBehaviour
     {
-        [SerializeField] WeaponUIInfo primaryWeapon;
-        [SerializeField] WeaponUIInfo secodnaryWeapon;
-        private Player.Player lastPlayerShooter;
+        [SerializeField] private WeaponUIInfo primaryWeapon;
+        [SerializeField] private WeaponUIInfo secondaryWeapon;
+        [SerializeField] private Player.Player playerOwner;
+        [SerializeField] private WeaponSwitcher playerWeaponSwitcher;
         private void OnEnable()
         {
-            WeaponSwitcher weaponSwitcher = NetworkManager.Instance.player.GetComponent<WeaponSwitcher>();
-            weaponSwitcher.OnWeaponChange += ChangeWeapon;
-
-            if (lastPlayerShooter)
-            {
-                lastPlayerShooter.OnShoot -= UpdateWeaponUI;
-                lastPlayerShooter.OnFinishedReload -= UpdateWeaponUI;
-            }
+            NetworkManager.Instance.OnHostPlayerCreated += Init;
         }
 
         private void OnDisable()
         {
-            WeaponSwitcher weaponSwitcher = NetworkManager.Instance.player.GetComponent<WeaponSwitcher>();
+            NetworkManager.Instance.OnHostPlayerCreated -= Init;
+            if (playerWeaponSwitcher) playerWeaponSwitcher.OnWeaponChange -= ChangeWeapon;
         }
-
+        void FindAndSetPlayer()
+        {
+            playerOwner = NetworkManager.Instance.player.GetComponent<Player.Player>();
+        }
+        private void Init(GameObject obj)
+        {
+            FindAndSetPlayer();
+            
+            if (playerOwner == null)
+            {
+                Debug.LogError("No player instance!");
+                return;
+            }
+            
+            playerWeaponSwitcher = playerOwner.GetComponent<WeaponSwitcher>();
+            playerWeaponSwitcher.OnWeaponChange += ChangeWeapon;
+            
+            if (playerOwner)
+            {
+                playerOwner.OnShoot -= UpdateWeaponUI;
+                playerOwner.OnFinishedReload -= UpdateWeaponUI;
+            }
+        }
+        
         void UpdateWeaponUI()
         {
-            primaryWeapon.UpdateUI();
-            secodnaryWeapon.UpdateUI();
+            if (primaryWeapon) primaryWeapon.UpdateUI();
+            if (secondaryWeapon) secondaryWeapon.UpdateUI();
         }
 
         void ChangeWeapon(Player.Player shooter, GameObject weapon, int index)
         {
-            lastPlayerShooter = shooter;
-            shooter.OnShoot += UpdateWeaponUI;
-            shooter.OnFinishedReload += UpdateWeaponUI;
+            Debug.Log("Weapon Tracker: ChangeWeapon");
+
+            if (playerOwner == shooter && shooter.isOwner())
+            {
+                shooter.OnShoot += UpdateWeaponUI;
+                shooter.OnFinishedReload += UpdateWeaponUI;
+            }
             
             WeaponData data = weapon.GetComponent<Weapon.Weapon>().localData;
             
             if (data == null)
             {
-                Debug.Log("Error Changing Weapon UI");
-                Debug.Log("Weapon: " + weapon + " Index: " + index);
+                Debug.Log($"Weapon Tracker: Error changing weapon. Weapon: {weapon} Index: {index}");
                 return;
             }
 
-            if (index == 0)
+            switch (index)
             {
-                primaryWeapon.SetWeapon(data);
-                primaryWeapon.UpdateUI();
-            }
-            if (index == 1)
-            {
-                secodnaryWeapon.SetWeapon(data);
-                secodnaryWeapon.UpdateUI();
+                case 0:
+                {
+                    Debug.Log("Weapon Tracker: Primary Weapon Set");
+                    primaryWeapon.SetWeapon(data);
+                    primaryWeapon.UpdateUI();
+                }
+                    break;
+                case 1:
+                {
+                    Debug.Log("Weapon Tracker: Secondary Weapon Set");
+                    secondaryWeapon.SetWeapon(data);
+                    secondaryWeapon.UpdateUI();
+                }
+                    break;
             }
         }
     }

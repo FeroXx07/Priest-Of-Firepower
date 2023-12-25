@@ -12,7 +12,6 @@ namespace _Scripts.UI.Enemies
         [SerializeField] float transparencyDistance;
 
         Image _sprite;
-
         private void Start()
         {
             _sprite = GetComponent<Image>();
@@ -21,7 +20,6 @@ namespace _Scripts.UI.Enemies
             Vector3 enemyPos = Camera.main.WorldToScreenPoint(enemyToTrack.gameObject.transform.position);
             transform.rotation = CalculateRotationToTarget(enemyPos);
         }
-
         void Update()
         {
             //pass world pos to screen pos
@@ -33,58 +31,48 @@ namespace _Scripts.UI.Enemies
             RotateToTarget(enemyPos);
             UpdateTransparency(enemyPos);
         }
-        public void SetEnemy(UIEnemyOffLimitsTracker tracker, Enemy en)
+        public void SetEnemy(UIEnemyOffLimitsTracker _tracker, Enemy en)
         {
             enemyToTrack = en;
-            this.tracker = tracker;
+            this.tracker = _tracker;
         }
-
         void CheckScreenLimits()
         {
-            float _x = transform.position.x;
-            float _y = transform.position.y;
-
-            Vector3 trackerPos = tracker.gameObject.transform.position;
+            var position = transform.position;
+            Vector3 trackerPos = tracker.transform.position;
+            Vector3 finalPos = new Vector3(position.x, position.y, position.z);
 
             //check right limit
             if (transform.position.x > trackerPos.x + tracker.screenOffsets.x)
             {
-                _x = trackerPos.x + tracker.screenOffsets.x;
+                finalPos.x = trackerPos.x + tracker.screenOffsets.x;
             }
 
             //check left limit
             if (transform.position.x < trackerPos.x - tracker.screenOffsets.x)
             {
-                _x = trackerPos.x - tracker.screenOffsets.x;
-
+                finalPos.x = trackerPos.x - tracker.screenOffsets.x;
             }
 
             //check up limit
             if (transform.position.y > trackerPos.y + tracker.screenOffsets.y)
             {
-                _y = trackerPos.y + tracker.screenOffsets.y;
+                finalPos.y = trackerPos.y + tracker.screenOffsets.y;
             }
 
             //check down limit
             if (transform.position.y < trackerPos.y - tracker.screenOffsets.y)
             {
-                _y = trackerPos.y - tracker.screenOffsets.y;
-
+                finalPos.y = trackerPos.y - tracker.screenOffsets.y;
             }
 
-            Vector3 finalPos = new Vector3(_x, _y);
             transform.position = finalPos;
-
         }
-
-        
-
         void RotateToTarget(Vector3 pos)
         {
             //Rotate gradually to target
             transform.rotation = Quaternion.Lerp(transform.rotation, CalculateRotationToTarget(pos), rotationSpeed);
         }
-
         Quaternion CalculateRotationToTarget(Vector3 pos)
         {
             Vector3 dir = (pos - transform.position).normalized;
@@ -95,7 +83,6 @@ namespace _Scripts.UI.Enemies
             // Create a Quaternion for the rotation.
             return Quaternion.Euler(new Vector3(0f, 0f, angle + 90));
         }
-
         void UpdateTransparency(Vector3 pos)
         {
             if (_sprite == null) return;
@@ -109,7 +96,6 @@ namespace _Scripts.UI.Enemies
             }
 
             _sprite.color = new Color(_sprite.color.r, _sprite.color.g, _sprite.color.b, a);
-            
         }
     }
 }

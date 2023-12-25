@@ -16,34 +16,52 @@ namespace _Scripts.UI.WeaponTracker
         [SerializeField] Image magazineSprite;
         [SerializeField] Image magazineSpriteBg;
         [SerializeField] TextMeshProUGUI totalAmmo;
+        [SerializeField] private Player.Player playerOwner;
         float _prevAmmo;
         float _newAmmo;
         float _currReloadTime;
         float _reloadTime;
         bool _pulsingMagazineBg = false;
         bool _stopMagazineBgPulse = false;
-        
+
         private void Awake()
         {
             weaponSprite.preserveAspect = true;
-            
-        }      
+        }
+
         private void OnEnable()
         {
-            Player.Player shooter = NetworkManager.Instance.player.GetComponent<Player.Player>();
-            shooter.OnStartingReload += Reload;
-            shooter.OnShoot += TryShoot;
-            PowerUpBase.PowerUpPickedGlobal += OnPowerUp;
+            NetworkManager.Instance.OnHostPlayerCreated += Init;
         }
 
         private void OnDisable()
         {
-            Player.Player shooter = NetworkManager.Instance.player.GetComponent<Player.Player>();
-            shooter.OnStartingReload -= Reload;
-            shooter.OnShoot -= TryShoot;
+            NetworkManager.Instance.OnHostPlayerCreated -= Init;
+            playerOwner.OnStartingReload -= Reload;
+            playerOwner.OnShoot -= TryShoot;
             PowerUpBase.PowerUpPickedGlobal -= OnPowerUp;
         }
-        
+
+        void FindAndSetPlayer()
+        {
+            playerOwner = NetworkManager.Instance.player.GetComponent<Player.Player>();
+        }
+
+        private void Init(GameObject obj)
+        {
+            FindAndSetPlayer();
+            if (playerOwner == null)
+            {
+                Debug.LogError("No player instance!");
+                return;
+            }
+
+            playerOwner = NetworkManager.Instance.player.GetComponent<Player.Player>();
+            playerOwner.OnStartingReload += Reload;
+            playerOwner.OnShoot += TryShoot;
+            PowerUpBase.PowerUpPickedGlobal += OnPowerUp;
+        }
+
         public void SetWeapon(WeaponData data)
         {
             weaponData = data;

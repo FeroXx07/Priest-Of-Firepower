@@ -131,7 +131,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ac165568864f064980a8ec69f768a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  showDebugInfo: 1
+  isDeSpawned: 0
+  showDebugInfo: 0
   tickRateBehaviour: 1
   doTickUpdates: 1
   clientSendReplicationData: 1
@@ -158,6 +159,9 @@ MonoBehaviour:
   sendEveryChange: 0
   sendTickChange: 0
   clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
   tickCounter: 0
   showDebugInfo: 0
   isInterpolating: 0
