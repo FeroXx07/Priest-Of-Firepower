@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
@@ -7,6 +8,7 @@ using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using _Scripts.UI.Interactable;
 using Unity.VisualScripting;
+using Unity.VisualScripting.Dependencies.NCalc;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
@@ -239,6 +241,7 @@ namespace _Scripts.Interactables
 
         public void Interact(Interactor interactor, bool _keyPressed)
         {
+            interactionPromptUI.SetText(message);
             if (keyPressed != _keyPressed)
             {
                 if (NetworkManager.Instance.IsClient())
@@ -246,6 +249,11 @@ namespace _Scripts.Interactables
                     keyPressed = _keyPressed;
                     if (keyPressed)
                     {
+                        if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
+                        {
+                            interactionPromptUI.SetText("Not enough points!");
+                            return;
+                        }
                         interactorId = interactor.GetObjId();
                     }
                     else
@@ -259,6 +267,11 @@ namespace _Scripts.Interactables
 
                     if (keyPressed)
                     {
+                        if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
+                        {
+                            interactionPromptUI.SetText("Not enough points!");
+                            return;
+                        }
                         currentState = InteractableState.INTERACTING;
                         interactorId = interactor.GetObjId();
                     }else

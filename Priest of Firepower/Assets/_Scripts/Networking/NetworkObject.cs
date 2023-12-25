@@ -40,6 +40,9 @@ namespace _Scripts.Networking
         public bool sendEveryChange = false;
         public bool sendTickChange = true;
         public bool clientSendReplicationData = false;
+        public float accelerationFactor = 5f;
+        public float lagThreshold = 1.5f; // Tweak this threshold as needed
+        public float tpThreshold = 10f;
         TransformData newTransformData;
         TransformData currentTransfromData;
         TransformData lastTransformSentData;
@@ -319,11 +322,8 @@ namespace _Scripts.Networking
 
                 // Speed up the interpolation if it's lagging behind
                 float adjustedSpeed = speed;
-                float lagThreshold = 1.5f; // Tweak this threshold as needed
-                float tpThreshold = 10f;
                 if (distance > lagThreshold && distance < tpThreshold)
                 {
-                    float accelerationFactor = 5.0f; // Tweak this factor as needed
                     adjustedSpeed *= accelerationFactor;
                 }
                 else if(distance < tpThreshold)
@@ -331,7 +331,6 @@ namespace _Scripts.Networking
                     //tp
                     transform.position = currentTransfromData.position;
                 }
-
                 // Calculate the time needed to travel the distance at the given speed
                 float travelTime = distance / adjustedSpeed;
                 // Calculate the interpolation factor based on the elapsed time
