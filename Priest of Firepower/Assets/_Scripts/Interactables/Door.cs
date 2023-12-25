@@ -39,6 +39,7 @@ namespace _Scripts.Interactables
 
         private InteractableState currentState = InteractableState.NONE;
         InteractableState IInteractable.state { get => currentState ; set => currentState = value; }
+        ulong IInteractable.interactorId { get => interactorId; set => interactorId = value; }
 
         bool _open = false;
 
@@ -244,9 +245,9 @@ namespace _Scripts.Interactables
             interactionPromptUI.SetText(message);
             if (keyPressed != _keyPressed)
             {
+                keyPressed = _keyPressed;
                 if (NetworkManager.Instance.IsClient())
-                {
-                    keyPressed = _keyPressed;
+                {                    
                     if (keyPressed)
                     {
                         if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
@@ -263,8 +264,6 @@ namespace _Scripts.Interactables
                 }
                 else
                 {
-                    keyPressed = _keyPressed;
-
                     if (keyPressed)
                     {
                         if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)

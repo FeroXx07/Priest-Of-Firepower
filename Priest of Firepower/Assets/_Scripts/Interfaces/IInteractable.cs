@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Unity.VisualScripting;
 
@@ -13,6 +14,7 @@ namespace _Scripts.Interfaces
     public interface IInteractable
     {        
         public InteractableState state { get; set; }
+        public UInt64 interactorId { get; set; }
         public bool IsBeingInteracted { get; }
         public float InteractionTime { get; }
         public string Prompt { get; }

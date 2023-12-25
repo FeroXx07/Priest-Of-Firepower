@@ -25,6 +25,7 @@ namespace _Scripts.Interactables
 
         InteractableState currentState;
         public InteractableState state { get => currentState; set => currentState = value; }
+        public ulong interactorId { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 
         private void OnEnable()
         {
