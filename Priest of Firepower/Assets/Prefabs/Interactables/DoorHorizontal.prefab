@@ -274,6 +274,7 @@ GameObject:
   - component: {fileID: 6899846537113805449}
   - component: {fileID: 7663582016502797283}
   - component: {fileID: 7513834794639708306}
+  - component: {fileID: 8943663424516488769}
   m_Layer: 6
   m_Name: DoorHorizontal
   m_TagString: Untagged
@@ -297,7 +298,7 @@ Transform:
   - {fileID: 6899846536512817916}
   - {fileID: 6899846536306093689}
   m_Father: {fileID: 0}
-  m_RootOrder: -1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &6899846537113805451
 BoxCollider2D:
@@ -383,6 +384,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 639af073384a93642977a12801cfa8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 0
+  clientSendReplicationData: 0
   message: Open the door[cost:750]
   time: 0
   price: 0
@@ -417,7 +423,7 @@ MonoBehaviour:
   - {x: 1, y: -0.5, z: 0}
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
-  m_InstanceId: 87864
+  m_InstanceId: 56838
   m_LocalBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 1, y: 0.5, z: 0}
@@ -437,6 +443,32 @@ MonoBehaviour:
   m_Area: 1
   m_IgnoreFromBuild: 0
   m_AffectedAgents: ffffffff
+--- !u!114 &8943663424516488769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6899846537113805462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 1
+  synchronizeTransform: 0
+  sendEveryChange: 0
+  sendTickChange: 0
+  clientSendReplicationData: 0
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1001 &6899846536936614240
 PrefabInstance:
   m_ObjectHideFlags: 0

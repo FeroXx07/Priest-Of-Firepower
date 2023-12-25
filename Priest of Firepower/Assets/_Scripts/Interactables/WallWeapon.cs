@@ -76,6 +76,11 @@ namespace _Scripts.Interactables
             interactionPromptUI.gameObject.SetActive(show);
         }
 
+        public void InterruptInteraction()
+        {
+            
+        }
+
         public MemoryStream GetInteractionStream()
         {
             throw new System.NotImplementedException();

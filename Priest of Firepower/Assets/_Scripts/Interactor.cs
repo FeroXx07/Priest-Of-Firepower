@@ -1,3 +1,4 @@
+using System;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
 using _Scripts.Networking.Utility;
@@ -11,12 +12,18 @@ namespace _Scripts
         [SerializeField]private LayerMask layer;
         [SerializeField] private float interactionRange;
         private Collider2D _interactable;
+        private Player.Player player; 
 
         public override void Awake()
         {
             base.Awake();
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
+
+        private void Start()
+        {
+            player = GetComponent<Player.Player>();
         }
 
         protected override void InitNetworkVariablesList()
@@ -26,6 +33,8 @@ namespace _Scripts
 
         public override void Update()
         {
+            if (!player.isOwner()) return;
+            
             base.Update();
             // Get the mouse position in world coordinates.
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -39,13 +48,13 @@ namespace _Scripts
             {
                 _interactable = hit.collider;
                 IInteractable obj =  _interactable.GetComponent<IInteractable>();
-                //obj.Interact(this, Input.GetKey(key));
+                obj.Interact(this, Input.GetKey(key));
             }
             // if not looking any more the las interacteable, diable UI and clear the reference to it
             else if (_interactable != null)
             {
                 IInteractable obj = _interactable.GetComponent<IInteractable>();
-                obj.EnablePromptUI(false);
+                obj.InterruptInteraction();
                 _interactable = null;
             }
         

@@ -7,7 +7,8 @@ namespace _Scripts.Interfaces
     {
         INTERACTING,
         INTERRUPTED,
-        INTERACTION_COMPLETE
+        INTERACTION_COMPLETE,
+        NONE
     }
     public interface IInteractable
     {        
@@ -16,11 +17,8 @@ namespace _Scripts.Interfaces
         public float InteractionTime { get; }
         public string Prompt { get; }
         public int InteractionCost { get; }
-        public void Interact(State _state);
-        public void ClientInteract(Interactor interactor, bool keyPressed);
-        public void ClientHandleInteraction(MemoryStream stream);
-        public void ServerInteract(Interactor interactor, bool keyPressed);       
-        public void ServerHandleInteraction(MemoryStream stream);
+        public void Interact(Interactor interactor, bool keyPressed);
         public void EnablePromptUI(bool show);
+        public void InterruptInteraction();
     }
 }

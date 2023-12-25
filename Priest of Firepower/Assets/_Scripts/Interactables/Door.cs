@@ -24,7 +24,6 @@ namespace _Scripts.Interactables
 
         [SerializeField] List<Door> prerequisiteDoors;
         [SerializeField] List<GameObject> objectsToEnable;
-
         UInt64 interactorId; // client that is currently interacting
         float _timer;
         public string Prompt => message;
@@ -36,7 +35,7 @@ namespace _Scripts.Interactables
 
         private bool keyPressed = false;
 
-        private InteractableState currentState;
+        private InteractableState currentState = InteractableState.NONE;
         InteractableState IInteractable.state { get => currentState ; set => currentState = value; }
 
         bool _open = false;
@@ -58,24 +57,23 @@ namespace _Scripts.Interactables
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
 
             writer.Write((int)currentState);
-
+            writer.Write(interactorId);
+            writer.Write(keyPressed);
+            
+            
             switch(currentState)
             {
                 case InteractableState.INTERACTING:
-                    writer.Write(interactorId);
                     break;
                 case InteractableState.INTERRUPTED:
                     break;
                 case InteractableState.INTERACTION_COMPLETE:
                     break;
-
-                default:
+                case InteractableState.NONE:
                     break;
             }
-
-
-            ReplicationHeader header = new ReplicationHeader(GetObjId(),this.GetType().FullName,ReplicationAction.UPDATE, outputMemoryStream.ToArray().Length);
-
+            
+            ReplicationHeader header = new ReplicationHeader(GetObjId(),this.GetType().FullName,action, outputMemoryStream.ToArray().Length);
             return header;
         }
 
@@ -83,39 +81,37 @@ namespace _Scripts.Interactables
         {
 
             InteractableState _state = (InteractableState)reader.ReadInt32();
-
+            Debug.Log("Receiving " + currentState);
+            interactorId = reader.ReadUInt64();
+            keyPressed = reader.ReadBoolean();
             switch (_state)
             {
                 case InteractableState.INTERACTING:
-
-                    UInt64 newInteractorId =  reader.ReadUInt64();
-
-                    //if no one is interacting store interaction
-                    if(newInteractorId == UInt64.MaxValue)
-                    {
-                        interactorId = newInteractorId;
-                    }
-                    else
-                    {
-
-                    }
-
-
                     break;
                 case InteractableState.INTERRUPTED:
                     break;
                 case InteractableState.INTERACTION_COMPLETE:
+                    DisableDoor();
                     break;
-                default:
+                case InteractableState.NONE :
                     break;
             }
-
             return true;
         }
 
         public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
         {
-           
+            keyPressed = reader.ReadBoolean();
+            interactorId = reader.ReadUInt64();
+            
+            if (keyPressed)
+            {
+                currentState = InteractableState.INTERACTING;
+            }else
+            {
+                currentState = InteractableState.INTERRUPTED;
+                interactorId = UInt64.MaxValue;
+            }
         }
 
         public override void OnEnable()
@@ -132,6 +128,16 @@ namespace _Scripts.Interactables
         {
             interactionPromptUI.gameObject.SetActive(show);
         }
+
+        public void InterruptInteraction()
+        {
+             EnablePromptUI(false);
+            // interactorId = UInt64.MaxValue;
+            // keyPressed = false;
+            // currentState = InteractableState.INTERRUPTED;
+            // SendReplicationData(ReplicationAction.UPDATE);
+        }
+
         public override void Update()
         {
             base.Update();
@@ -151,13 +157,14 @@ namespace _Scripts.Interactables
                             _open = true;
                             Debug.Log(Prompt);
                             _timer = InteractionTime;
-                            //pointSystem.RemovePoints(price);
-
                             EnablePromptUI(false);
-
                             EnableObjects(true);
-
-                            DisableDoor();
+                            if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(interactorId,
+                                    out NetworkObject interactor))
+                            {
+                                interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
+                            }
+                            currentState = InteractableState.INTERACTION_COMPLETE;
                         }
                     }
                     break;
@@ -166,14 +173,16 @@ namespace _Scripts.Interactables
                     EnablePromptUI(true);
                     _timer = time;
                     interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
+                    interactorId = UInt64.MaxValue;
+                    currentState = InteractableState.NONE;
                     break;
 
                 case InteractableState.INTERACTION_COMPLETE:
+                    DisableDoor();
+                    SendReplicationData(ReplicationAction.UPDATE);
                     break;
-
-                default:
+                case InteractableState.NONE:
                     break;
-
             }
         }
         
@@ -215,59 +224,52 @@ namespace _Scripts.Interactables
             {
                 child.gameObject.SetActive(false);
             }
+            Destroy(this);
         }
-
         bool IsOpen() { return _open; }
-
 
         public override void SendInputToServer()
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write(keyPressed);
-            SendInput(stream, false);
+            writer.Write(interactorId);
+            SendInput(stream, true);
         }
 
-        public void ClientInteract(Interactor interactor, bool _keyPressed)
+        public void Interact(Interactor interactor, bool _keyPressed)
         {
             if (keyPressed != _keyPressed)
             {
-                MemoryStream stream = new MemoryStream();
-
-                if (keyPressed)
-                { 
-                    currentState = InteractableState.INTERACTING; 
-                    interactorId = interactor.GetObjId();
+                if (NetworkManager.Instance.IsClient())
+                {
+                    keyPressed = _keyPressed;
+                    if (keyPressed)
+                    {
+                        interactorId = interactor.GetObjId();
+                    }
+                    else
+                        interactorId = UInt64.MaxValue;
+                    
+                    SendInputToServer();
                 }
                 else
-                { 
-                    currentState = InteractableState.INTERRUPTED;
-                    interactorId = UInt64.MaxValue;// no one
+                {
+                    keyPressed = _keyPressed;
+
+                    if (keyPressed)
+                    {
+                        currentState = InteractableState.INTERACTING;
+                        interactorId = interactor.GetObjId();
+                    }else
+                    {
+                        currentState = InteractableState.INTERRUPTED;
+                        interactorId = UInt64.MaxValue;
+                    }
+                    SendReplicationData(ReplicationAction.UPDATE);
                 }
-
-                WriteReplicationPacket(stream, ReplicationAction.UPDATE);
-                keyPressed = _keyPressed;
             }
-           
-        }
-        public void ClientHandleInteraction(MemoryStream stream)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void ServerInteract(Interactor interactor, bool _keyPressed)
-        {
-            keyPressed = _keyPressed;
-        }
-
-        public void ServerHandleInteraction(MemoryStream stream)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void Interact(State _state)
-        {
-            throw new System.NotImplementedException();
-        }
+            EnablePromptUI(true);
+      }
     }
 }

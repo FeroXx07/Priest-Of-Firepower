@@ -320,11 +320,16 @@ namespace _Scripts.Networking
                 // Speed up the interpolation if it's lagging behind
                 float adjustedSpeed = speed;
                 float lagThreshold = 1.5f; // Tweak this threshold as needed
-
-                if (distance > lagThreshold)
+                float tpThreshold = 10f;
+                if (distance > lagThreshold && distance < tpThreshold)
                 {
-                    float accelerationFactor = 2.0f; // Tweak this factor as needed
+                    float accelerationFactor = 5.0f; // Tweak this factor as needed
                     adjustedSpeed *= accelerationFactor;
+                }
+                else if(distance < tpThreshold)
+                {
+                    //tp
+                    transform.position = currentTransfromData.position;
                 }
 
                 // Calculate the time needed to travel the distance at the given speed

@@ -60,6 +60,11 @@ namespace _Scripts.Interactables
             interactionPromptUI.gameObject.SetActive(show);
         }
 
+        public void InterruptInteraction()
+        {
+ 
+        }
+
         public MemoryStream GetInteractionStream()
         {
             MemoryStream stream = new MemoryStream();
