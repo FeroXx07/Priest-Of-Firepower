@@ -1,27 +1,49 @@
+using System;
 using _Scripts.Networking;
 using TMPro;
 using UnityEngine;
 
-namespace _Scripts.Points.UI
+namespace _Scripts.UI.Points
 {
     public class UIPoints : MonoBehaviour
     {
+        public Player.Player player;
         [SerializeField] PointSystem pointSystem;
         [SerializeField] TMP_Text pointsTxt;
-        private void SetPlayer(GameObject obj)
+        private void Init(GameObject obj)
         {
-            pointSystem = NetworkManager.Instance.player.GetComponent<PointSystem>();
+            FindAndSetPlayer();
+            
+            if (player == null)
+            {
+                Debug.LogError("No player instance!");
+                return;
+            }
+            
+            pointSystem = player.GetComponent<PointSystem>();
             if(pointSystem != null) pointSystem.OnPointsChanged += UpdatePoints;
+        }
+
+        private void Update()
+        {
+            if (player != null) return;
+            Debug.LogError("UIPoints player was null");
+            Init(null);
+        }
+
+        void FindAndSetPlayer()
+        {
+            player = NetworkManager.Instance.player.GetComponent<Player.Player>();
         }
         
         private void OnEnable()
         {
-            NetworkManager.Instance.OnHostPlayerCreated += SetPlayer;
+            NetworkManager.Instance.OnHostPlayerCreated += Init;
         }
         
         private void OnDisable()
         {
-            NetworkManager.Instance.OnHostPlayerCreated -= SetPlayer;
+            NetworkManager.Instance.OnHostPlayerCreated -= Init;
             if(pointSystem != null) pointSystem.OnPointsChanged -= UpdatePoints;
         }
 

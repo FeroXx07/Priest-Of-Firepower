@@ -18,7 +18,6 @@ namespace _Scripts.Enemies
     {
         List<Transform> _spawnPoints = new List<Transform>();
         public List<GameObject> enemiesPrefabs = new List<GameObject>();
-        public int numToInit = 5;
 
         [SerializeField] AnimationCurve enemyCountProgression = new AnimationCurve();
         [SerializeField] List<Enemy> enemiesAlive = new List<Enemy>();
@@ -50,18 +49,28 @@ namespace _Scripts.Enemies
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
         }
 
-        private void Start()
-        {
-            SpawnEnemies(numToInit);
-        }
-
         protected override void InitNetworkVariablesList()
         {
             
         }
+
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        {
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            writer.Write(_numberOfEnemiesToSpwan);
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            return replicationHeader;
+        }
+
+        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        {
+            _numberOfEnemiesToSpwan = reader.ReadInt32();
+            return true;
+        }
+
         public void SpawnEnemies(int round)
         {
-            _numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(1);
+            _numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
             Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
         }
 
@@ -89,8 +98,7 @@ namespace _Scripts.Enemies
 
         void ServerSpawnEnemy(Vector3 spawnPosition)
         {
-            Debug.Log("Enemy Manager: spawning enemy!");
-            // TODO add probability
+            Debug.Log("Enemy Manager: Server spawning enemy!");
             int enemyType = UnityEngine.Random.Range(0, enemiesPrefabs.Count - 1);
             GameObject enemyPrefab = enemiesPrefabs[enemyType];
             
@@ -104,17 +112,19 @@ namespace _Scripts.Enemies
             writer.Write(spawnPosition.z);
             
             ReplicationHeader changeWeaponHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.CREATE, changeWeaponMemoryStream.ToArray().Length);
-            GameObject enemyGO = NetworkManager.Instance.replicationManager.Server_InstantiateNetworkObject(enemyPrefab,
+            GameObject enemyGo = NetworkManager.Instance.replicationManager.Server_InstantiateNetworkObject(enemyPrefab,
                 changeWeaponHeader, changeWeaponMemoryStream);
 
-            enemyGO.transform.position = spawnPosition;
+            enemyGo.transform.position = spawnPosition;
             
-            if (enemyGO.TryGetComponent(out Enemy enemy)) AddEnemyToList(enemy);
+            if (enemyGo.TryGetComponent(out Enemy enemy)) AddEnemyToList(enemy);
             OnEnemySpawn?.Invoke(enemy);
         }
 
         void ClientSpawnEnemy(GameObject spawnedEnemy, Vector3 spawnPosition)
         {
+            Debug.Log("Enemy Manager: Client spawning enemy!");
+            _numberOfEnemiesToSpwan--;
             spawnedEnemy.transform.position = spawnPosition;
             
             if (spawnedEnemy.TryGetComponent(out Enemy enemy)) AddEnemyToList(enemy);
@@ -137,11 +147,6 @@ namespace _Scripts.Enemies
             }
         }
 
-        public override void CallBackDeSpawnObjectOther(NetworkObject objectDestroyed, BinaryReader reader, long timeStamp, int lenght)
-        {
-            base.CallBackDeSpawnObjectOther(objectDestroyed, reader, timeStamp, lenght);
-        }
-
         void AddEnemyToList(Enemy enemy)
         {
             enemiesAlive.Add(enemy);
@@ -150,9 +155,9 @@ namespace _Scripts.Enemies
 
         void RemoveEnemyFromList(Enemy enemy)
         {
+            Debug.Log($"Enemy Manager: Enemy remove callback!, enemies alive {enemiesAlive.Count}");
             enemiesAlive.Remove(enemy);
             enemy.onDeath.RemoveListener(RemoveEnemyFromList);
-            Debug.Log("enemies alive: " + enemiesAlive.Count);
             OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
             OnEnemyRemove?.Invoke(enemy);
         }

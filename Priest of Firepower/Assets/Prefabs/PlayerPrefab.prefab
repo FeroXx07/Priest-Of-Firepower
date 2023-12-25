@@ -355,7 +355,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isDeSpawned: 0
-  showDebugInfo: 1
+  showDebugInfo: 0
   tickRateBehaviour: 1
   doTickUpdates: 1
   clientSendReplicationData: 0

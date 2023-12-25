@@ -45,7 +45,7 @@ namespace _Scripts.Networking
         public static readonly UInt64 UNKNOWN_ID = 69;
         public UInt64 getId => IsClient() ? _client.GetId() : 0;
         public string PlayerName = "testeo";
-        public Player.Player player { get; set; }
+        public GameObject player { get; set; }
         public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
         public ReplicationManager replicationManager = new ReplicationManager();
 
@@ -53,7 +53,7 @@ namespace _Scripts.Networking
 
         #region Buffers
 
-        private uint _mtu = 1400;
+        private uint _mtu = 1300;
         private int _stateBufferTimeout = 100; // time with no activity to send not fulled packets
         private int _inputBufferTimeout = 10; // time with no activity to send not fulled packets
         private int _heartBeatRate = 1000; // beat rate to send to the server 
@@ -213,6 +213,11 @@ namespace _Scripts.Networking
             }
         }
 
+        public void OwnerPlayerCreated(GameObject playerGameObject)
+        {
+            OnHostPlayerCreated?.Invoke(playerGameObject);
+        }
+        
         void DespawnPlayer(UInt64 id, string userName)
         {
             if (_isHost)

@@ -10,26 +10,21 @@ namespace _Scripts.UI.Wave_Info
         [SerializeField] RoundSystem roundSystem;
 
         float _timer = 0;
-
         private void OnEnable()
         {
             roundSystem.OnRoundEnd += StartTimer;
         }
-        // Start is called before the first frame update
-        void Start()
+        private void OnDisable()
         {
-
         }
-
-        // Update is called once per frame
         void Update()
         {
+            Debug.Log("UI Round timer: Updating round timer");
             if (_timer > 0)
             {
                 _timer -= Time.deltaTime;
 
                 if (_timer > roundSystem.timeBetweenRounds / 4 * 3)
-
                 {
                     titleText.text = "Round Finished!";
                     timerText.gameObject.SetActive(false);
@@ -39,7 +34,6 @@ namespace _Scripts.UI.Wave_Info
                     titleText.text = "Next Round in";
                     timerText.gameObject.SetActive(true);
                     SetText();
-
                 }
             }
             else
@@ -48,21 +42,18 @@ namespace _Scripts.UI.Wave_Info
                 gameObject.SetActive(false);
                 timerText.gameObject.SetActive(false);
             }
-
-            
-
         }
 
         void StartTimer()
         {
+            Debug.Log("UI Round timer: Starting round timer");
             if (roundSystem != null)
             {
                 gameObject.SetActive(true);
                 _timer = roundSystem.timeBetweenRounds;
             }
-
         }
-
+        
         void SetText()
         {
             timerText.text = Mathf.CeilToInt(_timer + 0.2f).ToString();

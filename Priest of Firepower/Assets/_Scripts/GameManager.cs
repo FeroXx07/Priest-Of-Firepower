@@ -1,5 +1,6 @@
 using _Scripts.Enemies;
 using _Scripts.Networking;
+using _Scripts.UI.Points;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,9 +8,9 @@ namespace _Scripts
 {
     public class GameManager : GenericSingleton<GameManager>
     {
+        [SerializeField] GameObject uiCanvas;
         [SerializeField] EnemyManager enemySpawnManager;
-
-        [SerializeField]RoundSystem roundSystem;
+        [SerializeField] RoundSystem roundSystem;
         public void StartGame(string sceneToLoad)
         {
             SceneManager.LoadScene(sceneToLoad);
@@ -28,18 +29,36 @@ namespace _Scripts
             }
         }
 
-        private void Start()
+        public void StartGame()
         {
-            //roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
-            //roundSystem.StartRound();
-        }
+            if (uiCanvas == null)
+            {
+                uiCanvas = FindObjectOfType<UIPoints>(true).gameObject;
+            }
+            
+            uiCanvas.SetActive(true);
 
-
-        private void Update()
-        {
-           // roundSystem.RoundFinished(enemySpawnManager);
+            if (roundSystem == null)
+            {
+                roundSystem = FindObjectOfType<RoundSystem>(true);
+            }
+            
+            if (enemySpawnManager == null)
+            {
+                enemySpawnManager = FindObjectOfType<EnemyManager>(true);
+            }
+            
+            roundSystem.OnRoundBegin += enemySpawnManager.SpawnEnemies;
+            roundSystem.StartRound();
         }
         
+        private void Update()
+        {
+            if (roundSystem == null || enemySpawnManager == null)
+                return;
+            
+            roundSystem.RoundFinished(enemySpawnManager);
+        }
     }
 }
 

@@ -124,6 +124,9 @@ namespace _Scripts.Player
             {
                 GetComponent<SpriteRenderer>().sortingOrder = 11;
                 FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
+                NetworkManager.Instance.player = gameObject;
+                GameManager.Instance.StartGame();
+                NetworkManager.Instance.OwnerPlayerCreated(gameObject);
             }
 
             shootMarker.positionCount = 2;
