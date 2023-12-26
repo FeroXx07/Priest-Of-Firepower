@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using _Scripts.Enemies;
@@ -23,6 +24,23 @@ namespace _Scripts.UI.Enemies
         private void Start()
         {
             _enemyTrackers = new List<UISingleEnemyTracker>();
+            StartCoroutine(NullCheckRoutine());
+        }
+
+        IEnumerator NullCheckRoutine()
+        {
+            WaitForSeconds seconds = new WaitForSeconds(1);
+            while (true)
+            {
+                foreach (UISingleEnemyTracker enemyTracker in _enemyTrackers)
+                {
+                    if (enemyTracker == null)
+                        _enemyTrackers.Remove(enemyTracker);
+                }
+
+                yield return seconds;
+            }
+            yield return null;
         }
         void CreateTracker(Enemy e)
         {
@@ -38,6 +56,9 @@ namespace _Scripts.UI.Enemies
 
             foreach (UISingleEnemyTracker t in _enemyTrackers)
             {
+                if (t.enemyToTrack == null)
+                    _enemyTrackers.Remove(t);
+                
                 if (t.enemyToTrack == e)
                 {
                     toDestroy = t.gameObject;

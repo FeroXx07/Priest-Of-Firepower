@@ -2,17 +2,18 @@ using System.Collections.Generic;
 using _Scripts.Power_Ups;
 using UnityEngine;
 using System;
+using System.Collections;
 using System.IO;
 using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
+using _Scripts.UI.Enemies;
 
 namespace _Scripts.Enemies
 {
     public enum EnemyManagerEvent
     {
         SPAWN_ENEMY,
-        DESPAWN_ENEMY
     }
     public class EnemyManager : NetworkBehaviour
     {
@@ -47,6 +48,11 @@ namespace _Scripts.Enemies
             base.Awake();
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
+
+        private void Start()
+        {
+            StartCoroutine(NullCheckRoutine());
         }
 
         protected override void InitNetworkVariablesList()
@@ -95,7 +101,20 @@ namespace _Scripts.Enemies
                 }
             }
         }
-
+        IEnumerator NullCheckRoutine()
+        {
+            WaitForSeconds seconds = new WaitForSeconds(1);
+            while (true)
+            {
+                foreach (Enemy enemy in enemiesAlive)
+                {
+                    if (enemy == null)
+                        enemiesAlive.Remove(enemy);
+                }
+                yield return seconds;
+            }
+            yield return null;
+        }
         void ServerSpawnEnemy(Vector3 spawnPosition)
         {
             Debug.Log("Enemy Manager: Server spawning enemy!");
@@ -140,10 +159,6 @@ namespace _Scripts.Enemies
             {
                 Vector3 spawnPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
                 ClientSpawnEnemy(objectSpawned.gameObject, spawnPosition);
-            }
-            else if (enemyManagerEvent == EnemyManagerEvent.DESPAWN_ENEMY)
-            {
-                
             }
         }
 
