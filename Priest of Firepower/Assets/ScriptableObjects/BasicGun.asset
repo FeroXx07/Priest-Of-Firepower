@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
   m_Name: BasicGun
   m_EditorClassIdentifier: 
-  _name: Holy Gun
+  weaponName: Basic Gun
   price: 15
   range: 5
   damage: 5
@@ -24,5 +24,5 @@ MonoBehaviour:
   maxAmmoCapacity: 80
   magazineSize: 16
   reloadSpeed: 0.5
-  Reloading: 0
+  reloading: 0
   sprite: {fileID: 208659192, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}

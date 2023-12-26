@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
   m_Name: M1 Carabine
   m_EditorClassIdentifier: 
-  _name: M1 Carabine
+  weaponName: M1 Carabine
   price: 500
   range: 15
   damage: 4
@@ -24,5 +24,5 @@ MonoBehaviour:
   maxAmmoCapacity: 70
   magazineSize: 14
   reloadSpeed: 0.3
-  Reloading: 0
+  reloading: 0
   sprite: {fileID: -501131978, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
