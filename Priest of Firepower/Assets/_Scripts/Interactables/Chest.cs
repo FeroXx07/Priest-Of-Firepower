@@ -31,8 +31,7 @@ namespace _Scripts.Interactables
 
         UInt64 _interactorId = UInt64.MaxValue;
         private bool _keyPressed = false;
-        private int _spriteIndex;
-        private int _weaponIndex;
+        private int _weaponIndex = 0;
         private GameObject _weapon;
         private float _timer;
         public string Prompt => message;
@@ -40,7 +39,7 @@ namespace _Scripts.Interactables
         public float InteractionTime => time;
         public int InteractionCost => price;
 
-        private InteractableState currentState;
+        private InteractableState currentState = InteractableState.NONE;
         public InteractableState state { get => currentState; set => currentState = value; }
         public ulong interactorId { get => _interactorId; set => _interactorId = value; }
 
@@ -58,66 +57,64 @@ namespace _Scripts.Interactables
         public override void OnEnable()
         {
             base.OnEnable();
-            InitNetworkVariablesList();
-            BITTracker = new ChangeTracker(NetworkVariableList.Count);
-
             interactionPromptUI.SetText(message);
             GetComponent<SpriteRenderer>().sprite = sprites[0];
             EnablePromptUI(false);
             vfx.Stop();
             obtainedWeapon.SetActive(false);
+            _timer = InteractionTime;
             _weaponReady = false;
+            currentState = InteractableState.NONE;
         }
 
         public override void Update()
         {
             base.Update();
-            
+
+            if (NetworkManager.Instance.IsClient()) return;
 
             switch(state)
             {
                 case InteractableState.INTERACTING:
-                    //decrease timer to interact
-                    _timer -= Time.deltaTime;
-                    if (_timer <= 0)
+                    
+                    //open chest
+                    if (!_openChest)
                     {
-                        //open chest
-                        if (!_openChest)
-                        {
-                            if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(interactorId,
-                                 out NetworkObject interactor))
-                            {
-                                interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
-                            }
-                            OpenChest();
-                        }
-                        //If chest showing the aviable weapon
-                        //and player interact get weapon and close chest
-                        else
-                        {
-                            if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(interactorId,
-                                 out NetworkObject interactor))
-                            {
-                                if(_weapon != null)
-                                    interactor.GetComponent<WeaponSwitcher>().ChangeWeaponServer(_weapon);
-                            }
-                            CloseChest();
-                        }
-
-                        _timer = InteractionTime;
+                        OpenChest();
                     }
-
+                    //If chest showing the aviable weapon
+                    //and player interact get weapon and close chest
+                    else if(_weaponReady && _keyPressed && _interactorId != UInt64.MaxValue)
+                    {
+                        if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(interactorId,
+                             out NetworkObject interactor))
+                        {
+                            if (_weapon != null)
+                                interactor.GetComponent<WeaponSwitcher>().ChangeWeaponServer(_weapon);
+                        }
+                        CloseChest();
+                    }
                     // Check if the weaponReady has been active for more than 9 seconds and close the chest.
-                    if (_weaponReady && Time.time - _weaponRuletteStartTime >= 9)
+                    if (_weaponReady && (Time.time - _weaponRuletteStartTime) >= 9)
                     {
                         CloseChest();
                     }
+
                     break;
                 case InteractableState.INTERRUPTED:
                     _timer = InteractionTime;
                     interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
+                    currentState = InteractableState.NONE;
                     break;
                 case InteractableState.INTERACTION_COMPLETE:
+                    _timer = InteractionTime;
+                    _keyPressed = false;
+                    _weaponIndex = 0;
+                    _interactorId = UInt64.MaxValue;
+                    _randomizingWeapon = false;
+                    _openChest = false;
+                    _weaponReady = false;
+                    currentState = InteractableState.NONE;
                     break;
                     case InteractableState.NONE: break;
             }
@@ -132,7 +129,19 @@ namespace _Scripts.Interactables
 
         public void InterruptInteraction()
         {
- 
+            EnablePromptUI(false);
+
+            _keyPressed = false;
+            _interactorId = UInt64.MaxValue;
+            if (NetworkManager.Instance.IsClient())
+            {
+                SendInputToServer();
+            }
+            else
+            {
+               SendReplicationData(ReplicationAction.UPDATE);
+            }
+
         }
 
         public MemoryStream GetInteractionStream()
@@ -151,62 +160,55 @@ namespace _Scripts.Interactables
 
         public void Interact(Interactor interactor, bool keyPressed)
         {
-
+            //no interaction allowed
             if (_randomizingWeapon) return;
 
-            _interactorId = interactor.GetObjId();
-            if(keyPressed != _keyPressed)
+            EnablePromptUI(true);
+
+            interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
+
+            //if (interactor.GetComponent<PointSystem>().GetPoints() >= InteractionCost)
+            //{
+            //    interactionPromptUI.SetText("Not enough points!");
+            //    return;
+            //}
+
+            
+            if (keyPressed && (currentState == InteractableState.NONE || _weaponReady))
             {
-                _keyPressed = keyPressed;
-                if(NetworkManager.Instance.IsClient())
+                _timer -= Time.deltaTime;
+                if (_timer <= 0)
                 {
-                    if(_keyPressed)
-                    {
-                        if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
-                        {
-                            interactionPromptUI.SetText("Not enough points!");
-                            return;
-                        }
+                    _timer = InteractionTime;
+
+                    _keyPressed = keyPressed;
+                    _interactorId = interactor.GetObjId();
+
+                    if (NetworkManager.Instance.IsClient())
+                    {                        
+                        interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);                       
                         _interactorId = interactor.GetObjId();
+                        SendInputToServer();
                     }
                     else
                     {
-                        _interactorId = UInt64.MaxValue;
-                    }
-                    
-
-                    SendInputToServer();
-                }
-                else
-                {
-                    if (keyPressed)
-                    {
-                        if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
-                        {
-                            interactionPromptUI.SetText("Not enough points!");
-                            return;
-                        }
                         currentState = InteractableState.INTERACTING;
                         _interactorId = interactor.GetObjId();
+                        SendReplicationData(ReplicationAction.UPDATE);
                     }
-                    else
-                    {
-                        currentState = InteractableState.INTERRUPTED;
-                        _interactorId = UInt64.MaxValue;
-                    }
-                    SendReplicationData(ReplicationAction.UPDATE);
                 }
-                
             }
-            
-            EnablePromptUI(true);   
-     
+            else
+            {
+                _timer = InteractionTime;
+            }
         }
 
         public override void SendInputToServer()
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
+            
             writer.Write(_keyPressed);
             writer.Write(_interactorId);
             SendInput(stream, true);
@@ -217,14 +219,11 @@ namespace _Scripts.Interactables
             _interactorId = reader.ReadUInt64();
 
             if (_keyPressed)
-            {
                 currentState = InteractableState.INTERACTING;
-            }
-            else
-            {
+
+            if (!_keyPressed && currentState != InteractableState.INTERACTING)
                 currentState = InteractableState.INTERRUPTED;
-                interactorId = UInt64.MaxValue;
-            }
+
         }
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
@@ -236,21 +235,7 @@ namespace _Scripts.Interactables
             writer.Write(_openChest);
             writer.Write(_randomizingWeapon);
             writer.Write(_weaponReady);
-            writer.Write(_spriteIndex);
             writer.Write(_weaponIndex);
-
-            switch (currentState)
-            {
-                case InteractableState.INTERACTING:
-
-                    break;
-                case InteractableState.INTERRUPTED:
-                    break;
-                case InteractableState.INTERACTION_COMPLETE:
-                    break;
-                case InteractableState.NONE:
-                    break;
-            }
 
             ReplicationHeader header = new ReplicationHeader(GetObjId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             return header;
@@ -259,35 +244,66 @@ namespace _Scripts.Interactables
         public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
 
-            InteractableState _state = (InteractableState)reader.ReadInt32();
+            currentState = (InteractableState)reader.ReadInt32();
             Debug.Log("Receiving " + currentState);
             _interactorId = reader.ReadUInt64();
             _keyPressed = reader.ReadBoolean();
             _openChest = reader.ReadBoolean();
             _randomizingWeapon = reader.ReadBoolean();
             _weaponReady = reader.ReadBoolean();
-            _spriteIndex = reader.ReadInt32();
             _weaponIndex = reader.ReadInt32();
 
 
-            switch (_state)
+            Debug.Log("Open " + _openChest);
+            if (_openChest)
             {
-                case InteractableState.INTERACTING:
-                    break;
-                case InteractableState.INTERRUPTED:
-                    break;
-                case InteractableState.INTERACTION_COMPLETE:
-                    break;
-                case InteractableState.NONE:
-                    break;
+                if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))
+                {
+                    spriteRenderer.sprite = sprites[1];
+                }
+
+                if (_randomizingWeapon)
+                {
+                    vfx.Play();
+                }
+                else
+                {
+                    vfx.Stop();
+                }
+
+                if (_weaponReady)
+                {
+                    _weapon = weapons[_weaponIndex];
+                    obtainedWeapon.SetActive(true);
+                    interactionPromptUI.SetText("F to pickup");
+                    if (_weapon != null)
+                    {
+                        if (obtainedWeapon.TryGetComponent<SpriteRenderer>(out var weaponSpriteRenderer))
+                        {
+                            weaponSpriteRenderer.sprite = _weapon.GetComponent<Weapon.Weapon>().weaponData.sprite;
+                        }
+                    }
+                }
             }
+            else
+            {
+                if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))
+                {
+                    spriteRenderer.sprite = sprites[0];
+                }
+
+                obtainedWeapon.SetActive(false);
+                interactionPromptUI.SetText(message);
+            }
+
+
             return true;
         }
 
         private void OpenChest()
         {
             if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))
-            {
+            { 
                 spriteRenderer.sprite = sprites[1];
             }
 
@@ -310,9 +326,13 @@ namespace _Scripts.Interactables
             _openChest = false;
             _weaponReady = false;
             _weapon = null;
+            _weaponIndex = 0;
+
             obtainedWeapon.SetActive(false);
 
             _timer = InteractionTime * 2;
+
+            currentState = InteractableState.INTERACTION_COMPLETE;
 
             SendReplicationData(ReplicationAction.UPDATE);
         }
