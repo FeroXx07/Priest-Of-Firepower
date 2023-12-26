@@ -100,7 +100,7 @@ namespace _Scripts.Weapon
             localData.totalAmmo = reader.ReadInt32();
             localData.maxAmmoCapacity = reader.ReadInt32();
             localData.magazineSize = reader.ReadInt32();
-            localData.reloadSpeed = reader.ReadInt32();
+            localData.reloadSpeed = reader.ReadSingle();
             localData.reloading = reader.ReadBoolean();
             return true;
         }
@@ -114,10 +114,10 @@ namespace _Scripts.Weapon
                 return;
             
             if (shooterOwner != null) shooterOwner.OnStartingReload?.Invoke();
-            StartCoroutine(Realoading());
+            StartCoroutine(Reloading());
         }
 
-        IEnumerator Realoading()
+        IEnumerator Reloading()
         {
             localData.reloading = true;
             yield return new WaitForSeconds(localData.reloadSpeed);
@@ -152,8 +152,6 @@ namespace _Scripts.Weapon
             {
                 if (CanShoot())
                 {
-                    //bullet = Instantiate();
-                    // 
                     InstantiateBulletServer();
                     OnGunShoot();
                 }
@@ -172,6 +170,10 @@ namespace _Scripts.Weapon
                 {
                     OnGunShoot();
                 }
+            }
+            else
+            {
+                Reload();
             }
         }
 
@@ -280,6 +282,12 @@ namespace _Scripts.Weapon
 
         public void SetPlayerShooter(Player.Player player)
         {
+            if (shooterOwner != null)
+                shooterOwner.OnFlip -= FlipGun;
+            
+            if (player != null)
+                player.OnFlip += FlipGun;
+            
             shooterOwner = player;
         }
     }

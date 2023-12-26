@@ -37,8 +37,13 @@ namespace _Scripts.UI.WeaponTracker
         private void OnDisable()
         {
             NetworkManager.Instance.OnHostPlayerCreated -= Init;
-            playerOwner.OnStartingReload -= Reload;
-            playerOwner.OnShoot -= TryShoot;
+
+            if (playerOwner != null)
+            {
+                playerOwner.OnStartingReload -= Reload;
+                playerOwner.OnShoot -= TryShoot;
+            }
+            
             PowerUpBase.PowerUpPickedGlobal -= OnPowerUp;
         }
 

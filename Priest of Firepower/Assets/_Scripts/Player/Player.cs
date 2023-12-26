@@ -1,5 +1,6 @@
 using _Scripts.Networking;
 using System;
+using System.Collections;
 using System.IO;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
@@ -97,21 +98,12 @@ namespace _Scripts.Player
             GetComponent<NetworkObject>().speed = speed;
             
             clientSendReplicationData = true;
-
-            // if (NetworkManager.Instance.IsClient())
-            // {
-            //     NetworkObject.sendEveryChange = false;
-            //     NetworkObject.tickRate = 1.0f;
-            // }
         }
         
         public override void OnEnable()
         {
             base.OnEnable();
             _weaponSwitcher.OnWeaponSwitch += ChangeHolder;
-            
-            //if host render on top the player over the others
-            
         }
 
         public override void  OnDisable()
@@ -127,12 +119,21 @@ namespace _Scripts.Player
             
             if (isOwner())
             {
+                Debug.Log("Initiating host player and UI");
                 GetComponent<SpriteRenderer>().sortingOrder = 11;
                 FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
                 NetworkManager.Instance.player = gameObject;
                 NetworkManager.Instance.OwnerPlayerCreated(gameObject);
                 GameManager.Instance.StartGame();
             }
+
+            StartCoroutine(LateStart());
+        }
+
+        IEnumerator LateStart()
+        {
+            yield return new WaitForSeconds(0.2f);
+            _weaponSwitcher.InitializeWeapons();
         }
         
         public override void Update()
@@ -144,16 +145,15 @@ namespace _Scripts.Player
             
             if (Input.GetMouseButtonDown(0))
             {
+                currentWeaponInput = PlayerShooterInputs.SHOOT;
+                OnShoot?.Invoke();
                 if (isHost)
                 {
-                    currentWeaponInput = PlayerShooterInputs.SHOOT;
-                    OnShoot?.Invoke();
                     _currentWeapon.ShootServer();
                     SendInputToClients();
                 }
                 else if (isClient)
                 {
-                    currentWeaponInput = PlayerShooterInputs.SHOOT;
                     _currentWeapon.ShootClient();
                     SendInputToServer();
                 }
@@ -162,7 +162,16 @@ namespace _Scripts.Player
             if (Input.GetKeyDown(KeyCode.R))
             {
                 currentWeaponInput = PlayerShooterInputs.RELOAD;
+                _currentWeapon.Reload();
                 OnReload?.Invoke();
+                if (isHost)
+                {
+                    SendInputToClients();
+                }
+                else if (isClient)
+                {
+                    SendInputToServer();
+                }
             }
             
             if (Input.GetKey(KeyCode.W))
@@ -292,10 +301,13 @@ namespace _Scripts.Player
 
             // Create a Quaternion for the rotation.
             Quaternion targetRotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
-            
-            _weaponHolder.transform.rotation = targetRotation;
 
-            _weaponHolder.transform.position = transform.position + shootDir * weaponOffset;  
+            if (_weaponHolder != null)
+            {
+                var transform1 = _weaponHolder.transform;
+                transform1.rotation = targetRotation;
+                transform1.position = transform.position + shootDir * weaponOffset;  
+            }
         }
         
         void UpdateShootMarker(Vector3 finalPos)
@@ -338,9 +350,19 @@ namespace _Scripts.Player
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-            writer.Write(_weaponHolder.transform.rotation.eulerAngles.z);
-            writer.Write(shootDir.x);
-            writer.Write(shootDir.y);
+
+            if (_weaponHolder == null)
+            {
+                writer.Write(false);
+            }
+            else
+            {
+                writer.Write(true);
+                writer.Write(_weaponHolder.transform.rotation.eulerAngles.z);
+                writer.Write(shootDir.x);
+                writer.Write(shootDir.y);
+            }
+               
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             if (showDebugInfo) Debug.Log($"{_playerId} Player Shooter: Sending data");
             return replicationHeader;
@@ -348,12 +370,15 @@ namespace _Scripts.Player
 
         public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
-            float angle = reader.ReadSingle();
-            shootDir.x = reader.ReadSingle();
-            shootDir.y = reader.ReadSingle();
-            if (showDebugInfo) Debug.Log($"{_playerId} Player Shooter: New angle received: {angle}");
-            if (_weaponHolder != null)
-                _weaponHolder.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
+            if (reader.ReadBoolean())
+            {
+                float angle = reader.ReadSingle();
+                shootDir.x = reader.ReadSingle();
+                shootDir.y = reader.ReadSingle();
+                if (showDebugInfo) Debug.Log($"{_playerId} Player Shooter: New angle received: {angle}");
+                if (_weaponHolder != null)
+                    _weaponHolder.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
+            }
             return true;
         }
         
@@ -394,8 +419,14 @@ namespace _Scripts.Player
             if (currentWeaponInput == PlayerShooterInputs.SHOOT)
             {
                 currentWeaponInput = PlayerShooterInputs.SHOOT;
-                OnShoot?.Invoke();
                 _currentWeapon.ShootServer();
+                OnShoot?.Invoke();
+                SendInputToClients();
+            }
+            else if (currentWeaponInput == PlayerShooterInputs.RELOAD)
+            {
+                _currentWeapon.Reload();
+                OnReload?.Invoke();
                 SendInputToClients();
             }
         }
@@ -445,6 +476,11 @@ namespace _Scripts.Player
                 currentWeaponInput = PlayerShooterInputs.SHOOT;
                 _currentWeapon.ShootClient();
                 OnShoot?.Invoke();
+            }
+            else if (currentWeaponInput == PlayerShooterInputs.RELOAD)
+            {
+                _currentWeapon.Reload();
+                OnReload?.Invoke();
             }
         }
     }

@@ -52,6 +52,10 @@ namespace _Scripts.Weapon
         private void Start()
         {
             SetWeapons();
+        }
+
+        public void InitializeWeapons()
+        {
             SelectWeapon(_selectedWeapon);
             if (NetworkManager.Instance.IsHost()) ChangeWeaponServer(initialWeaponPrefab);
             if (NetworkManager.Instance.IsHost()) ChangeWeaponServer(initialSecondaryWeaponPrefab);

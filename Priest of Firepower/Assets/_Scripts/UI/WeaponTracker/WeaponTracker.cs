@@ -40,6 +40,7 @@ namespace _Scripts.UI.WeaponTracker
             
             if (playerOwner)
             {
+                Debug.Log("Weapon Tracker: Unsubscribing UpdateWeaponUI");
                 playerOwner.OnShoot -= UpdateWeaponUI;
                 playerOwner.OnFinishedReload -= UpdateWeaponUI;
             }
@@ -47,6 +48,7 @@ namespace _Scripts.UI.WeaponTracker
         
         void UpdateWeaponUI()
         {
+            //Debug.Log("Weapon Tracker: UpdateWeaponUI()");
             if (primaryWeapon) primaryWeapon.UpdateUI();
             if (secondaryWeapon) secondaryWeapon.UpdateUI();
         }
@@ -57,6 +59,7 @@ namespace _Scripts.UI.WeaponTracker
 
             if (playerOwner == shooter && shooter.isOwner())
             {
+                Debug.Log("Weapon Tracker: Subscribing UpdateWeaponUI");
                 shooter.OnShoot += UpdateWeaponUI;
                 shooter.OnFinishedReload += UpdateWeaponUI;
             }
