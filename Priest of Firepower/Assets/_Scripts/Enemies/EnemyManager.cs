@@ -92,7 +92,7 @@ namespace _Scripts.Enemies
                 _spawnTimer -= Time.deltaTime;
                 if (_spawnTimer <= 0)
                 {
-                    Transform p = GetRadomSpawnPoint();
+                    Transform p = GetRandomSpawnPoint();
                     ServerSpawnEnemy(p.position);
                     _numberOfEnemiesToSpwan--;
                     _spawnTimer = _spawnRate;
@@ -118,10 +118,9 @@ namespace _Scripts.Enemies
         void ServerSpawnEnemy(Vector3 spawnPosition)
         {
             Debug.Log("Enemy Manager: Server spawning enemy!");
-            int enemyType = UnityEngine.Random.Range(0, enemiesPrefabs.Count - 1);
+            int enemyType = UnityEngine.Random.Range(0, enemiesPrefabs.Count);
             GameObject enemyPrefab = enemiesPrefabs[enemyType];
             
-            //GameObject polledObj = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
             MemoryStream changeWeaponMemoryStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(changeWeaponMemoryStream);
             
@@ -196,14 +195,14 @@ namespace _Scripts.Enemies
             nuke.RaiseDamageDealthEvent(gameObject);
         }
 
-        int GetNumberOfEnemiesToSpawn(int round)
+        private int GetNumberOfEnemiesToSpawn(int round)
         {
             return Mathf.FloorToInt(enemyCountProgression.Evaluate(round));
         }
 
-        Transform GetRadomSpawnPoint()
+        private Transform GetRandomSpawnPoint()
         {
-            return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count)];
+            return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count - 1)];
         }
 
         public void AddSpawnpoint(Transform spawnPoint)

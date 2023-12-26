@@ -50,12 +50,18 @@ MonoBehaviour:
   instantiatablesPrefabs:
   - {fileID: 1747872900250147753, guid: d8a41d9ffc3dad24eb4139bdec85de48, type: 3}
   - {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  - {fileID: 5059123218599921543, guid: 4e66b9e2bf9809941a2e225fbc5f832c, type: 3}
   - {fileID: 32228731526877059, guid: 486933937a9c483438aa9fd734731343, type: 3}
   - {fileID: 824060067660528363, guid: 4eef580d63463244abf0796b10d30d7d, type: 3}
   - {fileID: 4472022888998543014, guid: 02783c3842fa620448c0e358f8923992, type: 3}
+  - {fileID: 6899846537113805462, guid: 273ea94a92c6900439dd686a3a0f9bca, type: 3}
+  - {fileID: 824060067660528363, guid: bcc07618a1f2cbd4cb88a47082ff33ab, type: 3}
+  - {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
   replicationManager:
-    gameObject: {fileID: 0}
     idReplication: 0
+    networkObjectMap:
+      m_keys: 
+      m_values: []
     unRegisteredNetIds: 
   sendSeqNumState: 0
   recSeqNumState: 0

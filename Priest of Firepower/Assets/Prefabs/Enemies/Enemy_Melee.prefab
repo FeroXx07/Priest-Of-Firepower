@@ -10,10 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 824060067660528359}
   - component: {fileID: 824060067660528357}
-  - component: {fileID: 824060067660528352}
   - component: {fileID: 824060067660528354}
   - component: {fileID: 824060067660528355}
   - component: {fileID: 824060067660528381}
+  - component: {fileID: 824060067660528352}
+  - component: {fileID: 5189478850491432953}
   m_Layer: 7
   m_Name: Enemy_Melee
   m_TagString: Untagged
@@ -59,25 +60,6 @@ NavMeshAgent:
   m_BaseOffset: 0.5
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
---- !u!114 &824060067660528352
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 824060067660528363}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fd6e738bda0d6e4d9b31233dd2cb71a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pointsOnHit: 10
-  pointsOnDeath: 100
-  attackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
-  onDeath:
-    m_PersistentCalls:
-      m_Calls: []
-  attackDuration: 0.5
 --- !u!58 &824060067660528354
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -152,11 +134,73 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4152c504c31e8548a451fc8d636155b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   health: 10
   maxHealth: 10
   layer:
     serializedVersion: 2
     m_Bits: 128
+--- !u!114 &824060067660528352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824060067660528363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fd6e738bda0d6e4d9b31233dd2cb71a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 6
+  doTickUpdates: 1
+  clientSendReplicationData: 0
+  pointsOnHit: 10
+  pointsOnDeath: 100
+  speed: 2
+  damage: 5
+  target: {fileID: 0}
+  attackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
+  onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+  logicFrameIntervalUpdate: 10
+  attackDuration: 0.5
+--- !u!114 &5189478850491432953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824060067660528363}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 2
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 0
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1 &6550177769006481092
 GameObject:
   m_ObjectHideFlags: 0

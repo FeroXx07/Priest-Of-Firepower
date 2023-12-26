@@ -1737,6 +1737,9 @@ MonoBehaviour:
   sendEveryChange: 0
   sendTickChange: 0
   clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
   tickCounter: 0
   showDebugInfo: 0
   isInterpolating: 0
@@ -1764,7 +1767,7 @@ MonoBehaviour:
   clientSendReplicationData: 0
   enemiesPrefabs:
   - {fileID: 824060067660528363, guid: 4eef580d63463244abf0796b10d30d7d, type: 3}
-  numToInit: 2
+  - {fileID: 824060067660528363, guid: bcc07618a1f2cbd4cb88a47082ff33ab, type: 3}
   enemyCountProgression:
     serializedVersion: 2
     m_Curve:
@@ -1824,7 +1827,10 @@ MonoBehaviour:
   tickRateBehaviour: 4
   doTickUpdates: 1
   clientSendReplicationData: 0
+  _currentRound: 0
   timeBetweenRounds: 10
+  _timer: 0
+  _isCountDown: 0
 --- !u!1 &8051760738569706016
 GameObject:
   m_ObjectHideFlags: 0

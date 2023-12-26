@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 3340570484506096359}
   - component: {fileID: 5582988782769018351}
   - component: {fileID: 1741262131348639112}
-  - component: {fileID: 5812887198852348544}
+  - component: {fileID: 4643426246778021138}
   m_Layer: 0
   m_Name: BounceBullet
   m_TagString: Untagged
@@ -163,11 +163,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df0f2b720801e474285fd5ceb10e1646, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   layers:
     serializedVersion: 2
     m_Bits: 128
   damage: 20
   destroyOnContactWithLayer: 1
+  destructionTime: 1
 --- !u!114 &1741262131348639112
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,10 +186,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0cc98dd54e6b954499359d56e0cbd92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   maxBounces: 3
   reboundCounter: 0
-  destructionTime: 1
---- !u!114 &5812887198852348544
+--- !u!114 &4643426246778021138
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -192,6 +202,23 @@ MonoBehaviour:
   m_GameObject: {fileID: 5059123218599921543}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8bb6e295f51da0c43816dfe59d1a8e19, type: 3}
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 10
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0

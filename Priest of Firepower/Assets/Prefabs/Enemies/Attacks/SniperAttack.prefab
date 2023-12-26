@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 6167136818739818673}
   - component: {fileID: -2498038464860930454}
   - component: {fileID: 3115550596773295711}
+  - component: {fileID: 1027794924696887693}
   m_Layer: 10
   m_Name: SniperAttack
   m_TagString: Ignore_Enemies
@@ -134,7 +135,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4472022888998543014}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.6178687, y: -0.90096694, z: -0.041664016}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -216,6 +217,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df0f2b720801e474285fd5ceb10e1646, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 1
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   layers:
     serializedVersion: 2
     m_Bits: 512
@@ -229,10 +235,39 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4472022888998543014}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d0cc98dd54e6b954499359d56e0cbd92, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   maxBounces: 3
   reboundCounter: 0
+--- !u!114 &1027794924696887693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4472022888998543014}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 0
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0

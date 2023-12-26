@@ -9,10 +9,9 @@ namespace _Scripts.Enemies
     public class RangedEnemyBehavior : Enemy
     {
         public float bulletSpeedMultiplier = 2.0f;
-
-        // Update is called once per frame
         protected override void UpdateServer()
         {
+            float distance = Vector3.Distance(target.position, this.transform.position);
             switch (enemyState)
             {
                 case EnemyState.SPAWN:
@@ -27,9 +26,7 @@ namespace _Scripts.Enemies
                     agent.isStopped = false;
 
                     agent.SetDestination(target.position);
-
-                    float distance = Vector3.Distance(target.position, this.transform.position);
-
+                    
                     if (distance < 3)
                     {
                         agent.SetDestination(-target.position); // To be revewed
@@ -38,9 +35,7 @@ namespace _Scripts.Enemies
                     {
                         agent.SetDestination(target.position);
                     }
-
-                    //Debug.Log("Before if: "+ CheckLineOfSight(target));
-
+                    
                     if (distance <= 8 && distance >= 3 && (CheckLineOfSight(target) == true))
                     {
                         enemyState = EnemyState.ATTACK;
@@ -67,7 +62,7 @@ namespace _Scripts.Enemies
                         ServerAttack();
                     
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(target.position, this.transform.position) > 8 || (CheckLineOfSight(target) == false))  
+                    if (distance > 8 || (CheckLineOfSight(target) == false))  
                     {
                         enemyState = EnemyState.CHASE;
                     }
@@ -117,9 +112,7 @@ namespace _Scripts.Enemies
                     
                     agent.SetDestination(target.position);
                     
-                    float distance = Vector3.Distance(target.position, this.transform.position);
-                    
-                    if (distance < 3)
+                    if (Vector3.Distance(target.position, this.transform.position) < 3)
                     {
                         agent.SetDestination(-target.position); // To be revewed
                     }
@@ -134,9 +127,6 @@ namespace _Scripts.Enemies
                     agent.isStopped = true;
                     
                     if (target == null) return;
-                    
-                    // if (attackState == EnemyAttackState.EXECUTE)
-                    //     ClientAttack();
                     
                     // For example: Perform attack, reduce player health, animation sound and particles
                     if (Vector3.Distance(target.position, this.transform.position) > 8 || (CheckLineOfSight(target) == false))  
@@ -237,7 +227,6 @@ namespace _Scripts.Enemies
             
             OnTriggerAttack onTriggerAttack = internalAttackObject.GetComponent<OnTriggerAttack>();
             onTriggerAttack.Damage = damage;
-            onTriggerAttack.SetOwner(gameObject);
             onTriggerAttack.SetOwner(gameObject);
             
             if (internalAttackObject.TryGetComponent<Rigidbody2D>(out Rigidbody2D rbComp))

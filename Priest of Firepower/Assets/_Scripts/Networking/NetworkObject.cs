@@ -139,8 +139,7 @@ namespace _Scripts.Networking
             Vector2 newPos = new Vector2(reader.ReadSingle(), reader.ReadSingle());
             float rotZ = reader.ReadSingle();
 
-            //send new data to main thread
-            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => UpdatePosition((TransformAction)actionValue,newPos,rotZ, sequenceState));
+            UpdatePosition((TransformAction)actionValue,newPos,rotZ, sequenceState);
         }
 
         public void WriteReplicationTransform(TransformAction transformAction)

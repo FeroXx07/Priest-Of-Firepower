@@ -22,7 +22,8 @@ namespace _Scripts.Enemies
     public enum EnemyAttackState
     {
         COOLDOWN,
-        EXECUTE
+        EXECUTE,
+        END
     }
 
     public class Enemy : NetworkBehaviour, IPointsProvider
@@ -128,7 +129,7 @@ namespace _Scripts.Enemies
             }
         }
 
-        private void ClientSetTarget(UInt64 playerNetworkObjectId)
+        protected virtual void ClientSetTarget(UInt64 playerNetworkObjectId)
         {
             GameObject targetPlayer = NetworkManager.Instance.replicationManager.networkObjectMap[playerNetworkObjectId].gameObject;
             target = targetPlayer.transform;

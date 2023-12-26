@@ -41,11 +41,7 @@ namespace _Scripts.Attacks
                 if (NetworkManager.Instance.IsHost())
                 {
                     //Debug.Log("OnTriggerAttack: Timer destroy");
-                    MemoryStream stream = new MemoryStream();
-                    BinaryWriter writer = new BinaryWriter(stream);
-                    ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
-                    NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
-                    DisposeGameObject();
+                    DoDisposeGameObject();
                 }
                 else if (NetworkManager.Instance.IsClient())
                 {
@@ -83,12 +79,7 @@ namespace _Scripts.Attacks
 
             if (IsSelected(collision.layer) && destroyOnContactWithLayer && NetworkManager.Instance.IsHost())
             {
-                //Debug.Log("OnTriggerAttack: Collision destroy");
-                MemoryStream stream = new MemoryStream();
-                BinaryWriter writer = new BinaryWriter(stream);
-                ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
-                NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
-                DisposeGameObject();
+                DoDisposeGameObject();
             }
         }
         
@@ -113,6 +104,15 @@ namespace _Scripts.Attacks
         {
             OnDamageDealerDestroyed?.Invoke(gameObject);
             base.DisposeGameObject();
+        }
+
+        public void DoDisposeGameObject()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+            NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
+            DisposeGameObject();
         }
     }
 }

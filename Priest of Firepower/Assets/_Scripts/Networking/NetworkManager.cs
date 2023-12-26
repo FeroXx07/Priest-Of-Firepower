@@ -1019,7 +1019,7 @@ namespace _Scripts.Networking
                 }
                 catch (EndOfStreamException ex)
                 {
-                    Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message}");
+                    Debug.LogError($"Network Manager: EndOfStreamException: {ex.Message} -- ID:{header.id}, ObjName:{header.objectFullName}, Action: {header.replicationAction}, Size: {header.memoryStreamSize}");
                 }
             }
 
