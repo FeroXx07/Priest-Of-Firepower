@@ -167,13 +167,13 @@ namespace _Scripts.Interactables
 
             interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
 
-            //if (interactor.GetComponent<PointSystem>().GetPoints() >= InteractionCost)
-            //{
-            //    interactionPromptUI.SetText("Not enough points!");
-            //    return;
-            //}
+            if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
+            {
+                interactionPromptUI.SetText("Not enough points!");
+                return;
+            }
 
-            
+
             if (keyPressed && (currentState == InteractableState.NONE || _weaponReady))
             {
                 _timer -= Time.deltaTime;
