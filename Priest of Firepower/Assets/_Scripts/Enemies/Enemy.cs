@@ -147,8 +147,6 @@ namespace _Scripts.Enemies
             {
                 NetworkObject netObj = target.GetComponent<NetworkObject>();
                 writer.Write(true);
-                writer.Write(player.GetPlayerId());
-                writer.Write(player.GetName());
                 writer.Write(netObj.GetNetworkId());
                 writer.Write((int)enemyState);
                 writer.Write((int)attackState);
@@ -165,8 +163,6 @@ namespace _Scripts.Enemies
 
             if (hasTarget)
             {
-                UInt64 playerId = reader.ReadUInt64();
-                string playerName = reader.ReadString();
                 UInt64 networkId = reader.ReadUInt64();
                 enemyState = (EnemyState)reader.ReadInt32();
                 attackState = (EnemyAttackState)reader.ReadInt32();

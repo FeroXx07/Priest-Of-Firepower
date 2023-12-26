@@ -18,6 +18,7 @@ namespace _Scripts.Networking
         NONE
     }
     
+    [Serializable]
     public class NetworkObject : MonoBehaviour
     {
         #region NetworkId

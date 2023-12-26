@@ -2,20 +2,28 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using _Scripts.Networking;
 using UnityEngine;
+using UnityEngine.Collections.Generic;
 
 namespace _Scripts.Networking.Replication
 {
+    [Serializable]
+    public class UDictionaryRegisteredIds: UDictionary<UInt64, NetworkObject> { }
+    
+    [Serializable]
     public class ReplicationManager
     {
-        public GameObject gameObject;
-        public UInt64 idReplication { get; private set; }
-        public Dictionary<UInt64, NetworkObject> networkObjectMap = new Dictionary<ulong, NetworkObject>();
+        [SerializeField] private UInt64 idReplication;
+        public UDictionaryRegisteredIds networkObjectMap;
         public List<UInt64> unRegisteredNetIds = new List<UInt64>();
 
         public void InitManager(List<NetworkObject> listNetObj)
         {
+            idReplication = 0;
             networkObjectMap.Clear();
+            NetworkObjectManager sortingAlgorithm = new NetworkObjectManager();
+            sortingAlgorithm.SortList(listNetObj);
             foreach (var networkObject in listNetObj)
             {
                 RegisterObjectServer(networkObject);
@@ -255,6 +263,86 @@ namespace _Scripts.Networking.Replication
             }
             
             return true;
+        }
+    }
+}
+
+public class NetworkObjectComparer : IComparer<NetworkObject>
+{
+    public int Compare(NetworkObject x, NetworkObject y)
+    {
+        // Compare by name strings
+        return string.Compare(x.gameObject.name, y.gameObject.name);
+    }
+}
+
+public class NetworkObjectManager
+{
+    private NetworkObjectComparer comparer = new NetworkObjectComparer();
+
+    // Function to sort the list using Merge Sort
+    public void SortList(List<NetworkObject> list)
+    {
+        MergeSort(list, 0, list.Count - 1);
+    }
+
+    private void MergeSort(List<NetworkObject> list, int left, int right)
+    {
+        if (left < right)
+        {
+            int mid = (left + right) / 2;
+
+            MergeSort(list, left, mid);
+            MergeSort(list, mid + 1, right);
+
+            Merge(list, left, mid, right);
+        }
+    }
+
+    private void Merge(List<NetworkObject> list, int left, int mid, int right)
+    {
+        int n1 = mid - left + 1;
+        int n2 = right - mid;
+
+        NetworkObject[] leftArray = new NetworkObject[n1];
+        NetworkObject[] rightArray = new NetworkObject[n2];
+
+        int i, j;
+        for (i = 0; i < n1; ++i)
+            leftArray[i] = list[left + i];
+        for (j = 0; j < n2; ++j)
+            rightArray[j] = list[mid + 1 + j];
+
+        i = 0;
+        j = 0;
+        int k = left;
+        while (i < n1 && j < n2)
+        {
+            if (comparer.Compare(leftArray[i], rightArray[j]) <= 0)
+            {
+                list[k] = leftArray[i];
+                i++;
+            }
+            else
+            {
+                list[k] = rightArray[j];
+                j++;
+            }
+            k++;
+        }
+
+        while (i < n1)
+        {
+            list[k] = leftArray[i];
+            i++;
+            k++;
+        }
+
+        while (j < n2)
+        {
+            list[k] = rightArray[j];
+            j++;
+            k++;
         }
     }
 }

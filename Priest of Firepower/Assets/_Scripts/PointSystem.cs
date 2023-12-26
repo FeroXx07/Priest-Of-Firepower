@@ -5,18 +5,18 @@ using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace _Scripts
 {
     public class PointSystem : NetworkBehaviour
     {
-        private int _points;
-        public int multiplier = 1;
+        [SerializeField] private int _points;
+        [SerializeField] public int multiplier = 1;
         public Action<int> OnPointsAdded;
         public Action<int> OnPointsRemoved;
         public Action<int> OnPointsChanged;
-
+        [SerializeField] private Player.Player player;
+        
         public override void Awake()
         {
             base.Awake();
@@ -29,11 +29,12 @@ namespace _Scripts
             _points = 0;
             //Show points on start
             OnPointsChanged?.Invoke(_points);
+            player = GetComponent<Player.Player>();
         }
 
         private void AddPoints(int pointsToAdd)
         {
-            Debug.Log("Point System: adding points");
+            Debug.Log($"Point System: Adding points. Name: {player.name}. Owner: {player.isOwner()}. Points: {pointsToAdd}");
             _points += pointsToAdd;
             OnPointsAdded?.Invoke(pointsToAdd);
             OnPointsChanged?.Invoke(_points);
@@ -41,7 +42,7 @@ namespace _Scripts
 
         public void RemovePoints(int pointsToRemove)
         {
-            Debug.Log("Point System: removing points");
+            Debug.Log($"Point System: Removing points. Name: {player.name}. Owner: {player.isOwner()}. Points: {pointsToRemove}");
             _points -= pointsToRemove;
             OnPointsRemoved?.Invoke(pointsToRemove);
             OnPointsChanged?.Invoke(_points);

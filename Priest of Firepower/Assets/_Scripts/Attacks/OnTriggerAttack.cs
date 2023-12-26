@@ -33,19 +33,24 @@ namespace _Scripts.Attacks
         public override void Update()
         {
             base.Update();
-
-            if (!NetworkManager.Instance.IsHost()) return;
             
             _timer -= Time.deltaTime;
             
             if (_timer < 0.0f && !isDeSpawned)
             {
-                //Debug.Log("OnTriggerAttack: Timer destroy");
-                MemoryStream stream = new MemoryStream();
-                BinaryWriter writer = new BinaryWriter(stream);
-                ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
-                NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
-                DisposeGameObject();
+                if (NetworkManager.Instance.IsHost())
+                {
+                    //Debug.Log("OnTriggerAttack: Timer destroy");
+                    MemoryStream stream = new MemoryStream();
+                    BinaryWriter writer = new BinaryWriter(stream);
+                    ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+                    NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject,replicationHeader, stream);
+                    DisposeGameObject();
+                }
+                else if (NetworkManager.Instance.IsClient())
+                {
+                    DisposeGameObject();
+                }
             }
         }
         protected virtual void CollisionHandeler(GameObject collision)
