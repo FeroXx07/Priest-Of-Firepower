@@ -116,7 +116,6 @@ namespace _Scripts.Player
         {
             shootMarker.positionCount = 2;
             _weaponFlipped = false;
-            
             NetworkManager.Instance.AnyPlayerCreated(gameObject);
 
             if (isOwner())

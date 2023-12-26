@@ -17,7 +17,6 @@ namespace _Scripts.UI.TeamList
         public void Init(Player.Player player)
         {
             playerRef = player;
-            playerRef = NetworkManager.Instance.player.GetComponent<Player.Player>();
 
             playerRef.GetComponent<HealthSystem>().OnHealthChange += UpdatePlayerHealth;
             playerRef.GetComponent<PointSystem>().OnPointsChanged += UpdatePlayerPoints;
@@ -27,6 +26,7 @@ namespace _Scripts.UI.TeamList
 
         private void OnDisable()
         {
+            if (playerRef == null) return;
             playerRef.GetComponent<HealthSystem>().OnHealthChange -= UpdatePlayerHealth;
             playerRef.GetComponent<PointSystem>().OnPointsChanged -= UpdatePlayerPoints;
         }
