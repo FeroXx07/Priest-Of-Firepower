@@ -86,15 +86,12 @@ namespace _Scripts.Networking.Replication
                     break;
                 case ReplicationAction.DESTROY:
                 {
-                    bool successfulDespawn = Client_DeSpawnNetworkObject(header.id,reader,timeStamp);
-                    
-                    if (!successfulDespawn)
-                        reader.BaseStream.Seek(header.memoryStreamSize, SeekOrigin.Current);
+                    Client_DeSpawnNetworkObject(header.id,reader,timeStamp);
                 }
                     break;
                 case ReplicationAction.TRANSFORM:
                 {
-                    if (networkObjectMap.ContainsKey(header.id))
+                    if (networkObjectMap.ContainsKey(header.id) && networkObjectMap[header.id] != null)
                     {
                         if (networkObjectMap[header.id].synchronizeTransform)
                             networkObjectMap[header.id].ReadReplicationTransform(reader, header.id, timeStamp, sequenceNumState);
@@ -148,8 +145,8 @@ namespace _Scripts.Networking.Replication
             ownerSpawnerData.CopyTo(outputMemoryStream);
             
             ReplicationHeader replicationHeader = new ReplicationHeader(newId, this.GetType().FullName, ReplicationAction.CREATE, outputMemoryStream.ToArray().Length);
-            // Debug.LogWarning($"Replication Manager: Sending spawn. Name: {prefab.name} ID: {newId}, Obj: {this.GetType().FullName}, " +
-            //                  $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");            
+            Debug.LogWarning($"Replication Manager: Sending spawn. Name: {prefab.name} ID: {newId}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");            
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
             return newGo.gameObject;
         }
@@ -164,8 +161,8 @@ namespace _Scripts.Networking.Replication
             var prefab = NetworkManager.Instance.instantiatablesPrefabs.First(prefab => prefab.name == prefabName);
             NetworkObject newGo = GameObject.Instantiate(prefab).GetComponent<NetworkObject>();
             RegisterObjectClient(serverAssignedNetObjId, newGo);
-            // Debug.LogWarning($"Replication Manager: Receiving spawn. Name: {prefab.name} ID: {serverAssignedNetObjId}, Obj: {this.GetType().FullName}, " +
-            //                  $"Header Size: {spawnerOwnerHeader.GetSerializedHeader().Length}, Data size {spawnerOwnerHeader.memoryStreamSize}");  
+            Debug.LogWarning($"Replication Manager: Receiving spawn. Name: {prefab.name} ID: {serverAssignedNetObjId}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {spawnerOwnerHeader.GetSerializedHeader().Length}, Data size {spawnerOwnerHeader.memoryStreamSize}");  
             
             // An temporary exception
             if (prefabName.Equals("PlayerPrefab"))
@@ -220,8 +217,8 @@ namespace _Scripts.Networking.Replication
             objDestroyerData.CopyTo(outputMemoryStream);
             
             ReplicationHeader replicationHeader = new ReplicationHeader(nObjToDespawn.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, outputMemoryStream.ToArray().Length);
-            // Debug.LogWarning($"Replication Manager: Sending despawn. ID: {nObjToDespawn.GetNetworkId()}, Obj: {this.GetType().FullName}, " +
-            //                  $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");
+            Debug.LogWarning($"Replication Manager: Sending despawn. ID: {nObjToDespawn.GetNetworkId()}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {replicationHeader.GetSerializedHeader().Length}, Data size {outputMemoryStream.ToArray().Length}");
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, outputMemoryStream);
             
             UnRegisterObjectServer(nObjToDespawn);
@@ -231,12 +228,18 @@ namespace _Scripts.Networking.Replication
         public bool Client_DeSpawnNetworkObject(UInt64 networkObjectId, BinaryReader reader, Int64 timeStamp)
         {
             ReplicationHeader deSpawnerOwnerHeader = ReplicationHeader.DeSerializeHeader(reader);
-            // Debug.LogWarning($"Replication Manager: Receiving despawn. ID: {networkObjectId}, Obj: {this.GetType().FullName}, " +
-            //                  $"Header Size: {deSpawnerOwnerHeader.GetSerializedHeader().Length}, Data size {deSpawnerOwnerHeader.memoryStreamSize}");
+            Debug.LogWarning($"Replication Manager: Receiving despawn. ID: {networkObjectId}, Obj: {this.GetType().FullName}, " +
+                             $"Header Size: {deSpawnerOwnerHeader.GetSerializedHeader().Length}, Data size {deSpawnerOwnerHeader.memoryStreamSize}");
             Type type = Type.GetType(deSpawnerOwnerHeader.objectFullName);
 
             if (networkObjectMap.TryGetValue(networkObjectId, out NetworkObject objectToDestroy) && networkObjectMap.TryGetValue(deSpawnerOwnerHeader.id, out NetworkObject objectDestroyee))
             {
+                if (objectDestroyee == null || objectToDestroy == null)
+                {
+                    reader.BaseStream.Seek(deSpawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
+                    return false;
+                }
+                
                 NetworkBehaviour deSpawnerBehaviour = objectDestroyee.GetComponent(type) as NetworkBehaviour;
             
                 long startPosData = reader.BaseStream.Position;
@@ -259,6 +262,7 @@ namespace _Scripts.Networking.Replication
             }
             else
             {
+                reader.BaseStream.Seek(deSpawnerOwnerHeader.memoryStreamSize, SeekOrigin.Current);
                 return false;
             }
             
