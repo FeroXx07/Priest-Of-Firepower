@@ -1,3 +1,5 @@
+using System;
+using _Scripts.Networking;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,30 +8,33 @@ namespace _Scripts.UI.TeamList
 {
     public class UITeamListTile : MonoBehaviour
     {
-
         [SerializeField] Image playerHealthBg;
         [SerializeField] Image playerHealth;
         [SerializeField] TextMeshProUGUI playerName;
         [SerializeField] TextMeshProUGUI playerPoints;
         [SerializeField] Gradient healthColor;
-        [SerializeField] float testHealthAmount;
-
-
-        private void OnEnable()
+        [SerializeField] private Player.Player playerRef;
+        public void Init(Player.Player player)
         {
-            //subscribe UpdatePlayerHealth to specific OnPlayerHit
-            //subscribe UpdatePlayerPoints to specific OnGetPoints
+            playerRef = player;
+            playerRef = NetworkManager.Instance.player.GetComponent<Player.Player>();
+
+            playerRef.GetComponent<HealthSystem>().OnHealthChange += UpdatePlayerHealth;
+            playerRef.GetComponent<PointSystem>().OnPointsChanged += UpdatePlayerPoints;
+            
+            playerName.SetText(playerRef.name);
         }
 
-        // Start is called before the first frame update
-        void Start()
+        private void OnDisable()
         {
-
+            playerRef.GetComponent<HealthSystem>().OnHealthChange -= UpdatePlayerHealth;
+            playerRef.GetComponent<PointSystem>().OnPointsChanged -= UpdatePlayerPoints;
         }
 
-        void UpdatePlayerHealth(HealthSystem hs)
+        void UpdatePlayerHealth(int health, int maxHealth)
         {
-            float amount = hs.Health / hs.MaxHealth;
+            // ReSharper disable once PossibleLossOfFraction
+            float amount = (float)health / (float)maxHealth;
             playerHealth.fillAmount = amount;
             playerHealth.color = healthColor.Evaluate(amount);
 
@@ -37,26 +42,11 @@ namespace _Scripts.UI.TeamList
             Color bgCol = playerHealth.color - new Color(tmp, tmp, tmp);
             bgCol.a = 1;
             playerHealthBg.color = bgCol;
-
         }
-
-        //void UpdatePlayerHealthTest(float n)
-        //{
-        //    float amount = n / 100;
-        //    playerHealth.fillAmount = amount;
-        //    playerHealth.color = healthColor.Evaluate(amount);
-
-        //    float tmp = 0.4f;
-        //    Color bgCol = playerHealth.color - new Color(tmp, tmp, tmp);
-        //    bgCol.a = 1;
-        //    playerHealthBg.color = bgCol;
-
-
-        //}
-
-        void UpdatePlayerPoints(PointSystem ps)
+        
+        void UpdatePlayerPoints(int ps)
         {
-            playerPoints.text = ps.GetPoints().ToString();
+            playerPoints.text = ps.ToString();
         }
     }
 }

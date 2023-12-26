@@ -117,6 +117,8 @@ namespace _Scripts.Player
             shootMarker.positionCount = 2;
             _weaponFlipped = false;
             
+            NetworkManager.Instance.AnyPlayerCreated(gameObject);
+
             if (isOwner())
             {
                 Debug.Log("Initiating host player and UI");
@@ -126,7 +128,6 @@ namespace _Scripts.Player
                 NetworkManager.Instance.OwnerPlayerCreated(gameObject);
                 GameManager.Instance.StartGame();
             }
-
             StartCoroutine(LateStart());
         }
 

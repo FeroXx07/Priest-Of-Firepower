@@ -148,6 +148,7 @@ namespace _Scripts.Networking
         public Action OnClientDisconnected;
         public Action<int> OnHostCreated;
         public Action<GameObject> OnHostPlayerCreated;
+        public Action<GameObject> OnAnyPlayerCreated;
 
         // Message sendId, message string, message timestamp
         public Action<UInt64, string, long> OnGameEventMessageReceived;
@@ -218,7 +219,11 @@ namespace _Scripts.Networking
         {
             OnHostPlayerCreated?.Invoke(playerGameObject);
         }
-        
+
+        public void AnyPlayerCreated(GameObject playerGameObject)
+        {
+            OnAnyPlayerCreated?.Invoke(playerGameObject);
+        }
         void DespawnPlayer(UInt64 id, string userName)
         {
             if (_isHost)

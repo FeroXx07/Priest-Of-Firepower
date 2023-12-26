@@ -14,12 +14,22 @@ namespace _Scripts
         [SerializeField] private int maxHealth;
         [SerializeField] private LayerMask layer;
         public LayerMask Layers { get => layer; set => layer = value; }
-        public int Health { get => health; set => health = value; }
+
+        public int Health
+        {
+            get => health;
+            set
+            {
+                health = value;
+                OnHealthChange?.Invoke(health, maxHealth);
+            }
+        }
+
         public int MaxHealth { get => maxHealth; set => maxHealth = value; }
 
         public event Action<GameObject, GameObject> OnDamageableDestroyed;
         public event Action<GameObject, GameObject> OnDamageTaken;
-
+        public Action<int, int> OnHealthChange;
         protected override void InitNetworkVariablesList()
         {
         }
@@ -52,7 +62,7 @@ namespace _Scripts
 
         public void TakeDamage(IDamageDealer damageDealer, Vector3 dir, GameObject owner)
         {
-            health -= damageDealer.Damage;
+            Health -= damageDealer.Damage;
             OnDamageTaken?.Invoke(gameObject, owner);
             
             if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
@@ -63,7 +73,7 @@ namespace _Scripts
                 }
             }
 
-            if (health <= 0)
+            if (Health <= 0)
             {
                 if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProviders))
                 {
@@ -73,7 +83,7 @@ namespace _Scripts
                     }
                 }
             
-                health = 0;
+                Health = 0;
                 RaiseEventOnDamageableDestroyed(owner);
             }
             
