@@ -163,7 +163,7 @@ namespace _Scripts.Interactables
 
             if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
             {
-                interactionPromptUI.SetText("Not enough points!");
+                interactionPromptUI.SetText("Not enough points! [cost: " + price + "]");
                 return;
             }
             else
@@ -172,7 +172,7 @@ namespace _Scripts.Interactables
             }
 
 
-            if (keyPressed && !_open)
+            if (keyPressed)
             {
                 _timer -= Time.deltaTime;
                 if (_timer <= 0)

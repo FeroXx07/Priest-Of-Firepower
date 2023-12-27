@@ -50,7 +50,7 @@ namespace _Scripts
                 IInteractable obj =  _interactable.GetComponent<IInteractable>();
                 obj.Interact(this, Input.GetKey(key));
             }
-            // if not looking any more the las interacteable, diable UI and clear the reference to it
+            // if not looking anymore to the las interacteable, disable UI and clear the reference to it
             else if (_interactable != null)
             {
                 IInteractable obj = _interactable.GetComponent<IInteractable>();

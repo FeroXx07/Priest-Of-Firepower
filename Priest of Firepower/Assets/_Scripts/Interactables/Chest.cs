@@ -147,21 +147,6 @@ namespace _Scripts.Interactables
             }
 
         }
-
-        public MemoryStream GetInteractionStream()
-        {
-            MemoryStream stream = new MemoryStream();
-            BinaryWriter writer = new BinaryWriter(stream);
-
-
-            return stream;
-        }
-
-        public void ReadInteractionStream(MemoryStream stream)
-        {
-
-        }
-
         public void Interact(Interactor interactor, bool keyPressed)
         {
             //no interaction allowed
@@ -173,8 +158,12 @@ namespace _Scripts.Interactables
 
             if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost && !_weaponReady)
             {
-                interactionPromptUI.SetText("Not enough points!");
+                interactionPromptUI.SetText("Not enough points! [cost: " + price + "]");
                 return;
+            }
+            else
+            {
+                interactionPromptUI.SetText(message);
             }
 
 
@@ -188,7 +177,8 @@ namespace _Scripts.Interactables
                     _keyPressed = keyPressed;
                     _interactorId = interactor.GetObjId();
 
-                    interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
+                    if(!_openChest)
+                      interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
 
                     if (isClient)
                     {                                              

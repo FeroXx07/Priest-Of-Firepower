@@ -21,7 +21,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1897267876575666528
 Transform:
   m_ObjectHideFlags: 0
@@ -30,7 +30,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1897267876575666539}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.482815, y: -1.494, z: -0.006251061}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -38,7 +38,7 @@ Transform:
   - {fileID: 1976169429354997253}
   - {fileID: 7454091956583269067}
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1897267876575666543
 SpriteRenderer:
@@ -261,7 +261,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7454091956583269067
 Transform:
   m_ObjectHideFlags: 0
@@ -434,7 +434,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1873773341647793513, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1873773341647793514, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_RootOrder
@@ -483,6 +483,10 @@ PrefabInstance:
     - target: {fileID: 1873773341647793515, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_Name
       value: ChestVFX
+      objectReference: {fileID: 0}
+    - target: {fileID: 1873773341647793515, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1873773341647793515, guid: b56c0d592cfb30e44b30a1b4e66579ef, type: 3}
       propertyPath: m_StaticEditorFlags
@@ -589,7 +593,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2056408807029494883, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.15600586
+      value: 0.64
       objectReference: {fileID: 0}
     - target: {fileID: 2056408807029494883, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -614,6 +618,10 @@ PrefabInstance:
     - target: {fileID: 2056408807567314185, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
+      objectReference: {fileID: 0}
+    - target: {fileID: 2056408807567314187, guid: 5f43b2bfb1e1f914e9ee2292f70fd80c, type: 3}
+      propertyPath: m_text
+      value: 'Hold F for a random weapon [cost: 950]'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

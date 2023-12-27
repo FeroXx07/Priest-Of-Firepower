@@ -24,10 +24,10 @@ namespace _Scripts.Interactables
         public float InteractionTime => timeToInteract;
 
         public int InteractionCost => price;
-
+        UInt64 _interactorId;
         InteractableState currentState;
         public InteractableState state { get => currentState; set => currentState = value; }
-        public ulong interactorId { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+        public ulong interactorId { get => _interactorId; set => _interactorId=value; }
 
         public override void Awake()
         {
@@ -39,14 +39,24 @@ namespace _Scripts.Interactables
         public override void OnEnable()
         { 
             base.OnEnable();
+          
             _timer = InteractionTime;
+            
             Weapon.Weapon wp = weapon.GetComponent<Weapon.Weapon>(); 
-            message = " " + wp.weaponData.weaponName +" [" + wp.weaponData.price.ToString()+"]";
+            
             interactionPromptUI.SetText(message);
-            EnablePromptUI(false);
+
             _wallWeaponImg = GetComponent<SpriteRenderer>();
             _wallWeaponImg.sprite = wp.weaponData.sprite;
+
+            EnablePromptUI(false);            
         }
+
+        public override void Update()
+        {
+            base.Update();
+        }
+
         public void Interact(Interactor interactor, bool keyPressed)
         {
 
@@ -56,8 +66,12 @@ namespace _Scripts.Interactables
 
             if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
             {
-                interactionPromptUI.SetText("Not enough points!");
+                interactionPromptUI.SetText("Not enough points! [cost: "+price+"]");
                 return;
+            }
+            else
+            {
+                interactionPromptUI.SetText(message);
             }
 
 
@@ -72,11 +86,18 @@ namespace _Scripts.Interactables
                    // if has not this weapon change by current weapon
                    if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                    {
-                       switcher.ChangeWeaponServer(weapon);
+                        if(isClient)
+                        {
+                            switcher.ChangeWeaponClient(weapon);
+                        }
+                        else
+                        {
+                             switcher.ChangeWeaponServer(weapon);
+                        }
+                      
                        _timer = InteractionTime;
                        EnablePromptUI(false);
-
-                        interactor.GetComponent<PointSystem>().RemovePoints(price);
+                       interactor.GetComponent<PointSystem>().RemovePoints(price);
                    }
                     
                 }
@@ -98,44 +119,8 @@ namespace _Scripts.Interactables
             EnablePromptUI(false);
         }
 
-        public MemoryStream GetInteractionStream()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void ReadInteractionStream(MemoryStream stream)
-        {
-            
-        }
-
-        public void Interact(State _state)
-        {
-           
-        }
-
-        public void ClientInteract(Interactor interactor, bool keyPressed)
-        {
-            
-        }
-
-        public void ClientHandleInteraction(MemoryStream stream)
-        {
-            
-        }
-
-        public void ServerInteract(Interactor interactor, bool keyPressed)
-        {
-            
-        }
-
-        public void ServerHandleInteraction(MemoryStream stream)
-        {
-            
-        }
-
         protected override void InitNetworkVariablesList()
         {
-            
         }
     }
 }
