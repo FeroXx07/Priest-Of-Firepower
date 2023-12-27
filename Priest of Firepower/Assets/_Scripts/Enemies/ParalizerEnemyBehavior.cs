@@ -43,8 +43,8 @@ namespace _Scripts.Enemies
                     {
                         agent.SetDestination(target.position);
                     }
-                    bool inSight = CheckLineOfSight(target);
                     
+                    bool inSight = CheckLineOfSight(target);
                     if (distance <= maxRange && distance >= minRange && inSight)
                     {
                         enemyState = EnemyState.ATTACK;
@@ -87,9 +87,7 @@ namespace _Scripts.Enemies
                     // Play death animation, sound and particles, destroy enemy object
                     collider2D.enabled = false;
                     
-                    if (timeRemaining == 1.2f) 
-                        ServerEndAttack();
-                    
+                    ServerEndAttack();
                     timeRemaining -= Time.deltaTime;
                     if (timeRemaining <= 0 && !isDeSpawned)
                     {
@@ -100,6 +98,7 @@ namespace _Scripts.Enemies
                         NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
                         DisposeGameObject();
                     }
+                    if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
                 }
                     break;
                 default:
@@ -121,7 +120,8 @@ namespace _Scripts.Enemies
                 case EnemyState.CHASE:
                 {
                     agent.isStopped = false;
-                    
+                    overrideTarget = false;
+
                     if (target == null) return;
                     float distance = Vector3.Distance(target.position, this.transform.position);
                     
@@ -135,8 +135,8 @@ namespace _Scripts.Enemies
                     {
                         agent.SetDestination(target.position);
                     }
-                    
-                    if (distance <= maxRange && distance >= minRange && (CheckLineOfSight(target) == true))
+                    bool inSight = CheckLineOfSight(target);
+                    if (distance <= maxRange && distance >= minRange && inSight)
                     {
                         enemyState = EnemyState.ATTACK;
                     }
@@ -145,7 +145,8 @@ namespace _Scripts.Enemies
                 case EnemyState.ATTACK:
                 {
                     agent.isStopped = true;
-                    
+                    overrideTarget = true;
+
                     if (target == null) return;
                     float distance = Vector3.Distance(target.position, this.transform.position);
 
@@ -171,6 +172,7 @@ namespace _Scripts.Enemies
                     agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
                     collider2D.enabled = false;
+                    if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
                 }
                     break;
                 default:
@@ -181,16 +183,17 @@ namespace _Scripts.Enemies
         private void StartServerAttack()
         {
             if (target == null) return;
+
+            Debug.Log("ParalizerEnemy: Starting Server Attack");
             
             if(internalAttackObject != null) 
             {
+                Debug.Log("ParalizerEnemy: Deleting Previous Server Attack");
                 ParalizerAttack p = internalAttackObject.GetComponent<ParalizerAttack>();
                 p.DoDisposeGameObject();
             }
             
             attackState = EnemyAttackState.COOLDOWN;
-            
-            target.gameObject.GetComponent<Player.Player>().isParalized = true;
             
             MemoryStream meleeAttackMemoryStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(meleeAttackMemoryStream);
@@ -221,6 +224,8 @@ namespace _Scripts.Enemies
 
         private void StartClientAttack(GameObject objectSpawned)
         {
+            Debug.Log("ParalizerEnemy: Starting Client Attack");
+
             internalAttackObject = objectSpawned;
             internalAttackObject.transform.position = target.position;
             
@@ -232,13 +237,12 @@ namespace _Scripts.Enemies
 
         private void ServerEndAttack()
         {
-            if (target == null) return;
+            if (target == null || attackState == EnemyAttackState.END) return;
             attackState = EnemyAttackState.END;
-            
             target.gameObject.GetComponent<Player.Player>().isParalized = false;
-            
-            if(internalAttackObject != null) 
+            if(internalAttackObject) 
             {
+                Debug.Log("ParalizerEnemy: Deleting Server Attack");
                 ParalizerAttack paralizerAttack = internalAttackObject.GetComponent<ParalizerAttack>();
                 paralizerAttack.DoDisposeGameObject();
             }
@@ -246,6 +250,8 @@ namespace _Scripts.Enemies
         }
         private void ClientEndAttack()
         {
+            Debug.Log("ParalizerEnemy: Ending Client Attack");
+            if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
             attackState = EnemyAttackState.END;
             cooldownTimer = cooldownDuration;
         }
@@ -258,6 +264,7 @@ namespace _Scripts.Enemies
         {
             Debug.Log("Enemy dead in client");
             DisposeGameObject();
+            if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
         }
         bool CheckLineOfSightParalizer(Transform playerTransform)
         {

@@ -17,19 +17,24 @@ namespace _Scripts.UI.Enemies
             _sprite = GetComponent<Image>();
 
             //Start facing the target
-            Vector3 enemyPos = Camera.main.WorldToScreenPoint(enemyToTrack.gameObject.transform.position);
-            transform.rotation = CalculateRotationToTarget(enemyPos);
+            if (enemyToTrack)
+            {
+                Vector3 enemyPos = Camera.main.WorldToScreenPoint(enemyToTrack.gameObject.transform.position);
+                transform.rotation = CalculateRotationToTarget(enemyPos);
+            }
         }
         void Update()
         {
-            //pass world pos to screen pos
-            Vector3 enemyPos = Camera.main.WorldToScreenPoint(enemyToTrack.gameObject.transform.position);
+            if (enemyToTrack)
+            {
+                Vector3 enemyPos = Camera.main.WorldToScreenPoint(enemyToTrack.gameObject.transform.position);
 
-            transform.position = enemyPos;
+                transform.position = enemyPos;
 
-            CheckScreenLimits();
-            RotateToTarget(enemyPos);
-            UpdateTransparency(enemyPos);
+                CheckScreenLimits();
+                RotateToTarget(enemyPos);
+                UpdateTransparency(enemyPos);
+            }
         }
         public void SetEnemy(UIEnemyOffLimitsTracker _tracker, Enemy en)
         {

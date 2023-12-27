@@ -107,8 +107,8 @@ Rigidbody2D:
   m_Simulated: 1
   m_UseFullKinematicContacts: 0
   m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 1
+  m_Mass: 10
+  m_LinearDrag: 10
   m_AngularDrag: 0.05
   m_GravityScale: 0
   m_Material: {fileID: 0}
@@ -166,6 +166,7 @@ MonoBehaviour:
   speed: 2
   damage: 5
   target: {fileID: 0}
+  overrideTarget: 0
   attackPrefab: {fileID: 4472022888998543014, guid: 081ad3c55d6d32743b06c7d2710aa988, type: 3}
   enemyState: 0
   attackState: 0

@@ -105,37 +105,37 @@ namespace _Scripts.Interactables
 
         public void ReadInteractionStream(MemoryStream stream)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         public void Interact(State _state)
         {
-            throw new System.NotImplementedException();
+           
         }
 
         public void ClientInteract(Interactor interactor, bool keyPressed)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         public void ClientHandleInteraction(MemoryStream stream)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         public void ServerInteract(Interactor interactor, bool keyPressed)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         public void ServerHandleInteraction(MemoryStream stream)
         {
-            throw new System.NotImplementedException();
+            
         }
 
         protected override void InitNetworkVariablesList()
         {
-            throw new System.NotImplementedException();
+            
         }
     }
 }

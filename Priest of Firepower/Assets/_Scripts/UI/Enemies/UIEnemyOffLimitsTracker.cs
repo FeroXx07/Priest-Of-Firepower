@@ -34,10 +34,16 @@ namespace _Scripts.UI.Enemies
             {
                 foreach (UISingleEnemyTracker enemyTracker in _enemyTrackers)
                 {
-                    if (enemyTracker == null)
+                    if (enemyTracker.enemyToTrack == null)
+                    {
+                        Destroy(enemyTracker.gameObject);
                         _enemyTrackers.Remove(enemyTracker);
+                    }
+                    else if (enemyTracker == null)
+                    {
+                        _enemyTrackers.Remove(enemyTracker);
+                    }
                 }
-
                 yield return seconds;
             }
             yield return null;

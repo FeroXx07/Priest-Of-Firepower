@@ -12,8 +12,6 @@ namespace _Scripts.Attacks
         private float _timer;
         public int tickRate = 1;
         public GameObject targetedPlayer;
-        public float rotationSpeed = 1.0f;
-        public float rotationAmount = 1.0f;
         
         public event Action<GameObject> OnDamageDealerDestroyed;
         public event Action<GameObject> OnDamageDealth;
@@ -23,13 +21,21 @@ namespace _Scripts.Attacks
             GameObject hittedGameObject)
         {
             OnDamageDealth?.Invoke(hittedGameObject);
-            //Debug.Log($"OnTriggerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+            //Debug.Log($"ParalizerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
         }
 
         public void SetPlayer(GameObject player)
         {
             targetedPlayer = player;
+            targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = true;
         }
+
+        public override void OnDisable()
+        {
+            base.OnDisable();
+            if (targetedPlayer) targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = false;
+        }
+
         private void Start()
         {
             _timer = tickRate;
@@ -38,13 +44,8 @@ namespace _Scripts.Attacks
         public override void Update()
         {
             base.Update();
-            var transform1 = transform;
-            var rotation = transform1.rotation;
-            Quaternion target = Quaternion.Euler(rotation.x, rotation.y, rotation.z + rotationAmount);
-            transform.rotation = Quaternion.Slerp(transform.rotation, target,  Time.deltaTime * rotationSpeed);
-            
             _timer -= Time.deltaTime;
-            
+            targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = true;
             if (_timer < 0.0f && !isDeSpawned)
             {
                 _timer = tickRate;
@@ -74,6 +75,13 @@ namespace _Scripts.Attacks
 
 
             }
+        }
+        
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        {
+            //Debug.Log("OnTriggerAttack: Despawn by server");
+            if (targetedPlayer) targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = false;
+            DisposeGameObject();
         }
         
         protected override void DisposeGameObject()

@@ -5,6 +5,7 @@ using System.IO;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using _Scripts.Player;
+using Cinemachine.Utility;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -336,10 +337,13 @@ namespace _Scripts.Networking
                 // Calculate the interpolation factor based on the elapsed time
                 float t = Mathf.Clamp01(Time.deltaTime / travelTime);
 
-
+                
                 // Perform interpolation towards the new target position
                 //if (showDebugInfo) Debug.Log($"Interpolating from {pointA} to next position {pointB}");
-                transform.position = Vector3.LerpUnclamped(pointA, pointB, t);
+                Vector3 nextPos = Vector3.LerpUnclamped(pointA, pointB, t);
+                
+                if (!nextPos.IsNaN())
+                    transform.position = nextPos;
                 
                 if (t >= 1.0f)
                 {

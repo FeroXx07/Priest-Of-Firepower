@@ -248,7 +248,7 @@ namespace _Scripts.Interactables
         {
 
             currentState = (InteractableState)reader.ReadInt32();
-            Debug.Log("Receiving " + currentState);
+            //Debug.Log("Receiving " + currentState);
             _interactorId = reader.ReadUInt64();
             _keyPressed = reader.ReadBoolean();
             _openChest = reader.ReadBoolean();
@@ -257,7 +257,7 @@ namespace _Scripts.Interactables
             _weaponIndex = reader.ReadInt32();
 
 
-            Debug.Log("Open " + _openChest);
+            //Debug.Log("Open " + _openChest);
             if (_openChest)
             {
                 if (TryGetComponent<SpriteRenderer>(out var spriteRenderer))

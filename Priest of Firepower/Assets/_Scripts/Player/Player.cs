@@ -247,7 +247,7 @@ namespace _Scripts.Player
                 state = PlayerState.IDLE;
             }
             
-            if (hasChangedMovement)
+            if (hasChangedMovement || isParalized)
             {
                 hasChangedMovement = false;
                 if (NetworkManager.Instance.IsClient())
