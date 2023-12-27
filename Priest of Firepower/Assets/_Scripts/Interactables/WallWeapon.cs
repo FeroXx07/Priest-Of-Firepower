@@ -6,6 +6,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using _Scripts.Networking.Utility;
 using _Scripts.Networking;
+using System;
 
 namespace _Scripts.Interactables
 {
@@ -24,7 +25,7 @@ namespace _Scripts.Interactables
         public float InteractionTime => timeToInteract;
 
         public int InteractionCost => price;
-        UInt64 _interactorId;
+        private UInt64 _interactorId;
         InteractableState currentState;
         public InteractableState state { get => currentState; set => currentState = value; }
         public ulong interactorId { get => _interactorId; set => _interactorId=value; }

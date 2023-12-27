@@ -26,7 +26,7 @@ namespace _Scripts.Interactables
 
         [SerializeField] List<Door> prerequisiteDoors;
         [SerializeField] List<GameObject> objectsToEnable;
-        UInt64 _interactorId; // client that is currently interacting
+        private UInt64 _interactorId; // client that is currently interacting
         float _timer;
         public string Prompt => message;
 
