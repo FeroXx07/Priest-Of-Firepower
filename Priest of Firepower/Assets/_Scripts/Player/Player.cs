@@ -56,6 +56,7 @@ namespace _Scripts.Player
         [SerializeField] private float tickCounter = 0.0f;
         private Rigidbody2D _rb;
         public float speed = 7.0f;
+        public bool isParalized = false;
         #endregion
 
         #region Shooter
@@ -174,7 +175,7 @@ namespace _Scripts.Player
                 }
             }
             
-            if (Input.GetKey(KeyCode.W))
+            if (Input.GetKey(KeyCode.W) && !isParalized)
             {
                 input[0] = true;
                 hasChangedMovement = true;
@@ -185,7 +186,7 @@ namespace _Scripts.Player
                 input[0] = false;
             }
 
-            if (Input.GetKey(KeyCode.D))
+            if (Input.GetKey(KeyCode.D) && !isParalized)
             {
                 input[1] = true;
                 hasChangedMovement = true;
@@ -196,7 +197,7 @@ namespace _Scripts.Player
                 input[1] = false;
             }
 
-            if (Input.GetKey(KeyCode.S))
+            if (Input.GetKey(KeyCode.S) && !isParalized)
             {
                 input[2] = true;
                 hasChangedMovement = true;
@@ -207,7 +208,7 @@ namespace _Scripts.Player
                 input[2] = false;
             }
 
-            if (Input.GetKey(KeyCode.A))
+            if (Input.GetKey(KeyCode.A) && !isParalized)
             {
                 input[3] = true;
                 hasChangedMovement = true;
@@ -362,7 +363,7 @@ namespace _Scripts.Player
                 writer.Write(shootDir.x);
                 writer.Write(shootDir.y);
             }
-               
+            writer.Write(isParalized);
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             if (showDebugInfo) Debug.Log($"{_playerId} Player Shooter: Sending data");
             return replicationHeader;
@@ -379,6 +380,8 @@ namespace _Scripts.Player
                 if (_weaponHolder != null)
                     _weaponHolder.transform.rotation = Quaternion.Euler(new Vector3(0f, 0f, angle));
             }
+
+            isParalized = reader.ReadBoolean();
             return true;
         }
         

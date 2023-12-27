@@ -1,65 +1,67 @@
+using System.IO;
+using _Scripts.Attacks;
+using _Scripts.Networking;
+using _Scripts.Networking.Replication;
 using UnityEngine;
 
 namespace _Scripts.Enemies
 {
     public class ParalizerEnemyBehavior : Enemy
     {
-        public float bulletSpeedMultiplier = 6.0f;
+        public float minRange = 3.0f;
+        public float maxRange = 9.0f;
 
-        // Update is called once per frame
-        public override void Update()
+        public override void Start()
         {
-            base.Update();
-            
-            // Execute logic of enemy manager only in server
-            if (!isHost) return;
-            
+            base.Start();
+            attackState = EnemyAttackState.END;
+        }
+
+        protected override void UpdateServer()
+        {
+            float distance = Vector3.Distance(target.position, this.transform.position);
             switch (enemyState)
             {
                 case EnemyState.SPAWN:
+                {
                     agent.isStopped = true;
-                    // Spawn sound, particle and animation
                     enemyState = EnemyState.CHASE;
+                }
                     break;
-
                 case EnemyState.CHASE:
-
+                {
                     agent.isStopped = false;
-
+                    overrideTarget = false;
+                    
                     agent.SetDestination(target.position);
-
-                    float distance = Vector3.Distance(target.position, this.transform.position);
-
-                    if (distance < 3)
+                    
+                    if (distance < minRange)
                     {
-                        agent.SetDestination(-target.position); // To be revewed
+                        agent.SetDestination(-target.position); 
                     }
                     else
                     {
                         agent.SetDestination(target.position);
                     }
-
-                    //Debug.Log("Before if: "+ CheckLineOfSight(target));
-
-                    if (distance <= 9 && distance >= 3) // && (CheckLineOfSight(target) == true)
+                    bool inSight = CheckLineOfSight(target);
+                    
+                    if (distance <= maxRange && distance >= minRange && inSight)
                     {
                         enemyState = EnemyState.ATTACK;
-                        // Debug.Log("Attack mode");
                     }
-
-
+                }
                     break;
-
                 case EnemyState.ATTACK:
-
+                {
                     agent.isStopped = true;
-
-                    if (cooldownTimer <= 0f)
+                    overrideTarget = true;
+                    
+                    if (attackState == EnemyAttackState.END && cooldownTimer <= 0f)
                     {
-                        StartParalyzerAttack();
+                        attackState = EnemyAttackState.EXECUTE;
                     }
 
-                    if (cooldownTimer > 0f)
+                    if (attackState == EnemyAttackState.END)
                     {
                         cooldownTimer -= Time.deltaTime;
                     }
@@ -68,65 +70,196 @@ namespace _Scripts.Enemies
                     {
                         internalAttackObject.transform.position = target.position;
                     }
-
-                    // For example: Perform attack, reduce player health, animation sound and particles
-                    if (Vector3.Distance(target.position, this.transform.position) > 9)
+                    
+                    if (attackState == EnemyAttackState.EXECUTE)
+                        StartServerAttack();
+                    
+                    if (distance > 9)
                     {
                         enemyState = EnemyState.CHASE;
-
-                        StopParalyzerAttack();
+                        ServerEndAttack();
                     }
-
+                }
                     break;
-
                 case EnemyState.DIE:
-
+                {
                     agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
-                    GetComponent<Collider2D>().enabled = false;
-
-                    StopParalyzerAttack();
-
+                    collider2D.enabled = false;
+                    
+                    if (timeRemaining == 1.2f) 
+                        ServerEndAttack();
+                    
                     timeRemaining -= Time.deltaTime;
-                    if (timeRemaining <= 0)
+                    if (timeRemaining <= 0 && !isDeSpawned)
                     {
+                        isDeSpawned = true;
+                        MemoryStream stream = new MemoryStream();
+                        BinaryWriter writer = new BinaryWriter(stream);
+                        ReplicationHeader enemyDeSpawnHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+                        NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
                         DisposeGameObject();
                     }
+                }
                     break;
-
                 default:
                     agent.isStopped = true;
                     break;
             }
         }
-
-        private void StartParalyzerAttack()
+        protected override void UpdateClient()
         {
-            target.gameObject.GetComponent<Player.Player>().enabled = false;
-
-            if(internalAttackObject){}
-            else
+            switch (enemyState)
             {
-                internalAttackObject = Instantiate(attackPrefab);
-                internalAttackObject.transform.position = target.position;
-            }
-        
+                case EnemyState.SPAWN:
+                {
+                    agent.isStopped = true;
+                    // Spawn sound, particle and animation
+                    enemyState = EnemyState.CHASE;
+                }
+                    break;
+                case EnemyState.CHASE:
+                {
+                    agent.isStopped = false;
+                    
+                    if (target == null) return;
+                    float distance = Vector3.Distance(target.position, this.transform.position);
+                    
+                    agent.SetDestination(target.position);
+                    
+                    if (distance < minRange)
+                    {
+                        agent.SetDestination(-target.position); 
+                    }
+                    else
+                    {
+                        agent.SetDestination(target.position);
+                    }
+                    
+                    if (distance <= maxRange && distance >= minRange && (CheckLineOfSight(target) == true))
+                    {
+                        enemyState = EnemyState.ATTACK;
+                    }
+                }
+                    break;
+                case EnemyState.ATTACK:
+                {
+                    agent.isStopped = true;
+                    
+                    if (target == null) return;
+                    float distance = Vector3.Distance(target.position, this.transform.position);
 
+                    if (attackState == EnemyAttackState.END)
+                    {
+                        cooldownTimer -= Time.deltaTime;
+                    }
+
+                    if (internalAttackObject) 
+                    {
+                        internalAttackObject.transform.position = target.position;
+                    }
+                    
+                    if (distance > 9)
+                    {
+                        enemyState = EnemyState.CHASE;
+                        ClientEndAttack();
+                    }
+                }
+                    break;
+                case EnemyState.DIE:
+                {
+                    agent.isStopped = true;
+                    // Play death animation, sound and particles, destroy enemy object
+                    collider2D.enabled = false;
+                }
+                    break;
+                default:
+                    agent.isStopped = true;
+                    break;
+            }
+        }
+        private void StartServerAttack()
+        {
+            if (target == null) return;
+            
+            if(internalAttackObject != null) 
+            {
+                ParalizerAttack p = internalAttackObject.GetComponent<ParalizerAttack>();
+                p.DoDisposeGameObject();
+            }
+            
+            attackState = EnemyAttackState.COOLDOWN;
+            
+            target.gameObject.GetComponent<Player.Player>().isParalized = true;
+            
+            MemoryStream meleeAttackMemoryStream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(meleeAttackMemoryStream);
+            writer.Write("ParalizerAttack");
+            ReplicationHeader changeWeaponHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.CREATE, meleeAttackMemoryStream.ToArray().Length);
+            internalAttackObject = NetworkManager.Instance.replicationManager.Server_InstantiateNetworkObject(attackPrefab,
+                changeWeaponHeader, meleeAttackMemoryStream);
+            
+            internalAttackObject.transform.position = target.position;
+            
+            ParalizerAttack paralizerAttack = internalAttackObject.GetComponent<ParalizerAttack>();
+            paralizerAttack.Damage = damage;
+            paralizerAttack.SetOwner(gameObject);
+            paralizerAttack.SetPlayer(target.gameObject);
+            
             cooldownTimer = cooldownDuration;
         }
-
-        private void StopParalyzerAttack()
+        
+        public override void CallBackSpawnObjectOther(NetworkObject objectSpawned, BinaryReader reader, long timeStamp, int lenght)
         {
-            target.gameObject.GetComponent<Player.Player>().enabled = true;
-
-            if (internalAttackObject)
+            string type = reader.ReadString();
+        
+            if (type == "ParalizerAttack")
             {
-                Destroy(internalAttackObject);
+                StartClientAttack(objectSpawned.gameObject);
             }
-
         }
 
-        new bool CheckLineOfSight(Transform playerTransform)
+        private void StartClientAttack(GameObject objectSpawned)
+        {
+            internalAttackObject = objectSpawned;
+            internalAttackObject.transform.position = target.position;
+            
+            ParalizerAttack paralizerAttack = internalAttackObject.GetComponent<ParalizerAttack>();
+            paralizerAttack.Damage = damage;
+            paralizerAttack.SetOwner(gameObject);
+            paralizerAttack.SetPlayer(target.gameObject);
+        }
+
+        private void ServerEndAttack()
+        {
+            if (target == null) return;
+            attackState = EnemyAttackState.END;
+            
+            target.gameObject.GetComponent<Player.Player>().isParalized = false;
+            
+            if(internalAttackObject != null) 
+            {
+                ParalizerAttack paralizerAttack = internalAttackObject.GetComponent<ParalizerAttack>();
+                paralizerAttack.DoDisposeGameObject();
+            }
+            cooldownTimer = cooldownDuration;
+        }
+        private void ClientEndAttack()
+        {
+            attackState = EnemyAttackState.END;
+            cooldownTimer = cooldownDuration;
+        }
+        public override void OnClientNetworkSpawn(NetworkObject spawner, BinaryReader reader, long timeStamp, int lenght)
+        {
+            Debug.Log("Enemy spawned in client");
+        }
+
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        {
+            Debug.Log("Enemy dead in client");
+            DisposeGameObject();
+        }
+        bool CheckLineOfSightParalizer(Transform playerTransform)
         {
             Vector2 directionToPlayer = (playerTransform.position - transform.position).normalized;
             float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);

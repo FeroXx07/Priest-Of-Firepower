@@ -35,6 +35,7 @@ namespace _Scripts.Enemies
         [SerializeField] protected int damage = 5;
         
         [SerializeField] protected Transform target;
+        public bool overrideTarget = false;
         protected NavMeshAgent agent;
         protected HealthSystem healthSystem;
         protected new Collider2D collider2D;
@@ -50,8 +51,8 @@ namespace _Scripts.Enemies
         protected GameObject[] playerList;
         protected GameObject internalAttackObject;
 
-        protected EnemyState enemyState;
-        protected EnemyAttackState attackState = EnemyAttackState.COOLDOWN;
+        [SerializeField] protected EnemyState enemyState;
+        [SerializeField] protected EnemyAttackState attackState = EnemyAttackState.COOLDOWN;
 
         public UnityEvent<Enemy> onDeath = new UnityEvent<Enemy>();
         public int PointsOnHit { get => pointsOnHit; }
@@ -77,7 +78,7 @@ namespace _Scripts.Enemies
         protected override void InitNetworkVariablesList()
         {
         }
-        void Start()
+        public virtual void Start()
         {
             // Only server executes the logic of the enemy
             if (!isHost) return;
@@ -88,7 +89,8 @@ namespace _Scripts.Enemies
         public override void Update()
         {
             base.Update();
-            if (Time.frameCount % logicFrameIntervalUpdate == 0)
+            
+            if (overrideTarget == false && Time.frameCount % logicFrameIntervalUpdate == 0)
             {
                 ServerSetTarget();
             }

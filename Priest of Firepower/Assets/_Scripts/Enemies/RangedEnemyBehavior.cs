@@ -9,6 +9,8 @@ namespace _Scripts.Enemies
     public class RangedEnemyBehavior : Enemy
     {
         public float bulletSpeedMultiplier = 2.0f;
+        public float minRange = 3.0f;
+        public float maxRange = 8.0f;
         protected override void UpdateServer()
         {
             float distance = Vector3.Distance(target.position, this.transform.position);
@@ -17,7 +19,6 @@ namespace _Scripts.Enemies
                 case EnemyState.SPAWN:
                 {
                     agent.isStopped = true;
-                    // Spawn sound, particle and animation
                     enemyState = EnemyState.CHASE;
                 }
                     break;
@@ -27,19 +28,18 @@ namespace _Scripts.Enemies
 
                     agent.SetDestination(target.position);
                     
-                    if (distance < 3)
+                    if (distance < minRange)
                     {
-                        agent.SetDestination(-target.position); // To be revewed
+                        agent.SetDestination(-target.position); 
                     }
                     else
                     {
                         agent.SetDestination(target.position);
                     }
                     
-                    if (distance <= 8 && distance >= 3 && (CheckLineOfSight(target) == true))
+                    if (distance <= maxRange && distance >= minRange && (CheckLineOfSight(target) == true))
                     {
                         enemyState = EnemyState.ATTACK;
-                        // Debug.Log("Attack mode");
                     }
                 }
                     break;
@@ -62,11 +62,10 @@ namespace _Scripts.Enemies
                         ServerAttack();
                     
                     // For example: Perform attack, reduce player health, animation sound and particles
-                    if (distance > 8 || (CheckLineOfSight(target) == false))  
+                    if (distance > maxRange || (CheckLineOfSight(target) == false))  
                     {
                         enemyState = EnemyState.CHASE;
                     }
-
                 }
                     break;
                 case EnemyState.DIE:

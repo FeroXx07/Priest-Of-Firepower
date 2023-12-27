@@ -3412,34 +3412,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetworkManager
       objectReference: {fileID: 0}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: debugShowInputPackets
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.size
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[5]
-      value: 
-      objectReference: {fileID: 6899846537113805462, guid: 273ea94a92c6900439dd686a3a0f9bca, type: 3}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[6]
-      value: 
-      objectReference: {fileID: 2627832369091270297, guid: 19628ac0d74ae464481cc59a138dc5c2, type: 3}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[7]
-      value: 
-      objectReference: {fileID: 7817667860927790107, guid: 5e41785d45510a0479517d35bc8a77e9, type: 3}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[8]
-      value: 
-      objectReference: {fileID: 1283569598023597542, guid: db663414989952d41a6d60db15d7ce84, type: 3}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[9]
-      value: 
-      objectReference: {fileID: 1681268591073965709, guid: 3480f4e7954274743a02daa813d7098d, type: 3}
     - target: {fileID: 9178497600898120432, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
       propertyPath: m_RootOrder
       value: 4

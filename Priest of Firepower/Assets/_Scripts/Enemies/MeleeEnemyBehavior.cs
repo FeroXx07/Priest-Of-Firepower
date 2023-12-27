@@ -45,6 +45,7 @@ namespace _Scripts.Enemies
 
                     if (!_isAttacking && cooldownTimer <= 0f)
                     {
+                        attackState = EnemyAttackState.EXECUTE;
                         StartServerAttack();
                     }
 
@@ -53,7 +54,11 @@ namespace _Scripts.Enemies
                         _attackTimer -= Time.deltaTime;
                         if (_attackTimer <= 0f)
                         {
-                            ServerEndMeleeAttack();
+                            ServerEndAttack();
+                        }
+                        else
+                        {
+                            attackState = EnemyAttackState.COOLDOWN;
                         }
                     }
                     else if (cooldownTimer > 0f)
@@ -125,7 +130,7 @@ namespace _Scripts.Enemies
                         _attackTimer -= Time.deltaTime;
                         if (_attackTimer <= 0f)
                         {
-                            ClientEndMeleeAttack();
+                            ClientEndAttack();
                         }
                     }
                     else if (cooldownTimer > 0f)
@@ -236,7 +241,7 @@ namespace _Scripts.Enemies
             
             _attackTimer = attackDuration;
         }
-        private void ServerEndMeleeAttack()
+        private void ServerEndAttack()
         {
             _isAttacking = false;
             if(internalAttackObject != null) 
@@ -247,7 +252,7 @@ namespace _Scripts.Enemies
             cooldownTimer = cooldownDuration;
         }
         
-        private void ClientEndMeleeAttack()
+        private void ClientEndAttack()
         {
             _isAttacking = false;
             cooldownTimer = cooldownDuration;
