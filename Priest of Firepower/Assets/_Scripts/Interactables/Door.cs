@@ -26,7 +26,7 @@ namespace _Scripts.Interactables
 
         [SerializeField] List<Door> prerequisiteDoors;
         [SerializeField] List<GameObject> objectsToEnable;
-        UInt64 interactorId; // client that is currently interacting
+        UInt64 _interactorId; // client that is currently interacting
         float _timer;
         public string Prompt => message;
 
@@ -35,11 +35,11 @@ namespace _Scripts.Interactables
 
         public int InteractionCost => price;
 
-        private bool keyPressed = false;
+        private bool _keyPressed = false;
 
         private InteractableState currentState = InteractableState.NONE;
         InteractableState IInteractable.state { get => currentState ; set => currentState = value; }
-        ulong IInteractable.interactorId { get => interactorId; set => interactorId = value; }
+        ulong IInteractable.interactorId { get => _interactorId; set => _interactorId = value; }
 
         bool _open = false;
 
@@ -60,22 +60,10 @@ namespace _Scripts.Interactables
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
 
             writer.Write((int)currentState);
-            writer.Write(interactorId);
-            writer.Write(keyPressed);
-            
-            
-            switch(currentState)
-            {
-                case InteractableState.INTERACTING:
-                    break;
-                case InteractableState.INTERRUPTED:
-                    break;
-                case InteractableState.INTERACTION_COMPLETE:
-                    break;
-                case InteractableState.NONE:
-                    break;
-            }
-            
+            writer.Write(_interactorId);
+            writer.Write(_keyPressed);
+            writer.Write(_open);
+
             ReplicationHeader header = new ReplicationHeader(GetObjId(),this.GetType().FullName,action, outputMemoryStream.ToArray().Length);
             return header;
         }
@@ -85,36 +73,14 @@ namespace _Scripts.Interactables
 
             InteractableState _state = (InteractableState)reader.ReadInt32();
             Debug.Log("Receiving " + currentState);
-            interactorId = reader.ReadUInt64();
-            keyPressed = reader.ReadBoolean();
-            switch (_state)
-            {
-                case InteractableState.INTERACTING:
-                    break;
-                case InteractableState.INTERRUPTED:
-                    break;
-                case InteractableState.INTERACTION_COMPLETE:
-                    DisableDoor();
-                    break;
-                case InteractableState.NONE :
-                    break;
-            }
-            return true;
-        }
+            _interactorId = reader.ReadUInt64();
+            _keyPressed = reader.ReadBoolean();
+            _open = reader.ReadBoolean();
 
-        public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
-        {
-            keyPressed = reader.ReadBoolean();
-            interactorId = reader.ReadUInt64();
-            
-            if (keyPressed)
-            {
-                currentState = InteractableState.INTERACTING;
-            }else
-            {
-                currentState = InteractableState.INTERRUPTED;
-                interactorId = UInt64.MaxValue;
-            }
+            if (_open)
+                DisableDoor();
+
+            return true;
         }
 
         public override void OnEnable()
@@ -122,7 +88,7 @@ namespace _Scripts.Interactables
             base.OnEnable();
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
-
+            message += " [" + price + "]";
             interactionPromptUI.SetText(message);
             EnablePromptUI(false);
             EnableObjects(false);
@@ -143,73 +109,9 @@ namespace _Scripts.Interactables
 
         public override void Update()
         {
-            base.Update();
-            
-            if (isClient) return;
-
-            //check wether the door can interacted with or not
-            if (!CanInteract()) return;
-
-            switch (currentState)
-            {
-                case InteractableState.INTERACTING:
-                    {
-                        _timer -= Time.deltaTime;
-                        if (_timer <= 0)
-                        {
-                            _open = true;
-                            Debug.Log(Prompt);
-                            _timer = InteractionTime;
-                            EnablePromptUI(false);
-                            EnableObjects(true);
-                            if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(interactorId,
-                                    out NetworkObject interactor))
-                            {
-                                interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
-                            }
-                            currentState = InteractableState.INTERACTION_COMPLETE;
-                        }
-                    }
-                    break;
-
-                case InteractableState.INTERRUPTED:
-                    EnablePromptUI(true);
-                    _timer = time;
-                    interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
-                    interactorId = UInt64.MaxValue;
-                    currentState = InteractableState.NONE;
-                    break;
-
-                case InteractableState.INTERACTION_COMPLETE:
-                    DisableDoor();
-                    SendReplicationData(ReplicationAction.UPDATE);
-                    break;
-                case InteractableState.NONE:
-                    break;
-            }
+            base.Update();            
         }
-        
-        private bool CanInteract()
-        {
-            bool canInteract = false;
 
-            // if one of the prerequisite doors is open then enable door interaction
-            if(prerequisiteDoors.Count > 0)
-            {
-                foreach (Door door in prerequisiteDoors)
-                {
-                    if (door.IsOpen())
-                        canInteract = true;
-                }
-            }
-            else
-            {
-                canInteract = true; 
-            }
-
-
-            return canInteract;
-        }
         private void EnableObjects(bool enable)
         {
             foreach (var obj in objectsToEnable)
@@ -227,7 +129,13 @@ namespace _Scripts.Interactables
             {
                 child.gameObject.SetActive(false);
             }
-            Destroy(this);
+
+            _open = true;
+
+            if(!isClient)
+                SendReplicationData(ReplicationAction.UPDATE);
+
+            gameObject.SetActive(false);
         }
         bool IsOpen() { return _open; }
 
@@ -235,53 +143,62 @@ namespace _Scripts.Interactables
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-            writer.Write(keyPressed);
-            writer.Write(interactorId);
+            writer.Write(_keyPressed);
+            writer.Write(_interactorId);
             SendInput(stream, true);
         }
 
-        public void Interact(Interactor interactor, bool _keyPressed)
+        public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
         {
-            interactionPromptUI.SetText(message);
-            if (keyPressed != _keyPressed)
+            _keyPressed = reader.ReadBoolean();
+            _interactorId = reader.ReadUInt64();
+            DisableDoor();
+        }
+
+        public void Interact(Interactor interactor, bool keyPressed)
+        {
+            EnablePromptUI(true);
+
+            interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
+
+            if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
             {
-                keyPressed = _keyPressed;
-                if (NetworkManager.Instance.IsClient())
-                {                    
-                    if (keyPressed)
+                interactionPromptUI.SetText("Not enough points!");
+                return;
+            }
+            else
+            {
+                interactionPromptUI.SetText(message);
+            }
+
+
+            if (keyPressed && !_open)
+            {
+                _timer -= Time.deltaTime;
+                if (_timer <= 0)
+                {
+                    _timer = InteractionTime;
+
+                    _keyPressed = keyPressed;
+                    _interactorId = interactor.GetObjId();
+
+                    interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
+
+                    if (isClient)
                     {
-                        if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
-                        {
-                            interactionPromptUI.SetText("Not enough points!");
-                            return;
-                        }
-                        interactorId = interactor.GetObjId();
+                        SendInputToServer();
                     }
                     else
-                        interactorId = UInt64.MaxValue;
-                    
-                    SendInputToServer();
-                }
-                else
-                {
-                    if (keyPressed)
                     {
-                        if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
-                        {
-                            interactionPromptUI.SetText("Not enough points!");
-                            return;
-                        }
-                        currentState = InteractableState.INTERACTING;
-                        interactorId = interactor.GetObjId();
-                    }else
-                    {
-                        currentState = InteractableState.INTERRUPTED;
-                        interactorId = UInt64.MaxValue;
+                        
+                        DisableDoor();  
                     }
-                    SendReplicationData(ReplicationAction.UPDATE);
                 }
             }
-            EnablePromptUI(true);
-      }
+            else
+            {
+                _timer = InteractionTime;
+            }
+        }
     }
 }

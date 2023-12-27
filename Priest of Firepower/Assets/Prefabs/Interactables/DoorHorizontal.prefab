@@ -389,9 +389,9 @@ MonoBehaviour:
   tickRateBehaviour: 1
   doTickUpdates: 0
   clientSendReplicationData: 0
-  message: Open the door[cost:750]
-  time: 0
-  price: 750
+  message: Open door
+  time: 0.5
+  price: 10
   interactionPromptUI: {fileID: 2448695558081809923}
   interactionProgress: {fileID: 4114389586618269713}
   audioClip: {fileID: 0}
@@ -423,7 +423,7 @@ MonoBehaviour:
   - {x: 1, y: -0.5, z: 0}
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
-  m_InstanceId: 57434
+  m_InstanceId: 81868
   m_LocalBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 1, y: 0.5, z: 0}

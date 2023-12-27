@@ -129,9 +129,9 @@ MonoBehaviour:
   tickRateBehaviour: 1
   doTickUpdates: 1
   clientSendReplicationData: 0
-  message: Open the door[cost:750]
-  time: 750
-  price: 0
+  message: Open door
+  time: 0.5
+  price: 10
   interactionPromptUI: {fileID: 4260816170529418465}
   interactionProgress: {fileID: 2577125093014282995}
   audioClip: {fileID: 0}

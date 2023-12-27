@@ -4,10 +4,12 @@ using _Scripts.UI.Interactable;
 using _Scripts.Weapon;
 using UnityEngine;
 using Unity.VisualScripting;
+using _Scripts.Networking.Utility;
+using _Scripts.Networking;
 
 namespace _Scripts.Interactables
 {
-    public class WallWeapon : MonoBehaviour, IInteractable
+    public class WallWeapon : NetworkBehaviour, IInteractable
     {
         [SerializeField] string message;
         [SerializeField] float timeToInteract = 1f;
@@ -27,11 +29,19 @@ namespace _Scripts.Interactables
         public InteractableState state { get => currentState; set => currentState = value; }
         public ulong interactorId { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
 
-        private void OnEnable()
+        public override void Awake()
         {
+            base.Awake();
+            InitNetworkVariablesList();
+            BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
+
+        public override void OnEnable()
+        { 
+            base.OnEnable();
             _timer = InteractionTime;
             Weapon.Weapon wp = weapon.GetComponent<Weapon.Weapon>(); 
-            message = "Hold F to buy " + wp.weaponData.weaponName +" [" + wp.weaponData.price.ToString()+"]";
+            message = " " + wp.weaponData.weaponName +" [" + wp.weaponData.price.ToString()+"]";
             interactionPromptUI.SetText(message);
             EnablePromptUI(false);
             _wallWeaponImg = GetComponent<SpriteRenderer>();
@@ -39,37 +49,43 @@ namespace _Scripts.Interactables
         }
         public void Interact(Interactor interactor, bool keyPressed)
         {
-            if(keyPressed)
+
+            EnablePromptUI(true);
+
+            interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
+
+            if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
             {
+                interactionPromptUI.SetText("Not enough points!");
+                return;
+            }
+
+
+            if (keyPressed)
+            {
+                
                 _timer -= Time.deltaTime;
                 if (_timer <= 0)
                 {
-                    if (interactor.TryGetComponent<PointSystem>(out PointSystem pointSystem))
-                    {
-                        if (pointSystem.GetPoints() >= InteractionCost)
-                        {
+                   // if has that weapon fill ammo 
+                   // if has a slot empty add to empty slot
+                   // if has not this weapon change by current weapon
+                   if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                   {
+                       switcher.ChangeWeaponServer(weapon);
+                       _timer = InteractionTime;
+                       EnablePromptUI(false);
 
-                            // if has that weapon fill ammo 
-                            // if has a slot empty add to empty slot
-                            // if has not this weapon change by current weapon
-                            if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
-                            {
-                                switcher.ChangeWeaponServer(weapon);
-                                _timer = InteractionTime;
-                                EnablePromptUI(false);
-
-                                pointSystem.RemovePoints(price);
-                            }
-                        }
-                    }
+                        interactor.GetComponent<PointSystem>().RemovePoints(price);
+                   }
+                    
                 }
             }
             else
             {
-                EnablePromptUI(true);
                 _timer = timeToInteract;
             }
-                interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
+     
         }
 
         public void EnablePromptUI(bool show)
@@ -79,7 +95,7 @@ namespace _Scripts.Interactables
 
         public void InterruptInteraction()
         {
-            
+            EnablePromptUI(false);
         }
 
         public MemoryStream GetInteractionStream()
@@ -113,6 +129,11 @@ namespace _Scripts.Interactables
         }
 
         public void ServerHandleInteraction(MemoryStream stream)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        protected override void InitNetworkVariablesList()
         {
             throw new System.NotImplementedException();
         }

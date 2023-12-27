@@ -57,6 +57,8 @@ namespace _Scripts.Interactables
         public override void OnEnable()
         {
             base.OnEnable();
+
+            message += " [" + price + "]";
             interactionPromptUI.SetText(message);
             GetComponent<SpriteRenderer>().sprite = sprites[0];
             EnablePromptUI(false);
@@ -65,13 +67,15 @@ namespace _Scripts.Interactables
             _timer = InteractionTime;
             _weaponReady = false;
             currentState = InteractableState.NONE;
+
+
         }
 
         public override void Update()
         {
             base.Update();
 
-            if (NetworkManager.Instance.IsClient()) return;
+            if (isClient) return;
 
             switch(state)
             {
@@ -167,7 +171,7 @@ namespace _Scripts.Interactables
 
             interactionProgress.UpdateProgress(InteractionTime - _timer, InteractionTime);
 
-            if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost)
+            if (interactor.GetComponent<PointSystem>().GetPoints() < InteractionCost && !_weaponReady)
             {
                 interactionPromptUI.SetText("Not enough points!");
                 return;
@@ -184,16 +188,15 @@ namespace _Scripts.Interactables
                     _keyPressed = keyPressed;
                     _interactorId = interactor.GetObjId();
 
-                    if (NetworkManager.Instance.IsClient())
-                    {                        
-                        interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);                       
-                        _interactorId = interactor.GetObjId();
+                    interactor.GetComponent<PointSystem>().RemovePoints(InteractionCost);
+
+                    if (isClient)
+                    {                                              
                         SendInputToServer();
                     }
                     else
                     {
                         currentState = InteractableState.INTERACTING;
-                        _interactorId = interactor.GetObjId();
                         SendReplicationData(ReplicationAction.UPDATE);
                     }
                 }

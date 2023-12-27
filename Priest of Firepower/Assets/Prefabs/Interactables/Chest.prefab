@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1897267876575666541}
   - component: {fileID: 4534680615128562026}
   - component: {fileID: 9161270688950272331}
+  - component: {fileID: 8932839917391767489}
   m_Layer: 6
   m_Name: Chest
   m_TagString: Untagged
@@ -175,9 +176,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69efe637c1dadcd489ecd289739d1314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  message: Open the Chestr[cost:750]
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
+  message: Open chest
   time: 0.5
-  price: 0
+  price: 10
   interactionPromptUI: {fileID: 7236965091297131869}
   interactionProgress: {fileID: 8974655141216203599}
   audioClip: {fileID: 0}
@@ -208,6 +214,35 @@ MonoBehaviour:
   m_Area: 1
   m_IgnoreFromBuild: 0
   m_AffectedAgents: ffffffff
+--- !u!114 &8932839917391767489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1897267876575666539}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 10
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1 &2227612726843118593
 GameObject:
   m_ObjectHideFlags: 0

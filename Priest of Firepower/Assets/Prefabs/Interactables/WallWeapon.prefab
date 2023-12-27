@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 7191902583211532011}
   - component: {fileID: 7191902583211531927}
   - component: {fileID: 7191902583211532008}
+  - component: {fileID: 3080361885343607672}
   m_Layer: 6
   m_Name: WallWeapon
   m_TagString: Untagged
@@ -155,10 +156,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd84f284e555b024dbfc1a1b2cec065a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  message: Hold F to buy  "Weapon name [cost:100]
-  timeToInteract: 1
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
+  message: ' Buy '
+  timeToInteract: 0.5
   weapon: {fileID: 1681268591073965709, guid: 3480f4e7954274743a02daa813d7098d, type: 3}
-  price: 0
+  price: 10
   interactionPromptUI: {fileID: 2158468006393200306}
   interactionProgress: {fileID: 366716893788467360}
 --- !u!212 &7191902583211532011
@@ -285,6 +291,35 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &3080361885343607672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7191902583211532012}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 10
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1001 &7191902583358183889
 PrefabInstance:
   m_ObjectHideFlags: 0
