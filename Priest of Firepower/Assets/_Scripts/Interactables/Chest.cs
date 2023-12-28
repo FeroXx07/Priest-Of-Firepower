@@ -6,13 +6,10 @@ using _Scripts.UI.Interactable;
 using _Scripts.Weapon;
 using UnityEngine;
 using UnityEngine.VFX;
-using Unity.VisualScripting;
 using System;
 using _Scripts.Networking;
 using _Scripts.Networking.Replication;
-using _Scripts.Enemies;
 using _Scripts.Networking.Utility;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 namespace _Scripts.Interactables
 {
