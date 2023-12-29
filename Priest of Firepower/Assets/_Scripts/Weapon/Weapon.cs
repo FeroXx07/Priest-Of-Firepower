@@ -68,12 +68,15 @@ namespace _Scripts.Weapon
         public override void OnEnable()
         {
             base.OnEnable();
+
         }
 
         public override void OnDisable()
         {
             base.OnDisable();
             localData.reloading = false;
+            if(shooterOwner != null ) 
+                shooterOwner.OnFlip -= FlipGun;
         }
 
         public override void Update()
@@ -182,12 +185,16 @@ namespace _Scripts.Weapon
 
         void InstantiateBulletServer()
         {
+
+            float dispersion = UnityEngine.Random.Range(-localData.dispersion, localData.dispersion);
+
             MemoryStream bulletDataStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(bulletDataStream);
                     
             writer.Write(shooterOwner.GetPlayerId());
             writer.Write(weaponData.weaponName);
             writer.Write((int)BulletState.CREATION);
+            writer.Write(dispersion);
             ReplicationHeader bulletDataHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.CREATE, bulletDataStream.ToArray().Length);
 
             GameObject bullet =
@@ -199,10 +206,10 @@ namespace _Scripts.Weapon
             onTriggerAttack.SetOwner(_owner);
 
             transform.localRotation = transform.parent.rotation;
-            //var dispersion = Random.Range(-localData.dispersion, localData.dispersion); NO DISPERSION BECAUSE RNG ARE DIFFICULT TO HANDLE IN DIFFERENT MACHINES
+       
             
             Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x, transform.localEulerAngles.y,
-                transform.localEulerAngles.z /*+ dispersion*/);
+                transform.localEulerAngles.z + dispersion);
             transform.rotation = newRot;
             bullet.transform.rotation = transform.rotation;
             bullet.transform.position = firePoint.position;
@@ -227,11 +234,13 @@ namespace _Scripts.Weapon
                 onTriggerAttack.SetOwner(_owner);
 
                 transform.localRotation = transform.parent.rotation;
-                //var dispersion = Random.Range(-localData.dispersion, localData.dispersion); NO DISPERSION BECAUSE RNG ARE DIFFICULT TO HANDLE IN DIFFERENT MACHINES
-            
+                float dispersion = reader.ReadSingle();
+
                 Quaternion newRot = Quaternion.Euler(transform.localEulerAngles.x, transform.localEulerAngles.y,
-                    transform.localEulerAngles.z /*+ dispersion*/);
+                    transform.localEulerAngles.z + dispersion);
                 transform.rotation = newRot;
+
+
 
                 Int64 currentTime = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
                 Rigidbody2D rigidbody2D = objectSpawned.GetComponent<Rigidbody2D>();
@@ -297,7 +306,6 @@ namespace _Scripts.Weapon
 
         public void ServerDespawn()
         {
-            shooterOwner.OnFlip -= FlipGun;
             isDeSpawned = true;
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
