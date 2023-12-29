@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 2627832369091270299}
   - component: {fileID: 2627832369091270296}
   - component: {fileID: 2627832369091270298}
+  - component: {fileID: 4196992546868996865}
   m_Layer: 0
   m_Name: Blue Belly Variant
   m_TagString: Untagged
@@ -130,11 +131,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ac165568864f064980a8ec69f768a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   weaponData: {fileID: 11400000, guid: 4e5110f0fc1933b43b528a4a2df70f1b, type: 2}
   localData: {fileID: 0}
   bulletRef: {fileID: 5059123218599921543, guid: 4e66b9e2bf9809941a2e225fbc5f832c, type: 3}
   firePoint: {fileID: 2627832367354819856}
   muzzleFlash: {fileID: 618522874705143124}
+--- !u!114 &4196992546868996865
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2627832369091270297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 10
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1001 &7957938483790717519
 PrefabInstance:
   m_ObjectHideFlags: 0

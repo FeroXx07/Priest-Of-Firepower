@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1283569598023597540}
   - component: {fileID: 1283569598023597543}
   - component: {fileID: 1283569598023597541}
+  - component: {fileID: 5701805441734704926}
   m_Layer: 0
   m_Name: M1 Carabine Variant
   m_TagString: Untagged
@@ -99,12 +100,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ac165568864f064980a8ec69f768a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isDeSpawned: 0
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   weaponData: {fileID: 11400000, guid: dd849d499d7a229449759facb2beddc5, type: 2}
   localData: {fileID: 0}
-  bulletPool: {fileID: 11400000, guid: 93ee4b2c378bb2446a05de413b85cb42, type: 2}
   bulletRef: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
   firePoint: {fileID: 1283569598434614895}
   muzzleFlash: {fileID: 4210907783179533682}
+--- !u!114 &5701805441734704926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1283569598023597542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 10
+  synchronizeTransform: 1
+  sendEveryChange: 0
+  sendTickChange: 1
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
 --- !u!1 &1283569598434614894
 GameObject:
   m_ObjectHideFlags: 0
@@ -141,6 +175,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 1283569598023597540}
     m_Modifications:
     - target: {fileID: 7414378147472295701, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
@@ -212,6 +247,9 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
 --- !u!4 &4210907783179533681 stripped
 Transform:

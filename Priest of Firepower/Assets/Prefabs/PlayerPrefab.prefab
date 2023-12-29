@@ -379,9 +379,11 @@ MonoBehaviour:
   isDeSpawned: 0
   showDebugInfo: 0
   tickRateBehaviour: 1
-  doTickUpdates: 1
+  doTickUpdates: 0
   clientSendReplicationData: 0
+  _points: 1000
   multiplier: 1
+  player: {fileID: 0}
 --- !u!114 &1475039635855122171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -437,6 +439,7 @@ MonoBehaviour:
   tickRatePlayer: 10
   tickCounter: 0
   speed: 7
+  isParalized: 0
   shootMarker: {fileID: 1747872900257342778}
   layerMask:
     serializedVersion: 2

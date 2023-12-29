@@ -183,7 +183,11 @@ namespace _Scripts.Weapon
             //remove previous weapon
             foreach (Transform w in emptySlot.holder)
             {
-                Destroy(w.gameObject);
+                Weapon wp = w.GetComponent<Weapon>();
+                if(wp != null)
+                {
+                    wp.ServerDespawn();
+                }
             }
 
             emptySlot.weapon = newWeaponPrefab;
@@ -199,12 +203,19 @@ namespace _Scripts.Weapon
             ReplicationHeader changeWeaponHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.CREATE, changeWeaponMemoryStream.ToArray().Length);
             GameObject weapon = NetworkManager.Instance.replicationManager.Server_InstantiateNetworkObject(newWeaponPrefab,
                 changeWeaponHeader, changeWeaponMemoryStream);
+
             weapon.transform.parent = emptySlot.holder.transform;
-            
+
+            weapon.transform.position = Vector3.zero;
+            weapon.transform.rotation = Quaternion.identity;
+
             Weapon weaponComponent =  weapon.GetComponent<Weapon>();
             weaponComponent.SetData();
             weaponComponent.SetOwner(gameObject);
-            OnWeaponChange?.Invoke(user, weapon, emptySlot.index);
+
+            SelectWeapon(_selectedWeapon);
+
+            OnWeaponChange?.Invoke(user, weapon, emptySlot.index);           
         }
 
         public void ChangeWeaponClient(GameObject objectSpawned)
@@ -247,6 +258,10 @@ namespace _Scripts.Weapon
             slots[emptySlot.index] = emptySlot;
             
             objectSpawned.transform.parent = emptySlot.holder.transform;
+
+            objectSpawned.transform.position = Vector3.zero;
+            objectSpawned.transform.rotation = Quaternion.identity;
+
             Player.Player user = gameObject.GetComponent<Player.Player>();
             Weapon weaponComponent = objectSpawned.GetComponent<Weapon>();
             weaponComponent.SetData();

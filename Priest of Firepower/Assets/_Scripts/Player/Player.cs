@@ -122,7 +122,7 @@ namespace _Scripts.Player
             if (isOwner())
             {
                 Debug.Log("Initiating host player and UI");
-                GetComponent<SpriteRenderer>().sortingOrder = 11;
+                GetComponent<SpriteRenderer>().sortingOrder = 13;
                 FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
                 NetworkManager.Instance.player = gameObject;
                 NetworkManager.Instance.OwnerPlayerCreated(gameObject);
@@ -144,7 +144,7 @@ namespace _Scripts.Player
             directionMovement = Vector2.zero;
             currentWeaponInput = PlayerShooterInputs.NONE;
             
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && _currentWeapon != null)
             {
                 currentWeaponInput = PlayerShooterInputs.SHOOT;
                 OnShoot?.Invoke();
@@ -307,7 +307,7 @@ namespace _Scripts.Player
             {
                 var transform1 = _weaponHolder.transform;
                 transform1.rotation = targetRotation;
-                transform1.position = transform.position + shootDir * weaponOffset;  
+                transform1.position = transform.position + (shootDir * weaponOffset);  
             }
         }
         
@@ -339,10 +339,15 @@ namespace _Scripts.Player
         void ChangeHolder(Transform holder)
         {
             _weaponHolder = holder;
+            _currentWeapon = null;
             _currentWeapon = holder.GetComponentInChildren<Weapon.Weapon>();
-            
+
+                        
             if (_currentWeapon != null)
             {
+                if(isOwner())
+                    _currentWeapon.GetComponent<SpriteRenderer>().sortingOrder = 15;
+                
                 _range = _currentWeapon.localData.range;
                 _currentWeapon.SetPlayerShooter(this);
             }

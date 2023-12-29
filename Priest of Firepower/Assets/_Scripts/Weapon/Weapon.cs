@@ -5,6 +5,7 @@ using _Scripts.Attacks;
 using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
+using _Scripts.Object_Pool;
 using _Scripts.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.VFX;
@@ -54,8 +55,10 @@ namespace _Scripts.Weapon
         private void Start()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
-            _spriteRenderer.sprite = localData.sprite;
+            _spriteRenderer.sprite = localData.sprite;          
             _timeSinceLastShoot = 10;
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
         }
 
         protected override void InitNetworkVariablesList()
@@ -289,6 +292,33 @@ namespace _Scripts.Weapon
                 player.OnFlip += FlipGun;
             
             shooterOwner = player;
+        }
+        
+
+        public void ServerDespawn()
+        {
+            shooterOwner.OnFlip -= FlipGun;
+            isDeSpawned = true;
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            ReplicationHeader enemyDeSpawnHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
+            NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
+            DisposeGameObject();
+        }
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        {
+            DisposeGameObject();
+        }
+        void DisposeGameObject()
+        {
+            Debug.Log("Weapon: Disposing");
+            isDeSpawned = true;
+            if (TryGetComponent(out PoolObject pool))
+            {
+                gameObject.SetActive(false);
+            }
+            else
+                Destroy(gameObject, 0.1f);
         }
     }
 }

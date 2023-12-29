@@ -82,19 +82,23 @@ namespace _Scripts.Interactables
                 _timer -= Time.deltaTime;
                 if (_timer <= 0)
                 {
-                   // if has that weapon fill ammo 
-                   // if has a slot empty add to empty slot
-                   // if has not this weapon change by current weapon
-                   if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                    _timer = timeToInteract;
+                    // if has that weapon fill ammo 
+                    // if has a slot empty add to empty slot
+                    // if has not this weapon change by current weapon
+                    if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                    {
-                        if(isClient)
-                        {
-                            switcher.ChangeWeaponClient(weapon);
-                        }
-                        else
-                        {
-                             switcher.ChangeWeaponServer(weapon);
-                        }
+
+                        switcher.ChangeWeaponServer(weapon);
+
+                        //if (isClient)
+                        //{
+                        //    switcher.ChangeWeaponClient(weapon);
+                        //}
+                        //else
+                        //{
+                             
+                        //}
                       
                        _timer = InteractionTime;
                        EnablePromptUI(false);
