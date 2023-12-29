@@ -239,7 +239,7 @@ namespace _Scripts.Enemies
         protected void DisposeGameObject()
         {
             Debug.Log("Enemy: Disposing");
-            isDeSpawned = true;
+            NetworkObject.isDeSpawned = true;
             if (TryGetComponent(out PoolObject pool))
             {
                 gameObject.SetActive(false);

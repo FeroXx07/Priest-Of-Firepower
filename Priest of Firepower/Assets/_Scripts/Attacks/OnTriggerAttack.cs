@@ -21,6 +21,7 @@ namespace _Scripts.Attacks
         {
             OnDamageDealth?.Invoke(hittedGameObject);
             //Debug.Log($"OnTriggerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+            //Play audio
         }
         
         public override void OnEnable()
@@ -36,16 +37,12 @@ namespace _Scripts.Attacks
             
             _timer -= Time.deltaTime;
             
-            if (_timer < 0.0f && !isDeSpawned)
+            if (_timer < 0.0f && !NetworkObject.isDeSpawned)
             {
                 if (NetworkManager.Instance.IsHost())
                 {
                     //Debug.Log("OnTriggerAttack: Timer destroy");
                     DoDisposeGameObject();
-                }
-                else if (NetworkManager.Instance.IsClient())
-                {
-                    DisposeGameObject();
                 }
             }
         }
@@ -108,6 +105,10 @@ namespace _Scripts.Attacks
 
         public void DoDisposeGameObject()
         {
+            if (NetworkObject.isDeSpawned)
+                return;
+            
+            NetworkObject.isDeSpawned = true;
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);

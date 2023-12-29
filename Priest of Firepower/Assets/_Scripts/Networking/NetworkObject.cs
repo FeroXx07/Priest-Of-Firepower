@@ -69,7 +69,8 @@ namespace _Scripts.Networking
         public float interpolationTime = 0.1f; 
         public float speed =0f;//velocity of the obj to calculate interpolation
         #endregion
-        
+        [SerializeField] public bool isDeSpawned = false;
+
         private void Awake()
         {
             newTransformData = new TransformData(transform.position, transform.rotation, transform.localScale);
@@ -263,7 +264,7 @@ namespace _Scripts.Networking
 
             // only send the position as a server
 
-            if (NetworkManager.Instance.IsClient()) return;
+            if (NetworkManager.Instance.IsClient() || isDeSpawned) return;
 
             bool hasChanged = transform.hasChanged;
 

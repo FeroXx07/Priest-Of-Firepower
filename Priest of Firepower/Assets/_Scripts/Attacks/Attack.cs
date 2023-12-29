@@ -21,7 +21,7 @@ namespace _Scripts.Attacks
         }
         protected virtual void DisposeGameObject()
         {
-            isDeSpawned = true;
+            NetworkObject.isDeSpawned = true;
             if (TryGetComponent(out PoolObject pool))
             {
                 gameObject.SetActive(false);

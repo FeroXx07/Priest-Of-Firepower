@@ -3412,22 +3412,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetworkManager
       objectReference: {fileID: 0}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.size
-      value: 17
-      objectReference: {fileID: 0}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[14]
-      value: 
-      objectReference: {fileID: 2615922107341307039, guid: 29bd65b45b0de4649bd111f07536de71, type: 3}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[15]
-      value: 
-      objectReference: {fileID: 8168449793920789381, guid: c0e091105f1d8a84da7e771a6641a63c, type: 3}
-    - target: {fileID: 2838878651600560996, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
-      propertyPath: instantiatablesPrefabs.Array.data[16]
-      value: 
-      objectReference: {fileID: 3401575252818483046, guid: 702b66ef7c813d845aa413dc289b6652, type: 3}
     - target: {fileID: 9178497600898120432, guid: bc0f0dfa37cc6df4b84225a054b909a5, type: 3}
       propertyPath: m_RootOrder
       value: 4

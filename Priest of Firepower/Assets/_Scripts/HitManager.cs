@@ -123,7 +123,11 @@ namespace _Scripts
 
         public void RegisterHit(UInt64 owner, UInt64 hitter, UInt64 hitted, bool hitterIsTrigger, bool hittedIsTrigger, Vector2 position, Vector2 direction)
         {
-            if (!isHost) Debug.LogError("Clients cannot register hit, only server authority can");
+            if (!isHost)
+            {
+                Debug.LogError("Clients cannot register hit, only server authority can");
+                return;
+            }
             
             //Debug.Log("Registered Hit: " + owner + " hitter id: "+ hitter + " hitted id: " + hitted);
 

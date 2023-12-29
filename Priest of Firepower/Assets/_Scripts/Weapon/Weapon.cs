@@ -290,7 +290,7 @@ namespace _Scripts.Weapon
 
         public void ServerDespawn()
         {
-            isDeSpawned = true;
+            NetworkObject.isDeSpawned = true;
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             ReplicationHeader enemyDeSpawnHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);
@@ -304,7 +304,7 @@ namespace _Scripts.Weapon
         void DisposeGameObject()
         {
             Debug.Log("Weapon: Disposing");
-            isDeSpawned = true;
+            NetworkObject.isDeSpawned = true;
             if (TryGetComponent(out PoolObject pool))
             {
                 gameObject.SetActive(false);

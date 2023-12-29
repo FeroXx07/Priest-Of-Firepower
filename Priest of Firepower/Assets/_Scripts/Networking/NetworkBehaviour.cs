@@ -14,7 +14,6 @@ namespace _Scripts.Networking
     {
         [SerializeField] protected bool isHost => NetworkManager.Instance.IsHost();
         [SerializeField] protected bool isClient => NetworkManager.Instance.IsClient();
-        [SerializeField] protected bool isDeSpawned = false;
         [SerializeField] protected bool showDebugInfo = false;
 
         #region TickInfo
@@ -242,7 +241,7 @@ namespace _Scripts.Networking
 
         public virtual void Update()
         {
-            if (!doTickUpdates) return;
+            if (!doTickUpdates || NetworkObject.isDeSpawned) return;
 
             // Send Write to state buffer
             float finalRate = 1.0f / tickRateBehaviour;
@@ -257,6 +256,8 @@ namespace _Scripts.Networking
 
         protected void SendInput(MemoryStream dataStream, bool reliable)
         {
+            if (NetworkObject.isDeSpawned) return;
+            
             InputHeader inputHeader = new InputHeader(NetworkObject.GetNetworkId(), this.GetType().FullName,
                 dataStream.ToArray().Length, NetworkManager.Instance.getId,
                 DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);

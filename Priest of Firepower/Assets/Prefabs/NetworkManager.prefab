@@ -62,6 +62,9 @@ MonoBehaviour:
   - {fileID: 4472022888998543014, guid: f0967a45807eeee4391e62641838d932, type: 3}
   - {fileID: 824060067660528363, guid: 584bcf8e84042ef418b9cf2156c37d2d, type: 3}
   - {fileID: 4472022888998543014, guid: 081ad3c55d6d32743b06c7d2710aa988, type: 3}
+  - {fileID: 2615922107341307039, guid: 29bd65b45b0de4649bd111f07536de71, type: 3}
+  - {fileID: 8168449793920789381, guid: c0e091105f1d8a84da7e771a6641a63c, type: 3}
+  - {fileID: 3401575252818483046, guid: 702b66ef7c813d845aa413dc289b6652, type: 3}
   replicationManager:
     idReplication: 0
     networkObjectMap:

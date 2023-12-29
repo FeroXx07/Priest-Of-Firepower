@@ -46,7 +46,7 @@ namespace _Scripts.Attacks
             base.Update();
             _timer -= Time.deltaTime;
             targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = true;
-            if (_timer < 0.0f && !isDeSpawned)
+            if (_timer < 0.0f && !NetworkObject.isDeSpawned)
             {
                 _timer = tickRate;
                 DoDamage();
@@ -92,6 +92,10 @@ namespace _Scripts.Attacks
 
         public void DoDisposeGameObject()
         {
+            if (NetworkObject.isDeSpawned)
+                return;
+            
+            NetworkObject.isDeSpawned = true;
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);

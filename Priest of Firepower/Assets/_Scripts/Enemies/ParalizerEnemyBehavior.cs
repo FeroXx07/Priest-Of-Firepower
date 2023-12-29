@@ -89,9 +89,9 @@ namespace _Scripts.Enemies
                     
                     ServerEndAttack();
                     timeRemaining -= Time.deltaTime;
-                    if (timeRemaining <= 0 && !isDeSpawned)
+                    if (timeRemaining <= 0 && !NetworkObject.isDeSpawned)
                     {
-                        isDeSpawned = true;
+                        NetworkObject.isDeSpawned = true;
                         MemoryStream stream = new MemoryStream();
                         BinaryWriter writer = new BinaryWriter(stream);
                         ReplicationHeader enemyDeSpawnHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, ReplicationAction.DESTROY, stream.ToArray().Length);

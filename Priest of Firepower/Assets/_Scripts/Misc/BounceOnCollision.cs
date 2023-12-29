@@ -55,7 +55,7 @@ namespace _Scripts.Misc
         }
         private void DisposeGameObject()
         {
-            isDeSpawned = true;
+            NetworkObject.isDeSpawned = true;
             if (TryGetComponent(out PoolObject pool))
                 gameObject.SetActive(false);
             else
