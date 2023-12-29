@@ -86,7 +86,7 @@ namespace _Scripts.Interactables
                     // if has that weapon fill ammo 
                     // if has a slot empty add to empty slot
                     // if has not this weapon change by current weapon
-                    if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                   if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                    {
 
                         switcher.ChangeWeaponServer(weapon);                      

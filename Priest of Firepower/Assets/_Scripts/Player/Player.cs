@@ -139,7 +139,7 @@ namespace _Scripts.Player
             directionMovement = Vector2.zero;
             currentWeaponInput = PlayerShooterInputs.NONE;
             
-            if (Input.GetMouseButtonDown(0) && _currentWeapon != null)
+            if (Input.GetMouseButton(0) && _currentWeapon != null)
             {
                 currentWeaponInput = PlayerShooterInputs.SHOOT;
                 OnShoot?.Invoke();
@@ -153,8 +153,7 @@ namespace _Scripts.Player
                     _currentWeapon.ShootClient();
                     SendInputToServer();
                 }
-            }
-            
+            }else         
             if (Input.GetKeyDown(KeyCode.R))
             {
                 currentWeaponInput = PlayerShooterInputs.RELOAD;

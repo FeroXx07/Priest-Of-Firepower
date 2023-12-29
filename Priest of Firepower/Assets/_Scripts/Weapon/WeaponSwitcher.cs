@@ -214,7 +214,7 @@ namespace _Scripts.Weapon
             weaponComponent.SetOwner(gameObject);
 
             SelectWeapon(_selectedWeapon);
-
+            SendReplicationData(ReplicationAction.UPDATE);
             OnWeaponChange?.Invoke(user, weapon, emptySlot.index);           
         }
 
@@ -267,6 +267,7 @@ namespace _Scripts.Weapon
             weaponComponent.SetData();
             weaponComponent.SetOwner(gameObject);
             SelectWeapon(_selectedWeapon);
+            SendReplicationData(ReplicationAction.UPDATE);
             OnWeaponChange?.Invoke(user, objectSpawned, emptySlot.index);
         }
 

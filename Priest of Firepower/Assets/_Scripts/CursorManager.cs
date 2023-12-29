@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace _Scripts
 {
-    public class CursorManager : MonoBehaviour
+    public class CursorManager : GenericSingleton<CursorManager>
     {
         [SerializeField] private Texture2D cursorTexture;
         void Start()
