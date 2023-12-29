@@ -263,7 +263,13 @@ namespace _Scripts.Weapon
 
         public void FlipGun(bool flip)
         {
-            _spriteRenderer.flipY = flip;            
+            //_spriteRenderer.flipY = flip;
+            if (flip)
+                transform.localScale = new Vector3(1, -1, 1);
+            else
+            {
+                transform.localScale = new Vector3(1, 1, 1);
+            }
         }
 
         public void GiveMaxAmmo()
