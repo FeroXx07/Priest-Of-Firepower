@@ -61,7 +61,6 @@ namespace _Scripts.Player
         #endregion
 
         #region Shooter
-        [SerializeField] private LineRenderer shootMarker;
         [SerializeField] private LayerMask layerMask;
         Transform _weaponHolder;
         [SerializeField] private float weaponOffset = .5f;
@@ -71,9 +70,6 @@ namespace _Scripts.Player
         public Action OnStartingReload;
         public Action OnReload;
         public Action OnFinishedReload;
-        public Action<bool> OnFlip;
-        [SerializeField] private bool _weaponFlipped;
-        [SerializeField] private float _range = 1;
         [SerializeField] private Weapon.Weapon _currentWeapon; 
         [SerializeField] private WeaponSwitcher _weaponSwitcher;
         [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
@@ -116,8 +112,6 @@ namespace _Scripts.Player
         
         private void Start()
         {
-            shootMarker.positionCount = 2;
-            _weaponFlipped = false;
             NetworkManager.Instance.AnyPlayerCreated(gameObject);
             _spriteRenderer = GetComponent<SpriteRenderer>();
             if (isOwner())
@@ -280,18 +274,6 @@ namespace _Scripts.Player
                 shootDir = (mousePos - transform.position).normalized;
             }
             
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, shootDir, _range, layerMask);
-            if (hit)
-            {
-                UpdateShootMarker(hit.point);
-            }
-            else
-            {
-                Vector3 lineEnd = transform.position + shootDir * _range;
-
-                UpdateShootMarker(lineEnd);
-            }
-
             if (shootDir.x < 0)
                 Flip(true);
             else
@@ -311,14 +293,6 @@ namespace _Scripts.Player
                 transform1.position = transform.position + (shootDir * weaponOffset);  
             }
         }
-        
-        void UpdateShootMarker(Vector3 finalPos)
-        {
-            // Set the positions of the line _spriteRenderer.
-            shootMarker.SetPosition(0, transform.position);
-            shootMarker.SetPosition(1, finalPos);
-        }
-
         void Flip(bool flip)
         {           
             _spriteRenderer.flipX = flip;
@@ -332,14 +306,11 @@ namespace _Scripts.Player
             _weaponHolder = holder;
             _currentWeapon = null;
             _currentWeapon = holder.GetComponentInChildren<Weapon.Weapon>();
-
                         
             if (_currentWeapon != null)
             {
                 if(isOwner())
                     _currentWeapon.GetComponent<SpriteRenderer>().sortingOrder = 15;
-                
-                _range = _currentWeapon.localData.range;
                 _currentWeapon.SetPlayerShooter(this);
             }
         }

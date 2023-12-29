@@ -75,8 +75,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 84494373
+  m_SortingLayer: 3
   m_SortingOrder: 0
   m_Sprite: {fileID: -714185765, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -242,7 +242,7 @@ MonoBehaviour:
   m_PointLightInnerAngle: 25.24884
   m_PointLightOuterAngle: 25.24884
   m_PointLightInnerRadius: 0
-  m_PointLightOuterRadius: 5.61
+  m_PointLightOuterRadius: 8
   m_ShapeLightParametricSides: 5
   m_ShapeLightParametricAngleOffset: 0
   m_ShapeLightParametricRadius: 1
@@ -271,11 +271,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7414378147472295704, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.455
+      value: 0.9
       objectReference: {fileID: 0}
     - target: {fileID: 7414378147472295704, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.108
+      value: 0.171
       objectReference: {fileID: 0}
     - target: {fileID: 7414378147472295704, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
       propertyPath: m_LocalPosition.z
@@ -308,6 +308,18 @@ PrefabInstance:
     - target: {fileID: 7414378147472295704, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7414378147472295706, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
+      propertyPath: m_SortingLayer
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7414378147472295706, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
+      propertyPath: m_SortingOrder
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7414378147472295706, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
+      propertyPath: m_SortingLayerID
+      value: 84494373
       objectReference: {fileID: 0}
     - target: {fileID: 7414378147472295707, guid: b8f0e7584ea8d094a88156e151d366d4, type: 3}
       propertyPath: m_PropertySheet.m_Vector3f.m_Array.Array.size
