@@ -89,17 +89,7 @@ namespace _Scripts.Interactables
                     if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
                    {
 
-                        switcher.ChangeWeaponServer(weapon);
-
-                        //if (isClient)
-                        //{
-                        //    switcher.ChangeWeaponClient(weapon);
-                        //}
-                        //else
-                        //{
-                             
-                        //}
-                      
+                        switcher.ChangeWeaponServer(weapon);                      
                        _timer = InteractionTime;
                        EnablePromptUI(false);
                        interactor.GetComponent<PointSystem>().RemovePoints(price);

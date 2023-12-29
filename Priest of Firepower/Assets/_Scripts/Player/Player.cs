@@ -46,6 +46,7 @@ namespace _Scripts.Player
         public void SetName(string name) => _playerName = name;
         public string GetName() => _playerName;
         [SerializeField] private string _playerName;
+        private SpriteRenderer _spriteRenderer;
         #endregion
 
         #region Movement
@@ -118,7 +119,7 @@ namespace _Scripts.Player
             shootMarker.positionCount = 2;
             _weaponFlipped = false;
             NetworkManager.Instance.AnyPlayerCreated(gameObject);
-
+            _spriteRenderer = GetComponent<SpriteRenderer>();
             if (isOwner())
             {
                 Debug.Log("Initiating host player and UI");
@@ -319,21 +320,11 @@ namespace _Scripts.Player
         }
 
         void Flip(bool flip)
-        {
-            if (_weaponFlipped != flip)
-            {
-                _weaponFlipped = flip;
-                OnFlip?.Invoke(flip);
+        {           
+            _spriteRenderer.flipX = flip;
 
-                if (flip)
-                {
-                    transform.localScale = new Vector3(-1, 1, 1);
-                }
-                else
-                {
-                    transform.localScale = new Vector3(1, 1, 1);
-                }
-            }
+            if(_currentWeapon != null)
+                _currentWeapon.FlipGun(flip);
         }    
 
         void ChangeHolder(Transform holder)

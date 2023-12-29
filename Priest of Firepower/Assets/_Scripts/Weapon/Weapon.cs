@@ -75,8 +75,6 @@ namespace _Scripts.Weapon
         {
             base.OnDisable();
             localData.reloading = false;
-            if(shooterOwner != null ) 
-                shooterOwner.OnFlip -= FlipGun;
         }
 
         public override void Update()
@@ -265,15 +263,7 @@ namespace _Scripts.Weapon
 
         public void FlipGun(bool flip)
         {
-            //_spriteRenderer.flipY = flip;
-            if (flip)
-            {
-                transform.localScale = new Vector3(-1, -1, 1);
-            }
-            else
-            {
-                transform.localScale = new Vector3(1, 1, 1);
-            }
+            _spriteRenderer.flipY = flip;            
         }
 
         public void GiveMaxAmmo()
@@ -293,13 +283,7 @@ namespace _Scripts.Weapon
         }
 
         public void SetPlayerShooter(Player.Player player)
-        {
-            if (shooterOwner != null)
-                shooterOwner.OnFlip -= FlipGun;
-            
-            if (player != null)
-                player.OnFlip += FlipGun;
-            
+        {           
             shooterOwner = player;
         }
         
