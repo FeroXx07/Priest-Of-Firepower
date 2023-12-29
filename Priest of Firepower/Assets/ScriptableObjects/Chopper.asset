@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
+  m_Name: Chopper
+  m_EditorClassIdentifier: 
+  weaponName: Chopper
+  price: 750
+  range: 15
+  damage: 10
+  fireRate: 0.8
+  bulletSpeed: 20
+  dispersion: 15
+  ammoInMagazine: 32
+  totalAmmo: 160
+  maxAmmoCapacity: 160
+  magazineSize: 32
+  reloadSpeed: 0.5
+  reloading: 0
+  sprite: {fileID: -714185765, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}

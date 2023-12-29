@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d59c60f49c26f71468802c43eff15345, type: 3}
+  m_Name: Eraser
+  m_EditorClassIdentifier: 
+  weaponName: Eraser
+  price: 350
+  range: 15
+  damage: 8
+  fireRate: 0.1
+  bulletSpeed: 25
+  dispersion: 25
+  ammoInMagazine: 54
+  totalAmmo: 270
+  maxAmmoCapacity: 270
+  magazineSize: 54
+  reloadSpeed: 1
+  reloading: 0
+  sprite: {fileID: -393660249, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}

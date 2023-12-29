@@ -138,7 +138,7 @@ MonoBehaviour:
   clientSendReplicationData: 0
   weaponData: {fileID: 11400000, guid: 58a498e33baee1c4683c3f7af71ae93c, type: 2}
   localData: {fileID: 0}
-  bulletRef: {fileID: 7430432126554555486, guid: 0aec686515513e84a8aab241fa4bb03b, type: 3}
+  bulletRef: {fileID: 5457185531148667883, guid: ddcef11b082ef6b4e8ad47d6e6fcaf5c, type: 3}
   firePoint: {fileID: 7817667859191357330}
   muzzleFlash: {fileID: 5527112364877350375}
 --- !u!114 &6323368886658075872
