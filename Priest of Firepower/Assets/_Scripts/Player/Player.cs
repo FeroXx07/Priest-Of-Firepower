@@ -138,37 +138,64 @@ namespace _Scripts.Player
             if (!isOwner()) return;  // Only the owner of the player will control it
             directionMovement = Vector2.zero;
             currentWeaponInput = PlayerShooterInputs.NONE;
-            
-            if (Input.GetMouseButton(0) && _currentWeapon != null)
+
+            if (_currentWeapon != null)
             {
-                currentWeaponInput = PlayerShooterInputs.SHOOT;
-                OnShoot?.Invoke();
-                if (isHost)
+                if (_currentWeapon.weaponData.automatic)
                 {
-                    _currentWeapon.ShootServer();
-                    SendInputToClients();
+                    // Automatic weapon
+                    if (Input.GetMouseButton(0))
+                    {
+                        currentWeaponInput = PlayerShooterInputs.SHOOT;
+                        OnShoot?.Invoke();
+                        if (isHost)
+                        {
+                            _currentWeapon.ShootServer();
+                            SendInputToClients();
+                        }
+                        else if (isClient)
+                        {
+                            _currentWeapon.ShootClient();
+                            SendInputToServer();
+                        }
+                    }
                 }
-                else if (isClient)
+                else
                 {
-                    _currentWeapon.ShootClient();
-                    SendInputToServer();
+                    // Semi-automatic
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        currentWeaponInput = PlayerShooterInputs.SHOOT;
+                        OnShoot?.Invoke();
+                        if (isHost)
+                        {
+                            _currentWeapon.ShootServer();
+                            SendInputToClients();
+                        }
+                        else if (isClient)
+                        {
+                            _currentWeapon.ShootClient();
+                            SendInputToServer();
+                        }
+                    }
                 }
-            }else         
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                currentWeaponInput = PlayerShooterInputs.RELOAD;
-                _currentWeapon.Reload();
-                OnReload?.Invoke();
-                if (isHost)
+                
+                if (Input.GetKeyDown(KeyCode.R))
                 {
-                    SendInputToClients();
-                }
-                else if (isClient)
-                {
-                    SendInputToServer();
+                    currentWeaponInput = PlayerShooterInputs.RELOAD;
+                    _currentWeapon.Reload();
+                    OnReload?.Invoke();
+                    if (isHost)
+                    {
+                        SendInputToClients();
+                    }
+                    else if (isClient)
+                    {
+                        SendInputToServer();
+                    }
                 }
             }
-            
+
             if (Input.GetKey(KeyCode.W) && !isParalized)
             {
                 input[0] = true;

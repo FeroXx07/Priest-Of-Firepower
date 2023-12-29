@@ -256,6 +256,7 @@ namespace _Scripts.Weapon
         void OnGunShoot()
         {
             //VFX, sound
+            CameraShaker.Instance.Shake(0.5f,0.2f);
             muzzleFlash.Play();
         }
 

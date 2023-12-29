@@ -16,9 +16,10 @@ MonoBehaviour:
   price: 500
   range: 15
   damage: 4
-  fireRate: 0.05
-  bulletSpeed: 20
+  fireRate: 0.03
+  bulletSpeed: 30
   dispersion: 1
+  automatic: 0
   ammoInMagazine: 14
   totalAmmo: 70
   maxAmmoCapacity: 70

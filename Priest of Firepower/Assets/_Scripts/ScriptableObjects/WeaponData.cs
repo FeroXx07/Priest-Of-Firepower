@@ -17,6 +17,7 @@ namespace _Scripts.ScriptableObjects
         public float fireRate;
         public float bulletSpeed;
         public float dispersion;
+        public bool automatic;
 
         [Header("Reloading")]
         public int ammoInMagazine;

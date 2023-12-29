@@ -17,8 +17,9 @@ MonoBehaviour:
   range: 15
   damage: 10
   fireRate: 0.3
-  bulletSpeed: 20
+  bulletSpeed: 25
   dispersion: 15
+  automatic: 1
   ammoInMagazine: 32
   totalAmmo: 160
   maxAmmoCapacity: 160
