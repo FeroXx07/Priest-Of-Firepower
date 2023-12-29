@@ -209,6 +209,12 @@ namespace _Scripts.Enemies
         {
             _spawnPoints.Add(spawnPoint);
         }
+        
+        public void RemoveSpawnPoint(Transform spawnPoint)
+        {
+            if (_spawnPoints.Contains(spawnPoint))
+                _spawnPoints.Remove(spawnPoint);
+        }
 
         public int GetEnemiesAlive()
         {

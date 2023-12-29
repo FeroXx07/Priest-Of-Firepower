@@ -11,8 +11,18 @@ namespace _Scripts.Spawners
         {
             if(spawnerManager == null) 
                 spawnerManager = GetComponentInParent<EnemyManager>();
+        }
+
+        public void Activate()
+        {
             if(spawnerManager != null) 
                 spawnerManager.AddSpawnpoint(gameObject.transform);
+        }
+        
+        public void DeActivate()
+        {
+            if(spawnerManager != null) 
+                spawnerManager.RemoveSpawnPoint(gameObject.transform);
         }
     }
 }
