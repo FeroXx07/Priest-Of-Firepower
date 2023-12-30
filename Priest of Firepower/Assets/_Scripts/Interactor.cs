@@ -33,9 +33,10 @@ namespace _Scripts
 
         public override void Update()
         {
+            base.Update();
+            
             if (!player.isOwner()) return;
             
-            base.Update();
             // Get the mouse position in world coordinates.
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = 0;
