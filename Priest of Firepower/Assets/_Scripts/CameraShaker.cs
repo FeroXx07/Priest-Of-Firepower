@@ -33,14 +33,14 @@ public class CameraShaker : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (_duration > 0)
-        {
-            _duration -= Time.deltaTime;
-        }
-        else
-        {
-            noise.m_AmplitudeGain = 0;
-        }
+        // if (_duration > 0)
+        // {
+        //     _duration -= Time.deltaTime;
+        // }
+        // else
+        // {
+        //     noise.m_AmplitudeGain = 0;
+        // }
     }
 
     public void Shake(float intesity, float duration)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace _Scripts.ScriptableObjects
@@ -29,5 +30,8 @@ namespace _Scripts.ScriptableObjects
 
         [Header("Visual")]
         public Sprite sprite;
+
+        public List<AudioClip> shotSound;
+        public List<AudioClip> reloadSound;
     }
 }

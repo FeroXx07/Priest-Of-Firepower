@@ -9,6 +9,7 @@ using _Scripts.Object_Pool;
 using _Scripts.ScriptableObjects;
 using UnityEngine;
 using UnityEngine.VFX;
+using Random = UnityEngine.Random;
 
 namespace _Scripts.Weapon
 {
@@ -31,7 +32,7 @@ namespace _Scripts.Weapon
         GameObject _owner;
         public Player.Player shooterOwner { get; private set; }
         bool _localDataCopied = false;
-
+        private AudioSource _audioSource;
         #endregion
 
         public override void Awake()
@@ -59,6 +60,7 @@ namespace _Scripts.Weapon
             _timeSinceLastShoot = 10;
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
+            _audioSource = GetComponent<AudioSource>();
         }
 
         protected override void InitNetworkVariablesList()
@@ -119,6 +121,9 @@ namespace _Scripts.Weapon
             
             if (shooterOwner != null) shooterOwner.OnStartingReload?.Invoke();
             StartCoroutine(Reloading());
+            
+            int reloadSound = Random.Range(0, localData.reloadSound.Count);
+            _audioSource.PlayOneShot(localData.reloadSound[reloadSound]);
         }
 
         IEnumerator Reloading()
@@ -256,8 +261,10 @@ namespace _Scripts.Weapon
         void OnGunShoot()
         {
             //VFX, sound
-            CameraShaker.Instance.Shake(0.5f,0.2f);
+            //CameraShaker.Instance.Shake(0.5f,0.2f);
             muzzleFlash.Play();
+            int shotSound = Random.Range(0, localData.shotSound.Count);
+            _audioSource.PlayOneShot(localData.shotSound[shotSound]);
         }
 
         #endregion

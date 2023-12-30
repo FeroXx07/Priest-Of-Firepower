@@ -33,7 +33,7 @@ namespace _Scripts.Enemies
         [SerializeField] protected int pointsOnDeath = 100;
         [SerializeField] protected float speed = 2;
         [SerializeField] protected int damage = 5;
-        
+        [SerializeField] private GameObject deathVFXPrefab;
         [SerializeField] protected Transform target;
         public bool overrideTarget = false;
         protected NavMeshAgent agent;

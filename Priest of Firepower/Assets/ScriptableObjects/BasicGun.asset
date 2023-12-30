@@ -27,3 +27,14 @@ MonoBehaviour:
   reloadSpeed: 0.5
   reloading: 0
   sprite: {fileID: 208659192, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
+  shotSound:
+  - {fileID: 8300000, guid: 3d6ee6e0515410c4c838911546c78c4a, type: 3}
+  - {fileID: 8300000, guid: 40a9276065d69f04ebe73021676f7fc6, type: 3}
+  - {fileID: 8300000, guid: 7833cce12c063c545abdb01ac6003730, type: 3}
+  - {fileID: 8300000, guid: d81bebac9cee217409b15b76e7011fc6, type: 3}
+  reloadSound:
+  - {fileID: 8300000, guid: 27062ab1f9e909a4a9a73b958ea91906, type: 3}
+  - {fileID: 8300000, guid: 9713ec8371d2ac24d8ddafe1f7de4e6f, type: 3}
+  - {fileID: 8300000, guid: f1198f3fd86876b408f01d02a3beaa30, type: 3}
+  - {fileID: 8300000, guid: dca74159a61f24e458cce8b48812159f, type: 3}
+  - {fileID: 8300000, guid: 592ba66392b8b124ea6a23d2b591f168, type: 3}
