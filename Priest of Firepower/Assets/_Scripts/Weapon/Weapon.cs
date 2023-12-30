@@ -263,7 +263,7 @@ namespace _Scripts.Weapon
             //VFX, sound
             if (_owner.GetComponent<Player.Player>().isOwner())
             {
-                CameraShaker.Instance.Shake(0.3f,1.0f);
+                CameraShaker.Instance.Shake(0.3f,weaponData.shakeIntensity);
             }
             muzzleFlash.Play();
             int shotSound = Random.Range(0, localData.shotSound.Count);

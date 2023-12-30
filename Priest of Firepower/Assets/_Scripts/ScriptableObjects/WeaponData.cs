@@ -31,7 +31,9 @@ namespace _Scripts.ScriptableObjects
         [Header("Visual")]
         public Sprite sprite;
 
+        public float shakeIntensity;
         public List<AudioClip> shotSound;
         public List<AudioClip> reloadSound;
+        
     }
 }
