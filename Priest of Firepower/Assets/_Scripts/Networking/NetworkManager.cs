@@ -152,7 +152,7 @@ namespace _Scripts.Networking
 
         // Message sendId, message string, message timestamp
         public Action<UInt64, string, long> OnGameEventMessageReceived;
-        private List<GameObject> playerInstancesList = new List<GameObject>();
+
 
         #endregion
 
@@ -187,12 +187,13 @@ namespace _Scripts.Networking
             SceneManager.sceneLoaded += ResetNetworkIds;
         }
 
-        public void SpawnPlayers()
+        public List<GameObject> SpawnPlayers()
         {
             if (SceneManager.GetActiveScene().name == "Game_Networking_Test")
             {
                 if (_isHost)
                 {
+                    List<GameObject> playerList = new List<GameObject>();
                     var prefab = instantiatablesPrefabs.Find(p => p.name == "PlayerPrefab");
                     foreach (ClientData clientData in _server.GetClients())
                     {
@@ -205,14 +206,17 @@ namespace _Scripts.Networking
                             ReplicationAction.CREATE, mem.ToArray().Length);
                         GameObject go = replicationManager.Server_InstantiateNetworkObject(prefab, header, mem);
                         go.gameObject.name = clientData.userName;
-                        playerInstancesList.Add(go);
                         Player.Player player = go.GetComponent<Player.Player>();
                         player.SetName(clientData.userName);
                         player.SetPlayerId(clientData.id);
                         clientData.playerInstantiated = true;
+                        playerList.Add(go);
                     }
+
+                    return playerList;
                 }
             }
+            return null;
         }
 
         public void OwnerPlayerCreated(GameObject playerGameObject)
@@ -226,36 +230,9 @@ namespace _Scripts.Networking
         }
         void DespawnPlayer(UInt64 id, string userName)
         {
-            if (_isHost)
-            {
-                MemoryStream stream = new MemoryStream();
-                BinaryWriter writer = new BinaryWriter(stream);
-                writer.Write(userName);
-                writer.Write(id);
-                ReplicationHeader header = new ReplicationHeader(0, this.GetType().FullName, ReplicationAction.DESTROY,
-                    stream.ToArray().Length);
-                GameObject obj = null;
-                foreach (GameObject player in playerInstancesList)
-                {
-                    if (player.name == userName)
-                    {
-                        obj = player;
-                        break;
-                    }
-                }
-
-                if (obj == null)
-                {
-                    Debug.LogError("Something happend when removing player instace ... ");
-                    return;
-                }
-
-                playerInstancesList.Remove(obj);
-                NetworkObject nObj = obj.GetComponent<NetworkObject>();
-                replicationManager.Server_DeSpawnNetworkObject(nObj, header, stream);
-            }
+            if(_isHost)
+                GameManager.Instance.RemovePlayer(userName);
         }
-
         public void Reset()
         {
             Debug.Log("NW reset ...");

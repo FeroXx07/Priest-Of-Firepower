@@ -261,7 +261,7 @@ namespace _Scripts.Weapon
         void OnGunShoot()
         {
             //VFX, sound
-            //CameraShaker.Instance.Shake(0.5f,0.2f);
+           // CameraShaker.Instance.Shake(0.5f,0.2f);
             muzzleFlash.Play();
             int shotSound = Random.Range(0, localData.shotSound.Count);
             _audioSource.PlayOneShot(localData.shotSound[shotSound]);

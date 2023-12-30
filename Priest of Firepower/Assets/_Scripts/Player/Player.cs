@@ -49,6 +49,13 @@ namespace _Scripts.Player
         private SpriteRenderer _spriteRenderer;
         #endregion
 
+        #region Player State
+
+        public Action OnPlayerDeath;
+        private HealthSystem _healthSystem;
+        
+
+        #endregion
         #region Movement
         [SerializeField] bool hasChangedMovement = false;
         [SerializeField] private Vector2 directionMovement;
@@ -96,18 +103,23 @@ namespace _Scripts.Player
             GetComponent<NetworkObject>().speed = speed;
             
             clientSendReplicationData = true;
+
+            _healthSystem = GetComponent<HealthSystem>();
+
         }
         
         public override void OnEnable()
         {
             base.OnEnable();
             _weaponSwitcher.OnWeaponSwitch += ChangeHolder;
+            _healthSystem.OnDamageableDestroyed += Die;
         }
 
         public override void  OnDisable()
         {
             base.OnDisable();
             _weaponSwitcher.OnWeaponSwitch -= ChangeHolder;
+            _healthSystem.OnDamageableDestroyed -= Die;
         }
         
         private void Start()
@@ -121,7 +133,7 @@ namespace _Scripts.Player
                 FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
                 NetworkManager.Instance.player = gameObject;
                 NetworkManager.Instance.OwnerPlayerCreated(gameObject);
-                GameManager.Instance.StartGame();
+                //GameManager.Instance.StartGame();
             }
             StartCoroutine(LateStart());
         }
@@ -136,6 +148,10 @@ namespace _Scripts.Player
         {
             base.Update();
             if (!isOwner()) return;  // Only the owner of the player will control it
+            
+            if(state == PlayerState.DEAD)
+                return;            
+            
             directionMovement = Vector2.zero;
             currentWeaponInput = PlayerShooterInputs.NONE;
 
@@ -340,11 +356,20 @@ namespace _Scripts.Player
                 _currentWeapon.SetPlayerShooter(this);
             }
         }
+
+        void Die(GameObject self,GameObject killer)
+        {
+            state = PlayerState.DEAD;
+            OnPlayerDeath?.Invoke();
+            SendReplicationData(ReplicationAction.UPDATE);
+        }
         
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-
+            
+            writer.Write((int)state);
+            
             if (_weaponHolder == null)
             {
                 writer.Write(false);
@@ -364,6 +389,11 @@ namespace _Scripts.Player
 
         public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
         {
+            state = (PlayerState)reader.ReadInt32();
+            //check when a player dies if other players are still alive to call a game over
+            if(state == PlayerState.DEAD && isHost)
+                GameManager.Instance.CheckGameOver();
+                
             if (reader.ReadBoolean())
             {
                 float angle = reader.ReadSingle();

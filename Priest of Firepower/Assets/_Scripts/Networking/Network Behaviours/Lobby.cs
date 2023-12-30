@@ -211,7 +211,6 @@ namespace _Scripts.Networking.Network_Behaviours
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream,
             ReplicationAction action)
         {
-            base.WriteReplicationPacket(outputMemoryStream, action);
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             return replicationHeader;
         }
