@@ -99,9 +99,9 @@ namespace _Scripts.UI.WeaponTracker
             magazineSprite.fillAmount = fill;
         }
 
-        void Reload()
+        void Reload(WeaponData data)
         {
-            if (weaponData == null) return;
+            if (weaponData == null || weaponData != data) return;
             if (weaponData.totalAmmo <= 0)
             {
                 UseFailed();
@@ -135,9 +135,9 @@ namespace _Scripts.UI.WeaponTracker
             _stopMagazineBgPulse = false;
         }
 
-        void TryShoot()
+        void TryShoot(WeaponData data)
         {
-            if (weaponData == null) return;
+            if (weaponData == null || weaponData != data) return;
             if (weaponData.totalAmmo <= 0)
             {
                 UseFailed();

@@ -119,7 +119,7 @@ namespace _Scripts.Weapon
                 !gameObject.activeSelf)
                 return;
             
-            if (shooterOwner != null) shooterOwner.OnStartingReload?.Invoke();
+            if (shooterOwner != null) shooterOwner.OnStartingReload?.Invoke(localData);
             StartCoroutine(Reloading());
             
             int reloadSound = Random.Range(0, localData.reloadSound.Count);
@@ -139,7 +139,7 @@ namespace _Scripts.Weapon
                 localData.reloading = false;
             }
 
-            if (shooterOwner != null) shooterOwner.OnFinishedReload?.Invoke();
+            if (shooterOwner != null) shooterOwner.OnFinishedReload?.Invoke(localData);
         }
 
         #endregion
@@ -283,7 +283,7 @@ namespace _Scripts.Weapon
         public void GiveMaxAmmo()
         {
             localData.totalAmmo = localData.maxAmmoCapacity;
-            shooterOwner.OnReload?.Invoke();
+            shooterOwner.OnReload?.Invoke(localData);
         }
 
         public void SetOwner(GameObject owner)

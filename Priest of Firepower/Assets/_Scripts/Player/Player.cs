@@ -5,6 +5,7 @@ using System.IO;
 using System.Xml;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
+using _Scripts.ScriptableObjects;
 using _Scripts.Weapon;
 using Cinemachine;
 using UnityEngine;
@@ -74,10 +75,10 @@ namespace _Scripts.Player
         [SerializeField] private float weaponOffset = .5f;
         [SerializeField] private Vector3 shootDir;
         [SerializeField] private PlayerShooterInputs currentWeaponInput;
-        public Action OnShoot;
-        public Action OnStartingReload;
-        public Action OnReload;
-        public Action OnFinishedReload;
+        public Action<WeaponData> OnShoot;
+        public Action<WeaponData> OnStartingReload;
+        public Action<WeaponData> OnReload;
+        public Action<WeaponData> OnFinishedReload;
         [SerializeField] private Weapon.Weapon _currentWeapon; 
         [SerializeField] private WeaponSwitcher _weaponSwitcher;
         [SerializeField] private UInt64 myId => NetworkManager.Instance.getId;
@@ -166,7 +167,7 @@ namespace _Scripts.Player
                     if (Input.GetMouseButton(0))
                     {
                         currentWeaponInput = PlayerShooterInputs.SHOOT;
-                        OnShoot?.Invoke();
+                        OnShoot?.Invoke(_currentWeapon.localData);
                         if (isHost)
                         {
                             _currentWeapon.ShootServer();
@@ -185,7 +186,7 @@ namespace _Scripts.Player
                     if (Input.GetMouseButtonDown(0))
                     {
                         currentWeaponInput = PlayerShooterInputs.SHOOT;
-                        OnShoot?.Invoke();
+                        OnShoot?.Invoke(_currentWeapon.localData);
                         if (isHost)
                         {
                             _currentWeapon.ShootServer();
@@ -203,7 +204,7 @@ namespace _Scripts.Player
                 {
                     currentWeaponInput = PlayerShooterInputs.RELOAD;
                     _currentWeapon.Reload();
-                    OnReload?.Invoke();
+                    OnReload?.Invoke(_currentWeapon.localData);
                     if (isHost)
                     {
                         SendInputToClients();
@@ -455,13 +456,13 @@ namespace _Scripts.Player
             {
                 currentWeaponInput = PlayerShooterInputs.SHOOT;
                 _currentWeapon.ShootServer();
-                OnShoot?.Invoke();
+                OnShoot?.Invoke(_currentWeapon.localData);
                 SendInputToClients();
             }
             else if (currentWeaponInput == PlayerShooterInputs.RELOAD)
             {
                 _currentWeapon.Reload();
-                OnReload?.Invoke();
+                OnReload?.Invoke(_currentWeapon.localData);
                 SendInputToClients();
             }
         }
@@ -510,12 +511,12 @@ namespace _Scripts.Player
             {
                 currentWeaponInput = PlayerShooterInputs.SHOOT;
                 _currentWeapon.ShootClient();
-                OnShoot?.Invoke();
+                OnShoot?.Invoke(_currentWeapon.localData);
             }
             else if (currentWeaponInput == PlayerShooterInputs.RELOAD)
             {
                 _currentWeapon.Reload();
-                OnReload?.Invoke();
+                OnReload?.Invoke(_currentWeapon.localData);
             }
         }
     }

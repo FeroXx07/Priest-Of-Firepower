@@ -218,7 +218,7 @@ namespace _Scripts.Weapon
             OnWeaponChange?.Invoke(user, weapon, emptySlot.index);           
         }
 
-        public void ChangeWeaponClient(GameObject objectSpawned)
+        private void ChangeWeaponClient(GameObject objectSpawned)
         {
             if (objectSpawned == null ||!NetworkManager.Instance.IsClient()) return;
             WeaponSlot emptySlot = new WeaponSlot{empty = true, holder = null, weapon = null,index = -1 };

@@ -46,7 +46,7 @@ namespace _Scripts.UI.WeaponTracker
             }
         }
         
-        void UpdateWeaponUI()
+        void UpdateWeaponUI(WeaponData data)
         {
             //Debug.Log("Weapon Tracker: UpdateWeaponUI()");
             if (primaryWeapon) primaryWeapon.UpdateUI();
