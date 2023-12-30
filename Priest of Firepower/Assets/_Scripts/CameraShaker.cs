@@ -1,60 +1,35 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using _Scripts;
 using Cinemachine;
-using JetBrains.Annotations;
 using UnityEngine;
 
-public class CameraShaker : MonoBehaviour
+namespace _Scripts
 {
-    [SerializeField]private CinemachineVirtualCamera cmvCamera;
-    private float shakeTimer, startingIntensity,totalIntensity;
-    private static CameraShaker instance;
-    public static CameraShaker Instance
+    public class CameraShaker : GenericSingleton<CameraShaker>
     {
-        get
+        [SerializeField] private CinemachineVirtualCamera cmvCamera;
+        private float shakeTimer, startingIntensity,totalIntensity;
+        public void Shake(float duration, float intensity)
         {
-            if (instance == null)
-            {
-                // If the instance doesn't exist, create it
-                instance = new GameObject("CameraShaker").AddComponent<CameraShaker>();
-            }
-            return instance;
+            CinemachineBasicMultiChannelPerlin noise = cmvCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
+            noise.m_AmplitudeGain = intensity;
+            startingIntensity = intensity;
+            totalIntensity = intensity;
+            shakeTimer = duration;
         }
-    }
-    void Awake()
-    {
-        if (instance != null && instance != this)
+        private void Update()
         {
-            Destroy(this.gameObject);
-            return;
-        }
-        instance = this;
-    }
-
-    public void Shake(float duration, float intensity)
-    {
-        CinemachineBasicMultiChannelPerlin noise = cmvCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
-        noise.m_AmplitudeGain = intensity;
-        startingIntensity = intensity;
-        totalIntensity = intensity;
-        shakeTimer = duration;
-    }
-    private void Update()
-    {
-        if (cmvCamera)
-        {
-            if (shakeTimer > 0)
+            if (cmvCamera)
             {
-                shakeTimer -= Time.deltaTime;
-                CinemachineBasicMultiChannelPerlin noise = cmvCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
-                noise.m_AmplitudeGain = Mathf.Lerp(startingIntensity, 0f, 1 - (startingIntensity / totalIntensity));
-            }
-            else
-            {
-                CinemachineBasicMultiChannelPerlin noise = cmvCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
-                noise.m_AmplitudeGain = 0f;
+                if (shakeTimer > 0)
+                {
+                    shakeTimer -= Time.deltaTime;
+                    CinemachineBasicMultiChannelPerlin noise = cmvCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
+                    noise.m_AmplitudeGain = Mathf.Lerp(startingIntensity, 0f, 1 - (startingIntensity / totalIntensity));
+                }
+                else
+                {
+                    CinemachineBasicMultiChannelPerlin noise = cmvCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
+                    noise.m_AmplitudeGain = 0f;
+                }
             }
         }
     }

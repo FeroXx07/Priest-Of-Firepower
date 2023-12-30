@@ -174,7 +174,7 @@ namespace _Scripts
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
             BinaryWriter writer = new BinaryWriter(outputMemoryStream);
-
+            writer.Write((int)state);
             ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
             if (showDebugInfo) Debug.Log("Game manager sending data");
             return replicationHeader;

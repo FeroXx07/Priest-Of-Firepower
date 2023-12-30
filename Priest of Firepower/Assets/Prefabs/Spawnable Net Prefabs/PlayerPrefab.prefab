@@ -126,7 +126,6 @@ GameObject:
   - component: {fileID: 607169092353570182}
   - component: {fileID: 1475039635855122171}
   - component: {fileID: -4167005071263701011}
-  - component: {fileID: 3732411864999352136}
   m_Layer: 9
   m_Name: PlayerPrefab
   m_TagString: Player
@@ -444,18 +443,6 @@ MonoBehaviour:
   currentWeaponInput: 0
   _currentWeapon: {fileID: 0}
   _weaponSwitcher: {fileID: 0}
---- !u!114 &3732411864999352136
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1747872900250147753}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74f57d61e60b0f44f9d48e645e8534c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1747872900254246786
 GameObject:
   m_ObjectHideFlags: 0

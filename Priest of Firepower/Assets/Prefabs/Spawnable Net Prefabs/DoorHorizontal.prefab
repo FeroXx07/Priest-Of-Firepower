@@ -384,8 +384,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 639af073384a93642977a12801cfa8f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDeSpawned: 0
-  showDebugInfo: 1
+  showDebugInfo: 0
   tickRateBehaviour: 1
   doTickUpdates: 0
   clientSendReplicationData: 0
@@ -472,6 +471,7 @@ MonoBehaviour:
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
   speed: 0
+  isDeSpawned: 0
 --- !u!1001 &6899846536936614240
 PrefabInstance:
   m_ObjectHideFlags: 0

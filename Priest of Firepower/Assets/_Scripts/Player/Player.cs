@@ -116,8 +116,9 @@ namespace _Scripts.Player
             _healthSystem.OnDamageableDestroyed += Die;
         }
 
-        public override void  OnDisable()
+        public override void OnDisable()
         {
+            Debug.LogWarning($"{GetName()}: OnDisable()");
             base.OnDisable();
             _weaponSwitcher.OnWeaponSwitch -= ChangeHolder;
             _healthSystem.OnDamageableDestroyed -= Die;
@@ -125,11 +126,12 @@ namespace _Scripts.Player
         
         private void Start()
         {
+            Debug.Log($"{GetName()}: Initiating player and UI");
             NetworkManager.Instance.AnyPlayerCreated(gameObject);
             _spriteRenderer = GetComponent<SpriteRenderer>();
             if (isOwner())
             {
-                Debug.Log("Initiating host player and UI");
+                Debug.Log($"{GetName()}: Initiating host player and UI");
                 GetComponent<SpriteRenderer>().sortingOrder = 13;
                 FindObjectOfType<CinemachineVirtualCamera>().Follow = transform;
                 NetworkManager.Instance.player = gameObject;
@@ -271,7 +273,7 @@ namespace _Scripts.Player
             if (isMoving)
             {
                 state = PlayerState.MOVING;
-                if (showDebugInfo) Debug.Log("is moving");
+                if (showDebugInfo) Debug.Log($"{GetName()}: Is moving");
             }
             else
             {
@@ -290,7 +292,7 @@ namespace _Scripts.Player
                 hasChangedMovement = false;
                 if (NetworkManager.Instance.IsClient())
                 {    
-                    if (showDebugInfo) Debug.Log("sending state" + state);
+                    if (showDebugInfo) Debug.Log($"{GetName()}: Sending state {state}");
                     float finalRate = 1.0f / tickRatePlayer;
                     if (tickCounter >= finalRate)
                     {                      
@@ -360,6 +362,7 @@ namespace _Scripts.Player
 
         void Die(GameObject self,GameObject killer)
         {
+            Debug.Log($"{GetName()}: Dying");
             state = PlayerState.DEAD;
             OnPlayerDeath?.Invoke();
             SendReplicationData(ReplicationAction.UPDATE);
@@ -395,8 +398,10 @@ namespace _Scripts.Player
         {
             state = (PlayerState)reader.ReadInt32();
             //check when a player dies if other players are still alive to call a game over
-            if(state == PlayerState.DEAD && isHost)
+            if (state == PlayerState.DEAD && isHost)
+            {
                 GameManager.Instance.CheckGameOver();
+            }
                 
             if (reader.ReadBoolean())
             {
