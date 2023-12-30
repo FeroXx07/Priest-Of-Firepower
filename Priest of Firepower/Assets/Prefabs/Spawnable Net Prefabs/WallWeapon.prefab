@@ -159,7 +159,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showDebugInfo: 0
   tickRateBehaviour: 1
-  doTickUpdates: 1
+  doTickUpdates: 0
   clientSendReplicationData: 0
   message: ' Buy '
   timeToInteract: 0.5

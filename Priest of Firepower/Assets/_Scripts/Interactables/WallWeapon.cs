@@ -9,6 +9,7 @@ using _Scripts.Networking;
 using System;
 using System.Collections.Generic;
 using Random = UnityEngine.Random;
+using _Scripts.Networking.Replication;
 
 namespace _Scripts.Interactables
 {
@@ -28,7 +29,7 @@ namespace _Scripts.Interactables
         public int InteractionCost => price;
         private UInt64 _interactorId;
         InteractableState currentState;
-
+        
         public InteractableState state
         {
             get => currentState;
@@ -52,6 +53,11 @@ namespace _Scripts.Interactables
             _audioSource = GetComponent<AudioSource>();
         }
 
+        private void Start()
+        {
+            EnablePromptUI(false);  
+        }
+
         public override void OnEnable()
         {
             base.OnEnable();
@@ -61,6 +67,7 @@ namespace _Scripts.Interactables
             _wallWeaponImg = GetComponent<SpriteRenderer>();
             _wallWeaponImg.sprite = wp.weaponData.sprite;
             EnablePromptUI(false);
+
         }
 
         public override void Update()
@@ -84,6 +91,7 @@ namespace _Scripts.Interactables
 
             if (keyPressed)
             {
+                _interactorId = interactor.GetObjId();
                 _timer -= Time.deltaTime;
                 if (_timer <= 0)
                 {
@@ -91,20 +99,79 @@ namespace _Scripts.Interactables
                     // if has that weapon fill ammo 
                     // if has a slot empty add to empty slot
                     // if has not this weapon change by current weapon
-                    if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+     
+                    if (NetworkManager.Instance.IsClient())
                     {
+                        SendInputToServer();
                         int sound = Random.Range(0, buySound.Count);
                         _audioSource.PlayOneShot(buySound[sound]);
-                        switcher.ChangeWeaponServer(weapon);
-                        _timer = InteractionTime;
-                        EnablePromptUI(false);
-                        interactor.GetComponent<PointSystem>().RemovePoints(price);
                     }
+                    else
+                    {
+                        if (interactor.TryGetComponent<WeaponSwitcher>(out WeaponSwitcher switcher))
+                        {
+                            int sound = Random.Range(0, buySound.Count);
+                            _audioSource.PlayOneShot(buySound[sound]);
+                            switcher.ChangeWeaponServer(weapon);         
+                            interactor.GetComponent<PointSystem>().RemovePoints(price);
+                        }
+                    }
+                    EnablePromptUI(false);
                 }
             }
             else
             {
                 _timer = timeToInteract;
+            }
+        }
+        
+        protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
+        {
+            BinaryWriter writer = new BinaryWriter(outputMemoryStream);
+            ReplicationHeader replicationHeader = new ReplicationHeader(NetworkObject.GetNetworkId(), this.GetType().FullName, action, outputMemoryStream.ToArray().Length);
+            if (showDebugInfo) Debug.Log($"Wall weapon: Sending data");
+            return replicationHeader;
+        }
+
+        public override bool ReadReplicationPacket(BinaryReader reader, long position = 0)
+        {
+            
+            return true;
+        }
+
+        public override void SendInputToServer()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+            writer.Write(_interactorId);
+            SendInput(stream, true);
+        }
+        public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
+        {
+            _interactorId = reader.ReadUInt64();
+
+            if (NetworkManager.Instance.replicationManager.networkObjectMap.TryGetValue(_interactorId,
+                    out NetworkObject interactor))
+            {
+                WeaponSwitcher wp = interactor.GetComponent<WeaponSwitcher>();
+                if(wp)
+                    wp.ChangeWeaponServer(weapon);
+                else
+                {
+                    Debug.Log("Could not change weapon");
+                    return;
+                }
+            
+                PointSystem ps = interactor.GetComponent<PointSystem>();
+                if (ps)
+                {
+                    ps.RemovePoints(price); 
+                }
+                else
+                {
+                    Debug.Log("Could not remove points");
+                    return;
+                }
             }
         }
 

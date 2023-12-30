@@ -192,10 +192,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69efe637c1dadcd489ecd289739d1314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDeSpawned: 0
   showDebugInfo: 0
   tickRateBehaviour: 1
-  doTickUpdates: 1
+  doTickUpdates: 0
   clientSendReplicationData: 0
   message: Open chest
   time: 0.5
@@ -246,6 +245,7 @@ MonoBehaviour:
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
   speed: 0
+  isDeSpawned: 0
 --- !u!1 &2227612726843118593
 GameObject:
   m_ObjectHideFlags: 0

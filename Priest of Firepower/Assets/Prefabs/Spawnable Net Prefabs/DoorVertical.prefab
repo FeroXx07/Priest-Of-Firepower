@@ -126,7 +126,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   showDebugInfo: 0
   tickRateBehaviour: 1
-  doTickUpdates: 1
+  doTickUpdates: 0
   clientSendReplicationData: 0
   message: Open door
   time: 0.5
@@ -162,7 +162,7 @@ MonoBehaviour:
   - {x: 0.25, y: -1, z: 0}
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
-  m_InstanceId: 43244
+  m_InstanceId: 124526
   m_LocalBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0.25, y: 1, z: 0}
