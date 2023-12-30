@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using _Scripts.Interfaces;
 using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace _Scripts
 {
@@ -13,6 +15,8 @@ namespace _Scripts
         [SerializeField] private int health;
         [SerializeField] private int maxHealth;
         [SerializeField] private LayerMask layer;
+
+        public List<GameObject> bloodParticles;
         public LayerMask Layers { get => layer; set => layer = value; }
 
         public int Health
@@ -64,6 +68,10 @@ namespace _Scripts
         {
             Health -= damageDealer.Damage;
             OnDamageTaken?.Invoke(gameObject, owner);
+            
+            int particle = Random.Range(0, bloodParticles.Count);
+            GameObject bloodParticle = Instantiate(bloodParticles[particle], transform);
+            bloodParticle.transform.rotation = Quaternion.Euler(-dir);
             
             if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
             {
