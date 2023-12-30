@@ -360,6 +360,12 @@ MonoBehaviour:
   layer:
     serializedVersion: 2
     m_Bits: 512
+  bloodParticles:
+  - {fileID: 3237166028260084441, guid: 92cca3c38a085cd41bc5d16a063a09c9, type: 3}
+  - {fileID: 5949346569163744470, guid: 6ab903375a450354f825acf196ed2f40, type: 3}
+  - {fileID: 335581449338891783, guid: a9415e00c59ad0b4991b9f0ac345afb0, type: 3}
+  - {fileID: 7483994455557807667, guid: 5c71cb85bdac25345a0e5653c08a121e, type: 3}
+  - {fileID: 1635123167527866855, guid: b727e1524036e364e89f686065f7b0dd, type: 3}
 --- !u!114 &607169092353570182
 MonoBehaviour:
   m_ObjectHideFlags: 0

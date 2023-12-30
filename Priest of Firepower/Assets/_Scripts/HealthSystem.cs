@@ -70,7 +70,7 @@ namespace _Scripts
             OnDamageTaken?.Invoke(gameObject, owner);
             
             int particle = Random.Range(0, bloodParticles.Count);
-            GameObject bloodParticle = Instantiate(bloodParticles[particle], transform);
+            GameObject bloodParticle = Instantiate(bloodParticles[particle]);
             bloodParticle.transform.rotation = Quaternion.Euler(-dir);
             
             if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))
