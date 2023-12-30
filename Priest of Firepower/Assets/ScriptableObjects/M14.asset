@@ -27,6 +27,7 @@ MonoBehaviour:
   reloadSpeed: 0.3
   reloading: 0
   sprite: {fileID: -1844164964, guid: 0004e6716e2d5e0488ec22b047409273, type: 3}
+  shakeIntensity: 0.8
   shotSound:
   - {fileID: 8300000, guid: 8adf72ab0bfda5f4eb455593032b129c, type: 3}
   - {fileID: 8300000, guid: eacbd44845b976d4ea0ab35c62294084, type: 3}
