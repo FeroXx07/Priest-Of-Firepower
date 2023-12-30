@@ -89,7 +89,7 @@ namespace _Scripts
             if (_instance == null)
             {
                 _instance = this as HitManager;
-                DontDestroyOnLoad(this.gameObject);
+                //DontDestroyOnLoad(this.gameObject);
             }
             else
             {

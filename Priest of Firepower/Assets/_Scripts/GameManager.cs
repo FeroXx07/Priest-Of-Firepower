@@ -155,6 +155,21 @@ namespace _Scripts
         {
             state = GameState.GAME_OVER;
             SendReplicationData(ReplicationAction.UPDATE);
+            if(isHost)
+                GameOver();
+
+        }
+
+        void GameOver()
+        {
+            uiCanvas = null;
+            enemySpawnManager = null;
+            roundSystem = null;
+            
+            //Display game over secene/canvas
+            //then go to lobby
+            ReturnToLobby();
+            
         }
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
@@ -175,7 +190,7 @@ namespace _Scripts
                     ReturnToLobby();
                     break;
                 case GameState.GAME_OVER:
-                    //display gameover canvas
+                    GameOver();
                     break;
             }
 

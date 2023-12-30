@@ -2,6 +2,7 @@ using _Scripts.Networking;
 using System;
 using System.Collections;
 using System.IO;
+using System.Xml;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using _Scripts.Weapon;
@@ -362,6 +363,9 @@ namespace _Scripts.Player
             state = PlayerState.DEAD;
             OnPlayerDeath?.Invoke();
             SendReplicationData(ReplicationAction.UPDATE);
+            
+            if(isHost)
+                GameManager.Instance.CheckGameOver();
         }
         
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)

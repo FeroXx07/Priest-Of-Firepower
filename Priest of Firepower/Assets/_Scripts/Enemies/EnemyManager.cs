@@ -38,7 +38,7 @@ namespace _Scripts.Enemies
             if (_instance == null)
             {
                 _instance = this as EnemyManager;
-                DontDestroyOnLoad(this.gameObject);
+                //DontDestroyOnLoad(this.gameObject);
             }
             else
             {
