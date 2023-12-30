@@ -42,7 +42,7 @@ namespace _Scripts.Enemies
 
         [SerializeField] protected GameObject attackPrefab;
 
-        protected float timeRemaining = 1.2f;
+        protected float timeRemaining = 0.0f;
 
         protected float cooldownDuration = 1.5f;
         protected float attackOffset = 1.0f;
@@ -245,7 +245,7 @@ namespace _Scripts.Enemies
                 gameObject.SetActive(false);
             }
             else
-                Destroy(gameObject, 0.1f);
+                Destroy(gameObject);
         }
     }
 }
