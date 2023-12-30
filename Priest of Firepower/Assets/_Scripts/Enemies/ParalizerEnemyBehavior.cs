@@ -98,7 +98,6 @@ namespace _Scripts.Enemies
                         NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
                         DisposeGameObject();
                     }
-                    if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
                 }
                     break;
                 default:
@@ -172,7 +171,6 @@ namespace _Scripts.Enemies
                     agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
                     collider2D.enabled = false;
-                    if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
                 }
                     break;
                 default:

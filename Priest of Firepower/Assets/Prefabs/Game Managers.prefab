@@ -2855,6 +2855,7 @@ MonoBehaviour:
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
   speed: 0
+  isDeSpawned: 0
 --- !u!114 &4229533987400084427
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2867,7 +2868,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1de4b52ab737df744baf8738e3056908, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDeSpawned: 0
   showDebugInfo: 0
   tickRateBehaviour: 4
   doTickUpdates: 1
@@ -2932,10 +2932,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2eb61d6eac2f5064da664b8b70aca928, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDeSpawned: 0
   showDebugInfo: 1
   tickRateBehaviour: 1
-  doTickUpdates: 1
+  doTickUpdates: 0
   clientSendReplicationData: 0
 --- !u!114 &5444848785586989590
 MonoBehaviour:
@@ -2949,7 +2948,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13fc042a17bc280469ef8a7d5b59a56b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDeSpawned: 0
   showDebugInfo: 0
   tickRateBehaviour: 4
   doTickUpdates: 1

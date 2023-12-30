@@ -21,7 +21,7 @@ namespace _Scripts.Attacks
             GameObject hittedGameObject)
         {
             OnDamageDealth?.Invoke(hittedGameObject);
-            //Debug.Log($"ParalizerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
+            Debug.Log($"ParalizerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
         }
 
         public void SetPlayer(GameObject player)
@@ -45,7 +45,6 @@ namespace _Scripts.Attacks
         {
             base.Update();
             _timer -= Time.deltaTime;
-            targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = true;
             if (_timer < 0.0f && !NetworkObject.isDeSpawned)
             {
                 _timer = tickRate;
