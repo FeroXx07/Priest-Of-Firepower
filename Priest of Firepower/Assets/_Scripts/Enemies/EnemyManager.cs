@@ -202,7 +202,7 @@ namespace _Scripts.Enemies
 
         private Transform GetRandomSpawnPoint()
         {
-            return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count - 1)];
+            return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count)];
         }
 
         public void AddSpawnpoint(Transform spawnPoint)

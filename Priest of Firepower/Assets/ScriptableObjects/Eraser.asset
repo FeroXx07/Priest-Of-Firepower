@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponName: Eraser
   price: 350
   range: 15
-  damage: 8
+  damage: 2
   fireRate: 0.15
   bulletSpeed: 25
   dispersion: 10

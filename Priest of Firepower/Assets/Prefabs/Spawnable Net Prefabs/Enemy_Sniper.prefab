@@ -138,8 +138,8 @@ MonoBehaviour:
   tickRateBehaviour: 1
   doTickUpdates: 1
   clientSendReplicationData: 0
-  health: 10
-  maxHealth: 10
+  health: 2
+  maxHealth: 2
   layer:
     serializedVersion: 2
     m_Bits: 128

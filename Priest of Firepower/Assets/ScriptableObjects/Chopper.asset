@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponName: Chopper
   price: 750
   range: 15
-  damage: 10
+  damage: 2
   fireRate: 0.3
   bulletSpeed: 25
   dispersion: 15

@@ -71,6 +71,7 @@ namespace _Scripts
             
             int particle = Random.Range(0, bloodParticles.Count);
             GameObject bloodParticle = Instantiate(bloodParticles[particle]);
+            bloodParticle.transform.position = transform.position;
             bloodParticle.transform.rotation = Quaternion.Euler(-dir);
             
             if (TryGetComponent<IPointsProvider>(out IPointsProvider pointsProvider ))

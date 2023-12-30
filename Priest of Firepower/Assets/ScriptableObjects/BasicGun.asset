@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponName: Basic Gun
   price: 15
   range: 5
-  damage: 5
+  damage: 2
   fireRate: 0.1
   bulletSpeed: 25
   dispersion: 3

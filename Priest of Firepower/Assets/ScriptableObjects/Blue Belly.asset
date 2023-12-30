@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponName: Blue Belly
   price: 500
   range: 10
-  damage: 4
+  damage: 1
   fireRate: 0.25
   bulletSpeed: 25
   dispersion: 7
