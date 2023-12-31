@@ -2,17 +2,14 @@ namespace _Scripts.Power_Ups
 {
     public class PowerUpMaxAmmo : PowerUpBase
     {
-        public override void ApplyPowerUp()
+        protected override void ApplyPowerUpServer()
         {
-            base.ApplyPowerUp();
-
-            Weapon.Weapon[] allWeapons = FindObjectsOfType<Weapon.Weapon>();
+            Weapon.Weapon[] allWeapons = FindObjectsOfType<Weapon.Weapon>(true);
             foreach (Weapon.Weapon weapon in allWeapons)
             {
                 if (weapon != null)
                     weapon.GiveMaxAmmo();
             }
-
         }
     }
 }

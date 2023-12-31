@@ -67,7 +67,7 @@ namespace _Scripts.Attacks
                                                         GetComponent<Collider2D>().isTrigger,
                                                         collision.GetComponent<Collider2D>().isTrigger,
                                                         (Vector2)transform.position, 
-                                                        GetComponent<Rigidbody2D>().velocity.normalized);
+                                                        rb2d.velocity.normalized);
 
 
                     }
@@ -80,7 +80,7 @@ namespace _Scripts.Attacks
             }
         }
         
-        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             //Debug.Log("OnTriggerAttack: Despawn by server");
             DisposeGameObject();

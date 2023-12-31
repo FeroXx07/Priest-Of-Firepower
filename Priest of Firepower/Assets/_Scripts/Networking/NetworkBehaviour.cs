@@ -170,7 +170,7 @@ namespace _Scripts.Networking
         }
 
         public virtual void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, Int64 timeStamp,
-            int lenght)
+            int length)
         {
         }
 

@@ -178,6 +178,13 @@ namespace _Scripts.Enemies
                     break;
             }
         }
+
+        public override void OnDisable()
+        {
+            base.OnDisable();
+            if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
+        }
+
         private void StartServerAttack()
         {
             if (target == null) return;
@@ -258,7 +265,7 @@ namespace _Scripts.Enemies
             Debug.Log("Enemy spawned in client");
         }
 
-        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             Debug.Log("Enemy dead in client");
             DisposeGameObject();

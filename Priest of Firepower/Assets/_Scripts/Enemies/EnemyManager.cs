@@ -21,7 +21,7 @@ namespace _Scripts.Enemies
         public List<GameObject> enemiesPrefabs = new List<GameObject>();
 
         [SerializeField] AnimationCurve enemyCountProgression = new AnimationCurve();
-        [SerializeField] List<Enemy> enemiesAlive = new List<Enemy>();
+        public List<Enemy> enemiesAlive = new List<Enemy>();
 
         //current number of enemies to spanw on the current wave
         int _numberOfEnemiesToSpwan = 0;
@@ -176,25 +176,7 @@ namespace _Scripts.Enemies
             OnEnemyRemove?.Invoke(enemy);
         }
 
-        public void KillAllEnemies()
-        {
-            // Execute logic of enemy manager only in server
-            if (!isHost) return;
-            
-            GameObject bombObject = new GameObject("NUKE");
-            NuclearBomb nuke = bombObject.AddComponent<NuclearBomb>();
-            nuke.Damage = 100000;
-            foreach (Enemy enemy in enemiesAlive.ToArray())
-            {
-                if (enemy.TryGetComponent(out HealthSystem healthSystem))
-                {
-                    healthSystem.TakeDamage(nuke, Vector3.zero, gameObject);
-                }
-            }
-
-            nuke.RaiseDamageDealthEvent(gameObject);
-        }
-
+        
         private int GetNumberOfEnemiesToSpawn(int round)
         {
             return Mathf.FloorToInt(enemyCountProgression.Evaluate(round));

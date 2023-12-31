@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 7072161840623267209}
   - component: {fileID: 3657976777616450299}
   - component: {fileID: 3657976777616450298}
-  - component: {fileID: 3657976777616450297}
   - component: {fileID: 7677457985512567292}
+  - component: {fileID: 2919422989453359338}
   - component: {fileID: 5193331756322526006}
   m_Layer: 0
   m_Name: PowerUp_OneShot
@@ -110,38 +110,6 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
---- !u!114 &3657976777616450297
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 382726395601732151}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfc8c643b21398e4a860e996acdd9ed9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  triggerEvent:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 5193331756322526006}
-        m_TargetAssemblyTypeName: PowerUpOneShot, Assembly-CSharp
-        m_MethodName: ApplyPowerUp
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  layers:
-    serializedVersion: 2
-    m_Bits: 512
-  destroyGameObject: 1
-  timeToDestroy: 0.2
 --- !u!82 &7677457985512567292
 AudioSource:
   m_ObjectHideFlags: 0
@@ -238,6 +206,36 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &2919422989453359338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 382726395601732151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 866f75dc8f5308546b7c6d68e880b461, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  globalObjectIdHash: 0
+  tickRate: 0
+  synchronizeTransform: 0
+  sendEveryChange: 0
+  sendTickChange: 0
+  clientSendReplicationData: 0
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
+  isInterpolating: 0
+  lastAction: 3
+  sequenceNum: 0
+  lastProcessedSequenceNum: -1
+  interpolationTime: 0.1
+  speed: 0
+  isDeSpawned: 0
 --- !u!114 &5193331756322526006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -250,7 +248,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f49d7a15fb0093e408c0b95beb79eb8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  showDebugInfo: 0
+  tickRateBehaviour: 1
+  doTickUpdates: 1
+  clientSendReplicationData: 0
   type: 3
+  pickedUp: 0
+  powerUpTime: 10
+  powerUpCount: 0
+  timeToDestroy: 0.2
+  destroyCount: 0
+  layers:
+    serializedVersion: 2
+    m_Bits: 512
   powerUpTime: 10
   timerCount: 0
   isActive: 0

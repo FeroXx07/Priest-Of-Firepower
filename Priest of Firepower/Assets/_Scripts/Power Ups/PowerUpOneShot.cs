@@ -11,10 +11,8 @@ namespace _Scripts.Power_Ups
         [SerializeField] bool isActive = false;
         List<Weapon.Weapon> _allWeapons = new List<Weapon.Weapon>();
    
-        public override void ApplyPowerUp()
+        protected override void ApplyPowerUpServer()
         {
-            base.ApplyPowerUp();
-
             // TODO: Make the next bullet of each player a one shot bullet. Change the damage for that bullet to 203574892357.
             _allWeapons = FindObjectsOfType<Weapon.Weapon>(true).ToList();
             _allWeapons.ForEach(p => p.localData.damage = 10000);

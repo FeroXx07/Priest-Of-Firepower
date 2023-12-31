@@ -76,7 +76,7 @@ namespace _Scripts.Attacks
             }
         }
         
-        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             //Debug.Log("OnTriggerAttack: Despawn by server");
             if (targetedPlayer) targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = false;

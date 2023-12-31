@@ -6,36 +6,27 @@ namespace _Scripts.Power_Ups
 {
     public class PowerUpDoublePoints : PowerUpBase
     {
-        [SerializeField] private float powerUpTime = 10.0f;
-        [SerializeField] private float timerCount = 0.0f;
-        [SerializeField] bool isActive = false;
+        
         List<PointSystem> _pointsProviders = new List<PointSystem>();
-        public override void ApplyPowerUp()
+        protected override void ApplyPowerUpServer()
         {
-            base.ApplyPowerUp();
-
-            // TODO: Give 2x points to all active players
             _pointsProviders = FindObjectsOfType<PointSystem>(true).ToList();
             _pointsProviders.ForEach(p => p.multiplier = 2);
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                transform.GetChild(i).gameObject.SetActive(false); // Hide sprites
-            }
-        
-            isActive = true;
+            _pointsProviders.ForEach(p => p.SendData());
         }
 
-        private void Update()
+        public override void Update()
         {
-            if (isActive)
+            base.Update();
+            
+            if (pickedUp)
             {
-                timerCount += Time.deltaTime;
-                if (timerCount >= powerUpTime)
+                powerUpCount += Time.deltaTime;
+                if (powerUpCount >= powerUpTime)
                 {
-                    isActive = false;
-                    timerCount = 0.0f;
+                    powerUpCount = 0.0f;
                     _pointsProviders.ForEach(p => p.multiplier = 1);
+                    _pointsProviders.ForEach(p => p.SendData());
                     _pointsProviders.Clear();
                 }
             }

@@ -86,5 +86,10 @@ namespace _Scripts
             OnPointsChanged?.Invoke(_points);
             return true;
         }
+
+        public void SendData()
+        {
+            SendReplicationData(ReplicationAction.UPDATE);
+        }
     }
 }

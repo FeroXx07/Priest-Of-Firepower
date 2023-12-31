@@ -287,6 +287,7 @@ namespace _Scripts.Weapon
         {
             localData.totalAmmo = localData.maxAmmoCapacity;
             shooterOwner.OnReload?.Invoke(localData);
+            shooterOwner.OnFinishedReload?.Invoke(localData);
         }
 
         public void SetOwner(GameObject owner)
@@ -314,7 +315,7 @@ namespace _Scripts.Weapon
             NetworkManager.Instance.replicationManager.Server_DeSpawnNetworkObject(NetworkObject, enemyDeSpawnHeader, stream);
             DisposeGameObject();
         }
-        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int lenght)
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             DisposeGameObject();
         }
