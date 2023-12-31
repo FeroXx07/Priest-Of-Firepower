@@ -15,7 +15,7 @@ MonoBehaviour:
   weaponName: M14
   price: 500
   range: 205.5
-  damage: 10
+  damage: 2
   fireRate: 0.1
   bulletSpeed: 25
   dispersion: 3

@@ -55,19 +55,18 @@ namespace _Scripts.Interactables
 
         private void Start()
         {
-            EnablePromptUI(false);  
+            _timer = InteractionTime;
+            Weapon.Weapon wp = weapon.GetComponent<Weapon.Weapon>();
+            message = "Hold F to buy " + wp.weaponData.weaponName + "\n[costs: " + price + "]";
+            interactionPromptUI.SetText(message);
+            _wallWeaponImg = GetComponent<SpriteRenderer>();
+            _wallWeaponImg.sprite = wp.weaponData.sprite;
+            EnablePromptUI(false);
         }
 
         public override void OnEnable()
         {
             base.OnEnable();
-            _timer = InteractionTime;
-            Weapon.Weapon wp = weapon.GetComponent<Weapon.Weapon>();
-            interactionPromptUI.SetText(message);
-            _wallWeaponImg = GetComponent<SpriteRenderer>();
-            _wallWeaponImg.sprite = wp.weaponData.sprite;
-            EnablePromptUI(false);
-
         }
 
         public override void Update()

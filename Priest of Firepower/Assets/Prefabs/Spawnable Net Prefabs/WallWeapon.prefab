@@ -161,7 +161,7 @@ MonoBehaviour:
   tickRateBehaviour: 1
   doTickUpdates: 0
   clientSendReplicationData: 0
-  message: ' Buy '
+  message: 
   timeToInteract: 0.5
   weapon: {fileID: 1681268591073965709, guid: 3480f4e7954274743a02daa813d7098d, type: 3}
   price: 10
@@ -336,7 +336,7 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.705
   m_Pitch: 1
   Loop: 0
   Mute: 0

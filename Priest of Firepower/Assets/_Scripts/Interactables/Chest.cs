@@ -20,7 +20,10 @@ namespace _Scripts.Interactables
         [SerializeField] private int price;
         [SerializeField] private InteractionPromptUI interactionPromptUI;
         [SerializeField] private UIInteractionProgress interactionProgress;
-        [SerializeField] private AudioClip audioClip;
+        [SerializeField] private AudioClip openChest;
+        [SerializeField] private AudioClip choosingWeapon;
+        [SerializeField] private AudioClip weaponPickup;
+        private AudioSource _audioSource;
         [SerializeField] private VisualEffect vfx;
         [SerializeField] private List<Sprite> sprites;
         [SerializeField] private List<GameObject> weapons;
@@ -68,6 +71,11 @@ namespace _Scripts.Interactables
 
         }
 
+        private void Start()
+        {
+            _audioSource = GetComponent<AudioSource>();
+        }
+
         public override void Update()
         {
             base.Update();
@@ -91,7 +99,10 @@ namespace _Scripts.Interactables
                              out NetworkObject interactor))
                         {
                             if (_weapon != null)
+                            {
                                 interactor.GetComponent<WeaponSwitcher>().ChangeWeaponServer(_weapon);
+                                _audioSource.PlayOneShot(weaponPickup);
+                            }
                         }
                         CloseChest();
                     }
@@ -299,7 +310,7 @@ namespace _Scripts.Interactables
 
             EnablePromptUI(false);
             _openChest = true;
-
+            _audioSource.PlayOneShot(openChest);
             StartCoroutine(WeaponRulette());
         }
 
@@ -329,8 +340,10 @@ namespace _Scripts.Interactables
 
         private IEnumerator WeaponRulette()
         {
+            //_audioSource.PlayOneShot(choosingWeapon);
+            
             vfx.Play();
-
+        
             _randomizingWeapon= true;
 
             _weapon = GetRandomWeapon();

@@ -23,6 +23,7 @@ namespace _Scripts.Interactables
         [SerializeField] InteractionPromptUI interactionPromptUI;
         [SerializeField] UIInteractionProgress interactionProgress;
         [SerializeField] AudioClip audioClip;
+        private AudioSource _audioSource;
 
         [SerializeField] List<Door> prerequisiteDoors;
         [SerializeField] List<GameObject> objectsToEnable;
@@ -48,6 +49,11 @@ namespace _Scripts.Interactables
             base.Awake();
             InitNetworkVariablesList();
             BITTracker = new ChangeTracker(NetworkVariableList.Count);
+        }
+
+        private void Start()
+        {
+            _audioSource = GetComponent<AudioSource>();
         }
 
         protected override void InitNetworkVariablesList()
@@ -129,7 +135,9 @@ namespace _Scripts.Interactables
             {
                 child.gameObject.SetActive(false);
             }
-
+            
+            _audioSource.PlayOneShot(audioClip);
+            
             _open = true;
 
             if(!isClient)
