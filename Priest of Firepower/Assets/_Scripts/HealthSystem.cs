@@ -15,7 +15,7 @@ namespace _Scripts
         [SerializeField] private int health;
         [SerializeField] private int maxHealth;
         [SerializeField] private LayerMask layer;
-
+        public bool hasBeenDestroyed = false;
         public List<GameObject> bloodParticles;
         public LayerMask Layers { get => layer; set => layer = value; }
 
@@ -54,6 +54,9 @@ namespace _Scripts
 
         public void RaiseEventOnDamageableDestroyed(GameObject destroyer)
         {
+            if (hasBeenDestroyed) return;
+            
+            hasBeenDestroyed = true;
             OnDamageableDestroyed?.Invoke(gameObject, destroyer);
         }
         

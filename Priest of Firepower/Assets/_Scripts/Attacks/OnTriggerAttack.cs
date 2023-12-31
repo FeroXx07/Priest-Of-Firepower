@@ -48,6 +48,8 @@ namespace _Scripts.Attacks
         }
         protected virtual void CollisionHandeler(GameObject collision)
         {
+            if (owner == null) return;
+            
             if (collision.TryGetComponent<IDamageable>(out IDamageable dmg) && NetworkManager.Instance.IsHost())
             {
                 if (IsSelected(collision.layer))

@@ -12,6 +12,7 @@ namespace _Scripts.Attacks
         private float _timer;
         public int tickRate = 1;
         public GameObject targetedPlayer;
+        public Player.Player player;
         
         public event Action<GameObject> OnDamageDealerDestroyed;
         public event Action<GameObject> OnDamageDealth;
@@ -24,16 +25,17 @@ namespace _Scripts.Attacks
             Debug.Log($"ParalizerAttack: Processed Hit. Owner: {hitOwnerGameObject.name}, Hitter: {hitterGameObject}, Hitted: {hittedGameObject}");
         }
 
-        public void SetPlayer(GameObject player)
+        public void SetPlayer(GameObject playerGo)
         {
-            targetedPlayer = player;
-            targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = true;
+            targetedPlayer = playerGo;
+            player = targetedPlayer.gameObject.GetComponent<Player.Player>();
+            if (player) player.SetParalize(true);
         }
 
         public override void OnDisable()
         {
             base.OnDisable();
-            if (targetedPlayer) targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = false;
+            if (player) player.SetParalize(false);
         }
 
         private void Start()
@@ -45,6 +47,7 @@ namespace _Scripts.Attacks
         {
             base.Update();
             _timer -= Time.deltaTime;
+            if (player) player.SetParalize(true);
             if (_timer < 0.0f && !NetworkObject.isDeSpawned)
             {
                 _timer = tickRate;
@@ -79,21 +82,22 @@ namespace _Scripts.Attacks
         public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             //Debug.Log("OnTriggerAttack: Despawn by server");
-            if (targetedPlayer) targetedPlayer.gameObject.GetComponent<Player.Player>().isParalized = false;
+            if (player) player.SetParalize(false);
             DisposeGameObject();
         }
         
         protected override void DisposeGameObject()
         {
+            if (player) player.SetParalize(false);
             OnDamageDealerDestroyed?.Invoke(gameObject);
             base.DisposeGameObject();
         }
 
         public void DoDisposeGameObject()
         {
+            if (player) player.SetParalize(false);
             if (NetworkObject.isDeSpawned)
                 return;
-            
             NetworkObject.isDeSpawned = true;
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);

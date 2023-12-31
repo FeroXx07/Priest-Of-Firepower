@@ -29,10 +29,13 @@ namespace _Scripts.Power_Ups
                 powerUpCount += Time.deltaTime;
                 if (powerUpCount >= powerUpTime)
                 {
-                    powerUpCount = 0.0f;
+                    powerUpCount = -10.0f;
                     NuclearBomb nuke = nukeReference.GetComponent<NuclearBomb>();
-                    nuke.Damage = 100000;
-                    nuke.KillAllEnemies();
+                    if (nuke)
+                    {
+                        nuke.Damage = 100000;
+                        nuke.KillAllEnemies();
+                    }
                 }
             }
         }

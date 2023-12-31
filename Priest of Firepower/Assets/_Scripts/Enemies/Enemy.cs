@@ -207,6 +207,12 @@ namespace _Scripts.Enemies
             return PointsOnDeath;
         }
 
+        public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
+        {
+            healthSystem.RaiseEventOnDamageableDestroyed(gameObject);
+            onDeath?.Invoke(this);
+        }
+
         protected bool CheckLineOfSight(Transform playerTransform)
         {
             Vector2 directionToPlayer = (playerTransform.position - transform.position);

@@ -156,6 +156,7 @@ namespace _Scripts.Enemies
         public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             Debug.Log("Enemy dead in client");
+            base.OnClientNetworkDespawn(destroyer, reader, timeStamp, length);
             DisposeGameObject();
         }
 

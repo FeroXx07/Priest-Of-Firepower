@@ -216,44 +216,44 @@ namespace _Scripts.Player
                 }
             }
 
-            if (Input.GetKey(KeyCode.W) && !isParalized)
+            if (Input.GetKey(KeyCode.W))
             {
                 input[0] = true;
                 hasChangedMovement = true;
-                directionMovement += Vector2.up;
+                if ( !isParalized) directionMovement += Vector2.up;
             }
             else
             {
                 input[0] = false;
             }
 
-            if (Input.GetKey(KeyCode.D) && !isParalized)
+            if (Input.GetKey(KeyCode.D))
             {
                 input[1] = true;
                 hasChangedMovement = true;
-                directionMovement += Vector2.right;
+                if ( !isParalized) directionMovement += Vector2.right;
             }
             else
             {
                 input[1] = false;
             }
 
-            if (Input.GetKey(KeyCode.S) && !isParalized)
+            if (Input.GetKey(KeyCode.S))
             {
                 input[2] = true;
                 hasChangedMovement = true;
-                directionMovement += Vector2.down;
+                if ( !isParalized) directionMovement += Vector2.down;
             }
             else
             {
                 input[2] = false;
             }
 
-            if (Input.GetKey(KeyCode.A) && !isParalized)
+            if (Input.GetKey(KeyCode.A))
             {
                 input[3] = true;
                 hasChangedMovement = true;
-                directionMovement += Vector2.left;
+                if ( !isParalized) directionMovement += Vector2.left;
             }
             else
             {
@@ -371,6 +371,19 @@ namespace _Scripts.Player
             if(isHost)
                 GameManager.Instance.CheckGameOver();
         }
+
+        public void SetParalize(bool value)
+        {
+            isParalized = value;
+            if (isHost)
+            { 
+                SendInputToClients();
+            }
+            else if (isClient)
+            {
+                SendInputToServer();
+            }
+        }
         
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
         {
@@ -428,7 +441,8 @@ namespace _Scripts.Player
 
             writer.Write((int)state);
             writer.Write((int)currentWeaponInput);
-  
+            writer.Write(isParalized);
+
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
 
@@ -437,20 +451,20 @@ namespace _Scripts.Player
         public override void ReceiveInputFromClient(InputHeader header, BinaryReader reader)
         {
             if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM client: {input}");
-
-
+            
             state = (PlayerState)reader.ReadInt32();         
-            currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();         
+            currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();
+            isParalized = reader.ReadBoolean();
             
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
             
             directionMovement = Vector2.zero;
             //store new direction
-            if (input[0]) directionMovement += Vector2.up;
-            if (input[1]) directionMovement += Vector2.right;
-            if (input[2]) directionMovement += Vector2.down;
-            if (input[3]) directionMovement += Vector2.left;
+            if (input[0] && !isParalized) directionMovement += Vector2.up;
+            if (input[1] && !isParalized) directionMovement += Vector2.right;
+            if (input[2] && !isParalized) directionMovement += Vector2.down;
+            if (input[3] && !isParalized) directionMovement += Vector2.left;
 
             if (currentWeaponInput == PlayerShooterInputs.SHOOT)
             {
@@ -476,6 +490,7 @@ namespace _Scripts.Player
  
             writer.Write((int)state);
             writer.Write((int)currentWeaponInput);
+            writer.Write(isParalized);
 
             for (int i = 0; i < 4; i++)
                 writer.Write(input[i]);
@@ -495,17 +510,18 @@ namespace _Scripts.Player
             if (showDebugInfo) Debug.Log($"{_playerId}--{_playerName}: Receiving movement inputs FROM server: {input}");
             
             state = (PlayerState)reader.ReadInt32();
-            currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();         
-
+            currentWeaponInput = (PlayerShooterInputs)reader.ReadInt32();
+            isParalized = reader.ReadBoolean();
+            
             for (int i = 0; i < 4; i++)
                 input[i] = reader.ReadBoolean();
             
             directionMovement = Vector2.zero;
             
-            if (input[0]) directionMovement += Vector2.up;
-            if (input[1]) directionMovement += Vector2.right;
-            if (input[2]) directionMovement += Vector2.down;
-            if (input[3]) directionMovement += Vector2.left;
+            if (input[0] && !isParalized) directionMovement += Vector2.up;
+            if (input[1] && !isParalized) directionMovement += Vector2.right;
+            if (input[2] && !isParalized) directionMovement += Vector2.down;
+            if (input[3] && !isParalized) directionMovement += Vector2.left;
             
             if (currentWeaponInput == PlayerShooterInputs.SHOOT)
             {

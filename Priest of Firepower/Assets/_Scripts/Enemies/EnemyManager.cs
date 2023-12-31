@@ -52,7 +52,7 @@ namespace _Scripts.Enemies
 
         private void Start()
         {
-            StartCoroutine(NullCheckRoutine());
+            //StartCoroutine(NullCheckRoutine());
         }
 
         protected override void InitNetworkVariablesList()
@@ -101,20 +101,20 @@ namespace _Scripts.Enemies
                 }
             }
         }
-        IEnumerator NullCheckRoutine()
-        {
-            WaitForSeconds seconds = new WaitForSeconds(1);
-            while (true)
-            {
-                foreach (Enemy enemy in enemiesAlive)
-                {
-                    if (enemy == null)
-                        enemiesAlive.Remove(enemy);
-                }
-                yield return seconds;
-            }
-            yield return null;
-        }
+        // IEnumerator NullCheckRoutine()
+        // {
+        //     WaitForSeconds seconds = new WaitForSeconds(1);
+        //     while (true)
+        //     {
+        //         foreach (Enemy enemy in enemiesAlive)
+        //         {
+        //             if (enemy == null)
+        //                 enemiesAlive.Remove(enemy);
+        //         }
+        //         yield return seconds;
+        //     }
+        //     yield return null;
+        // }
         void ServerSpawnEnemy(Vector3 spawnPosition)
         {
             Debug.Log("Enemy Manager: Server spawning enemy!");
@@ -170,7 +170,10 @@ namespace _Scripts.Enemies
         void RemoveEnemyFromList(Enemy enemy)
         {
             Debug.Log($"Enemy Manager: Enemy remove callback!, enemies alive {enemiesAlive.Count}");
-            enemiesAlive.Remove(enemy);
+            
+            if (enemiesAlive.Contains(enemy))
+                enemiesAlive.Remove(enemy);
+            
             enemy.onDeath.RemoveListener(RemoveEnemyFromList);
             OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
             OnEnemyRemove?.Invoke(enemy);

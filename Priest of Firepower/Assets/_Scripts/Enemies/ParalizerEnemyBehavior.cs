@@ -86,11 +86,11 @@ namespace _Scripts.Enemies
                     agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
                     collider2D.enabled = false;
-                    
                     ServerEndAttack();
                     timeRemaining -= Time.deltaTime;
                     if (timeRemaining <= 0 && !NetworkObject.isDeSpawned)
                     {
+                        if (target) target.gameObject.GetComponent<Player.Player>().SetParalize(false);
                         NetworkObject.isDeSpawned = true;
                         MemoryStream stream = new MemoryStream();
                         BinaryWriter writer = new BinaryWriter(stream);
@@ -171,6 +171,7 @@ namespace _Scripts.Enemies
                     agent.isStopped = true;
                     // Play death animation, sound and particles, destroy enemy object
                     collider2D.enabled = false;
+                    if (target) target.gameObject.GetComponent<Player.Player>().SetParalize(false);
                 }
                     break;
                 default:
@@ -182,7 +183,6 @@ namespace _Scripts.Enemies
         public override void OnDisable()
         {
             base.OnDisable();
-            if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
         }
 
         private void StartServerAttack()
@@ -242,9 +242,9 @@ namespace _Scripts.Enemies
 
         private void ServerEndAttack()
         {
+            if (target) target.gameObject.GetComponent<Player.Player>().SetParalize(false);
             if (target == null || attackState == EnemyAttackState.END) return;
             attackState = EnemyAttackState.END;
-            target.gameObject.GetComponent<Player.Player>().isParalized = false;
             if(internalAttackObject) 
             {
                 Debug.Log("ParalizerEnemy: Deleting Server Attack");
@@ -256,9 +256,9 @@ namespace _Scripts.Enemies
         private void ClientEndAttack()
         {
             Debug.Log("ParalizerEnemy: Ending Client Attack");
-            if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
             attackState = EnemyAttackState.END;
             cooldownTimer = cooldownDuration;
+            if (target) target.gameObject.GetComponent<Player.Player>().SetParalize(false);
         }
         public override void OnClientNetworkSpawn(NetworkObject spawner, BinaryReader reader, long timeStamp, int lenght)
         {
@@ -268,31 +268,9 @@ namespace _Scripts.Enemies
         public override void OnClientNetworkDespawn(NetworkObject destroyer, BinaryReader reader, long timeStamp, int length)
         {
             Debug.Log("Enemy dead in client");
+            base.OnClientNetworkDespawn(destroyer, reader, timeStamp, length);
             DisposeGameObject();
-            if (target) target.gameObject.GetComponent<Player.Player>().isParalized = false;
-        }
-        bool CheckLineOfSightParalizer(Transform playerTransform)
-        {
-            Vector2 directionToPlayer = (playerTransform.position - transform.position).normalized;
-            float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
-
-            // Cast a ray from the enemy towards the player
-            RaycastHit2D hit = Physics2D.Raycast(transform.position, directionToPlayer, distanceToPlayer);
-
-            // Draw the ray in the editor for debugging purposes
-            if (hit)
-            {
-                // Draw a red line to show that line of sight is blocked
-                Debug.DrawLine(transform.position, hit.point, Color.red);
-            }
-            else
-            {
-                // Draw a green line to show that line of sight is clear
-                Debug.DrawLine(transform.position, (Vector2)transform.position + directionToPlayer * distanceToPlayer, Color.green);
-            }
-
-            // If we hit something, check if it was the player
-            return hit.collider != null && hit.collider.transform == playerTransform;
+            if (target) target.gameObject.GetComponent<Player.Player>().SetParalize(false);
         }
     }
 }
