@@ -29,7 +29,8 @@ namespace _Scripts.Weapon
         [SerializeField] GameObject initialWeaponPrefab;
         [SerializeField] GameObject initialSecondaryWeaponPrefab;
         [SerializeField] private Player.Player player;
-        
+        [SerializeField] private AudioClip changeWpSound;
+        private AudioSource _audioSource;
         [SerializeField] private UInt64 myUserId => NetworkManager.Instance.getId;
 
         [Serializable]
@@ -52,6 +53,7 @@ namespace _Scripts.Weapon
         private void Start()
         {
             SetWeapons();
+            _audioSource = GetComponent<AudioSource>();
         }
 
         public void InitializeWeapons()
@@ -192,6 +194,7 @@ namespace _Scripts.Weapon
 
             emptySlot.weapon = newWeaponPrefab;
             slots[emptySlot.index] = emptySlot;
+            _selectedWeapon = emptySlot.index;
             
             Player.Player user = gameObject.GetComponent<Player.Player>();
             
@@ -256,6 +259,7 @@ namespace _Scripts.Weapon
 
             emptySlot.weapon = objectSpawned;
             slots[emptySlot.index] = emptySlot;
+            _selectedWeapon = emptySlot.index;
             
             objectSpawned.transform.parent = emptySlot.holder.transform;
 
@@ -288,6 +292,8 @@ namespace _Scripts.Weapon
         void OnWeaponSelected()
         {
             //TODO add sound 
+            _audioSource.clip = changeWpSound;
+            _audioSource.Play();
         }
     }
 }
