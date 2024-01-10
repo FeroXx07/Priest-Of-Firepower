@@ -379,6 +379,7 @@ GameObject:
   - component: {fileID: 4689862705457445186}
   - component: {fileID: 4544400504364439693}
   - component: {fileID: 7579905407060679361}
+  - component: {fileID: 4366176304069594089}
   m_Layer: 5
   m_Name: KickButton
   m_TagString: Untagged
@@ -489,6 +490,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4366176304069594089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6826528931753363915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19fe5343512c5044180b48b5ce8c9199, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverSound: {fileID: 8300000, guid: bac2074c4b2765c479e3250af8528a49, type: 3}
+  clickSound: {fileID: 8300000, guid: 24f29742bdeee7f46a18bfc3980987c9, type: 3}
 --- !u!1 &7741668692354257541
 GameObject:
   m_ObjectHideFlags: 0

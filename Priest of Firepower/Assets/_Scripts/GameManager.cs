@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using _Scripts.Enemies;
@@ -49,6 +50,11 @@ namespace _Scripts
             instance = this;
         }
 
+        public void Start()
+        {
+            MusicManager.Instance.PlayMenuMusic();
+        }
+
         public override void Update()
         {
             base.Update();
@@ -63,9 +69,11 @@ namespace _Scripts
         
         public void StartGame(string sceneToLoad)
         {
+            
             SceneManager.LoadScene(sceneToLoad);
             SceneManager.sceneLoaded += SpawnPlayers;
             SceneManager.sceneLoaded += InitGame;
+            MusicManager.Instance.PlayGameMusic();
         }
         public void ReturnToMainMenu()
         {

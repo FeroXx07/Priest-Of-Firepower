@@ -135,6 +135,7 @@ GameObject:
   - component: {fileID: 10680929}
   - component: {fileID: 10680928}
   - component: {fileID: 10680930}
+  - component: {fileID: 10680931}
   m_Layer: 5
   m_Name: StartGameBtn
   m_TagString: Untagged
@@ -245,6 +246,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &10680931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 10680926}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19fe5343512c5044180b48b5ce8c9199, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverSound: {fileID: 8300000, guid: bac2074c4b2765c479e3250af8528a49, type: 3}
+  clickSound: {fileID: 8300000, guid: 24f29742bdeee7f46a18bfc3980987c9, type: 3}
 --- !u!1 &19690710
 GameObject:
   m_ObjectHideFlags: 0
@@ -614,19 +629,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   globalObjectIdHash: 10
   tickRate: -1
-  tickCounter: 0
-  showDebugInfo: 0
   synchronizeTransform: 0
   sendEveryChange: 0
   sendTickChange: 0
   clientSendReplicationData: 1
+  accelerationFactor: 5
+  lagThreshold: 1.5
+  tpThreshold: 10
+  tickCounter: 0
+  showDebugInfo: 0
   isInterpolating: 0
-  speed: 0
   lastAction: 4
   sequenceNum: 0
   lastProcessedSequenceNum: -1
   interpolationTime: 0.1
-  interpolationTimer: 0
+  speed: 0
+  isDeSpawned: 0
 --- !u!1 &459644970
 GameObject:
   m_ObjectHideFlags: 0
@@ -2901,7 +2919,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_AnchorMin.x
@@ -2909,15 +2927,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 303.0924
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 0
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2949,11 +2967,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 151.5462
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -6
       objectReference: {fileID: 0}
     - target: {fileID: 6161224700139278260, guid: e4685a35fc6b545488506a9db9070b56, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
