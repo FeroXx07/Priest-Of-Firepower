@@ -87,7 +87,7 @@ namespace _Scripts.Networking
             {
                 ipInputField.text = "Invalid IP address";
                 ipTextfield.color = Color.red;
-                Debug.LogError(ip + " address is not valid ...");
+                Debug.LogWarning(ip + " address is not valid ...");
             }
         }
 

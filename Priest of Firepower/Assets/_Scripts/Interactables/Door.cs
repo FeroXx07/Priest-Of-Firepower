@@ -142,7 +142,7 @@ namespace _Scripts.Interactables
 
             if(!isClient)
                 SendReplicationData(ReplicationAction.UPDATE);
-
+            
             gameObject.SetActive(false);
         }
         bool IsOpen() { return _open; }

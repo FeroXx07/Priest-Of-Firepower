@@ -6,7 +6,6 @@ namespace _Scripts.Power_Ups
 {
     public class PowerUpOneShot : PowerUpBase
     {
-        [SerializeField] private float powerUpTime = 10.0f;
         [SerializeField] private float timerCount = 0.0f;
         [SerializeField] bool isActive = false;
         List<Weapon.Weapon> _allWeapons = new List<Weapon.Weapon>();

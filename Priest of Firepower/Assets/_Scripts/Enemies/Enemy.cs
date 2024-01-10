@@ -35,6 +35,7 @@ namespace _Scripts.Enemies
         [SerializeField] protected int damage = 5;
         [SerializeField] private GameObject deathVFXPrefab;
         [SerializeField] protected Transform target;
+        [SerializeField] public int spawnProbability = 10;
         public bool overrideTarget = false;
         protected NavMeshAgent agent;
         protected HealthSystem healthSystem;

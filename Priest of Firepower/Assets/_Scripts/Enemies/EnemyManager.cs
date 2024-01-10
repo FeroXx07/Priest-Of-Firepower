@@ -19,10 +19,12 @@ namespace _Scripts.Enemies
     {
         List<Transform> _spawnPoints = new List<Transform>();
         public List<GameObject> enemiesPrefabs = new List<GameObject>();
-
+        private List<GameObject> _enemiesToSpawn = new List<GameObject>();
+                
         [SerializeField] AnimationCurve enemyCountProgression = new AnimationCurve();
         public List<Enemy> enemiesAlive = new List<Enemy>();
 
+        
         //current number of enemies to spanw on the current wave
         int _numberOfEnemiesToSpwan = 0;
         float _spawnRate = 0.5f;
@@ -76,7 +78,10 @@ namespace _Scripts.Enemies
 
         public void SpawnEnemies(int round)
         {
-            _numberOfEnemiesToSpwan = GetNumberOfEnemiesToSpawn(round);
+            _enemiesToSpawn.Clear();
+            _enemiesToSpawn = GetEnemiesToSpawn(round);
+            Debug.Log(_enemiesToSpawn);
+            _numberOfEnemiesToSpwan = _enemiesToSpawn.Count;
             Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
         }
 
@@ -93,10 +98,9 @@ namespace _Scripts.Enemies
                 if (_spawnTimer <= 0)
                 {
                     Transform p = GetRandomSpawnPoint();
-                    ServerSpawnEnemy(p.position);
+                    ServerSpawnEnemy(p.position,_numberOfEnemiesToSpwan);
                     _numberOfEnemiesToSpwan--;
                     _spawnTimer = _spawnRate;
-                    //Debug.Log("Enemies remaining: " + _numberOfEnemiesToSpwan);
                     OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
                 }
             }
@@ -115,11 +119,45 @@ namespace _Scripts.Enemies
         //     }
         //     yield return null;
         // }
-        void ServerSpawnEnemy(Vector3 spawnPosition)
+        private List<GameObject> GetEnemiesToSpawn(int round)
+        {
+            List<GameObject> enemiesToSpawnList = new List<GameObject>();
+            float totalProbability = 0f;
+
+            // Calculate the total probability of all enemy types
+            foreach (GameObject enemyPrefab in enemiesPrefabs)
+            {
+                Enemy enemyScript = enemyPrefab.GetComponent<Enemy>();
+                if (enemyScript != null)
+                {
+                    totalProbability += enemyScript.spawnProbability;
+                }
+            }
+
+            // For each enemy type, calculate the number of enemies to spawn based on its probability
+            foreach (GameObject enemyPrefab in enemiesPrefabs)
+            {
+                Enemy enemyScript = enemyPrefab.GetComponent<Enemy>();
+                if (enemyScript != null)
+                {
+                    float probability = enemyScript.spawnProbability / totalProbability;
+                    int enemiesForType = Mathf.FloorToInt(probability * enemyCountProgression.Evaluate(round));
+
+                    // Add the enemy prefab to the list based on the calculated count
+                    for (int i = 0; i < enemiesForType; i++)
+                    {
+                        enemiesToSpawnList.Add(enemyPrefab);
+                    }
+                }
+            }
+
+            return enemiesToSpawnList;
+        }
+        void ServerSpawnEnemy(Vector3 spawnPosition,int enemyCount)
         {
             Debug.Log("Enemy Manager: Server spawning enemy!");
             int enemyType = UnityEngine.Random.Range(0, enemiesPrefabs.Count);
-            GameObject enemyPrefab = enemiesPrefabs[enemyType];
+            GameObject enemyPrefab = _enemiesToSpawn[enemyCount-1];
             
             MemoryStream changeWeaponMemoryStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(changeWeaponMemoryStream);

@@ -2824,7 +2824,7 @@ Transform:
   - {fileID: 2674125962752449972}
   - {fileID: 6226435891254168834}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2886411980033804262
 MonoBehaviour:
@@ -2883,24 +2883,24 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 0.49951553
       value: 1.0043144
-      inSlope: 0.033932976
-      outSlope: 0.033932976
+      inSlope: 0.817107
+      outSlope: 0.817107
       tangentMode: 34
       weightedMode: 0
       inWeight: 0
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1.0364232
-      value: 1.0225333
-      inSlope: 0.43226728
-      outSlope: 0.43226728
+      time: 0.9010472
+      value: 1.3324088
+      inSlope: 0.8367659
+      outSlope: 0.8367659
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
-      outWeight: 0.33333334
+      outWeight: 0.5096239
     - serializedVersion: 3
-      time: 1.1047612
-      value: 1.3599108
+      time: 1.2729436
+      value: 1.7417468
       inSlope: 1.1905171
       outSlope: 1.1905171
       tangentMode: 0
@@ -2910,8 +2910,8 @@ MonoBehaviour:
     - serializedVersion: 3
       time: 5
       value: 20
-      inSlope: 4.7853518
-      outSlope: 4.7853518
+      inSlope: 4.89884
+      outSlope: 4.89884
       tangentMode: 34
       weightedMode: 0
       inWeight: 0.33333334

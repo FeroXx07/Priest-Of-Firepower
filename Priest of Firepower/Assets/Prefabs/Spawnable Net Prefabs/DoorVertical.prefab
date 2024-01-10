@@ -131,7 +131,7 @@ MonoBehaviour:
   clientSendReplicationData: 0
   message: Open door
   time: 0.5
-  price: 10
+  price: 1250
   interactionPromptUI: {fileID: 4260816170529418465}
   interactionProgress: {fileID: 2577125093014282995}
   audioClip: {fileID: 8300000, guid: 5753cb455d7a21f42bdd0c3e79f56c51, type: 3}
@@ -163,7 +163,7 @@ MonoBehaviour:
   - {x: 0.25, y: -1, z: 0}
   m_ShapePathHash: 0
   m_Mesh: {fileID: 0}
-  m_InstanceId: 124526
+  m_InstanceId: 79344
   m_LocalBounds:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0.25, y: 1, z: 0}

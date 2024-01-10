@@ -143,6 +143,7 @@ MonoBehaviour:
   layer:
     serializedVersion: 2
     m_Bits: 128
+  hasBeenDestroyed: 0
   bloodParticles:
   - {fileID: 3237166028260084441, guid: 92cca3c38a085cd41bc5d16a063a09c9, type: 3}
   - {fileID: 5949346569163744470, guid: 6ab903375a450354f825acf196ed2f40, type: 3}
@@ -171,6 +172,7 @@ MonoBehaviour:
   damage: 5
   deathVFXPrefab: {fileID: 0}
   target: {fileID: 0}
+  spawnProbability: 95
   overrideTarget: 0
   attackPrefab: {fileID: 4472022888998543014, guid: 7a4a44e0686bade439d1cf69ff3fa712, type: 3}
   enemyState: 0
