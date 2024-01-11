@@ -5,6 +5,7 @@ using _Scripts.Networking;
 using _Scripts.Networking.Replication;
 using _Scripts.Networking.Utility;
 using _Scripts.Object_Pool;
+using _Scripts.Player;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -122,6 +123,8 @@ namespace _Scripts.Enemies
 
             foreach (var player in playerList)
             {
+                if (player.GetComponent<Player.Player>().state == PlayerState.DEAD)
+                    break;
                 float actualDistance = Vector2.Distance(player.transform.position, this.transform.position);
 
                 if (actualDistance < smallerDistance)

@@ -444,6 +444,7 @@ MonoBehaviour:
   tickCounter: 0
   speed: 7
   isParalized: 0
+  _reviveTime: 10
   layerMask:
     serializedVersion: 2
     m_Bits: 0

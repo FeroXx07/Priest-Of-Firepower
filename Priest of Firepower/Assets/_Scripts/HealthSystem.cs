@@ -52,6 +52,12 @@ namespace _Scripts
             health = maxHealth;
         }
 
+        public void Revive()
+        {
+            Health = maxHealth;
+            SendReplicationData(ReplicationAction.UPDATE);
+        }
+
         public void RaiseEventOnDamageableDestroyed(GameObject destroyer)
         {
             if (hasBeenDestroyed) return;

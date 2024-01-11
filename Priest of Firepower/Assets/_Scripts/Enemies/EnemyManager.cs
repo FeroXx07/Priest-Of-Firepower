@@ -98,10 +98,14 @@ namespace _Scripts.Enemies
                 if (_spawnTimer <= 0)
                 {
                     Transform p = GetRandomSpawnPoint();
-                    ServerSpawnEnemy(p.position,_numberOfEnemiesToSpwan);
-                    _numberOfEnemiesToSpwan--;
-                    _spawnTimer = _spawnRate;
-                    OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
+                    if (p != null)
+                    {
+                        ServerSpawnEnemy(p.position,_numberOfEnemiesToSpwan);
+                        _numberOfEnemiesToSpwan--;
+                        _spawnTimer = _spawnRate;
+                        OnEnemyCountUpdate?.Invoke(enemiesAlive.Count);
+                    }
+
                 }
             }
         }
@@ -225,7 +229,12 @@ namespace _Scripts.Enemies
 
         private Transform GetRandomSpawnPoint()
         {
+            if(_spawnPoints.Count > 0)
             return _spawnPoints[UnityEngine.Random.Range(0, _spawnPoints.Count)];
+            else
+            {
+               return null;
+            }
         }
 
         public void AddSpawnpoint(Transform spawnPoint)

@@ -67,6 +67,8 @@ namespace _Scripts.Player
         private Rigidbody2D _rb;
         public float speed = 7.0f;
         public bool isParalized = false;
+        public float _reviveTime = 5.0f;
+        private float _reviveCounter = 0;
         #endregion
 
         #region Shooter
@@ -150,11 +152,27 @@ namespace _Scripts.Player
         
         public override void Update()
         {
-            base.Update();
+            base.Update();           
+            if(isHost && state == PlayerState.DEAD)
+            {
+                _reviveCounter += Time.deltaTime;
+                if (_reviveCounter > _reviveTime)
+                {
+                    _healthSystem.Revive();
+                    _reviveCounter = 0;
+                    state = PlayerState.IDLE;
+                    SendReplicationData(ReplicationAction.UPDATE);
+                }
+                return;
+            }   
             if (!isOwner()) return;  // Only the owner of the player will control it
+
+            if (_healthSystem.Health <= 0)
+                state = PlayerState.DEAD;
             
-            if(state == PlayerState.DEAD)
-                return;            
+            
+            if(state == PlayerState.DEAD) return;
+            
             
             directionMovement = Vector2.zero;
             currentWeaponInput = PlayerShooterInputs.NONE;
@@ -365,11 +383,11 @@ namespace _Scripts.Player
         {
             Debug.Log($"{GetName()}: Dying");
             state = PlayerState.DEAD;
-            OnPlayerDeath?.Invoke();
-            SendReplicationData(ReplicationAction.UPDATE);
-            
-            if(isHost)
-                GameManager.Instance.CheckGameOver();
+            // OnPlayerDeath?.Invoke();
+            // SendReplicationData(ReplicationAction.UPDATE);
+            //
+            // if(isHost)
+            //     GameManager.Instance.CheckGameOver();
         }
 
         public void SetParalize(bool value)
@@ -414,7 +432,7 @@ namespace _Scripts.Player
             //check when a player dies if other players are still alive to call a game over
             if (state == PlayerState.DEAD && isHost)
             {
-                GameManager.Instance.CheckGameOver();
+               // GameManager.Instance.CheckGameOver();
             }
                 
             if (reader.ReadBoolean())

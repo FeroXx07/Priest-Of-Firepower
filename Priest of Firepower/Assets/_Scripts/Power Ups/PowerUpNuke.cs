@@ -24,14 +24,14 @@ namespace _Scripts.Power_Ups
         {
             base.Update();
             
-            if (pickedUp)
+            if (pickedUp && isHost)
             {
                 powerUpCount += Time.deltaTime;
                 if (powerUpCount >= powerUpTime)
                 {
                     powerUpCount = -10.0f;
                     NuclearBomb nuke = nukeReference.GetComponent<NuclearBomb>();
-                    if (nuke)
+                    if (nuke != null)
                     {
                         nuke.Damage = 100000;
                         nuke.KillAllEnemies();

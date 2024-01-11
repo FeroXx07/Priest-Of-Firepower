@@ -69,11 +69,16 @@ namespace _Scripts
         
         public void StartGame(string sceneToLoad)
         {
-            
             SceneManager.LoadScene(sceneToLoad);
-            SceneManager.sceneLoaded += SpawnPlayers;
-            SceneManager.sceneLoaded += InitGame;
+            SceneManager.sceneLoaded += OnGameLoaded;
             MusicManager.Instance.PlayGameMusic();
+        }
+
+        public void OnGameLoaded(Scene arg0, LoadSceneMode loadSceneMode)
+        {
+            SpawnPlayers();
+            InitGame();
+            SceneManager.sceneLoaded -= OnGameLoaded;
         }
         public void ReturnToMainMenu()
         {
@@ -82,14 +87,14 @@ namespace _Scripts
 
         public void ReturnToLobby()
         {
-            SceneManager.LoadScene("Lobby");
-            foreach (GameObject player in playersList)
-            {
-                RemovePlayer(player.name);
-            }
+             SceneManager.LoadScene("Lobby");
+            // foreach (GameObject player in playersList)
+            // {
+            //     RemovePlayer(player.name);
+            // }
         }
 
-        void SpawnPlayers(Scene arg0, LoadSceneMode loadSceneMode)
+        void SpawnPlayers()
         {
             if (NetworkManager.Instance.IsHost())
             {
@@ -118,7 +123,7 @@ namespace _Scripts
             }
         }
 
-        public void InitGame(Scene arg0, LoadSceneMode loadSceneMode)
+        public void InitGame()
         {
 
             state = GameState.IN_GAME;
@@ -145,19 +150,19 @@ namespace _Scripts
 
         public void CheckGameOver()
         {
-            bool isGameOver = true;
-            foreach (GameObject player in playersList)
-            {
-                Player.Player p = player.GetComponent<Player.Player>();
-                if (p.state != PlayerState.DEAD)
-                {
-                    isGameOver = false;
-                    break;
-                }
-            }
-            
-            if(isGameOver)
-                OnGameOver();
+            // bool isGameOver = true;
+            // foreach (GameObject player in playersList)
+            // {
+            //     Player.Player p = player.GetComponent<Player.Player>();
+            //     if (p.state != PlayerState.DEAD)
+            //     {
+            //         isGameOver = false;
+            //         break;
+            //     }
+            // }
+            //
+            // if(isGameOver)
+            //     OnGameOver();
         }
         void OnGameOver()
         {
@@ -170,13 +175,13 @@ namespace _Scripts
 
         void GameOver()
         {
-            uiCanvas = null;
-            enemySpawnManager = null;
-            roundSystem = null;
-            
-            //Display game over secene/canvas
-            //then go to lobby
-            ReturnToLobby();
+            // uiCanvas = null;
+            // enemySpawnManager = null;
+            // roundSystem = null;
+            //
+            // //Display game over secene/canvas
+            // //then go to lobby
+            // ReturnToLobby();
             
         }
         protected override ReplicationHeader WriteReplicationPacket(MemoryStream outputMemoryStream, ReplicationAction action)
@@ -195,10 +200,10 @@ namespace _Scripts
             switch (state)
             {
                 case GameState.RETURN_TO_LOBBY:
-                    ReturnToLobby();
+                   // ReturnToLobby();
                     break;
                 case GameState.GAME_OVER:
-                    GameOver();
+                    //GameOver();
                     break;
             }
 
