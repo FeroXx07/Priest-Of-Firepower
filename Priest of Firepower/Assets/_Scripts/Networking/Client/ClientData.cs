@@ -40,6 +40,8 @@ namespace _Scripts.Networking.Client
         public bool isHost = false;
         public bool playerInstantiated = false;
 
+        public long Ping;
+
         public System.Diagnostics.Stopwatch heartBeatStopwatch;
         #if UNITY_EDITOR
                 public float disconnectTimeout = 12500;

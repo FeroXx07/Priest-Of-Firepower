@@ -609,7 +609,7 @@ namespace _Scripts.Networking.Server
         }
         #endregion
         #region Heart Beat
-        public void HandleHeartBeat(BinaryReader reader)
+        public void HandleHeartBeat(Packet packet, BinaryReader reader)
         {
             UInt64 id = reader.ReadUInt64();
 
@@ -618,8 +618,12 @@ namespace _Scripts.Networking.Server
                 if (clientData.id == id)
                 {
                     if (NetworkManager.Instance.debugShowPingPackets) Debug.Log("Server: Received heartbeat client:" + id);
-                    if(clientData.heartBeatStopwatch != null) 
+                    if (clientData.heartBeatStopwatch != null)
+                    {
+                        clientData.Ping = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond)-packet.timeStamp;
                         clientData.heartBeatStopwatch.Restart();
+                        Debug.Log($"client: {clientData.userName} ping: {clientData.Ping}ms");
+                    }
                 }
             }
         }
@@ -630,7 +634,7 @@ namespace _Scripts.Networking.Server
             BinaryWriter writer = new BinaryWriter(newStream);
             writer.Write((int)PacketType.PING);
             writer.Write(0);
-            Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, long.MinValue,
+            Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond,
                 Int32.MinValue, false,newStream.ToArray());
             SendUdpToAll(syncPacket.allData);
         }

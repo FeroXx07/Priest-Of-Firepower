@@ -22,6 +22,8 @@ namespace _Scripts.Networking.Client
         private Process _serverListenerProcess = new Process();
         public DeliveryNotificationManager deliveryNotificationManager = new DeliveryNotificationManager();
 
+
+
         //tick sync
         private ushort _serverTick;
         public ushort ServerTick
@@ -334,9 +336,12 @@ namespace _Scripts.Networking.Client
         }
         #endregion
         #region Heart Beat
-        public void HandleHeartBeat(BinaryReader reader)
+        public void HandleHeartBeat(Packet packet, BinaryReader reader)
         {
+            _clientData.Ping = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond)-packet.timeStamp;
             _clientData.heartBeatStopwatch.Restart();
+            Debug.Log($"client: {_clientData.userName} ping: {_clientData.Ping}ms");
+
         }
 
         public void SendHeartBeat()
@@ -345,7 +350,7 @@ namespace _Scripts.Networking.Client
             BinaryWriter writer = new BinaryWriter(newStream);
             writer.Write(_clientData.id);
             writer.Write(0);
-            Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, long.MinValue,
+            Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond,
                 Int32.MinValue,false, newStream.ToArray());
             SendUdpPacket(syncPacket.allData);
         }

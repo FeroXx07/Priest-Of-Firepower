@@ -810,8 +810,8 @@ namespace _Scripts.Networking
                 {
                     if (debugShowPingPackets) Debug.Log($"Network Manager: Received packet {receivedPacket.packetType}");
                     if (_isHost)
-                        _server.HandleHeartBeat(contentsReader);
-                    else if (_isClient) _client.HandleHeartBeat(contentsReader);
+                        _server.HandleHeartBeat(receivedPacket,contentsReader);
+                    else if (_isClient) _client.HandleHeartBeat(receivedPacket,contentsReader);
                 }
                     break;
                 case PacketType.INPUT:
