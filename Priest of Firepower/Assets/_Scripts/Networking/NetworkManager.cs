@@ -335,9 +335,19 @@ namespace _Scripts.Networking
 
         private void Update()
         {
-            if (_isHost) _server.UpdatePendingDisconnections();
-            
-            //deliveryNotificationManager.Update();
+            if (_isHost)
+            {
+                _server.UpdatePendingDisconnections();
+                
+                foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
+                {
+                    manager.Value.Update(manager.Key.Ping * 2);
+                }
+            }
+            else if (_isClient)
+            {
+                _client.deliveryNotificationManager.Update(_client._clientData.Ping * 2);
+            }
         }
         
         private void FixedUpdate()
@@ -845,7 +855,7 @@ namespace _Scripts.Networking
                     {
                         foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                         {
-                            manager.Value.ReceiveDelivery(receivedPacket, () => UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream, contentsStream.Position,
+                            manager.Value.ReceiveDelivery(receivedPacket, () => UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(contentsStream, contentsStream.Position,
                                 receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum, receivedPacket.itemsCount)));
                         }
                     }
@@ -898,7 +908,7 @@ namespace _Scripts.Networking
 
                 try
                 {
-                    replicationManager.HandleReplication(reader, header, timeStamp, seqNum);
+                    replicationManager.HandleReplication(reader, header, streamPosition, packetSender, timeStamp, seqNum);
                 }
                 catch (EndOfStreamException ex)
                 {

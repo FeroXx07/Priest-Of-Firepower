@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using _Scripts.Networking;
+using _Scripts.Networking.Client;
 using UnityEngine;
 using UnityEngine.Collections.Generic;
 
@@ -56,7 +57,7 @@ namespace _Scripts.Networking.Replication
             networkObjectMap.Remove(id_);
         }
 
-        public void HandleReplication(BinaryReader reader, ReplicationHeader header, long timeStamp, ulong sequenceNumState)
+        public void HandleReplication(BinaryReader reader, ReplicationHeader header, long streamPosition, ulong packetSenderId, long timeStamp, ulong sequenceNumState)
         {
             //Debug.Log( $"Network Manager: HandlingNetworkAction: ID: {id}, Action: {action}, Type: {type.FullName}, Stream Position: {reader.BaseStream.Position}");
             switch (header.replicationAction)
@@ -125,6 +126,22 @@ namespace _Scripts.Networking.Replication
                 case ReplicationAction.ACKNOWLEDGMENT:
                 {
                     // TODO: Check sender id and for the client/server processACKs
+                    NetworkManager netManager = NetworkManager.Instance;
+                    if (netManager.IsClient())
+                    {
+                        netManager.GetClient().deliveryNotificationManager.ProcessACKs(reader);
+                    }
+                    else if (netManager.IsHost())
+                    {
+                        // Check id of the packetSenderId
+                        foreach (KeyValuePair<ClientData, DeliveryNotificationManager> manager in netManager.GetServer().deliveryNotificationManagers)
+                        {
+                            if (manager.Key.id == packetSenderId)
+                            {
+                                manager.Value.ProcessACKs(reader);
+                            }
+                        }
+                    }
                     //NetworkManager.Instance.deliveryNotificationManager.ProcessACKs(reader);
                 }
                     break;
