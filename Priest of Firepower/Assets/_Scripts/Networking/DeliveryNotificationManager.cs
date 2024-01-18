@@ -83,6 +83,8 @@ namespace _Scripts.Networking
                 return;
             }
             
+            Debug.Log($"DeliveryNotificationManager: OnDeliveryFailure resend {packet.sequenceNum}");
+
             // Set the time to current time.
             pendingDeliveriesTime[index] = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             
@@ -106,13 +108,22 @@ namespace _Scripts.Networking
                 // Acknowledgment is pending. No action.
                 return false;
             }
+            
+            failCounter++;
+            if (failCounter >= failThreshold)
+            {
+                Debug.Log($"DeliveryNotificationManager: Artificial packet lost {packet.sequenceNum}");
+                failCounter = 0;
+                return false;
+            }
+            
             pendingACKs.Add(packet.sequenceNum);
             NetworkManager netManager = NetworkManager.Instance;
             switch (packet.packetType)
             {
                 case PacketType.OBJECT_STATE:
                 {
-                    if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum)
+                    if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum && packet.sequenceNum != 0)
                     {
                         Debug.LogWarning("DeliveryNotificationManager: Old packet");
                         // Resend the acknowledgment.
@@ -129,7 +140,7 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.INPUT:
                 {
-                    if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum)
+                    if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum && packet.sequenceNum != 0)
                     {
                         Debug.LogWarning("DeliveryNotificationManager: Old packet");
                         // Resend the acknowledgment.
@@ -146,16 +157,6 @@ namespace _Scripts.Networking
                     break;
             }
             return true;
-            // failCounter++;
-            // if (failCounter >= failThreshold)
-            // {
-            //     failCounter = 0;
-            // }
-            // else
-            // {
-            //     pendingACKs.Add(packet);
-            //     processAction?.Invoke();
-            // }
         }
 
         private void ReOrderPackets()
@@ -219,7 +220,7 @@ namespace _Scripts.Networking
             {
                 Int64 storedTimeStamp = pendingDeliveriesTime[i];
                 // Compare the timestamps with the offset
-                if (storedTimeStamp - currentTimestamp > roundTripTime + rttOffset)
+                if (currentTimestamp - storedTimeStamp > roundTripTime + rttOffset)
                 {
                     OnDeliveryFailure(pendingDeliveries[i]);
                 }
