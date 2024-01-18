@@ -14,21 +14,11 @@ namespace _Scripts.Networking
     /// Packet PreparePacket(UInt64 senderId, PacketType type, ...)
     /// </summary>
     [Serializable]
-    public struct SequenceNum
-    {
-        public UInt64 incomingSequenceNum;
-        public UInt64 outgoingSequenceNum;
-        public UInt64 expectedNextSequenceNum => incomingSequenceNum + 1;
-    }
-    [Serializable]
     public class DeliveryNotificationManager
     {
         private List<Packet> pendingDeliveries = new();
         [SerializeField] private List<UInt64> pendingACKs = new();
         [SerializeField] private List<Int64> pendingDeliveriesTime = new();
-        
-        public SequenceNum inputSequenceNum;
-        public SequenceNum stateSequenceNum;
 
         private int failThreshold = 3;
         private int failCounter = 0;
@@ -50,18 +40,6 @@ namespace _Scripts.Networking
             {
                 Debug.LogError("DeliveryNotificationManager: Cannot make delivery as it is a duplicate packet");
                 return;
-            }
-
-            switch (packet.packetType)
-            {
-                case PacketType.OBJECT_STATE:
-                    if (stateSequenceNum.outgoingSequenceNum == ulong.MaxValue - 1) stateSequenceNum.outgoingSequenceNum = 0;
-                    stateSequenceNum.outgoingSequenceNum += 1;
-                    break;
-                case PacketType.INPUT:
-                    if (inputSequenceNum.outgoingSequenceNum == ulong.MaxValue - 1) inputSequenceNum.outgoingSequenceNum = 0;
-                    inputSequenceNum.outgoingSequenceNum += 1;
-                    break;
             }
             
             pendingDeliveries.Add(packet);
@@ -95,7 +73,7 @@ namespace _Scripts.Networking
             // Resend packet through network manager
             if (NetworkManager.Instance.IsHost())
             {
-                NetworkManager.Instance.GetServer().SendUdpToAll(packet.allData);
+                NetworkManager.Instance.GetServer().SendUdp(packet.senderId, packet.allData);
             }
             else
             {
@@ -110,43 +88,45 @@ namespace _Scripts.Networking
             {
                 Debug.LogError("DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet");
                 // Acknowledgment is pending. No action.
+                
                 return;
             }
             pendingACKs.Add(packet.sequenceNum);
+            NetworkManager netManager = NetworkManager.Instance;
             switch (packet.packetType)
             {
                 case PacketType.OBJECT_STATE:
                 {
-                    if (packet.sequenceNum < stateSequenceNum.expectedNextSequenceNum)
+                    if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogError("DeliveryNotificationManager: Old packet");
                         // Resend the acknowledgment.
-                        return;
+                        //return;
                     }
 
-                    if (packet.sequenceNum > stateSequenceNum.expectedNextSequenceNum)
+                    if (packet.sequenceNum > netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogError("DeliveryNotificationManager: Unordered, lost or duplicated packet");
                         ReOrderPackets();
                     }
-                    stateSequenceNum.incomingSequenceNum = packet.sequenceNum;
+                    netManager.stateSequenceNum.incomingSequenceNum = packet.sequenceNum;
                 }
                     break;
                 case PacketType.INPUT:
                 {
-                    if (packet.sequenceNum < inputSequenceNum.expectedNextSequenceNum)
+                    if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogError("DeliveryNotificationManager: Old packet");
                         // Resend the acknowledgment.
-                        return;
+                        //return;
                     }
 
-                    if (packet.sequenceNum > inputSequenceNum.expectedNextSequenceNum)
+                    if (packet.sequenceNum > netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogError("DeliveryNotificationManager:  Unordered, lost or duplicated packet");
                         ReOrderPackets();
                     }
-                    inputSequenceNum.incomingSequenceNum = packet.sequenceNum;
+                    netManager.inputSequenceNum.incomingSequenceNum = packet.sequenceNum;
                 }
                     break;
             }
@@ -177,7 +157,7 @@ namespace _Scripts.Networking
             writer.Write(pendingACKs.Count);
             foreach (UInt64 sequenceNum in pendingACKs)
                 writer.Write(sequenceNum);
-            pendingACKs.Clear(); // Maybe don't clear it so fast, ACK may get lost and we will need this.
+            //pendingACKs.Clear(); // Maybe don't clear it so fast, ACK may get lost and we will need this.
             ReplicationHeader replicationHeader =
                 new ReplicationHeader(UInt64.MaxValue, this.GetType().FullName, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);

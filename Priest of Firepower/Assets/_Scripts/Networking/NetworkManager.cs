@@ -14,6 +14,13 @@ using UnityEngine.SceneManagement;
 
 namespace _Scripts.Networking
 {
+    [Serializable]
+    public struct SequenceNum
+    {
+        public UInt64 incomingSequenceNum;
+        public UInt64 outgoingSequenceNum;
+        public UInt64 expectedNextSequenceNum => incomingSequenceNum + 1;
+    }
 //this class will work as a client or server or both at the same time
     public class NetworkManager : GenericSingleton<NetworkManager>
     {
@@ -39,6 +46,8 @@ namespace _Scripts.Networking
         public GameObject player { get; set; }
         public List<GameObject> instantiatablesPrefabs = new List<GameObject>();
         public ReplicationManager replicationManager = new ReplicationManager();
+        public SequenceNum inputSequenceNum;
+        public SequenceNum stateSequenceNum;
         #endregion
 
         #region Buffers
@@ -481,20 +490,24 @@ namespace _Scripts.Networking
                                     {
                                         if (debugShowInputPackets)
                                             Debug.Log(
-                                                $"Network Manager: Sending input as client, SIZE {packet.allData.Length}, TIMEOUT {_inputStopwatch.ElapsedMilliseconds} - {inputTimeout} and SEQ INPUT: {_client.deliveryNotificationManager.inputSequenceNum.outgoingSequenceNum}");
+                                                $"Network Manager: Sending input as client, SIZE {packet.allData.Length}, TIMEOUT {_inputStopwatch.ElapsedMilliseconds} - {inputTimeout} and SEQ INPUT: { inputSequenceNum.outgoingSequenceNum}");
                                         _client.deliveryNotificationManager.MakeDelivery(packet);
                                         _client.SendUdpPacket(packet.allData);
+                                        inputSequenceNum.outgoingSequenceNum++;
+                                        if (inputSequenceNum.outgoingSequenceNum == ulong.MaxValue - 1) inputSequenceNum.outgoingSequenceNum = 0;
                                     }
                                     else if (_isHost)
                                     {
                                         if (debugShowInputPackets)
                                             Debug.Log(
-                                                $"Network Manager: Sending input as server, SIZE {packet.allData.Length}, TIMEOUT {_inputStopwatch.ElapsedMilliseconds} - {inputTimeout} and SEQ INPUT: {_server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum}");
+                                                $"Network Manager: Sending input as server, SIZE {packet.allData.Length}, TIMEOUT {_inputStopwatch.ElapsedMilliseconds} - {inputTimeout} and SEQ INPUT: { inputSequenceNum.outgoingSequenceNum}");
                                         foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                                         {
                                             manager.Value.MakeDelivery(packet);
                                         }
                                         _server.SendUdpToAll(packet.allData);
+                                        inputSequenceNum.outgoingSequenceNum++;
+                                        if (inputSequenceNum.outgoingSequenceNum == ulong.MaxValue - 1) inputSequenceNum.outgoingSequenceNum = 0;
                                     }
 
                                     _inputItemsToSend.Clear();
@@ -552,14 +565,14 @@ namespace _Scripts.Networking
                                     {
                                         if (debugShowInputPackets)
                                             Debug.Log(
-                                                $"Network Manager: Sending input as client, SIZE {packet.allData.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {_client.deliveryNotificationManager.inputSequenceNum.outgoingSequenceNum}");
+                                                $"Network Manager: Sending input as client, SIZE {packet.allData.Length}, TIMEOUT {inputTimeout}");
                                         _client.SendTcp(packet.allData);
                                     }
                                     else if (_isHost)
                                     {
                                         if (debugShowInputPackets)
                                             Debug.Log(
-                                                $"Network Manager: Sending input as server, SIZE {packet.allData.Length}, TIMEOUT {inputTimeout} and SEQ INPUT: {_server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum}");
+                                                $"Network Manager: Sending input as server, SIZE {packet.allData.Length}, TIMEOUT {inputTimeout}");
                                         _server.SendTcpToAll(packet.allData);
                                     }
 
@@ -597,9 +610,9 @@ namespace _Scripts.Networking
                                                 replicationTotalSize += (int)replicationItem.memoryStream.Length +
                                                                         (int)currentItemHeaderStream.Length;
                                                 _replicationItemsToSend.Add(replicationItem);
-                                                if (debugShowObjectStatePackets)
-                                                    Debug.Log(
-                                                        $"Network Manager: Inserting item into STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
+                                                // if (debugShowObjectStatePackets)
+                                                //     Debug.Log(
+                                                //         $"Network Manager: Inserting item into STATE loop, elapsedTime: {_stateStopwatch.ElapsedMilliseconds}");
                                             }
                                         }
                                     }
@@ -627,20 +640,24 @@ namespace _Scripts.Networking
                                     {
                                         if (debugShowObjectStatePackets)
                                             Debug.Log(
-                                                $"Network Manager: Sending state as client, Items:{_replicationItemsToSend.Count()}, SIZE {packet.allData.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {_client.deliveryNotificationManager.stateSequenceNum.outgoingSequenceNum}");
+                                                $"Network Manager: Sending state as client, Items:{_replicationItemsToSend.Count()}, SIZE {packet.allData.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {stateSequenceNum.outgoingSequenceNum}");
                                         _client.deliveryNotificationManager.MakeDelivery(packet);
                                         _client.SendUdpPacket(packet.allData);
+                                        stateSequenceNum.outgoingSequenceNum++;
+                                        if (stateSequenceNum.outgoingSequenceNum == ulong.MaxValue - 1) stateSequenceNum.outgoingSequenceNum = 0;
                                     }
                                     else if (_isHost)
                                     {
                                         if (debugShowObjectStatePackets)
                                             Debug.Log(
-                                                $"Network Manager: Sending state as server, Items:{_replicationItemsToSend.Count()}, SIZE {packet.allData.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {_server.deliveryNotificationManagers.ElementAt(0).Value.stateSequenceNum.outgoingSequenceNum}");
+                                                $"Network Manager: Sending state as server, Items:{_replicationItemsToSend.Count()}, SIZE {packet.allData.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {stateSequenceNum.outgoingSequenceNum}");
                                         foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                                         {
                                             manager.Value.MakeDelivery(packet);
                                         }
                                         _server.SendUdpToAll(packet.allData);
+                                        stateSequenceNum.outgoingSequenceNum++;
+                                        if (stateSequenceNum.outgoingSequenceNum == ulong.MaxValue - 1) stateSequenceNum.outgoingSequenceNum = 0;
                                     }
 
                                     _replicationItemsToSend.Clear();
@@ -974,18 +991,8 @@ namespace _Scripts.Networking
                 item.memoryStream.Position = 0;
                 item.memoryStream.CopyTo(output);
             }
-
-            UInt64 seqNum = UInt64.MaxValue;
-            if (_isClient)
-            {
-                seqNum = _client.deliveryNotificationManager.stateSequenceNum.outgoingSequenceNum;
-            }
-            else if (_isHost)
-            {
-                seqNum = _server.deliveryNotificationManagers.Count == 0 ? (ulong)0 : _server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum;
-            }
             
-            Packet packet = new Packet(type, seqNum, senderId, timeStamp, streamsList.Count,false, output.ToArray());
+            Packet packet = new Packet(type, stateSequenceNum.outgoingSequenceNum, senderId, timeStamp, streamsList.Count,false, output.ToArray());
             return packet;
         }
 
@@ -1010,16 +1017,8 @@ namespace _Scripts.Networking
                 item.memoryStream.Position = 0;
                 item.memoryStream.CopyTo(output);
             }
-            UInt64 seqNum = UInt64.MaxValue;
-            if (_isClient)
-            {
-                seqNum = _client.deliveryNotificationManager.inputSequenceNum.outgoingSequenceNum;
-            }
-            else if (_isHost)
-            {
-                seqNum = _server.deliveryNotificationManagers.Count == 0 ? (ulong)0 : _server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum;
-            }
-            Packet packet = new Packet(type, seqNum, senderId, timeStamp, streamsList.Count,isReliable, output.ToArray());
+          
+            Packet packet = new Packet(type, inputSequenceNum.outgoingSequenceNum, senderId, timeStamp, streamsList.Count,isReliable, output.ToArray());
             return packet;
         }
 

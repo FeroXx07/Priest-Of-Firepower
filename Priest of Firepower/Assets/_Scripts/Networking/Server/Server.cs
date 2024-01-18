@@ -498,7 +498,8 @@ namespace _Scripts.Networking.Server
                     if (toRemove != null)
                         UnityMainThreadDispatcher.Dispatcher.Enqueue(() => _authenticationProcesses.Remove(toRemove));
                 }
-
+                
+                deliveryNotificationManagers.Add(clientData, new DeliveryNotificationManager());
                 Debug.Log(
                     $"Server {_localEndPointTcp}: Client {clientData.userName} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                 return clientData.id;
@@ -531,6 +532,7 @@ namespace _Scripts.Networking.Server
                     clientData.connectionTcp.Close();
                     Debug.Log(
                         $"Server {_localEndPointTcp}: Client {clientData.userName} with Id: {clientData.id} and EP: {clientData.endPointTcp} disconnected successfully");
+                    deliveryNotificationManagers.Remove(clientData);
                     _clientsList.Remove(clientData);
                     UnityMainThreadDispatcher.Dispatcher.Enqueue(() =>
                         onClientDisconnected(clientData.id, clientData.userName));
