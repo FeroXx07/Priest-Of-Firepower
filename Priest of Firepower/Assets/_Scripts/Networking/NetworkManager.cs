@@ -982,7 +982,7 @@ namespace _Scripts.Networking
             }
             else if (_isHost)
             {
-                seqNum = _server.deliveryNotificationManagers.ElementAt(0).Value.stateSequenceNum.outgoingSequenceNum;
+                seqNum = _server.deliveryNotificationManagers.Count == 0 ? (ulong)0 : _server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum;
             }
             
             Packet packet = new Packet(type, seqNum, senderId, timeStamp, streamsList.Count,false, output.ToArray());
@@ -1017,7 +1017,7 @@ namespace _Scripts.Networking
             }
             else if (_isHost)
             {
-                seqNum = _server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum;
+                seqNum = _server.deliveryNotificationManagers.Count == 0 ? (ulong)0 : _server.deliveryNotificationManagers.ElementAt(0).Value.inputSequenceNum.outgoingSequenceNum;
             }
             Packet packet = new Packet(type, seqNum, senderId, timeStamp, streamsList.Count,isReliable, output.ToArray());
             return packet;
