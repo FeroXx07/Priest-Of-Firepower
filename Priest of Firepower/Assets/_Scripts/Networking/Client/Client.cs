@@ -369,7 +369,7 @@ namespace _Scripts.Networking.Client
         {
             _clientData.Ping = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - packet.timeStamp;
             _clientData.heartBeatStopwatch.Restart();
-            Debug.Log($"client: {_clientData.userName} ping: {_clientData.Ping}ms");
+            //Debug.Log($"client: {_clientData.userName} ping: {_clientData.Ping}ms");
         }
 
         public void SendHeartBeat()

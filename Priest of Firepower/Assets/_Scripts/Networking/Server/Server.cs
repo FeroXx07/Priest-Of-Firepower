@@ -646,7 +646,7 @@ namespace _Scripts.Networking.Server
                     {
                         clientData.Ping = (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond) - packet.timeStamp;
                         clientData.heartBeatStopwatch.Restart();
-                        Debug.Log($"client: {clientData.userName} ping: {clientData.Ping}ms");
+                        //Debug.Log($"client: {clientData.userName} ping: {clientData.Ping}ms");
                     }
                 }
             }

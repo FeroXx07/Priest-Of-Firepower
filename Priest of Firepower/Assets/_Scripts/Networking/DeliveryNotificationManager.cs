@@ -13,15 +13,31 @@ namespace _Scripts.Networking
     /// and
     /// Packet PreparePacket(UInt64 senderId, PacketType type, ...)
     /// </summary>
+    ///
+
+    public struct AcknowledgmentWrapper
+    {
+        public AcknowledgmentWrapper(UInt64 ackSeqNum)
+        {
+            timeStamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            ACKSeqNum = ackSeqNum;
+        }
+        public Int64 timeStamp;
+        public UInt64 ACKSeqNum;
+    }
+    
     [Serializable]
     public class DeliveryNotificationManager
     {
         private List<Packet> pendingDeliveries = new();
         [SerializeField] private List<UInt64> pendingACKs = new();
+        [SerializeField] private List<AcknowledgmentWrapper> historicalACKs = new();
         [SerializeField] private List<Int64> pendingDeliveriesTime = new();
 
         private int failThreshold = 3;
         private int failCounter = 0;
+        
+        private const int historicalRemoveTimeMs = 1000;
         private void CleanPending(int index)
         {
             pendingDeliveries.RemoveAt(index);
@@ -82,14 +98,13 @@ namespace _Scripts.Networking
         }
         
         // Receive
-        public void ReceiveDelivery(Packet packet, Action processAction)
+        public bool ReceiveDelivery(Packet packet)
         {
-            if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs))
+            if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs) || historicalACKs.FindIndex(wrapper => wrapper.ACKSeqNum == packet.sequenceNum) != -1)
             {
                 Debug.LogError("DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet");
                 // Acknowledgment is pending. No action.
-                
-                return;
+                return false;
             }
             pendingACKs.Add(packet.sequenceNum);
             NetworkManager netManager = NetworkManager.Instance;
@@ -99,7 +114,7 @@ namespace _Scripts.Networking
                 {
                     if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager: Old packet");
+                        Debug.LogWarning("DeliveryNotificationManager: Old packet");
                         // Resend the acknowledgment.
                         //return;
                     }
@@ -116,21 +131,21 @@ namespace _Scripts.Networking
                 {
                     if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager: Old packet");
+                        Debug.LogWarning("DeliveryNotificationManager: Old packet");
                         // Resend the acknowledgment.
                         //return;
                     }
 
                     if (packet.sequenceNum > netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager:  Unordered, lost or duplicated packet");
+                        Debug.LogError("DeliveryNotificationManager: Unordered, lost or duplicated packet");
                         ReOrderPackets();
                     }
                     netManager.inputSequenceNum.incomingSequenceNum = packet.sequenceNum;
                 }
                     break;
             }
-            processAction?.Invoke();
+            return true;
             // failCounter++;
             // if (failCounter >= failThreshold)
             // {
@@ -155,9 +170,17 @@ namespace _Scripts.Networking
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write(pendingACKs.Count);
+            string result = $"ACKs list count: {pendingACKs.Count} -- ";
             foreach (UInt64 sequenceNum in pendingACKs)
+            {
                 writer.Write(sequenceNum);
-            //pendingACKs.Clear(); // Maybe don't clear it so fast, ACK may get lost and we will need this.
+                result += sequenceNum.ToString() + ", ";
+                AcknowledgmentWrapper ack = new AcknowledgmentWrapper(sequenceNum);
+                if (!historicalACKs.Contains(ack))
+                    historicalACKs.Add(ack);
+            }
+            Debug.Log($"DeliveryNotificationManager: Sending all ACKs --> {result}");
+            pendingACKs.Clear();
             ReplicationHeader replicationHeader =
                 new ReplicationHeader(UInt64.MaxValue, this.GetType().FullName, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
@@ -166,11 +189,14 @@ namespace _Scripts.Networking
         public void ProcessACKs(BinaryReader reader)
         {
             int count = reader.ReadInt32();
+            string result = $"ACKs list count: {count} -- ";
             for (int i = 0; i < count; i++)
             {
                 UInt64 ack = reader.ReadUInt64();
+                result += ack.ToString() + ", ";
                 OnDeliverySuccess(ack);
             }
+            Debug.Log($"DeliveryNotificationManager: Processing ACKs --> {result}");
         }
         // When do we send notifications from server?
         /* A couple of options
@@ -202,6 +228,15 @@ namespace _Scripts.Networking
             if (pendingACKs.Count > 3)
             {
                 SendAllACKs();
+            }
+
+            for (int i = 0; i < historicalACKs.Count; i++)
+            {
+                if (currentTimestamp - historicalACKs[i].timeStamp >= historicalRemoveTimeMs)
+                {
+                    historicalACKs.RemoveAt(i);
+                    i--;
+                }
             }
         }
 

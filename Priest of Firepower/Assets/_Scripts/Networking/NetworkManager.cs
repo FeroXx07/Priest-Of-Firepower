@@ -847,15 +847,28 @@ namespace _Scripts.Networking
 
                     if (_isClient)
                     {
-                       _client.deliveryNotificationManager.ReceiveDelivery(receivedPacket, () => UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream, contentsStream.Position,
-                           receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum, receivedPacket.itemsCount)));
+                        if (_client.deliveryNotificationManager.ReceiveDelivery(receivedPacket))
+                        {
+                            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream,
+                                contentsStream.Position,
+                                receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
+                                receivedPacket.itemsCount));
+                        }
                     }
                     else if (_isHost)
                     {
                         foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                         {
-                            manager.Value.ReceiveDelivery(receivedPacket, () => UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream, contentsStream.Position,
-                                receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum, receivedPacket.itemsCount)));
+                            if (receivedPacket.senderId == manager.Key.id)
+                            {
+                                if (manager.Value.ReceiveDelivery(receivedPacket))
+                                {
+                                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream,
+                                        contentsStream.Position,
+                                        receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
+                                        receivedPacket.itemsCount));
+                                }
+                            }
                         }
                     }
                 }
@@ -865,15 +878,28 @@ namespace _Scripts.Networking
                     if (debugShowObjectStatePackets) Debug.Log($"Network Manager: Received packet {receivedPacket.packetType}");
                     if (_isClient)
                     {
-                        _client.deliveryNotificationManager.ReceiveDelivery(receivedPacket, () => UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream, contentsStream.Position,
-                            receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum, receivedPacket.itemsCount)));
+                        if (_client.deliveryNotificationManager.ReceiveDelivery(receivedPacket))
+                        {
+                            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream,
+                                contentsStream.Position,
+                                receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
+                                receivedPacket.itemsCount));
+                        }
                     }
                     else if (_isHost)
                     {
                         foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                         {
-                            manager.Value.ReceiveDelivery(receivedPacket, () => UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(contentsStream, contentsStream.Position,
-                                receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum, receivedPacket.itemsCount)));
+                            if (receivedPacket.senderId == manager.Key.id)
+                            {
+                                if (manager.Value.ReceiveDelivery(receivedPacket))
+                                {
+                                    UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(contentsStream,
+                                        contentsStream.Position,
+                                        receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
+                                        receivedPacket.itemsCount));
+                                }
+                            }
                         }
                     }
                 }
