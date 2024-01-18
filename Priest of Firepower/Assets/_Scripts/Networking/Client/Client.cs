@@ -345,7 +345,7 @@ namespace _Scripts.Networking.Client
             writer.Write(_clientData.id);
             writer.Write(0);
             Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, long.MinValue,
-                Int32.MinValue, newStream.ToArray());
+                Int32.MinValue,false, newStream.ToArray());
             SendUdpPacket(syncPacket.allData);
         }
         #endregion

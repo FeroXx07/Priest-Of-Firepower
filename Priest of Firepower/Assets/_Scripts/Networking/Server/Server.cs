@@ -603,7 +603,7 @@ namespace _Scripts.Networking.Server
             BinaryWriter writer = new BinaryWriter(newStream);
             writer.Write(_currentTick);
             Packet syncPacket = new Packet(PacketType.SYNC, ulong.MinValue, ulong.MinValue, long.MinValue,
-                Int32.MinValue, newStream.ToArray());
+                Int32.MinValue, false, newStream.ToArray());
             SendUdpToAll(syncPacket.allData);
         }
         #endregion
@@ -630,7 +630,7 @@ namespace _Scripts.Networking.Server
             writer.Write((int)PacketType.PING);
             writer.Write(0);
             Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, long.MinValue,
-                Int32.MinValue, newStream.ToArray());
+                Int32.MinValue, false,newStream.ToArray());
             SendUdpToAll(syncPacket.allData);
         }
 

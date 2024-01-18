@@ -11,7 +11,8 @@ namespace _Scripts.Networking.Replication
         DESTROY,
         TRANSFORM,
         EVENT,
-        IMPORTANT_EVENT
+        IMPORTANT_EVENT,
+        ACKNOWLEDGMENT
     }
     public class ReplicationHeader
     {

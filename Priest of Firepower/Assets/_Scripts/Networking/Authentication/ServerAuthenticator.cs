@@ -50,7 +50,7 @@ namespace _Scripts.Networking.Authentication
 
                     Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}: Request client to send response ");
                     Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
-                        Int32.MinValue, authStream.ToArray());
+                        Int32.MinValue, true,authStream.ToArray());
                     clientBeingAuthenticated.connectionTcp.Send(authPacket.allData);
                 }
                     break;
@@ -74,7 +74,7 @@ namespace _Scripts.Networking.Authentication
                         SerializeIPEndPoint(clientEndPointTcp, authWriter);
                         authWriter.Write((int)AuthenticationState.CONFIRMED);
                         Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
-                            Int32.MinValue, authStream.ToArray());
+                            Int32.MinValue, true,authStream.ToArray());
                         clientBeingAuthenticated.connectionTcp.Send(authPacket.allData);
                     }
                     else
@@ -110,7 +110,7 @@ namespace _Scripts.Networking.Authentication
             authWriter.Write((int)AuthenticationState.REQUESTED);
             Debug.Log($"Server Authenticator: Request Client To Start Authentication!");
             Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
-                Int32.MinValue, authStream.ToArray());
+                Int32.MinValue, true,authStream.ToArray());
             clientBeingAuthenticated.connectionTcp.Send(authPacket.allData);
         }
     }

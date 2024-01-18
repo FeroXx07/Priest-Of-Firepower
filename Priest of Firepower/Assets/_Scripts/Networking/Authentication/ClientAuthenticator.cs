@@ -81,7 +81,7 @@ namespace _Scripts.Networking.Authentication
             }
             
             Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
-                Int32.MinValue, authStream.ToArray());
+                Int32.MinValue, true, authStream.ToArray());
             _clientData.connectionTcp.Send(authPacket.allData);
         }
     }

@@ -122,6 +122,11 @@ namespace _Scripts.Networking.Replication
                     NetworkManager.Instance.OnGameEventMessageReceived?.Invoke(messageSenderId, message, timeStamp);
                 }
                     break;
+                case ReplicationAction.ACKNOWLEDGMENT:
+                {
+                    NetworkManager.Instance.deliveryNotificationManager.ProcessACKs(reader);
+                }
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(header.replicationAction), header.replicationAction, null);
             }

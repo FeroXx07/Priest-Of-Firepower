@@ -14,8 +14,9 @@ namespace _Scripts.Networking
     
     public class Packet
     {
-        public Packet(PacketType packetType, UInt64 sequenceNum, UInt64 senderId, Int64 timeStamp, int itemsCount, byte[] contentsData)
+        public Packet(PacketType packetType, UInt64 sequenceNum, UInt64 senderId, Int64 timeStamp, int itemsCount, bool isReliable, byte[] contentsData)
         {
+            this.isReliable = isReliable;
             this.packetType = packetType;
             this.sequenceNum = sequenceNum;
             this.senderId = senderId;
@@ -24,6 +25,8 @@ namespace _Scripts.Networking
             this.contentsData = contentsData;
             Serialize();
         }
+
+        private bool isReliable = false;
         public PacketType packetType { get; private set; }
         public UInt64 sequenceNum { get; private set; }
         public UInt64 senderId { get; private set; }
@@ -36,6 +39,7 @@ namespace _Scripts.Networking
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
+            writer.Write(isReliable);
             writer.Write((int)packetType);
             writer.Write(sequenceNum);
             writer.Write(senderId);
@@ -49,7 +53,7 @@ namespace _Scripts.Networking
         {
             return new Packet((PacketType)reader.ReadInt32(), reader.ReadUInt64(), reader.ReadUInt64(),
                 reader.ReadInt64(), reader.ReadInt32(),
-                reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position)));
+                reader.ReadBoolean(), reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position)));
         }
     }
 }
