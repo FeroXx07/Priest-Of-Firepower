@@ -880,7 +880,7 @@ namespace _Scripts.Networking
                     {
                         if (_client.deliveryNotificationManager.ReceiveDelivery(receivedPacket))
                         {
-                            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream,
+                            UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(contentsStream,
                                 contentsStream.Position,
                                 receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
                                 receivedPacket.itemsCount));
