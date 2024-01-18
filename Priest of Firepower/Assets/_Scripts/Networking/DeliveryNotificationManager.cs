@@ -13,17 +13,19 @@ namespace _Scripts.Networking
     /// and
     /// Packet PreparePacket(UInt64 senderId, PacketType type, ...)
     /// </summary>
+    [Serializable]
     public struct SequenceNum
     {
         public UInt64 incomingSequenceNum;
         public UInt64 outgoingSequenceNum;
         public UInt64 expectedNextSequenceNum => incomingSequenceNum + 1;
     }
+    [Serializable]
     public class DeliveryNotificationManager
     {
-        private List<Packet> pendingDeliveries;
-        private List<Packet> pendingACKs;
-        private List<Int64> pendingDeliveriesTime;
+        private List<Packet> pendingDeliveries = new();
+        [SerializeField] private List<UInt64> pendingACKs = new();
+        [SerializeField] private List<Int64> pendingDeliveriesTime = new();
         
         public SequenceNum inputSequenceNum;
         public SequenceNum stateSequenceNum;
@@ -36,13 +38,15 @@ namespace _Scripts.Networking
             pendingDeliveriesTime.RemoveAt(index);
         }
         
-        private int roundTripTime;
-        private const int rttOffset = 60;// timeOutRtt = roundTripTime + someOffset; ex: timeOutRtt = roundTripTime(54ms) + someOffset (15ms)
-        
+        private float roundTripTime;
+        private const int rttOffset = 20;// timeOutRtt = roundTripTime + someOffset; ex: timeOutRtt = roundTripTime(54ms) + someOffset (15ms)
+
+        // 
+        private UInt64 idIndex = UInt64.MinValue;
         // Send
         public void MakeDelivery(Packet packet)
         {
-            if (CheckDuplicate(packet, pendingDeliveries))
+            if (CheckDuplicate<Packet>(packet, pendingDeliveries))
             {
                 Debug.LogError("DeliveryNotificationManager: Cannot make delivery as it is a duplicate packet");
                 return;
@@ -72,7 +76,7 @@ namespace _Scripts.Networking
                 Debug.LogError($"DeliveryNotificationManager: OnDeliverySuccess error, Seq: {ACK}");
                 return;
             }
-            
+            Debug.Log($"DeliveryNotificationManager: OnDeliverySuccess, Seq: {ACK}");
             CleanPending(index);
         }
 
@@ -99,18 +103,16 @@ namespace _Scripts.Networking
             }
         }
         
-        
         // Receive
         public void ReceiveDelivery(Packet packet, Action processAction)
         {
-            if (CheckDuplicate(packet, pendingACKs))
+            if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs))
             {
                 Debug.LogError("DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet");
-                
-                // Maybe resend the acknowledgment.
+                // Acknowledgment is pending. No action.
                 return;
             }
-            
+            pendingACKs.Add(packet.sequenceNum);
             switch (packet.packetType)
             {
                 case PacketType.OBJECT_STATE:
@@ -118,13 +120,16 @@ namespace _Scripts.Networking
                     if (packet.sequenceNum < stateSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogError("DeliveryNotificationManager: Old packet");
-                        // Maybe resend the acknowledgment.
+                        // Resend the acknowledgment.
+                        return;
                     }
-                    else if (packet.sequenceNum > stateSequenceNum.expectedNextSequenceNum)
+
+                    if (packet.sequenceNum > stateSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager: Unordered packet");
+                        Debug.LogError("DeliveryNotificationManager: Unordered, lost or duplicated packet");
                         ReOrderPackets();
                     }
+                    stateSequenceNum.incomingSequenceNum = packet.sequenceNum;
                 }
                     break;
                 case PacketType.INPUT:
@@ -132,27 +137,30 @@ namespace _Scripts.Networking
                     if (packet.sequenceNum < inputSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogError("DeliveryNotificationManager: Old packet");
-                        // Maybe resend the acknowledgment.
+                        // Resend the acknowledgment.
+                        return;
                     }
-                    else if (packet.sequenceNum > inputSequenceNum.expectedNextSequenceNum)
+
+                    if (packet.sequenceNum > inputSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager: Unordered packet");
+                        Debug.LogError("DeliveryNotificationManager:  Unordered, lost or duplicated packet");
                         ReOrderPackets();
                     }
+                    inputSequenceNum.incomingSequenceNum = packet.sequenceNum;
                 }
                     break;
             }
-
-            failCounter++;
-            if (failCounter >= failThreshold)
-            {
-                failCounter = 0;
-            }
-            else
-            {
-                pendingACKs.Add(packet);
-                processAction?.Invoke();
-            }
+            processAction?.Invoke();
+            // failCounter++;
+            // if (failCounter >= failThreshold)
+            // {
+            //     failCounter = 0;
+            // }
+            // else
+            // {
+            //     pendingACKs.Add(packet);
+            //     processAction?.Invoke();
+            // }
         }
 
         private void ReOrderPackets()
@@ -167,8 +175,8 @@ namespace _Scripts.Networking
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write(pendingACKs.Count);
-            foreach (Packet packet in pendingACKs)
-                writer.Write(packet.sequenceNum);
+            foreach (UInt64 sequenceNum in pendingACKs)
+                writer.Write(sequenceNum);
             pendingACKs.Clear(); // Maybe don't clear it so fast, ACK may get lost and we will need this.
             ReplicationHeader replicationHeader =
                 new ReplicationHeader(UInt64.MaxValue, this.GetType().FullName, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
@@ -196,8 +204,10 @@ namespace _Scripts.Networking
         
         // Call to process timed-out packets
         // For each delivery that timed out, call onFailure() and remove the delivery
-        public void Update()
+        public void Update(float rtt)
         {
+            roundTripTime = rtt;
+            
             Int64 currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             for (int i = 0; i < pendingDeliveriesTime.Count; i++)
             {
@@ -215,7 +225,7 @@ namespace _Scripts.Networking
             }
         }
 
-        private bool CheckDuplicate(Packet packet, List<Packet> list)
+        private bool CheckDuplicate<T>(T packet, List<T> list)
         {
             return list.Contains(packet);
         }

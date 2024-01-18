@@ -124,7 +124,8 @@ namespace _Scripts.Networking.Replication
                     break;
                 case ReplicationAction.ACKNOWLEDGMENT:
                 {
-                    NetworkManager.Instance.deliveryNotificationManager.ProcessACKs(reader);
+                    // TODO: Check sender id and for the client/server processACKs
+                    //NetworkManager.Instance.deliveryNotificationManager.ProcessACKs(reader);
                 }
                     break;
                 default:

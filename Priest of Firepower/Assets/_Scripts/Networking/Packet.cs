@@ -39,12 +39,12 @@ namespace _Scripts.Networking
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-            writer.Write(isReliable);
             writer.Write((int)packetType);
             writer.Write(sequenceNum);
             writer.Write(senderId);
             writer.Write(timeStamp);
             writer.Write(itemsCount);
+            writer.Write(isReliable);
             writer.Write(contentsData);
             allData = stream.ToArray();
         }

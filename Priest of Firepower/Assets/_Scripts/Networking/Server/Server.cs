@@ -37,7 +37,8 @@ namespace _Scripts.Networking.Server
        
         private List<ClientData> _clientsList = new List<ClientData>();
         private List<ClientData> _clientsToRemove = new List<ClientData>();
-        
+        public Dictionary<ClientData, DeliveryNotificationManager> deliveryNotificationManagers = new();
+
         private Process _listenConnectionsProcess;
         private ManualResetEvent _connectionListenerEvent = new ManualResetEvent(false);
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.

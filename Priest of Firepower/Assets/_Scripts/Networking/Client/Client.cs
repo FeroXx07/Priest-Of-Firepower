@@ -20,6 +20,7 @@ namespace _Scripts.Networking.Client
         
         private Process _authenticationProcess = new Process();
         private Process _serverListenerProcess = new Process();
+        public DeliveryNotificationManager deliveryNotificationManager = new DeliveryNotificationManager();
 
         //tick sync
         private ushort _serverTick;
