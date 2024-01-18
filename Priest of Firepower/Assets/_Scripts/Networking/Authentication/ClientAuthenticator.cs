@@ -37,12 +37,10 @@ namespace _Scripts.Networking.Authentication
             {
                 case AuthenticationState.REQUESTED:
                 {
-                    authWriter.Write((int)PacketType.AUTHENTICATION);
                     SerializeIPEndPoint(_clientData.connectionTcp.LocalEndPoint as IPEndPoint,authWriter);
                     authWriter.Write((int)AuthenticationState.REQUESTED);
                     authWriter.Write(AuthenticationCode);
                     Debug.Log($"Client Authenticator {_clientData.connectionTcp.LocalEndPoint}: Responding authentication request");
-                    _clientData.connectionTcp.Send(authStream.ToArray());
                 }
                     break;
                 case AuthenticationState.RESPONSE:
@@ -55,7 +53,6 @@ namespace _Scripts.Networking.Authentication
                         Debug.Log($"Client Authenticator {localEndPointTcp}: Responding authentication response");
                         
                         // Create an authentication packet
-                        authWriter.Write((int)PacketType.AUTHENTICATION);
                         SerializeIPEndPoint(localEndPointTcp,authWriter);
                         authWriter.Write((int)AuthenticationState.RESPONSE);
                         authWriter.Write(HandshakeOne);
@@ -65,9 +62,6 @@ namespace _Scripts.Networking.Authentication
                         authWriter.Write(_clientData.endPointTcp.Port);
                         authWriter.Write(_clientData.endPointUdp.Address.ToString());
                         authWriter.Write(_clientData.endPointUdp.Port);
-                        
-                        _clientData.connectionTcp.Send(authStream.ToArray());
-                        //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     }
                     else
                     {
@@ -77,17 +71,18 @@ namespace _Scripts.Networking.Authentication
                     break;
                 case AuthenticationState.CONFIRMED:
                 {
-                    authWriter.Write((int)PacketType.AUTHENTICATION);
                     SerializeIPEndPoint(localEndPointTcp,authWriter);
                     authWriter.Write((int)AuthenticationState.CONFIRMED);
                     authWriter.Write(AcknowledgmentOne);
-                    _clientData.connectionTcp.Send(authStream.ToArray());
-                    //NetworkManager.Instance.AddReliableStreamQueue(authStream);
                     UnityMainThreadDispatcher.Dispatcher.Enqueue(onAuthenticationSuccessful);
                     Debug.Log($"Client Authenticator {localEndPointTcp}: Responding authentication confirmation");
                 }
                     break;
             }
+            
+            Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
+                Int32.MinValue, authStream.ToArray());
+            _clientData.connectionTcp.Send(authPacket.allData);
         }
     }
 }

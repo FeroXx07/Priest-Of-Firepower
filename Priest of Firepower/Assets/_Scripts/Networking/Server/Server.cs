@@ -601,9 +601,10 @@ namespace _Scripts.Networking.Server
         {
             MemoryStream newStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(newStream);
-            writer.Write((int)PacketType.SYNC);
             writer.Write(_currentTick);
-            SendUdpToAll(newStream.ToArray());
+            Packet syncPacket = new Packet(PacketType.SYNC, ulong.MinValue, ulong.MinValue, long.MinValue,
+                Int32.MinValue, newStream.ToArray());
+            SendUdpToAll(syncPacket.allData);
         }
         #endregion
         #region Heart Beat
@@ -628,7 +629,9 @@ namespace _Scripts.Networking.Server
             BinaryWriter writer = new BinaryWriter(newStream);
             writer.Write((int)PacketType.PING);
             writer.Write(0);
-            SendUdpToAll(newStream.ToArray());
+            Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, long.MinValue,
+                Int32.MinValue, newStream.ToArray());
+            SendUdpToAll(syncPacket.allData);
         }
 
         #endregion

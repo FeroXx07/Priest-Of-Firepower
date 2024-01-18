@@ -43,15 +43,15 @@ namespace _Scripts.Networking.Authentication
                     string clientCode = reader.ReadString();
                     bool isSuccess = (clientCode == AuthenticationCode);
                     
-                    authWriter.Write((int)PacketType.AUTHENTICATION);
                     SerializeIPEndPoint(clientEndPointTcp, authWriter);
                     authWriter.Write((int)AuthenticationState.RESPONSE);
                     authWriter.Write(isSuccess);
                     authWriter.Write(clientBeingAuthenticated.id);
-                    
+
                     Debug.Log($"Server Authenticator {clientBeingAuthenticated.connectionTcp.LocalEndPoint}: Request client to send response ");
-                    clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
-                    //NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                    Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
+                        Int32.MinValue, authStream.ToArray());
+                    clientBeingAuthenticated.connectionTcp.Send(authPacket.allData);
                 }
                     break;
                 case AuthenticationState.RESPONSE:
@@ -71,11 +71,11 @@ namespace _Scripts.Networking.Authentication
                         clientBeingAuthenticated.userName = userName;
                         clientBeingAuthenticated.endPointUdp = new IPEndPoint(IPAddress.Parse(epUdp), portUdp);
                         
-                        authWriter.Write((int)PacketType.AUTHENTICATION);
                         SerializeIPEndPoint(clientEndPointTcp, authWriter);
                         authWriter.Write((int)AuthenticationState.CONFIRMED);
-                        clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
-                        //NetworkManager.Instance.AddReliableStreamQueue(authStream);
+                        Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
+                            Int32.MinValue, authStream.ToArray());
+                        clientBeingAuthenticated.connectionTcp.Send(authPacket.allData);
                     }
                     else
                     {
@@ -106,11 +106,12 @@ namespace _Scripts.Networking.Authentication
         {
             MemoryStream authStream = new MemoryStream();
             BinaryWriter authWriter = new BinaryWriter(authStream);
-            authWriter.Write((int)PacketType.AUTHENTICATION);
             SerializeIPEndPoint(clientEndPointTcp, authWriter);
             authWriter.Write((int)AuthenticationState.REQUESTED);
-            clientBeingAuthenticated.connectionTcp.Send(authStream.ToArray());
             Debug.Log($"Server Authenticator: Request Client To Start Authentication!");
+            Packet authPacket = new Packet(PacketType.AUTHENTICATION, ulong.MinValue, ulong.MinValue, long.MinValue,
+                Int32.MinValue, authStream.ToArray());
+            clientBeingAuthenticated.connectionTcp.Send(authPacket.allData);
         }
     }
 }

@@ -342,11 +342,11 @@ namespace _Scripts.Networking.Client
         {
             MemoryStream newStream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(newStream);
-            
-            writer.Write((int)PacketType.PING);
             writer.Write(_clientData.id);
             writer.Write(0);
-            SendUdpPacket(newStream.ToArray());
+            Packet syncPacket = new Packet(PacketType.PING, ulong.MinValue, ulong.MinValue, long.MinValue,
+                Int32.MinValue, newStream.ToArray());
+            SendUdpPacket(syncPacket.allData);
         }
         #endregion
     }
