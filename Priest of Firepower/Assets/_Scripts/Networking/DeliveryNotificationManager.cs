@@ -34,7 +34,7 @@ namespace _Scripts.Networking
         [SerializeField] private List<AcknowledgmentWrapper> historicalACKs = new();
         [SerializeField] private List<Int64> pendingDeliveriesTime = new();
 
-        private int failThreshold = 3;
+        private int failThreshold = 50;
         private int failCounter = 0;
         
         private const int historicalRemoveTimeMs = 1000;
@@ -56,7 +56,7 @@ namespace _Scripts.Networking
             {
                 if (CheckDuplicate<Packet>(packet, pendingDeliveries))
                 {
-                    Debug.LogError("DeliveryNotificationManager: Cannot make delivery as it is a duplicate packet");
+                    Debug.LogError($"DeliveryNotificationManager: Cannot make delivery as it is a duplicate packet. Seq num {packet.sequenceNum}");
                     return;
                 }
 
@@ -107,18 +107,18 @@ namespace _Scripts.Networking
         {
             if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs) || historicalACKs.FindIndex(wrapper => wrapper.ACKSeqNum == packet.sequenceNum) != -1)
             {
-                Debug.LogError("DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet");
+                Debug.LogError($"DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet. Seq num {packet.sequenceNum}");
                 // Acknowledgment is pending. No action.
                 return false;
             }
             
-            failCounter++;
-            if (failCounter >= failThreshold)
-            {
-                Debug.Log($"DeliveryNotificationManager: Artificial packet lost {packet.sequenceNum}");
-                failCounter = 0;
-                return false;
-            }
+            // failCounter++;
+            // if (failCounter >= failThreshold)
+            // {
+            //     Debug.Log($"DeliveryNotificationManager: Artificial packet lost {packet.sequenceNum}");
+            //     failCounter = 0;
+            //     return false;
+            // }
             
             pendingACKs.Add(packet.sequenceNum);
             NetworkManager netManager = NetworkManager.Instance;
@@ -128,14 +128,14 @@ namespace _Scripts.Networking
                 {
                     if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum && packet.sequenceNum != 0)
                     {
-                        Debug.LogWarning("DeliveryNotificationManager: Old packet");
+                        Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}");
                         // Resend the acknowledgment.
                         //return;
                     }
 
                     if (packet.sequenceNum > netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager: Unordered, lost or duplicated packet");
+                        Debug.LogError($"DeliveryNotificationManager: Unordered, lost or duplicated packet. Seq num {packet.sequenceNum}");
                         ReOrderPackets();
                     }
                     netManager.stateSequenceNum.incomingSequenceNum = packet.sequenceNum;
@@ -145,14 +145,14 @@ namespace _Scripts.Networking
                 {
                     if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum && packet.sequenceNum != 0)
                     {
-                        Debug.LogWarning("DeliveryNotificationManager: Old packet");
+                        Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}");
                         // Resend the acknowledgment.
                         //return;
                     }
 
                     if (packet.sequenceNum > netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError("DeliveryNotificationManager: Unordered, lost or duplicated packet");
+                        Debug.LogError($"DeliveryNotificationManager: Unordered, lost or duplicated packet. Seq num {packet.sequenceNum}");
                         ReOrderPackets();
                     }
                     netManager.inputSequenceNum.incomingSequenceNum = packet.sequenceNum;
