@@ -653,7 +653,8 @@ namespace _Scripts.Networking
                                                 $"Network Manager: Sending state as server, Items:{_replicationItemsToSend.Count()}, SIZE {packet.allData.Length}, TIMEOUT {stateTimeout}, and SEQ STATE: {stateSequenceNum.outgoingSequenceNum}");
                                         foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                                         {
-                                            manager.Value.MakeDelivery(packet);
+                                            if(manager.Key.id != getId)
+                                                manager.Value.MakeDelivery(packet);
                                         }
                                         _server.SendUdpToAll(packet.allData);
                                         stateSequenceNum.outgoingSequenceNum++;

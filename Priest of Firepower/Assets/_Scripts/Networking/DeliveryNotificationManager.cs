@@ -52,15 +52,18 @@ namespace _Scripts.Networking
         // Send
         public void MakeDelivery(Packet packet)
         {
-            if (CheckDuplicate<Packet>(packet, pendingDeliveries))
+            lock (pendingDeliveries)
             {
-                Debug.LogError("DeliveryNotificationManager: Cannot make delivery as it is a duplicate packet");
-                return;
+                if (CheckDuplicate<Packet>(packet, pendingDeliveries))
+                {
+                    Debug.LogError("DeliveryNotificationManager: Cannot make delivery as it is a duplicate packet");
+                    return;
+                }
+
+                pendingDeliveries.Add(packet);
+                pendingDeliveriesTime.Add(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
             }
-            
-            pendingDeliveries.Add(packet);
-            pendingDeliveriesTime.Add(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
-        }
+        }   
 
         private void OnDeliverySuccess(UInt64 ACK)
         {
@@ -89,7 +92,7 @@ namespace _Scripts.Networking
             pendingDeliveriesTime[index] = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             
             // Resend packet through network manager
-            if (NetworkManager.Instance.IsHost())
+            if (NetworkManager.Instance.IsHost() && NetworkManager.Instance.getId != packet.senderId)
             {
                 NetworkManager.Instance.GetServer().SendUdp(packet.senderId, packet.allData);
             }
@@ -216,13 +219,16 @@ namespace _Scripts.Networking
             roundTripTime = rtt;
             
             Int64 currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            for (int i = 0; i < pendingDeliveriesTime.Count; i++)
+            lock(pendingDeliveries)
             {
-                Int64 storedTimeStamp = pendingDeliveriesTime[i];
-                // Compare the timestamps with the offset
-                if (currentTimestamp - storedTimeStamp > roundTripTime + rttOffset)
+                for (int i = 0; i < pendingDeliveriesTime.Count; i++)
                 {
-                    OnDeliveryFailure(pendingDeliveries[i]);
+                    Int64 storedTimeStamp = pendingDeliveriesTime[i];
+                    // Compare the timestamps with the offset
+                    if (currentTimestamp - storedTimeStamp > roundTripTime + rttOffset)
+                    {
+                        OnDeliveryFailure(pendingDeliveries[i]);
+                    }
                 }
             }
 
