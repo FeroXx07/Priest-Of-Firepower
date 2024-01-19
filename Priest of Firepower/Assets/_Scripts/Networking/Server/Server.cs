@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Threading;
 using _Scripts.Networking.Authentication;
 using _Scripts.Networking.Client;
+using UnityEngine;
 using UnityEngine.Collections.Generic;
 using Debug = UnityEngine.Debug;
 using Process = _Scripts.Networking.Utility.Process;
@@ -15,11 +16,22 @@ using Process = _Scripts.Networking.Utility.Process;
 namespace _Scripts.Networking.Server
 {
     [Serializable]
+    public class UDictionaryClientDeliveryNotificationManager: UDictionary<ClientData, DeliveryNotificationManager> { }
+    
+    [Serializable]
     public class Server
     {
         public Server()
         {}
-        public Server(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
+        // public Server(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
+        // {
+        //     _localEndPointTcp = localEndPointTcp;
+        //     _localEndPointUdp = localEndPointUdp;
+        //     _nextClientId = 0;
+        //     InitServer();
+        //     NetworkManager.Instance.OnHostCreated += portUdp => _clientsList[0].endPointUdp.Port = portUdp;
+        // }
+        public void Init(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
         {
             _localEndPointTcp = localEndPointTcp;
             _localEndPointUdp = localEndPointUdp;
@@ -39,15 +51,11 @@ namespace _Scripts.Networking.Server
         private UInt64 _nextClientId = 0;
         private List<ClientData> _clientsList = new List<ClientData>();
         private List<ClientData> _clientsToRemove = new List<ClientData>();
-        public Dictionary<ClientData, DeliveryNotificationManager> deliveryNotificationManagers = new();
-        public List<DeliveryNotificationManager> DeliveryNotificationManagerList
-        {
-            get
-            {
-                // Return the values of the dictionary as a list
-                return new List<DeliveryNotificationManager>(deliveryNotificationManagers.Values);
-            }
-        }        private Process _listenConnectionsProcess;
+        public UDictionaryClientDeliveryNotificationManager deliveryNotificationManagers = new();
+        public List<DeliveryNotificationManager> DeliveryNotificationManagerList =>
+            // Return the values of the dictionary as a list
+            new(deliveryNotificationManagers.Values);
+        private Process _listenConnectionsProcess;
         private ManualResetEvent _connectionListenerEvent = new ManualResetEvent(false);
 
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.

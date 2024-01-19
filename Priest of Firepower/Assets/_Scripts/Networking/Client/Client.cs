@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using _Scripts.Networking.Authentication;
+using UnityEngine.PlayerLoop;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
 using Process = _Scripts.Networking.Utility.Process;
@@ -54,13 +55,17 @@ namespace _Scripts.Networking.Client
         private ClientAuthenticator _authenticator;
         public ClientAuthenticator authenticator => _authenticator;
 
-        public Client(string name, IPEndPoint localEndPointTcp, Action onConnected)
+        public Client()
+        {
+            
+        }
+
+        public void Init(string name, IPEndPoint localEndPointTcp, Action onConnected)
         {
             _clientData = new ClientData(69, name, localEndPointTcp, new IPEndPoint(IPAddress.Any, 0));
             this.onConnected += onConnected;
             ServerTick = 2;
         }
-
         #endregion
 
         #region Enable/Disable funcitons

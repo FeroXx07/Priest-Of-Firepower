@@ -1,8 +1,10 @@
-﻿using System;
+﻿#define MAX_CAPACITY_HISTORICAL_ACK 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using _Scripts.Networking.Replication;
 using UnityEngine;
+
 
 namespace _Scripts.Networking
 {
@@ -14,7 +16,6 @@ namespace _Scripts.Networking
     /// Packet PreparePacket(UInt64 senderId, PacketType type, ...)
     /// </summary>
     ///
-
     [Serializable]
     public struct AcknowledgmentWrapper
     {
@@ -30,9 +31,11 @@ namespace _Scripts.Networking
     [Serializable]
     public class DeliveryNotificationManager
     {
+        private const int MAX_CAPACITY_HISTORICAL_ACK = 1000;
+
         private List<Packet> pendingDeliveries = new();
         [SerializeField] private List<UInt64> pendingACKs = new();
-        [SerializeField] private List<AcknowledgmentWrapper> historicalACKs = new();
+        [SerializeField] private List<AcknowledgmentWrapper> historicalACKs = new(MAX_CAPACITY_HISTORICAL_ACK);
         [SerializeField] private List<Int64> pendingDeliveriesTime = new();
 
         private int failThreshold = 50;
@@ -46,9 +49,9 @@ namespace _Scripts.Networking
         }
         
         private float roundTripTime;
-        private const int rttOffset = 300;// timeOutRtt = roundTripTime + someOffset; ex: timeOutRtt = roundTripTime(54ms) + someOffset (15ms)
-        
-        // 
+        private const int rttOffset = 0;// timeOutRtt = roundTripTime + someOffset; ex: timeOutRtt = roundTripTime(54ms) + someOffset (15ms)
+
+        private List<UInt64> lastACKsSent = new(); 
         private UInt64 tempIndex = UInt64.MinValue;
         // Send
         public void MakeDelivery(Packet packet)
@@ -66,16 +69,17 @@ namespace _Scripts.Networking
             }
         }   
 
-        private void OnDeliverySuccess(UInt64 ACK)
+        private bool OnDeliverySuccess(UInt64 ACK)
         {
             int index = pendingDeliveries.FindIndex(packet => packet.sequenceNum == ACK);
             if (index == -1)
             {
-                Debug.LogError($"DeliveryNotificationManager: OnDeliverySuccess error, Seq: {ACK}");
-                return;
+                Debug.LogWarning($"DeliveryNotificationManager: OnDeliverySuccess already processed ACK, Seq: {ACK}");
+                return false;
             }
             Debug.Log($"DeliveryNotificationManager: OnDeliverySuccess, Seq: {ACK}");
             CleanPending(index);
+            return true;
         }
 
         private void OnDeliveryFailure(Packet packet)
@@ -92,23 +96,23 @@ namespace _Scripts.Networking
             // Set the time to current time.
             pendingDeliveriesTime[index] = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             
-            // Resend packet through network manager
-            if (NetworkManager.Instance.IsHost() && NetworkManager.Instance.getId != packet.senderId)
-            {
-                NetworkManager.Instance.GetServer().SendUdp(packet.senderId, packet.allData);
-            }
-            else
-            {
-                NetworkManager.Instance.GetClient().SendUdpPacket(packet.allData);
-            }
+            NetworkManager.Instance.AddResendPacket(packet);
         }
         
         // Receive
         public bool ReceiveDelivery(Packet packet)
         {
-            if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs) || historicalACKs.FindIndex(wrapper => wrapper.ACKSeqNum == packet.sequenceNum) != -1)            {
-                Debug.LogError($"DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet. Seq num {packet.sequenceNum}");
+            NetworkManager netManager = NetworkManager.Instance;
+            if (historicalACKs.FindIndex(wrapper => wrapper.ACKSeqNum == packet.sequenceNum) != -1)            {
+                if (packet.packetType == PacketType.OBJECT_STATE)
+                    Debug.LogWarning($"DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet. " +
+                                     $"Seq num {packet.sequenceNum}. Expected next state seq num {netManager.stateSequenceNum.expectedNextSequenceNum}");
+                else
+                    Debug.LogWarning($"DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet." +
+                                     $" Seq num {packet.sequenceNum}. Expected next input seq num {netManager.inputSequenceNum.expectedNextSequenceNum}");
                 // Acknowledgment is pending. No action.
+                if (!pendingACKs.Contains(packet.sequenceNum))
+                    pendingACKs.Add(packet.sequenceNum);
                 return false;
             }
             
@@ -120,22 +124,22 @@ namespace _Scripts.Networking
             //     return false;
             // }
             
-            pendingACKs.Add(packet.sequenceNum);
-            NetworkManager netManager = NetworkManager.Instance;
+            if (!pendingACKs.Contains(packet.sequenceNum))
+                pendingACKs.Add(packet.sequenceNum);
             switch (packet.packetType)
             {
                 case PacketType.OBJECT_STATE:
                 {
                     if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}");
+                        Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}. Expected next state seq num {netManager.stateSequenceNum.expectedNextSequenceNum}");
                         // Resend the acknowledgment.
                         //return;
                     }
 
                     if (packet.sequenceNum > netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError($"DeliveryNotificationManager: Unordered, lost or duplicated packet. Seq num {packet.sequenceNum}");
+                        Debug.LogWarning($"DeliveryNotificationManager: Unordered, lost or duplicated packet. Seq num {packet.sequenceNum}. Expected next state seq num {netManager.stateSequenceNum.expectedNextSequenceNum}");
                         ReOrderPackets();
                     }
                     netManager.stateSequenceNum.incomingSequenceNum = packet.sequenceNum;
@@ -145,14 +149,14 @@ namespace _Scripts.Networking
                 {
                     if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}");
+                        Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}. Expected next state seq num {netManager.inputSequenceNum.expectedNextSequenceNum}");
                         // Resend the acknowledgment.
                         //return;
                     }
 
                     if (packet.sequenceNum > netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
-                        Debug.LogError($"DeliveryNotificationManager: Unordered, lost or duplicated packet. Seq num {packet.sequenceNum}");
+                        Debug.LogWarning($"DeliveryNotificationManager: Unordered, lost or duplicated packet. Seq num {packet.sequenceNum}. Expected next state seq num {netManager.inputSequenceNum.expectedNextSequenceNum}");
                         ReOrderPackets();
                     }
                     netManager.inputSequenceNum.incomingSequenceNum = packet.sequenceNum;
@@ -171,22 +175,31 @@ namespace _Scripts.Networking
         // Send a packet with all the acknowledged sequence numbers from all received packets
         private void SendAllACKs()
         {
+            if (historicalACKs.Count >= 300)
+                historicalACKs.RemoveRange(0, 100);
+            
+            lastACKsSent.Clear();
+            
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
             writer.Write(pendingACKs.Count);
             string result = $"ACKs list count: {pendingACKs.Count} -- ";
             foreach (UInt64 sequenceNum in pendingACKs)
             {
+                lastACKsSent.Add(sequenceNum);
                 writer.Write(sequenceNum);
                 result += sequenceNum.ToString() + ", ";
                 AcknowledgmentWrapper ack = new AcknowledgmentWrapper(sequenceNum);
+                
                 if (!historicalACKs.Contains(ack))
+                {
                     historicalACKs.Add(ack);
+                }
             }
             Debug.Log($"DeliveryNotificationManager: Sending all ACKs --> {result}");
             pendingACKs.Clear();
             ReplicationHeader replicationHeader =
-                new ReplicationHeader(tempIndex++, this.GetType().FullName, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
+                new ReplicationHeader(tempIndex++, String.Empty, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
         }
 
@@ -197,10 +210,10 @@ namespace _Scripts.Networking
             for (int i = 0; i < count; i++)
             {
                 UInt64 ack = reader.ReadUInt64();
-                result += ack.ToString() + ", ";
-                OnDeliverySuccess(ack);
+                if (OnDeliverySuccess(ack))
+                    result += ack.ToString() + ", ";
             }
-            Debug.Log($"DeliveryNotificationManager: Processing ACKs --> {result}");
+            Debug.Log($"DeliveryNotificationManager: Processed ACKs --> {result}");
         }
         // When do we send notifications from server?
         /* A couple of options
@@ -217,6 +230,8 @@ namespace _Scripts.Networking
         public void Update(float rtt)
         {
             roundTripTime = rtt;
+            if (roundTripTime == -1)
+                roundTripTime = 1000;
             
             Int64 currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             lock(pendingDeliveries)
@@ -232,19 +247,19 @@ namespace _Scripts.Networking
                 }
             }
 
-            if (pendingACKs.Count > 3)
+            if (pendingACKs.Count > 10)
             {
                 SendAllACKs();
             }
 
-            for (int i = 0; i < historicalACKs.Count; i++)
-            {
-                if (currentTimestamp - historicalACKs[i].timeStamp >= historicalRemoveTimeMs)
-                {
-                    historicalACKs.RemoveAt(i);
-                    i--;
-                }
-            }
+            // for (int i = 0; i < historicalACKs.Count; i++)
+            // {
+            //     if (currentTimestamp - historicalACKs[i].timeStamp >= historicalRemoveTimeMs)
+            //     {
+            //         historicalACKs.RemoveAt(i);
+            //         i--;
+            //     }
+            // }
         }
 
         private bool CheckDuplicate<T>(T packet, List<T> list)

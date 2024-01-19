@@ -36,8 +36,8 @@ namespace _Scripts.Networking
 
         #region Server/Client Fields
 
-        [SerializeField] private Client.Client _client;
-        [SerializeField] private Server.Server _server;
+        [SerializeField] private Client.Client _client = new();
+        [SerializeField] private Server.Server _server = new();
         
         private bool _isHost = false;
         private bool _isClient = false;
@@ -49,6 +49,7 @@ namespace _Scripts.Networking
         public ReplicationManager replicationManager = new ReplicationManager();
         public SequenceNum inputSequenceNum;
         public SequenceNum stateSequenceNum;
+        public ConcurrentQueue<Packet> packetToResend = new ConcurrentQueue<Packet>();
         #endregion
 
         #region Buffers
@@ -64,7 +65,6 @@ namespace _Scripts.Networking
         // store all state streams to send
         private ConcurrentQueue<ReplicationItem> _stateStreamBuffer = new ConcurrentQueue<ReplicationItem>();
         private List<ReplicationItem> _replicationItemsToSend = new List<ReplicationItem>();
-        public UInt64 currSeqNumStateRead { get; private set; } = 0;
 
         // store all input streams to send
         int replicationTotalSize = 0;
@@ -81,6 +81,7 @@ namespace _Scripts.Networking
         private readonly object _inputQueueLock = new object();
         private readonly object _reliableInputQueueLock = new object();
         private readonly object _reliableQueueLock = new object();
+        private readonly object _resendPacketsLock = new object();
 
         // store all data in streams received
         private ConcurrentQueue<MemoryStream> _incomingStreamBuffer = new ConcurrentQueue<MemoryStream>();
@@ -152,6 +153,40 @@ namespace _Scripts.Networking
 
         #endregion
 
+        #region Average Time
+
+        [SerializeField] private double averageTimeBetweenStatePackets;
+        private List<Int64> packetTimeStamps = new List<long>();
+        private const int maxElapsedSeconds = 60; // Maximum allowed elapsed time in seconds
+
+        static void ClearOldTimestamps(ref List<long> packetTimestamps, long currentTimestamp, int maxElapsedSeconds)
+        {
+            long cutoffTime = currentTimestamp - (maxElapsedSeconds * 1000); // Convert seconds to milliseconds
+
+            // Remove all timestamps from the list that are older than the cutoff time.
+            packetTimestamps.RemoveAll(ts => ts < cutoffTime);
+        }
+
+        static double CalculateAverageTime(ref List<long> packetTimestamps)
+        {
+            if (packetTimestamps.Count < 2)
+            {
+                // Not enough data to calculate average
+                return -1;
+            }
+
+            double totalElapsedTime = 0;
+
+            for (int i = 1; i < packetTimestamps.Count; i++)
+            {
+                double timeElapsed = packetTimestamps[i] - packetTimestamps[i - 1];
+                totalElapsedTime += timeElapsed;
+            }
+
+            double averageTime = totalElapsedTime / (packetTimestamps.Count - 1);
+            return averageTime;
+        }
+        #endregion
         #endregion
 
         #region Enable/Disable
@@ -160,6 +195,8 @@ namespace _Scripts.Networking
         {
             base.Awake();
             Debug.Log("Network Manager: Awake");
+            inputSequenceNum.outgoingSequenceNum = 1;
+            stateSequenceNum.outgoingSequenceNum = 1;
         }
 
         private void Start()
@@ -311,7 +348,8 @@ namespace _Scripts.Networking
 
         public void StartClient()
         {
-            if (_client == null) _client = new Client.Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            //if (_client == null) _client = new Client.Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client.Init(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             if (isServerOnSameMachine)
             {
                 serverAdress = IPAddress.Parse("127.0.0.1");
@@ -325,11 +363,14 @@ namespace _Scripts.Networking
 
         public void StartHost()
         {
-            _server = new Server.Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
+            // _server = new Server.Server(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
+            //     new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
+            _server.Init(new IPEndPoint(IPAddress.Any, defaultServerTcpPort),
                 new IPEndPoint(IPAddress.Any, defaultServerUdpPort));
             _server.onClientConnected += ClientConnected;
             _server.onClientDisconnected += ClientDisconnected;
-            _client = new Client.Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            //_client = new Client.Client(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
+            _client.Init(PlayerName, new IPEndPoint(IPAddress.Any, 0), ClientConnected);
             _isHost = true;
             if (_server.isServerInitialized)
             {
@@ -345,18 +386,21 @@ namespace _Scripts.Networking
 
         private void Update()
         {
+            averageTimeBetweenStatePackets = CalculateAverageTime(ref packetTimeStamps);
+            ClearOldTimestamps(ref packetTimeStamps, DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond, maxElapsedSeconds);
+            
             if (_isHost)
             {
                 _server.UpdatePendingDisconnections();
                 
                 foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                 {
-                    manager.Value.Update(manager.Key.Ping * 2);
+                    manager.Value.Update(manager.Key.Ping * 2 + (float)averageTimeBetweenStatePackets);
                 }
             }
             else if (_isClient)
             {
-                _client.deliveryNotificationManager.Update(_client._clientData.Ping * 2);
+                _client.deliveryNotificationManager.Update(_client._clientData.Ping * 2 + (float)averageTimeBetweenStatePackets);
             }
         }
         
@@ -421,7 +465,13 @@ namespace _Scripts.Networking
             }
         }
         
-
+        public void AddResendPacket(Packet packet)
+        {
+            lock (_resendPacketsLock)
+            {
+                packetToResend.Enqueue(packet);
+            }
+        }
         // public void SendGameEventMessage(MemoryStream stream)
         // {
         //     UInt64 senderid = IsClient() ? _client.GetId() : 0;
@@ -451,6 +501,24 @@ namespace _Scripts.Networking
                 while (!token.IsCancellationRequested)
                 {
                     UInt64 senderid = IsClient() ? _client.GetId() : 0;
+
+                    lock (_resendPacketsLock)
+                    {
+                        if (packetToResend.Count > 0)
+                        {
+                            if (packetToResend.TryDequeue(out Packet packet))
+                            {
+                                if (_isHost && getId != packet.senderId)
+                                {
+                                    _server.SendUdp(packet.senderId, packet.allData);
+                                }
+                                else
+                                {
+                                    _client.SendUdpPacket(packet.allData);
+                                }
+                            }
+                        }
+                    }
                     lock (_inputQueueLock)
                     {
                         if (_inputStreamBuffer.Count > 0)
@@ -846,8 +914,14 @@ namespace _Scripts.Networking
                 case PacketType.INPUT:
                 {
                     if (debugShowInputPackets) Debug.Log($"Network Manager: Received packet {receivedPacket.packetType}");
-
-                    if (_isClient)
+                    if (receivedPacket.isReliable)
+                    {
+                        UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleInput(contentsStream,
+                            contentsStream.Position,
+                            receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
+                            receivedPacket.itemsCount));
+                    }
+                    else if (_isClient)
                     {
                         if (_client.deliveryNotificationManager.ReceiveDelivery(receivedPacket))
                         {
@@ -877,8 +951,18 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.OBJECT_STATE:
                 {
-                    if (debugShowObjectStatePackets) Debug.Log($"Network Manager: Received packet {receivedPacket.packetType}");
-                    if (_isClient)
+                    if (debugShowObjectStatePackets) Debug.Log($"Network Manager: Received packet {receivedPacket.packetType}, seq num {receivedPacket.sequenceNum}");
+                    // Reliable packets don't need UDP delivery notification manager, and their seq num is hardcoded to 0.
+                    if (receivedPacket.senderId != getId)
+                        packetTimeStamps.Add(DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond);
+                    if (receivedPacket.isReliable)
+                    {
+                        UnityMainThreadDispatcher.Dispatcher.Enqueue(() => HandleObjectState(contentsStream,
+                            contentsStream.Position,
+                            receivedPacket.senderId, receivedPacket.timeStamp, receivedPacket.sequenceNum,
+                            receivedPacket.itemsCount));
+                    }
+                    else if (_isClient)
                     {
                         if (_client.deliveryNotificationManager.ReceiveDelivery(receivedPacket))
                         {
@@ -935,7 +1019,6 @@ namespace _Scripts.Networking
                 ReplicationHeader.DeSerializeHeadersList(reader, replicationItemsCount);
 
             // TODO: If influx of packets is high, start discarding data and only read creates, destroy, updates, important events.
-            currSeqNumStateRead = seqNum;
             foreach (ReplicationHeader header in replicationHeaders)
             {
                 // if (recSeqNumState - currSeqNumStateRead >= (ulong)thresholdToStartDiscardingPackets)
@@ -1019,7 +1102,7 @@ namespace _Scripts.Networking
                 item.memoryStream.Position = 0;
                 item.memoryStream.CopyTo(output);
             }
-            
+
             Packet packet = new Packet(type, stateSequenceNum.outgoingSequenceNum, senderId, timeStamp, streamsList.Count,false, output.ToArray());
             return packet;
         }
@@ -1045,8 +1128,11 @@ namespace _Scripts.Networking
                 item.memoryStream.Position = 0;
                 item.memoryStream.CopyTo(output);
             }
-          
-            Packet packet = new Packet(type, inputSequenceNum.outgoingSequenceNum, senderId, timeStamp, streamsList.Count,isReliable, output.ToArray());
+            
+            // TCP packets will have 0 as sequence num as they don't need to be ordered in the application!.
+            UInt64 seqNum = isReliable ? 0 : inputSequenceNum.outgoingSequenceNum;
+            
+            Packet packet = new Packet(type, seqNum, senderId, timeStamp, streamsList.Count,isReliable, output.ToArray());
             return packet;
         }
 
@@ -1092,10 +1178,7 @@ namespace _Scripts.Networking
 
         public Server.Server GetServer()
         {
-            if (_isHost)
-                return _server;
-            else
-                return null;
+            return _isHost ? _server : null;
         }
 
         #endregion

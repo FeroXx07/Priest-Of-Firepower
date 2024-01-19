@@ -26,7 +26,7 @@ namespace _Scripts.Networking
             Serialize();
         }
 
-        private bool isReliable = false;
+        public bool isReliable = false;
         public PacketType packetType { get; private set; }
         public UInt64 sequenceNum { get; private set; }
         public UInt64 senderId { get; private set; }
