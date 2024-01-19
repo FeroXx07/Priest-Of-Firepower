@@ -11,6 +11,7 @@ namespace _Scripts.Networking.Client
         CONNECTED,
         AUTHENTICATED,
     }
+    [Serializable]
     public class ClientData
     {
         public ClientData(string userName = "NoName")

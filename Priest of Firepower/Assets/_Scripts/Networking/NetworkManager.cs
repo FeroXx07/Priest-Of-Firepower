@@ -36,8 +36,9 @@ namespace _Scripts.Networking
 
         #region Server/Client Fields
 
-        private Client.Client _client;
-        private Server.Server _server;
+        [SerializeField] private Client.Client _client;
+        [SerializeField] private Server.Server _server;
+        
         private bool _isHost = false;
         private bool _isClient = false;
         public static readonly UInt64 UNKNOWN_ID = 69;

@@ -8,13 +8,17 @@ using System.Net.Sockets;
 using System.Threading;
 using _Scripts.Networking.Authentication;
 using _Scripts.Networking.Client;
+using UnityEngine.Collections.Generic;
 using Debug = UnityEngine.Debug;
 using Process = _Scripts.Networking.Utility.Process;
 
 namespace _Scripts.Networking.Server
 {
+    [Serializable]
     public class Server
     {
+        public Server()
+        {}
         public Server(IPEndPoint localEndPointTcp, IPEndPoint localEndPointUdp)
         {
             _localEndPointTcp = localEndPointTcp;
@@ -36,7 +40,14 @@ namespace _Scripts.Networking.Server
         private List<ClientData> _clientsList = new List<ClientData>();
         private List<ClientData> _clientsToRemove = new List<ClientData>();
         public Dictionary<ClientData, DeliveryNotificationManager> deliveryNotificationManagers = new();
-        private Process _listenConnectionsProcess;
+        public List<DeliveryNotificationManager> DeliveryNotificationManagerList
+        {
+            get
+            {
+                // Return the values of the dictionary as a list
+                return new List<DeliveryNotificationManager>(deliveryNotificationManagers.Values);
+            }
+        }        private Process _listenConnectionsProcess;
         private ManualResetEvent _connectionListenerEvent = new ManualResetEvent(false);
 
         // It's used to signal to an asynchronous operation that it should stop or be interrupted.

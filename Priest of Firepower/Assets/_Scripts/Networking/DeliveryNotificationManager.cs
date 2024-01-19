@@ -15,6 +15,7 @@ namespace _Scripts.Networking
     /// </summary>
     ///
 
+    [Serializable]
     public struct AcknowledgmentWrapper
     {
         public AcknowledgmentWrapper(UInt64 ackSeqNum)
@@ -45,10 +46,10 @@ namespace _Scripts.Networking
         }
         
         private float roundTripTime;
-        private const int rttOffset = 20;// timeOutRtt = roundTripTime + someOffset; ex: timeOutRtt = roundTripTime(54ms) + someOffset (15ms)
-
+        private const int rttOffset = 300;// timeOutRtt = roundTripTime + someOffset; ex: timeOutRtt = roundTripTime(54ms) + someOffset (15ms)
+        
         // 
-        private UInt64 idIndex = UInt64.MinValue;
+        private UInt64 tempIndex = UInt64.MinValue;
         // Send
         public void MakeDelivery(Packet packet)
         {
@@ -105,8 +106,7 @@ namespace _Scripts.Networking
         // Receive
         public bool ReceiveDelivery(Packet packet)
         {
-            if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs) || historicalACKs.FindIndex(wrapper => wrapper.ACKSeqNum == packet.sequenceNum) != -1)
-            {
+            if (CheckDuplicate<UInt64>(packet.sequenceNum, pendingACKs) || historicalACKs.FindIndex(wrapper => wrapper.ACKSeqNum == packet.sequenceNum) != -1)            {
                 Debug.LogError($"DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet. Seq num {packet.sequenceNum}");
                 // Acknowledgment is pending. No action.
                 return false;
@@ -126,7 +126,7 @@ namespace _Scripts.Networking
             {
                 case PacketType.OBJECT_STATE:
                 {
-                    if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum && packet.sequenceNum != 0)
+                    if (packet.sequenceNum < netManager.stateSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}");
                         // Resend the acknowledgment.
@@ -143,7 +143,7 @@ namespace _Scripts.Networking
                     break;
                 case PacketType.INPUT:
                 {
-                    if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum && packet.sequenceNum != 0)
+                    if (packet.sequenceNum < netManager.inputSequenceNum.expectedNextSequenceNum)
                     {
                         Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}");
                         // Resend the acknowledgment.
@@ -186,7 +186,7 @@ namespace _Scripts.Networking
             Debug.Log($"DeliveryNotificationManager: Sending all ACKs --> {result}");
             pendingACKs.Clear();
             ReplicationHeader replicationHeader =
-                new ReplicationHeader(UInt64.MaxValue, this.GetType().FullName, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
+                new ReplicationHeader(tempIndex++, this.GetType().FullName, ReplicationAction.ACKNOWLEDGMENT, stream.ToArray().Length);
             NetworkManager.Instance.AddStateStreamQueue(replicationHeader, stream);
         }
 

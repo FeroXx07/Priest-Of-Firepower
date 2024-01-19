@@ -11,10 +11,10 @@ using Process = _Scripts.Networking.Utility.Process;
 
 namespace _Scripts.Networking.Client
 {
+    [Serializable]
     public class Client
     {
         #region Fields
-
         public ClientData _clientData { get; private set; }
         private IPEndPoint _remoteEndPointTcp;
         private IPEndPoint _remoteEndPointUdp;
