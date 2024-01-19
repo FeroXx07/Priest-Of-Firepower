@@ -854,7 +854,13 @@ namespace UnityEngine.Collections.Generic
 
             public int Count
             {
-                get { return dictionary.Count; }
+                get
+                {
+                    if (dictionary == null) 
+                        return 0;
+                    else
+                        return dictionary.Count;
+                }
             }
 
             bool ICollection<TKey>.IsReadOnly
@@ -1082,7 +1088,7 @@ namespace UnityEngine.Collections.Generic
 
             public int Count
             {
-                get { return dictionary.Count; }
+                get { return dictionary != null ? dictionary.Count : (0); }
             }
 
             bool ICollection<TValue>.IsReadOnly
