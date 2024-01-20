@@ -49,7 +49,7 @@ namespace _Scripts.Networking
         public ReplicationManager replicationManager = new ReplicationManager();
         public SequenceNum inputSequenceNum;
         public SequenceNum stateSequenceNum;
-        public ConcurrentQueue<Packet> packetToResend = new ConcurrentQueue<Packet>();
+        public ConcurrentQueue<ResendPacket> packetToResend = new ConcurrentQueue<ResendPacket>();
         #endregion
 
         #region Buffers
@@ -395,12 +395,12 @@ namespace _Scripts.Networking
                 
                 foreach (KeyValuePair<ClientData,DeliveryNotificationManager> manager in _server.deliveryNotificationManagers)
                 {
-                    manager.Value.Update(manager.Key.Ping * 2 + (float)averageTimeBetweenStatePackets);
+                    manager.Value.Update(manager.Key.Ping * 2, (float)averageTimeBetweenStatePackets);
                 }
             }
             else if (_isClient)
             {
-                _client.deliveryNotificationManager.Update(_client._clientData.Ping * 2 + (float)averageTimeBetweenStatePackets);
+                _client.deliveryNotificationManager.Update(_client._clientData.Ping * 2, (float)averageTimeBetweenStatePackets);
             }
         }
         
@@ -465,7 +465,7 @@ namespace _Scripts.Networking
             }
         }
         
-        public void AddResendPacket(Packet packet)
+        public void AddResendPacket(ResendPacket packet)
         {
             lock (_resendPacketsLock)
             {
@@ -506,16 +506,17 @@ namespace _Scripts.Networking
                     {
                         if (packetToResend.Count > 0)
                         {
-                            if (packetToResend.TryDequeue(out Packet packet))
+                            if (packetToResend.TryDequeue(out ResendPacket resendPacket))
                             {
-                                if (_isHost && getId != packet.senderId)
+                                if (_isHost)
                                 {
-                                    _server.SendUdp(packet.senderId, packet.allData);
+                                    if (resendPacket.sendToAll)
+                                        _server.SendUdpToAll(resendPacket.packet.allData);
+                                    else
+                                        _server.SendUdp(resendPacket.destinationId, resendPacket.packet.allData);
                                 }
                                 else
-                                {
-                                    _client.SendUdpPacket(packet.allData);
-                                }
+                                    _client.SendUdpPacket(resendPacket.packet.allData);
                             }
                         }
                     }
@@ -884,7 +885,7 @@ namespace _Scripts.Networking
             Packet receivedPacket = Packet.DeSerialize(reader);
             MemoryStream contentsStream = new MemoryStream(receivedPacket.contentsData);
             BinaryReader contentsReader = new BinaryReader(contentsStream);
-
+            
             // Check if packet is higher than 1500 bytes, it shouldn't be!
             if (stream.Length > 1500)
             {
@@ -1003,6 +1004,11 @@ namespace _Scripts.Networking
                         Debug.Log("Network Manager: Host auth message received");
                         _server.HandleAuthentication(contentsReader);
                     }
+                }
+                    break;
+                case PacketType.ACKNOWLEDGMENT:
+                {
+                    
                 }
                     break;
                 default:

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace _Scripts.Networking
@@ -9,7 +10,8 @@ namespace _Scripts.Networking
         PING,
         OBJECT_STATE,
         INPUT,
-        AUTHENTICATION
+        AUTHENTICATION,
+        ACKNOWLEDGMENT
     }
     
     public class Packet
@@ -55,5 +57,23 @@ namespace _Scripts.Networking
                 reader.ReadInt64(), reader.ReadInt32(),
                 reader.ReadBoolean(), reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position)));
         }
+    }
+
+    public class ResendPacket
+    {
+        public ResendPacket(Packet packetToResend, bool sendToAll = true)
+        {
+            packet = packetToResend;
+            this.sendToAll = sendToAll;
+        }
+        public ResendPacket(Packet packetToResend, UInt64 destinationId, bool sendToAll = false)
+        {
+            packet = packetToResend;
+            this.sendToAll = sendToAll;
+            this.destinationId = destinationId;
+        }
+        public Packet packet;
+        public bool sendToAll;
+        public UInt64 destinationId;
     }
 }

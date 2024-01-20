@@ -52,9 +52,6 @@ namespace _Scripts.Networking.Server
         private List<ClientData> _clientsList = new List<ClientData>();
         private List<ClientData> _clientsToRemove = new List<ClientData>();
         public UDictionaryClientDeliveryNotificationManager deliveryNotificationManagers = new();
-        public List<DeliveryNotificationManager> DeliveryNotificationManagerList =>
-            // Return the values of the dictionary as a list
-            new(deliveryNotificationManagers.Values);
         private Process _listenConnectionsProcess;
         private ManualResetEvent _connectionListenerEvent = new ManualResetEvent(false);
 
@@ -519,6 +516,8 @@ namespace _Scripts.Networking.Server
                 }
                 
                 deliveryNotificationManagers.Add(clientData, new DeliveryNotificationManager());
+                deliveryNotificationManagers.TryGetValue(clientData, out DeliveryNotificationManager dnm);
+                if (dnm != null) dnm.SetClient(clientData);
                 Debug.Log(
                     $"Server {_localEndPointTcp}: Client {clientData.userName} stored with Id: {clientData.id} and EP: {clientData.endPointTcp}");
                 return clientData.id;

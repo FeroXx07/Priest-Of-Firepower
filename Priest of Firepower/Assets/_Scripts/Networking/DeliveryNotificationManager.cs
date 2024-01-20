@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using _Scripts.Networking.Client;
 using _Scripts.Networking.Replication;
 using UnityEngine;
 
@@ -32,12 +33,12 @@ namespace _Scripts.Networking
     public class DeliveryNotificationManager
     {
         private const int MAX_CAPACITY_HISTORICAL_ACK = 1000;
-
         private List<Packet> pendingDeliveries = new();
         [SerializeField] private List<UInt64> pendingACKs = new();
         [SerializeField] private List<AcknowledgmentWrapper> historicalACKs = new(MAX_CAPACITY_HISTORICAL_ACK);
         [SerializeField] private List<Int64> pendingDeliveriesTime = new();
-
+        private ClientData _client;
+        
         private int failThreshold = 50;
         private int failCounter = 0;
         
@@ -53,6 +54,7 @@ namespace _Scripts.Networking
 
         private List<UInt64> lastACKsSent = new(); 
         private UInt64 tempIndex = UInt64.MinValue;
+        
         // Send
         public void MakeDelivery(Packet packet)
         {
@@ -71,32 +73,35 @@ namespace _Scripts.Networking
 
         private bool OnDeliverySuccess(UInt64 ACK)
         {
-            int index = pendingDeliveries.FindIndex(packet => packet.sequenceNum == ACK);
-            if (index == -1)
+            lock (pendingDeliveries)
             {
-                Debug.LogWarning($"DeliveryNotificationManager: OnDeliverySuccess already processed ACK, Seq: {ACK}");
-                return false;
+                int index = pendingDeliveries.FindIndex(packet => packet.sequenceNum == ACK);
+                if (index == -1)
+                {
+                    Debug.LogWarning(
+                        $"DeliveryNotificationManager: OnDeliverySuccess already processed ACK, Seq: {ACK}");
+                    return false;
+                }
+
+                Debug.Log($"DeliveryNotificationManager: OnDeliverySuccess, Seq: {ACK}");
+                CleanPending(index);
             }
-            Debug.Log($"DeliveryNotificationManager: OnDeliverySuccess, Seq: {ACK}");
-            CleanPending(index);
+
             return true;
         }
 
-        private void OnDeliveryFailure(Packet packet)
+        private void OnDeliveryFailure(Packet packet, int index, float timeDiff, float timeToCompare)
         {
-            int index = pendingDeliveries.FindIndex(p => p.sequenceNum == packet.sequenceNum);
-            if (index == -1)
-            {
-                Debug.LogError($"DeliveryNotificationManager: OnDeliveryFailure error, Seq: {packet.sequenceNum}");
-                return;
-            }
-            
-            Debug.Log($"DeliveryNotificationManager: OnDeliveryFailure resend {packet.sequenceNum}");
+            Debug.Log(
+                $"DeliveryNotificationManager: OnDeliveryFailure resend {packet.sequenceNum}, timeDiff:{timeDiff}, timeToCompare: {timeToCompare}");
 
             // Set the time to current time.
             pendingDeliveriesTime[index] = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
-            
-            NetworkManager.Instance.AddResendPacket(packet);
+            NetworkManager netMan = NetworkManager.Instance;
+            if (netMan.IsHost())
+                netMan.AddResendPacket(new ResendPacket(packet, _client.id));
+            else
+                netMan.AddResendPacket(new ResendPacket(packet));
         }
         
         // Receive
@@ -111,7 +116,7 @@ namespace _Scripts.Networking
                     Debug.LogWarning($"DeliveryNotificationManager: Cannot receive delivery as it is a duplicate packet." +
                                      $" Seq num {packet.sequenceNum}. Expected next input seq num {netManager.inputSequenceNum.expectedNextSequenceNum}");
                 // Acknowledgment is pending. No action.
-                if (!pendingACKs.Contains(packet.sequenceNum))
+                if (!lastACKsSent.Contains(packet.sequenceNum) && !pendingACKs.Contains(packet.sequenceNum))
                     pendingACKs.Add(packet.sequenceNum);
                 return false;
             }
@@ -134,7 +139,7 @@ namespace _Scripts.Networking
                     {
                         Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}. Expected next state seq num {netManager.stateSequenceNum.expectedNextSequenceNum}");
                         // Resend the acknowledgment.
-                        //return;
+                        return false;
                     }
 
                     if (packet.sequenceNum > netManager.stateSequenceNum.expectedNextSequenceNum)
@@ -151,7 +156,7 @@ namespace _Scripts.Networking
                     {
                         Debug.LogWarning($"DeliveryNotificationManager: Old packet. Seq num {packet.sequenceNum}. Expected next state seq num {netManager.inputSequenceNum.expectedNextSequenceNum}");
                         // Resend the acknowledgment.
-                        //return;
+                        return false;
                     }
 
                     if (packet.sequenceNum > netManager.inputSequenceNum.expectedNextSequenceNum)
@@ -227,11 +232,12 @@ namespace _Scripts.Networking
         
         // Call to process timed-out packets
         // For each delivery that timed out, call onFailure() and remove the delivery
-        public void Update(float rtt)
+        public void Update(float rtt, float timeBetweenStatePackets)
         {
-            roundTripTime = rtt;
-            if (roundTripTime == -1)
-                roundTripTime = 1000;
+            if (timeBetweenStatePackets == -1)
+                timeBetweenStatePackets = 1000;
+            
+            roundTripTime = rtt + timeBetweenStatePackets;
             
             Int64 currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             lock(pendingDeliveries)
@@ -239,19 +245,20 @@ namespace _Scripts.Networking
                 for (int i = 0; i < pendingDeliveriesTime.Count; i++)
                 {
                     Int64 storedTimeStamp = pendingDeliveriesTime[i];
-                    // Compare the timestamps with the offset
-                    if (currentTimestamp - storedTimeStamp > roundTripTime + rttOffset)
+                    float timeDiff = currentTimestamp - storedTimeStamp;
+                    float totalToCompare = roundTripTime + rttOffset;
+                    if (timeDiff > totalToCompare)
                     {
-                        OnDeliveryFailure(pendingDeliveries[i]);
+                        OnDeliveryFailure(pendingDeliveries[i], i, timeDiff, totalToCompare);
                     }
                 }
+                
+                if (pendingACKs.Count > 3)
+                {
+                    SendAllACKs();
+                }
             }
-
-            if (pendingACKs.Count > 10)
-            {
-                SendAllACKs();
-            }
-
+            
             // for (int i = 0; i < historicalACKs.Count; i++)
             // {
             //     if (currentTimestamp - historicalACKs[i].timeStamp >= historicalRemoveTimeMs)
@@ -261,7 +268,12 @@ namespace _Scripts.Networking
             //     }
             // }
         }
-
+        
+        public void SetClient(ClientData clientData)
+        {
+            _client = clientData;
+        }
+        
         private bool CheckDuplicate<T>(T packet, List<T> list)
         {
             return list.Contains(packet);
