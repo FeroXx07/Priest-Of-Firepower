@@ -1059,9 +1059,38 @@ namespace _Scripts.Networking
             BinaryReader reader = new BinaryReader(stream);
             List<InputHeader> inputHeaders = InputHeader.DeSerializeHeadersList(reader, replicationItemsCount);
             if (inputHeaders.Count == 0) Debug.LogError("Error in input packet");
+            bool hasACKs = false;
             foreach (InputHeader header in inputHeaders)
             {
-                if (replicationManager.networkObjectMap.ContainsKey(header.id))
+                if (header.objectFullName == "DNM")
+                {
+                    if (IsClient())
+                    {
+                        GetClient().deliveryNotificationManager.ProcessACKs(reader);
+                        if (!hasACKs)
+                        {
+                            GetClient().deliveryNotificationManager.CheckDeliveryFailures();
+                            hasACKs = true;
+                        }
+                    }
+                    else if (IsHost())
+                    {
+                        // Check id of the packetSenderId
+                        foreach (KeyValuePair<ClientData, DeliveryNotificationManager> manager in GetServer().deliveryNotificationManagers)
+                        {
+                            if (manager.Key.id == packetSender)
+                            {
+                                manager.Value.ProcessACKs(reader);
+                                if (!hasACKs)
+                                {
+                                    manager.Value.CheckDeliveryFailures();
+                                    hasACKs = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (replicationManager.networkObjectMap.ContainsKey(header.id))
                 {
                     try
                     {

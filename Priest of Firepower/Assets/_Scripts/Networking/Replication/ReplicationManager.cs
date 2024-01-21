@@ -127,9 +127,15 @@ namespace _Scripts.Networking.Replication
                 {
                     // TODO: Check sender id and for the client/server processACKs
                     NetworkManager netManager = NetworkManager.Instance;
+                    bool hasACKs = false;
                     if (netManager.IsClient())
                     {
                         netManager.GetClient().deliveryNotificationManager.ProcessACKs(reader);
+                        if (!hasACKs)
+                        {
+                            netManager.GetClient().deliveryNotificationManager.CheckDeliveryFailures();
+                            hasACKs = true;
+                        }
                     }
                     else if (netManager.IsHost())
                     {
@@ -139,10 +145,14 @@ namespace _Scripts.Networking.Replication
                             if (manager.Key.id == packetSenderId)
                             {
                                 manager.Value.ProcessACKs(reader);
+                                if (!hasACKs)
+                                {
+                                    manager.Value.CheckDeliveryFailures();
+                                    hasACKs = true;
+                                }
                             }
                         }
                     }
-                    //NetworkManager.Instance.deliveryNotificationManager.ProcessACKs(reader);
                 }
                     break;
                 default:
