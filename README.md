@@ -2,6 +2,7 @@
 A demo made for the Online &amp; Networks subject at the CITM-UPC. The objective of this project is to learn the internal structure of the networking layer in a video game.
 From the sockets, authentication to network models, synchronization models, object replication and object serialization. So, the Unity's netcode is NOT used in this project, but a custom one created from scratch.
 
+## Networking Structure
 The chosen structure for this 2D top down shooter is "State Synchronization" for the synchronization model, "Client-Server" for the network model, and "Binary Serialization" for the object serialization.
 How is this achieved?
 
@@ -13,3 +14,11 @@ How is this achieved?
 - Replication Headers and Streams -- How replication data is ordered in a packet.
 - Input Headers and Streams -- How input data is ordered in a packet.
 - Packet, encompasses both replication and inputs -- Datagram that is sent through the sockets.
+
+## Features
+
+## Team:
+### [Allen Bateman](https://github.com/allenbateman "Allen's Github Page") -- Network Manager, Client - Server, Transform Interpolation, Connections, Weapons, Wall Weapons
+### [Ali Hassan Shahid](https://github.com/FeroXx07 "Ali's Github Page") -- Replication Manager, Object serialization, Network UI, Network Enemies, PowerUps
+### [Brandon Arnadia](https://github.com/IconicGIT "Brandon's Github Page") -- UI
+### [Alexandre Carreras](https://github.com/TheGewehr "Alexandre's Github Page") -- Enemies
