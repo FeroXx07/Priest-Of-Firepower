@@ -38,5 +38,6 @@ MonoBehaviour:
   m_FloodFillContiguousOnly: 1
   randomTileSetSize: {x: 1, y: 1, z: 1}
   randomTileSets: []
+  randomTileChangeDataSets: []
   pickRandomTiles: 0
   addToRandomTiles: 0

@@ -12,7 +12,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{9dde18c4-e333-646f-e131-a30b2655506a}</ProjectGuid>
+    <ProjectGuid>{d562f951-7844-b0bc-e1d2-3417f1c58928}</ProjectGuid>
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -311,34 +311,34 @@
       <HintPath>C:\Program Files\2022.3.3f1\Editor\Data\PlaybackEngines\WindowsStandaloneSupport\UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Collections.LowLevel.ILSupport">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collections@1.2.4\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collections@1.2.4\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Antlr3.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="log4netPlastic">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\log4netPlastic.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\log4netPlastic.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.IonicZip">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
     </Reference>
     <Reference Include="unityplastic">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\unityplastic.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\unityplastic.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.ext.nunit@1.0.6\net35\unity-custom\nunit.framework.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.ext.nunit@1.0.6\net35\unity-custom\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib">
       <HintPath>C:\Program Files\2022.3.3f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>
@@ -716,247 +716,247 @@
       <HintPath>C:\Program Files\2022.3.3f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\Facades\System.Xml.XPath.XDocument.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.TestRunner">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\UnityEditor.TestRunner.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\UnityEditor.TestRunner.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TestRunner">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\UnityEngine.TestRunner.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\UnityEngine.TestRunner.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.IK.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.IK.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.IK.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="com.unity.cinemachine.editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\com.unity.cinemachine.editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\com.unity.cinemachine.editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Burst.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Burst.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Burst.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Common.Path.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Common.Path.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Common.Path.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.PixelPerfect.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.PixelPerfect.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.PixelPerfect.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Rider.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Rider.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Aseprite.Common">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Aseprite.Common.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Aseprite.Common.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Flow">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Mathematics.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Tilemap.Extras.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Tilemap.Extras.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Tilemap.Extras.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Collections">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.SpriteShape.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.SpriteShape.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.SpriteShape.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.PixelPerfect">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.PixelPerfect.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.PixelPerfect.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Aseprite.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Aseprite.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Aseprite.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VSCode.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VSCode.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VSCode.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor.ConversionSystem">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.ConversionSystem.dll</HintPath>
     </Reference>
     <Reference Include="PsdPlugin">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\PsdPlugin.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\PsdPlugin.dll</HintPath>
     </Reference>
     <Reference Include="Unity.PlasticSCM.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Burst">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Burst.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Burst.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Timeline.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Timeline.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Shared.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualStudio.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Core">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Core.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Animation.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Animation.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Animation.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Tilemap.Extras">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Tilemap.Extras.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Tilemap.Extras.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Core.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Core.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Core.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InternalAPIEditorBridge.005">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.InternalAPIEditorBridge.005.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.InternalAPIEditorBridge.005.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Flow.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InternalAPIEngineBridge.001">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.InternalAPIEngineBridge.001.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.InternalAPIEngineBridge.001.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Common.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Common.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Common.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Timeline">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Timeline.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InternalAPIEditorBridge.001">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.InternalAPIEditorBridge.001.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.InternalAPIEditorBridge.001.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Psdimporter.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Psdimporter.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Psdimporter.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Updater">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.Updater.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.Updater.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.State.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.State.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Common.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Common.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Common.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Searcher.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.AI.Navigation.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.State">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.VisualScripting.State.dll</HintPath>
     </Reference>
     <Reference Include="Cinemachine">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Cinemachine.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Cinemachine.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.SpriteShape.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.SpriteShape.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.SpriteShape.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.Animation.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.Animation.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.Animation.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.2D.IK.Editor">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.2D.IK.Editor.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.2D.IK.Editor.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Assembly-CSharp.csproj">
-      <Project>{5788db99-02a8-e719-09e3-73f5e1c38706}</Project>
+      <Project>{007a3a28-0a40-82f8-7861-9a97ec2ad847}</Project>
       <Name>Assembly-CSharp</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.VisualEffectGraph.Runtime.csproj">
-      <Project>{1f299fa4-b566-5f7a-b8f7-f4fbd8307465}</Project>
+      <Project>{386a88d4-a027-224a-aecd-fd80edc680e2}</Project>
       <Name>Unity.VisualEffectGraph.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.csproj">
-      <Project>{fc0dc473-f61f-15df-949f-8692cbfc964a}</Project>
+      <Project>{30a516f1-7b26-d779-f10f-0e49e64cf789}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.2D.Sprite.Editor.csproj">
-      <Project>{df78fc01-2551-bc83-e61c-c5923df311e8}</Project>
+      <Project>{f8230fed-cae1-6034-70bb-369a7c8ae327}</Project>
       <Name>Unity.2D.Sprite.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Editor.csproj">
-      <Project>{3f84cd78-bc68-ed5c-e822-c2459e3f7856}</Project>
+      <Project>{a013bf7f-54d3-ad00-2a98-e2ee42f930f0}</Project>
       <Name>Unity.RenderPipelines.Core.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.VisualEffectGraph.Editor.csproj">
-      <Project>{ed07d5f7-2f8d-57bc-af99-dc570e1a5309}</Project>
+      <Project>{622c73b6-df4b-8a52-ba6b-825c719c3dbe}</Project>
       <Name>Unity.VisualEffectGraph.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.ShaderLibrary.csproj">
-      <Project>{cf26607f-9676-c963-9d56-77ebcd009c65}</Project>
+      <Project>{9f82b3dc-d210-73a9-5bb6-f295845247fa}</Project>
       <Name>Unity.RenderPipelines.Core.ShaderLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="UnityMainThreadDispatcher.csproj">
-      <Project>{a31b5ab3-c70b-91d3-a9ba-4a67dcaee6b6}</Project>
+      <Project>{c1529d95-f024-bfc1-809f-148abfe5efd4}</Project>
       <Name>UnityMainThreadDispatcher</Name>
     </ProjectReference>
     <ProjectReference Include="PPv2URPConverters.csproj">
-      <Project>{48f10457-3693-b3e6-c8d1-52b1c291e9de}</Project>
+      <Project>{d6188949-9414-e265-d8f2-5749ec10fb28}</Project>
       <Name>PPv2URPConverters</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Universal.Editor.csproj">
-      <Project>{aafadb91-af80-d463-0895-e8720b7ddab1}</Project>
+      <Project>{4cbcb266-a84e-84b7-7a7f-be222c3f971d}</Project>
       <Name>Unity.RenderPipelines.Universal.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.csproj">
-      <Project>{f08380f8-9518-cb3d-8d73-e4c101a2dd34}</Project>
+      <Project>{f8d7d753-db92-214b-5485-a232910b5309}</Project>
       <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Universal.Runtime.csproj">
-      <Project>{df2aceca-7765-84b2-4190-9999686506ab}</Project>
+      <Project>{d330acda-e527-ce78-a945-f376f5cdc697}</Project>
       <Name>Unity.RenderPipelines.Universal.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.ShaderGraph.Editor.csproj">
-      <Project>{06dcbe73-ff19-0fb8-dd99-d205a5c201fa}</Project>
+      <Project>{bd7b13ba-3a0d-3950-0053-9f64f41816aa}</Project>
       <Name>Unity.ShaderGraph.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="IngameDebugConsole.Editor.csproj">
-      <Project>{62298612-aac0-c6a3-a68e-136e0a74dd47}</Project>
+      <Project>{51c0f1ee-3896-24b4-23bf-6d7f7e925c2b}</Project>
       <Name>IngameDebugConsole.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEditor.UI.csproj">
-      <Project>{a6811d19-3188-96e4-5171-346a81443f52}</Project>
+      <Project>{a2caa763-8cf6-2457-aa01-7aeed933c0bb}</Project>
       <Name>UnityEditor.UI</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEngine.UI.csproj">
-      <Project>{34999dcb-6974-f717-4da1-c6271032fa6f}</Project>
+      <Project>{cc33c67e-f3cf-fabc-dcca-f6777a536713}</Project>
       <Name>UnityEngine.UI</Name>
     </ProjectReference>
     <ProjectReference Include="NavMeshPlus.csproj">
-      <Project>{ee56536d-3d80-d4ae-f227-0ddfe4252a01}</Project>
+      <Project>{9f7ac564-38d1-49f2-4474-eda0f72e8f6d}</Project>
       <Name>NavMeshPlus</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.SerializedDictionary.csproj">
-      <Project>{32870404-9f28-225d-fe0b-5214a2183ab0}</Project>
+      <Project>{8344c228-532e-7022-1ffc-abbb94c0401b}</Project>
       <Name>Unity.SerializedDictionary</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipeline.Universal.ShaderLibrary.csproj">
-      <Project>{a576c8c9-434e-4fb3-0944-e449df68d3c4}</Project>
+      <Project>{4f250d8a-0d49-9327-3a96-8cf3e36e2f31}</Project>
       <Name>Unity.RenderPipeline.Universal.ShaderLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="NavMeshPlusEditor.csproj">
-      <Project>{5b753160-97d8-7a71-1cd5-75b6e57aee54}</Project>
+      <Project>{82bd598d-3011-c948-675d-7892075fb697}</Project>
       <Name>NavMeshPlusEditor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Universal.Shaders.csproj">
-      <Project>{5ca04068-5e5d-8e56-fcf5-e6d0d52a3d4f}</Project>
+      <Project>{b6f95e3d-0e79-5dbe-e398-95d33b897432}</Project>
       <Name>Unity.RenderPipelines.Universal.Shaders</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.2D.Tilemap.Editor.csproj">
-      <Project>{acfe37f0-5663-af22-e9c1-ff1f7491369e}</Project>
+      <Project>{a2ddfeb4-5d8e-7b3d-1861-a1f86b707d4c}</Project>
       <Name>Unity.2D.Tilemap.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="IngameDebugConsole.Runtime.csproj">
-      <Project>{95860502-4b48-ba5d-2b3f-5e1b222edf2e}</Project>
+      <Project>{3edc3ef0-fc88-e739-98e8-508121daf58c}</Project>
       <Name>IngameDebugConsole.Runtime</Name>
     </ProjectReference>
   </ItemGroup>

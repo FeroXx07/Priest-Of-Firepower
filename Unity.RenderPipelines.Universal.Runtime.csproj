@@ -12,7 +12,7 @@
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace></RootNamespace>
-    <ProjectGuid>{df2aceca-7765-84b2-4190-9999686506ab}</ProjectGuid>
+    <ProjectGuid>{d330acda-e527-ce78-a945-f376f5cdc697}</ProjectGuid>
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -478,31 +478,31 @@
       <HintPath>C:\Program Files\2022.3.3f1\Editor\Data\PlaybackEngines\WindowsStandaloneSupport\UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Collections.LowLevel.ILSupport">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collections@1.2.4\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collections@1.2.4\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Antlr3.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="log4netPlastic">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\log4netPlastic.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\log4netPlastic.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.IonicZip">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.visualscripting@1.9.0\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
     </Reference>
     <Reference Include="unityplastic">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\unityplastic.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\PackageCache\com.unity.collab-proxy@2.0.7\Lib\Editor\PlasticSCM\unityplastic.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>C:\Program Files\2022.3.3f1\Editor\Data\NetStandard\ref\2.1.0\netstandard.dll</HintPath>
@@ -871,27 +871,27 @@
       <HintPath>C:\Program Files\2022.3.3f1\Editor\Data\NetStandard\compat\2.1.0\shims\netfx\System.Xml.Serialization.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Mathematics">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Mathematics.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Burst">
-      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Priest of Firepower\Library\ScriptAssemblies\Unity.Burst.dll</HintPath>
+      <HintPath>E:\University Degree\Redes &amp; Online\Priest-Of-Firepower\Library\ScriptAssemblies\Unity.Burst.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.csproj">
-      <Project>{fc0dc473-f61f-15df-949f-8692cbfc964a}</Project>
+      <Project>{30a516f1-7b26-d779-f10f-0e49e64cf789}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipeline.Universal.ShaderLibrary.csproj">
-      <Project>{a576c8c9-434e-4fb3-0944-e449df68d3c4}</Project>
+      <Project>{4f250d8a-0d49-9327-3a96-8cf3e36e2f31}</Project>
       <Name>Unity.RenderPipeline.Universal.ShaderLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEditor.UI.csproj">
-      <Project>{a6811d19-3188-96e4-5171-346a81443f52}</Project>
+      <Project>{a2caa763-8cf6-2457-aa01-7aeed933c0bb}</Project>
       <Name>UnityEditor.UI</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEngine.UI.csproj">
-      <Project>{34999dcb-6974-f717-4da1-c6271032fa6f}</Project>
+      <Project>{cc33c67e-f3cf-fabc-dcca-f6777a536713}</Project>
       <Name>UnityEngine.UI</Name>
     </ProjectReference>
   </ItemGroup>

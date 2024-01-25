@@ -1,2 +1,0 @@
-E:\University Degree\Redes & Online\Priest-Of-Firepower\Priest of Firepower\obj\Debug\Assembly-CSharp.csproj.AssemblyReference.cache
-E:\University Degree\Redes & Online\Priest-Of-Firepower\Priest of Firepower\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache
