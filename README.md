@@ -16,7 +16,23 @@ How is this achieved?
 - Packet, encompasses both replication and inputs -- Datagram that is sent through the sockets.
 
 ## Features
+### Weapons
+7 weapons in total. Snipers, Submachines, Semi-automatic and auotmatic Rifles.
+### Enemies
+4 different enemies. Melee, Ranged, Sniper and Paralizer.
 
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_melee.gif?raw=true" alt="Melee enemy" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_ranged.gif?raw=true" alt="Ranged enemy" width="300" />
+
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_sniper.gif?raw=true" alt="Sniper enemy" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_paralizer.gif?raw=true" alt="Paralizer enemy" width="300" />
+### PowerUps
+4 unique powerups. Max ammo, nuke, oneshot bullets and double points.
+
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_max-ammo.gif?raw=true" alt="Powerup max ammo" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_nuke.gif?raw=true" alt="Powerup nuke" width="300" />
+
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_oneshot.gif?raw=true" alt="Powerup oneshot" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_double-points.gif?raw=true" alt="Powerup double points" width="300" />
+
+### Interactables
+Doors that open new rooms, wall where you can buy new weapons, chests you can open for a random weapon.
 ## Team:
 ### [Allen Bateman](https://github.com/allenbateman "Allen's Github Page") -- Network Manager, Client - Server, Transform Interpolation, Connections, Weapons, Wall Weapons
 ### [Ali Hassan Shahid](https://github.com/FeroXx07 "Ali's Github Page") -- Replication Manager, Object serialization, Network UI, Network Enemies, PowerUps
