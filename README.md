@@ -21,18 +21,21 @@ How is this achieved?
 ### Enemies
 4 different enemies. Melee, Ranged, Sniper and Paralizer.
 
-<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_melee.gif?raw=true" alt="Melee enemy" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_ranged.gif?raw=true" alt="Ranged enemy" width="300" />
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_melee.gif?raw=true" alt="Melee enemy" width="500" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_ranged.gif?raw=true" alt="Ranged enemy" width="500" />
 
-<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_sniper.gif?raw=true" alt="Sniper enemy" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_paralizer.gif?raw=true" alt="Paralizer enemy" width="300" />
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_sniper.gif?raw=true" alt="Sniper enemy" width="500" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Enemy_paralizer.gif?raw=true" alt="Paralizer enemy" width="500" />
 ### PowerUps
 4 unique powerups. Max ammo, nuke, oneshot bullets and double points.
 
-<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_max-ammo.gif?raw=true" alt="Powerup max ammo" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_nuke.gif?raw=true" alt="Powerup nuke" width="300" />
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_max-ammo.gif?raw=true" alt="Powerup max ammo" width="500" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_nuke.gif?raw=true" alt="Powerup nuke" width="500" />
 
-<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_oneshot.gif?raw=true" alt="Powerup oneshot" width="300" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_double-points.gif?raw=true" alt="Powerup double points" width="300" />
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_oneshot.gif?raw=true" alt="Powerup oneshot" width="500" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Powerup_double-points.gif?raw=true" alt="Powerup double points" width="500" />
 
 ### Interactables
 Doors that open new rooms, wall where you can buy new weapons, chests you can open for a random weapon.
+
+<img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Interactable_door.gif?raw=true" alt="Interactable door" width="330" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/WallWeapon.gif?raw=true" alt="Interactable wall weapon" width="330" /> <img src="https://github.com/FeroXx07/Priest-Of-Firepower/blob/main/Docs/images/Interactable_chest.gif?raw=true" alt="Interactable chest" width="330" />
+
 ## Team:
 ### [Allen Bateman](https://github.com/allenbateman "Allen's Github Page") -- Network Manager, Client - Server, Transform Interpolation, Connections, Weapons, Wall Weapons
 ### [Ali Hassan Shahid](https://github.com/FeroXx07 "Ali's Github Page") -- Replication Manager, Object serialization, Network UI, Network Enemies, PowerUps
